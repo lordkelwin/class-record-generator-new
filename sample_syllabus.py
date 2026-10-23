@@ -1,0 +1,565 @@
+import os
+from typing import List
+from fpdf import FPDF
+from models import (
+    SyllabusBlueprint,
+    CourseMetadata,
+    TermConfig,
+    CourseOutcome,
+    AssessmentCategory,
+    AssessmentItem,
+    StudentRecord,
+    CQIPlan,
+    get_default_cqi_indicators,
+)
+
+
+def get_default_sample_students() -> List[StudentRecord]:
+    """Returns a realistic roster of 15 engineering students with scores for EE 211."""
+    roster = [
+        ("2025-01881", "Abear", "Phave Bryl Perote", "", "EE 2A", 0.82),
+        ("2025-00148", "Acedilla", "Princess Aiky Amoin", "", "EE 2A", 0.76),
+        ("2025-00264", "Amomas", "Kristine Joy Failog", "", "EE 2A", 0.88),
+        ("2024-01487", "Añasco", "Jan Elie Alcoseba", "", "EE 2A", 0.68),
+        ("2025-00261", "Bucod", "Caster Troy Ceredon", "", "EE 2A", 0.74),
+        ("2025-00263", "Cabanilla", "Mary Queen Rectazo", "", "EE 2A", 0.91),
+        ("2025-01401", "Cartagena", "Jancart Gabito", "", "EE 2A", 0.45),
+        ("2025-00247", "Castillones", "Angelika Constantino", "", "EE 2A", 0.85),
+        ("2025-00271", "Castrodes", "Timothy John Caiña", "", "EE 2A", 0.79),
+        ("2025-00278", "Dinoy", "Rica Attos", "", "EE 2A", 0.56),
+        ("2025-00251", "Flores", "Louie Adrian Villarin", "", "EE 2A", 0.42),
+        ("2025-00253", "Galon", "Gabriel Jhon Melecio", "", "EE 2A", 0.81),
+        ("2025-00245", "Gella", "Clark Vergel Yares", "", "EE 2A", 0.48),
+        ("2025-00281", "Gemone", "Angelei Rose Cencia", "", "EE 2A", 0.77),
+        ("2025-00268", "Gonzales", "Anjelene Macias", "", "EE 2A", 0.84),
+    ]
+    # Define per-item and per-CLO max points for sample student score generation
+    item_clo_max = {
+        "A1": {"CLO1": 50, "CLO2": 50},
+        "A2": {"CLO1": 50, "CLO2": 50},
+        "Q1": {"CLO1": 15, "CLO2": 15},
+        "Q2": {"CLO1": 15, "CLO2": 15},
+        "MTE": {"CLO1": 30, "CLO2": 30},
+        "MTE_1": {"CLO1": 30},
+        "MTE_2": {"CLO2": 30},
+        "A3": {"CLO1": 50, "CLO2": 50},
+        "A4": {"CLO1": 50, "CLO2": 50},
+        "Q3": {"CLO1": 15, "CLO2": 15},
+        "Q4": {"CLO1": 15, "CLO2": 15},
+        "FTE": {"CLO1": 30, "CLO2": 30},
+        "FTE_1": {"CLO1": 30},
+        "FTE_2": {"CLO2": 30},
+    }
+    students = []
+    for idx, (sid, last, first, mi, prog, perf) in enumerate(roster):
+        scores = {}
+        for j, (item_id, clo_map) in enumerate(item_clo_max.items()):
+            item_total = 0
+            for c_idx, (clo_id, clo_max) in enumerate(clo_map.items()):
+                offset = ((idx * 7 + j * 5 + c_idx * 11) % 19 - 9) / 100.0
+                ratio = max(0.35, min(0.98, perf + offset))
+                sc_val = round(clo_max * ratio)
+                scores[f"{item_id}__{clo_id}"] = sc_val
+                item_total += sc_val
+            scores[item_id] = item_total
+        students.append(
+            StudentRecord(
+                student_id=sid,
+                last_name=last,
+                first_name=first,
+                middle_initial=mi,
+                program_year=prog,
+                scores=scores,
+            )
+        )
+    return students
+
+
+
+
+def get_default_rubrics() -> List[Dict[str, Any]]:
+    return [
+        {
+            "rubric_id": "rubric_fa1",
+            "title": "FA1: Oral Recitation",
+            "assessment_code": "FA1",
+            "used_for": "Formative Assessment 1 (Oral Recitation / Conceptual Explanation)",
+            "clo_ids": ["CLO1"],
+            "scale_type": "points_5",
+            "levels": [
+                {"level": 5, "label": "Excellent (5)"},
+                {"level": 4, "label": "Very Good (4)"},
+                {"level": 3, "label": "Satisfactory (3)"},
+                {"level": 2, "label": "Needs Improvement (2)"},
+                {"level": 1, "label": "Unsatisfactory (1)"},
+                {"level": 0, "label": "Unacceptable (0)"},
+            ],
+            "criteria": [
+                {
+                    "name": "Conceptual Understanding",
+                    "weight_pct": 40.0,
+                    "descriptors": [
+                        "Excellent understanding; fully accurate and thorough explanation.",
+                        "Good understanding; mostly correct.",
+                        "Partial understanding; minor errors.",
+                        "Basic understanding; some correct points.",
+                        "Very limited understanding; mostly incorrect.",
+                        "No understanding; cannot explain topic.",
+                    ],
+                },
+                {
+                    "name": "Application & Examples",
+                    "weight_pct": 30.0,
+                    "descriptors": [
+                        "Fully correct and relevant application to course principles, hardware, and analytical examples.",
+                        "Mostly correct application.",
+                        "Partial application; minor errors.",
+                        "Some application; partially correct.",
+                        "Very limited or incorrect application.",
+                        "No application.",
+                    ],
+                },
+                {
+                    "name": "Clarity & Communication",
+                    "weight_pct": 30.0,
+                    "descriptors": [
+                        "Very clear, confident, logical, and precise explanation.",
+                        "Mostly clear and organized delivery.",
+                        "Partial clarity; understandable but not structured.",
+                        "Some clarity; partially organized.",
+                        "Very poor; hard to understand.",
+                        "Incoherent; cannot communicate.",
+                    ],
+                },
+            ],
+            "notes": "Scores are based on the standard USeP 6-level rating scale (5 to 0).",
+        },
+        {
+            "rubric_id": "rubric_fa2",
+            "title": "FA2: Group Activity",
+            "assessment_code": "FA2",
+            "used_for": "Formative Assessment 2 (Collaborative Problem Solving & System Simulation)",
+            "clo_ids": ["CLO2"],
+            "scale_type": "points_5",
+            "levels": [
+                {"level": 5, "label": "Excellent (5)"},
+                {"level": 4, "label": "Very Good (4)"},
+                {"level": 3, "label": "Satisfactory (3)"},
+                {"level": 2, "label": "Needs Improvement (2)"},
+                {"level": 1, "label": "Unsatisfactory (1)"},
+                {"level": 0, "label": "Unacceptable (0)"},
+            ],
+            "criteria": [
+                {
+                    "name": "Task Completion & Accuracy",
+                    "weight_pct": 40.0,
+                    "descriptors": [
+                        "Fully completed; functional, accurate, meets objective.",
+                        "Completed correctly; mostly functional.",
+                        "Mostly completed; minor errors.",
+                        "Partially completed; some correct elements.",
+                        "Very minimal completion; mostly incorrect.",
+                        "Not completed.",
+                    ],
+                },
+                {
+                    "name": "Problem-Solving & Troubleshooting",
+                    "weight_pct": 30.0,
+                    "descriptors": [
+                        "Excellent problem identification, solution, and reasoning.",
+                        "Mostly correct identification and solutions.",
+                        "Partial identification and solutions.",
+                        "Identifies some issues; solutions are partially correct.",
+                        "Very limited or incorrect solutions.",
+                        "No problem-solving demonstrated.",
+                    ],
+                },
+                {
+                    "name": "Collaboration & Documentation",
+                    "weight_pct": 30.0,
+                    "descriptors": [
+                        "Excellent teamwork, complete, and clear documentation/report/presentation.",
+                        "Good teamwork; mostly clear documentation.",
+                        "Partial teamwork; documentation acceptable.",
+                        "Some teamwork; documentation barely acceptable.",
+                        "Very limited participation or poor documentation.",
+                        "No teamwork or documentation.",
+                    ],
+                },
+            ],
+            "notes": "Team performance rubric applied to group outputs and presentations.",
+        },
+        {
+            "rubric_id": "rubric_sa1",
+            "title": "SA1/SA2: Problem Solving Rubric",
+            "assessment_code": "SA1",
+            "used_for": "Summative Assessments (Quizzes and Term Examinations - Problem Solving)",
+            "clo_ids": ["CLO1", "CLO2"],
+            "scale_type": "percent_100",
+            "levels": [
+                {"level": 5, "label": "Excellent (100%)"},
+                {"level": 4, "label": "Very Good (80%)"},
+                {"level": 3, "label": "Satisfactory (60%)"},
+                {"level": 2, "label": "Needs Improvement (40%)"},
+                {"level": 1, "label": "Unsatisfactory (20%)"},
+                {"level": 0, "label": "Unacceptable (0%)"},
+            ],
+            "criteria": [
+                {
+                    "name": "Conceptual Analysis",
+                    "weight_pct": 40.0,
+                    "descriptors": [
+                        "Excellent understanding; fully accurate and thorough analysis.",
+                        "Good understanding; mostly correct.",
+                        "Partial understanding; minor errors.",
+                        "Basic understanding; minor errors.",
+                        "Very limited understanding; mostly incorrect.",
+                        "No understanding; cannot analyze problem.",
+                    ],
+                },
+                {
+                    "name": "Problem-Solving & Application",
+                    "weight_pct": 40.0,
+                    "descriptors": [
+                        "Fully correct, efficient, and logically sound solution.",
+                        "Mostly correct solution; minor issues.",
+                        "Adequate solution; partially correct.",
+                        "Partially correct solution; minor errors.",
+                        "Very limited solution; mostly incorrect.",
+                        "No attempt or completely incorrect.",
+                    ],
+                },
+                {
+                    "name": "Accuracy & Logical Reasoning",
+                    "weight_pct": 20.0,
+                    "descriptors": [
+                        "Fully logical, stepwise, and accurate.",
+                        "Mostly logical and accurate.",
+                        "Reasonable logic; some minor errors.",
+                        "Some logical steps; partial correctness.",
+                        "Very limited reasoning; mostly incorrect.",
+                        "Completely illogical or wrong.",
+                    ],
+                },
+            ],
+            "notes": "Applied to non-objective problem solving portions of Quizzes and Term Examinations.",
+        },
+        {
+            "rubric_id": "rubric_sa2",
+            "title": "SA1/SA2: Short Essay Rubric",
+            "assessment_code": "SA2",
+            "used_for": "Summative Assessments (Quizzes and Term Examinations - Short Essay / Design Questions)",
+            "clo_ids": ["CLO1", "CLO2"],
+            "scale_type": "percent_100",
+            "levels": [
+                {"level": 5, "label": "Excellent (100%)"},
+                {"level": 4, "label": "Very Good (80%)"},
+                {"level": 3, "label": "Satisfactory (60%)"},
+                {"level": 2, "label": "Needs Improvement (40%)"},
+                {"level": 1, "label": "Unsatisfactory (20%)"},
+                {"level": 0, "label": "Unacceptable (0%)"},
+            ],
+            "criteria": [
+                {
+                    "name": "Conceptual Understanding",
+                    "weight_pct": 40.0,
+                    "descriptors": [
+                        "Excellent understanding; fully accurate, thorough, and insightful.",
+                        "Good understanding; mostly correct.",
+                        "Partial understanding; minor errors.",
+                        "Basic understanding; some correct points.",
+                        "Very limited understanding; mostly incorrect.",
+                        "Shows no understanding; explanation missing or incorrect.",
+                    ],
+                },
+                {
+                    "name": "Application & Examples",
+                    "weight_pct": 30.0,
+                    "descriptors": [
+                        "Fully correct, relevant, and well-illustrated examples.",
+                        "Mostly correct application.",
+                        "Partial application; minor errors.",
+                        "Some application; partially correct.",
+                        "Very limited or incorrect application.",
+                        "No application.",
+                    ],
+                },
+                {
+                    "name": "Clarity, Organization, & Reasoning",
+                    "weight_pct": 30.0,
+                    "descriptors": [
+                        "Excellent clarity, highly logical, well-structured, and precise.",
+                        "Good clarity; mostly logical and organized.",
+                        "Partial clarity; understandable but not structured.",
+                        "Some clarity; partially organized.",
+                        "Very poor; hard to understand.",
+                        "Completely incoherent.",
+                    ],
+                },
+            ],
+            "notes": "Applied to theoretical, design rationale, and short essay exam items.",
+        },
+    ]
+
+def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBlueprint:
+    """Returns the USeP EE 211 (Electrical Circuits 1) syllabus blueprint matching EE 211.pdf & Math 211.xlsm."""
+    metadata = CourseMetadata(
+        university="University of Southeastern Philippines",
+        college="COLLEGE OF ENGINEERING",
+        address="Iñigo St., Bo. Obrero, Davao City 8000",
+        program_name="Bachelor of Science in Electrical Engineering",
+        program_code="EE",
+        academic_unit="Engineering",
+        course_code="EE 211",
+        course_title="Electrical Circuits 1",
+        credit_units="3.0 Units – Lecture",
+        lec_lab="Lecture",
+        schedule="MWF 08:00 AM - 09:00 AM",
+        room="304",
+        semester_ay="1st Semester, A.Y. 2026-2027",
+        section="EE 2A",
+        faculty_name="ELWIN JAY J. TANO",
+        program_head="CHARITO O. CLARO",
+        dean_name="JOIE D. CATAYTAY",
+        transmutation_base=50,
+        passing_percentage=75.0,
+        grading_mode="two_term",
+    )
+
+    terms = [
+        TermConfig(term_name="Midterm", weight_pct=50.0),
+        TermConfig(term_name="Finals", weight_pct=50.0),
+    ]
+
+    course_outcomes = [
+        CourseOutcome(
+            co_id="CLO1",
+            description="Given DC and AC circuit networks, the student will calculate unknown circuit variables by accurately solving necessary linear and differential equations.",
+            program_outcomes="PGO a",
+            graduate_outcome_desc="a) Apply knowledge of mathematics and sciences to solve engineering problems",
+            performance_indicator="a.1. Apply concepts in mathematics to solve engineering problems.",
+            iga_aligned="IGA2",
+            target_score_pct=75.0,
+            target_class_pass_pct=50.0,
+        ),
+        CourseOutcome(
+            co_id="CLO2",
+            description="Given multi-source electrical networks and time-varying circuits, the student will determine equivalent circuits and complete electrical responses by correctly applying fundamental network theorems and circuit principles.",
+            program_outcomes="PGO e",
+            graduate_outcome_desc="e) Identify, formulate, and solve engineering problems",
+            performance_indicator="e.2. Apply concepts, theories, and principles in solving engineering problem(s)",
+            iga_aligned="IGA5",
+            target_score_pct=75.0,
+            target_class_pass_pct=50.0,
+        ),
+    ]
+
+    categories = [
+        # MIDTERM PERIOD
+        AssessmentCategory(
+            category_id="MID_FA1",
+            term="Midterm",
+            assessment_type="FA",
+            assessment_code="FA1",
+            name="Formative Assessment 1 (Group Activity)",
+            lec_lab="Lecture",
+            weight_pct=0.0,
+            items=[
+                AssessmentItem(
+                    "A1",
+                    "FA1 Group Activity 1 (DC/AC Laws & Network Theorems)",
+                    100.0,
+                    "CLO1, CLO2",
+                    100.0,
+                    {"CLO1": 50.0, "CLO2": 50.0},
+                ),
+            ],
+        ),
+        AssessmentCategory(
+            category_id="MID_FA2",
+            term="Midterm",
+            assessment_type="FA",
+            assessment_code="FA2",
+            name="Formative Assessment 2 (Group Activity)",
+            lec_lab="Lecture",
+            weight_pct=0.0,
+            items=[
+                AssessmentItem(
+                    "A2",
+                    "FA1 Group Activity 2 (Network Theorems Simulation)",
+                    100.0,
+                    "CLO1, CLO2",
+                    100.0,
+                    {"CLO1": 50.0, "CLO2": 50.0},
+                ),
+            ],
+        ),
+        AssessmentCategory(
+            category_id="MID_SA1",
+            term="Midterm",
+            assessment_type="SA",
+            assessment_code="SA1",
+            name="Summative Assessment 1 (Quizzes)",
+            lec_lab="Lecture",
+            weight_pct=40.0,
+            items=[
+                AssessmentItem(
+                    "Q1",
+                    "Quiz 1 (Nodal, Mesh & Equivalent Circuit Equations)",
+                    30.0,
+                    "CLO1, CLO2",
+                    20.0,
+                    {"CLO1": 15.0, "CLO2": 15.0},
+                ),
+                AssessmentItem(
+                    "Q2",
+                    "Quiz 2 (Superposition, Thevenin/Norton & Op-Amp Circuits)",
+                    30.0,
+                    "CLO1, CLO2",
+                    20.0,
+                    {"CLO1": 15.0, "CLO2": 15.0},
+                ),
+            ],
+        ),
+        AssessmentCategory(
+            category_id="MID_SA2",
+            term="Midterm",
+            assessment_type="SA",
+            assessment_code="SA2",
+            name="Summative Assessment 2 (Term Examination)",
+            lec_lab="Lecture",
+            weight_pct=60.0,
+            items=[
+                AssessmentItem(
+                    "MTE",
+                    "Midterm Examination (CLO1: Circuit Equations | CLO2: Network Theorems)",
+                    60.0,
+                    "CLO1, CLO2",
+                    60.0,
+                    {"CLO1": 30.0, "CLO2": 30.0},
+                ),
+            ],
+        ),
+        # FINALS PERIOD
+        AssessmentCategory(
+            category_id="FIN_FA1",
+            term="Finals",
+            assessment_type="FA",
+            assessment_code="FA1",
+            name="Formative Assessment 1 (Group Activity)",
+            lec_lab="Lecture",
+            weight_pct=0.0,
+            items=[
+                AssessmentItem(
+                    "A3",
+                    "FA1 Group Activity 3 (RL/RC/RLC Transient Simulation)",
+                    100.0,
+                    "CLO1, CLO2",
+                    100.0,
+                    {"CLO1": 50.0, "CLO2": 50.0},
+                ),
+            ],
+        ),
+        AssessmentCategory(
+            category_id="FIN_FA2",
+            term="Finals",
+            assessment_type="FA",
+            assessment_code="FA2",
+            name="Formative Assessment 2 (Group Activity)",
+            lec_lab="Lecture",
+            weight_pct=0.0,
+            items=[
+                AssessmentItem(
+                    "A4",
+                    "FA1 Group Activity 4 (AC Sinusoidal Steady-State)",
+                    100.0,
+                    "CLO1, CLO2",
+                    100.0,
+                    {"CLO1": 50.0, "CLO2": 50.0},
+                ),
+            ],
+        ),
+        AssessmentCategory(
+            category_id="FIN_SA1",
+            term="Finals",
+            assessment_type="SA",
+            assessment_code="SA1",
+            name="Summative Assessment 1 (Quizzes)",
+            lec_lab="Lecture",
+            weight_pct=40.0,
+            items=[
+                AssessmentItem(
+                    "Q3",
+                    "Quiz 3 (Energy Elements & First/Second-Order Circuits)",
+                    30.0,
+                    "CLO1, CLO2",
+                    20.0,
+                    {"CLO1": 15.0, "CLO2": 15.0},
+                ),
+                AssessmentItem(
+                    "Q4",
+                    "Quiz 4 (Phasor & Frequency-Domain Circuit Analysis)",
+                    30.0,
+                    "CLO1, CLO2",
+                    20.0,
+                    {"CLO1": 15.0, "CLO2": 15.0},
+                ),
+            ],
+        ),
+        AssessmentCategory(
+            category_id="FIN_SA2",
+            term="Finals",
+            assessment_type="SA",
+            assessment_code="SA2",
+            name="Summative Assessment 2 (Term Examination)",
+            lec_lab="Lecture",
+            weight_pct=60.0,
+            items=[
+                AssessmentItem(
+                    "FTE",
+                    "Final Term Examination (CLO1: Differential/Phasor Equations | CLO2: Complete RLC/AC Responses)",
+                    60.0,
+                    "CLO1, CLO2",
+                    60.0,
+                    {"CLO1": 30.0, "CLO2": 30.0},
+                ),
+            ],
+        ),
+    ]
+
+    students = get_default_sample_students() if include_sample_scores else []
+
+    return SyllabusBlueprint(
+        metadata=metadata,
+        terms=terms,
+        course_outcomes=course_outcomes,
+        categories=categories,
+        students=students,
+        cqi_plan=CQIPlan(indicators=get_default_cqi_indicators()),
+        rubrics=get_default_rubrics(),
+        parser_notes=[
+            "Loaded USeP EE 211 (Electrical Circuits 1) OBE Syllabus Blueprint (FM-USeP-MID-01).",
+            "Linked CLO1 -> PGO a (PI a.1, IGA2) and CLO2 -> PGO e (PI e.2, IGA5).",
+            "Configured Base-50 Grading System (Passing = 75 -> 3.00): FA1 (Formative 0%), SA1 Quizzes (40%), SA2 Term Examination (60%).",
+            "Included CLO Grade section, Course Learning Outcome Assessment Report, CO Assessment Tool, and CQI Plan.",
+        ],
+    )
+
+
+def generate_sample_syllabus_pdf(output_path: str) -> str:
+    """If EE 211.pdf exists in workspace, returns it; otherwise generates a sample syllabus PDF."""
+    workspace_ee211 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "EE 211.pdf")
+    if os.path.exists(workspace_ee211):
+        return workspace_ee211
+
+    bp = get_default_blueprint(include_sample_scores=False)
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.cell(0, 7, bp.metadata.university, new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 8, f"COURSE SYLLABUS IN {bp.metadata.course_code} - {bp.metadata.course_title.upper()}", new_x="LMARGIN", new_y="NEXT", align="C")
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    pdf.output(output_path)
+    return output_path

@@ -1,0 +1,403 @@
+"""
+Syllabus review & approval workflow.
+
+Flow (each step must be completed in order before the next can act):
+  draft/returned --(faculty submits)--> committee review (checklist + e-signature)
+  --> Program Head (e-signature) --> College QA Head countersign (e-signature)
+  --> Dean approval (e-signature) --> APPROVED (syllabus locked; class record unlocked)
+
+Any reviewer can instead RETURN the syllabus for revision with remarks, which
+unlocks it for the faculty and clears the signatures of the current cycle
+(the full history is kept).
+
+The workflow state lives in the stored course document (doc["workflow"]), never in
+the client-supplied blueprint, so it cannot be forged from the browser.
+"""
+import copy
+import hashlib
+import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+# --------------------------------------------------------------------------
+# Step configuration (order matters)
+# --------------------------------------------------------------------------
+WORKFLOW_STEPS: List[Dict[str, Any]] = [
+    {
+        "key": "committee",
+        "role": "review_committee",
+        "label": "Syllabus Review Committee",
+        "action_label": "Reviewed by",
+        "status": "for_committee_review",
+        "requires_checklist": True,
+        "scope": "program",
+    },
+    {
+        "key": "program_head",
+        "role": "program_head",
+        "label": "Program Head",
+        "action_label": "Recommending Approval",
+        "status": "for_program_head",
+        "requires_checklist": False,
+        "scope": "program",
+    },
+    {
+        "key": "qa_head",
+        "role": "qa_head",
+        "label": "College QA Head",
+        "action_label": "Countersigned by",
+        "status": "for_qa_countersign",
+        "requires_checklist": False,
+        "scope": "college",
+    },
+    {
+        "key": "dean",
+        "role": "dean",
+        "label": "Dean",
+        "action_label": "Approved by",
+        "status": "for_dean_approval",
+        "requires_checklist": False,
+        "scope": "college",
+    },
+]
+
+WORKFLOW_ROLES = {s["role"]: s["label"] for s in WORKFLOW_STEPS}
+
+STATUS_LABELS = {
+    "draft": "Draft",
+    "returned": "Returned for Revision",
+    "for_committee_review": "For Review Committee",
+    "for_program_head": "For Program Head Approval",
+    "for_qa_countersign": "For QA Head Countersign",
+    "for_dean_approval": "For Dean's Approval",
+    "approved": "Approved",
+}
+
+EDITABLE_STATUSES = {"draft", "returned"}
+
+# Metadata fields that belong to the individual class/section (not the syllabus content)
+# and may still be edited after the syllabus is locked.
+SECTION_LEVEL_META_FIELDS = {"section", "schedule", "room", "transmutation_base", "passing_percentage", "grading_mode"}
+
+
+def _now() -> str:
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def default_workflow() -> Dict[str, Any]:
+    return {
+        "status": "draft",
+        "cycle": 1,
+        "content_hash": None,
+        "submitted_at": None,
+        "submitted_by": None,
+        "submitted_by_name": None,
+        "assigned_committee": None,
+        "assigned_committee_name": None,
+        "submission_notes": None,
+        "approved_at": None,
+        "signatures": [],  # current-cycle signatures [{step, role, username, full_name, title, decision, remarks, signed_at, signature_data, content_hash}]
+        "checklist": {"responses": {}, "comments": {}, "overall_recommendation": "", "general_remarks": "",
+                      "updated_by": None, "updated_at": None},
+        "history": [],  # [{at, by, action, step, remarks, cycle}]
+    }
+
+
+def get_workflow(doc: Dict[str, Any]) -> Dict[str, Any]:
+    wf = doc.get("workflow")
+    if not isinstance(wf, dict):
+        wf = default_workflow()
+        doc["workflow"] = wf
+    base = default_workflow()
+    for k, v in base.items():
+        wf.setdefault(k, copy.deepcopy(v))
+    return wf
+
+
+def status_label(status: str) -> str:
+    return STATUS_LABELS.get(status, status)
+
+
+def current_step(wf: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    for s in WORKFLOW_STEPS:
+        if s["status"] == wf.get("status"):
+            return s
+    return None
+
+
+def is_syllabus_locked(doc: Dict[str, Any]) -> bool:
+    return get_workflow(doc)["status"] not in EDITABLE_STATUSES
+
+
+def is_approved(doc: Dict[str, Any]) -> bool:
+    return get_workflow(doc)["status"] == "approved"
+
+
+# --------------------------------------------------------------------------
+# Syllabus snapshot / integrity hash
+# --------------------------------------------------------------------------
+def syllabus_portion(bp: Dict[str, Any]) -> Dict[str, Any]:
+    """The part of the blueprint that constitutes the syllabus (what gets reviewed & locked)."""
+    meta = {k: v for k, v in (bp.get("metadata") or {}).items() if k not in SECTION_LEVEL_META_FIELDS}
+    return {
+        "metadata": meta,
+        "course_outcomes": bp.get("course_outcomes") or [],
+        "rubrics": bp.get("rubrics") or [],
+        "terms": bp.get("terms") or [],
+    }
+
+
+def compute_hash(bp: Dict[str, Any]) -> str:
+    raw = json.dumps(syllabus_portion(bp), sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def enforce_locks(stored_doc: Dict[str, Any], incoming_bp: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merge an incoming (client) blueprint with the stored one according to the workflow:
+      - When the syllabus is locked (submitted/approved), syllabus content is kept from the stored copy.
+      - Until the syllabus is approved, the class record roster/scores cannot be changed.
+    Returns the blueprint dict that should be saved.
+    """
+    stored_bp = stored_doc.get("blueprint") or {}
+    if not stored_bp:
+        return incoming_bp
+    merged = copy.deepcopy(incoming_bp)
+
+    if is_syllabus_locked(stored_doc):
+        locked = syllabus_portion(stored_bp)
+        new_meta = copy.deepcopy(locked["metadata"])
+        for k in SECTION_LEVEL_META_FIELDS:
+            if k in (incoming_bp.get("metadata") or {}):
+                new_meta[k] = incoming_bp["metadata"][k]
+            elif k in (stored_bp.get("metadata") or {}):
+                new_meta[k] = stored_bp["metadata"][k]
+        merged["metadata"] = new_meta
+        merged["course_outcomes"] = copy.deepcopy(locked["course_outcomes"])
+        merged["rubrics"] = copy.deepcopy(locked["rubrics"])
+        merged["terms"] = copy.deepcopy(locked["terms"])
+
+    if not is_approved(stored_doc):
+        merged["students"] = copy.deepcopy(stored_bp.get("students") or [])
+        if "cqi_plan" in stored_bp:
+            merged["cqi_plan"] = copy.deepcopy(stored_bp["cqi_plan"])
+    return merged
+
+
+# --------------------------------------------------------------------------
+# Permission helpers
+# --------------------------------------------------------------------------
+def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[str, Any]] = None) -> bool:
+    """Can this user act on the current step of this course's workflow?"""
+    wf = get_workflow(doc)
+    step = step or current_step(wf)
+    if not step or not user:
+        return False
+    if doc.get("owner") == user.get("username"):
+        return False  # nobody reviews/approves their own syllabus
+    if user.get("role") == "admin":
+        return True
+    if step["key"] == "committee":
+        comm_unames = [m.get("username") for m in (wf.get("committee_members") or []) if m.get("username")]
+        if comm_unames and user["username"] in comm_unames:
+            return True
+        return ("review_committee" in (user.get("workflow_roles") or [])) and in_scope(user, doc, step)
+    if step["role"] not in (user.get("workflow_roles") or []):
+        return False
+    return in_scope(user, doc, step)
+
+
+def in_scope(user: Dict[str, Any], doc: Dict[str, Any], step: Dict[str, Any]) -> bool:
+    if step.get("scope") == "college":
+        user_college = (user.get("college") or "").strip().lower()
+        doc_college = (((doc.get("blueprint") or {}).get("metadata") or {}).get("college") or "").strip().lower()
+        return not user_college or not doc_college or user_college == doc_college
+    progs = [p.strip().upper() for p in (user.get("program_codes") or []) if p.strip()]
+    if not progs or "*" in progs:
+        return True
+    doc_prog = (((doc.get("blueprint") or {}).get("metadata") or {}).get("program_code") or "").strip().upper()
+    return doc_prog in progs
+
+
+# --------------------------------------------------------------------------
+# Transitions
+# --------------------------------------------------------------------------
+class WorkflowError(Exception):
+    pass
+
+
+def _log(wf, by, action, remarks="", step=None):
+    wf["history"].append({"at": _now(), "by": by, "action": action, "step": step, "remarks": remarks, "cycle": wf.get("cycle", 1)})
+
+
+def submit(doc: Dict[str, Any], user: Dict[str, Any],
+           assigned_committee: Optional[str] = None,
+           assigned_committee_name: Optional[str] = None,
+           committee_members: Optional[List[Dict[str, Any]]] = None,
+           submission_notes: Optional[str] = None) -> Dict[str, Any]:
+    wf = get_workflow(doc)
+    if doc.get("owner") != user["username"]:
+        raise WorkflowError("Only the faculty who owns this syllabus can submit it for review.")
+    if wf["status"] not in EDITABLE_STATUSES:
+        raise WorkflowError(f"This syllabus is already {status_label(wf['status'])}.")
+    bp = doc.get("blueprint") or {}
+    problems = validate_for_submission(bp)
+    if problems:
+        raise WorkflowError("Please complete the syllabus before submitting: " + "; ".join(problems))
+
+    # Committee must have at least three (3) members
+    if committee_members is None:
+        committee_members = [
+            {"username": "committee_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Chair"},
+            {"username": "committee_arenga", "name": "Engr. Delan Zoe H. Arenga", "role": "Review Committee Member"},
+            {"username": "committee_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Member"},
+        ]
+    if len(committee_members) < 3:
+        raise WorkflowError(f"The Syllabus Review Committee must have at least three (3) members (currently has {len(committee_members)}).")
+
+    wf["status"] = WORKFLOW_STEPS[0]["status"]
+    wf["content_hash"] = compute_hash(bp)
+    wf["submitted_at"] = _now()
+    wf["submitted_by"] = user["username"]
+    wf["submitted_by_name"] = user.get("full_name") or user["username"]
+    wf["committee_members"] = committee_members
+    wf["checklist"]["committee_members"] = committee_members
+    wf["assigned_committee"] = committee_members[0].get("username") or assigned_committee or "committee_basan"
+    wf["assigned_committee_name"] = ", ".join(m.get("name") for m in committee_members)
+    wf["submission_notes"] = (submission_notes or "").strip()
+    wf["signatures"] = []
+    wf["approved_at"] = None
+    _log(wf, user["username"], "submitted", remarks=wf["submission_notes"], step="faculty")
+    return wf
+
+
+def withdraw(doc: Dict[str, Any], user: Dict[str, Any]) -> Dict[str, Any]:
+    wf = get_workflow(doc)
+    if doc.get("owner") != user["username"]:
+        raise WorkflowError("Only the owner can withdraw this submission.")
+    if wf["status"] != WORKFLOW_STEPS[0]["status"] or wf["signatures"]:
+        raise WorkflowError("A submission can only be withdrawn before the review committee signs it.")
+    wf["status"] = "draft"
+    _log(wf, user["username"], "withdrawn", step="faculty")
+    return wf
+
+
+def save_checklist(doc: Dict[str, Any], user: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+    wf = get_workflow(doc)
+    step = current_step(wf)
+    if not step or not step.get("requires_checklist"):
+        raise WorkflowError("The review checklist can only be filled while the syllabus is with the Review Committee.")
+    if not user_can_act(user, doc, step):
+        raise WorkflowError("Only members of the Syllabus Review Committee can fill out the review checklist.")
+    cl = wf["checklist"]
+    cl["responses"] = {str(k): str(v) for k, v in (data.get("responses") or {}).items()}
+    cl["comments"] = {str(k): str(v) for k, v in (data.get("comments") or {}).items()}
+    cl["overall_recommendation"] = str(data.get("overall_recommendation") or "")
+    cl["general_remarks"] = str(data.get("general_remarks") or "")
+    cl["updated_by"] = user["username"]
+    cl["updated_at"] = _now()
+    return wf
+
+
+def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
+         required_item_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+    """decision: 'approve' (sign & forward) or 'return' (send back for revision)."""
+    wf = get_workflow(doc)
+    step = current_step(wf)
+    if not step:
+        raise WorkflowError("This syllabus is not awaiting any signature.")
+    if not user_can_act(user, doc, step):
+        raise WorkflowError(f"Only the {step['label']} assigned to this program/college can act on this step.")
+    if not user.get("has_signature"):
+        raise WorkflowError("Please upload or draw your e-signature first (My E-Signature).")
+
+    bp = doc.get("blueprint") or {}
+    if compute_hash(bp) != wf.get("content_hash"):
+        raise WorkflowError("The syllabus content changed after submission. It must be resubmitted.")
+
+    if decision == "return":
+        if not (remarks or "").strip():
+            raise WorkflowError("Please write remarks explaining what needs to be revised.")
+        wf["status"] = "returned"
+        wf["cycle"] = int(wf.get("cycle", 1)) + 1
+        wf["signatures"] = []
+        _log(wf, user["username"], "returned", remarks=remarks, step=step["key"])
+        return wf
+
+    if decision != "approve":
+        raise WorkflowError("Unknown decision.")
+
+    if step.get("requires_checklist"):
+        cl = wf["checklist"]
+        missing = [i for i in (required_item_ids or []) if not cl["responses"].get(i)]
+        if missing:
+            raise WorkflowError(f"Please answer all checklist items before signing ({len(missing)} unanswered).")
+        if not cl.get("overall_recommendation"):
+            raise WorkflowError("Please select the committee's overall recommendation before signing.")
+
+    wf["signatures"].append({
+        "step": step["key"],
+        "role": step["role"],
+        "label": step["label"],
+        "action_label": step["action_label"],
+        "username": user["username"],
+        "full_name": user.get("full_name") or user["username"],
+        "title": user.get("position_title") or step["label"],
+        "decision": "approved",
+        "remarks": remarks or "",
+        "signed_at": _now(),
+        "signature_data": user.get("signature_data") or "",
+        "content_hash": wf["content_hash"],
+    })
+    _log(wf, user["username"], "signed", remarks=remarks, step=step["key"])
+
+    idx = WORKFLOW_STEPS.index(step)
+    if idx + 1 < len(WORKFLOW_STEPS):
+        wf["status"] = WORKFLOW_STEPS[idx + 1]["status"]
+    else:
+        wf["status"] = "approved"
+        wf["approved_at"] = _now()
+        _log(wf, user["username"], "approved", step=step["key"])
+    return wf
+
+
+def validate_for_submission(bp: Dict[str, Any]) -> List[str]:
+    problems = []
+    meta = bp.get("metadata") or {}
+    if not (meta.get("course_code") or "").strip():
+        problems.append("course code is missing")
+    if not (meta.get("course_description") or "").strip():
+        problems.append("course description is missing")
+    if not bp.get("course_outcomes"):
+        problems.append("at least one Course Learning Outcome (CLO) is required")
+    if not (meta.get("syllabus_assessment_activities") or []):
+        problems.append("Part VI assessment activities are missing")
+    return problems
+
+
+def public_view(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """Workflow info safe to send to the browser."""
+    wf = get_workflow(doc)
+    step = current_step(wf)
+    return {
+        "status": wf["status"],
+        "status_label": status_label(wf["status"]),
+        "locked": wf["status"] not in EDITABLE_STATUSES,
+        "approved": wf["status"] == "approved",
+        "cycle": wf.get("cycle", 1),
+        "current_step": step["key"] if step else None,
+        "current_step_label": step["label"] if step else None,
+        "submitted_at": wf.get("submitted_at"),
+        "submitted_by": wf.get("submitted_by"),
+        "submitted_by_name": wf.get("submitted_by_name"),
+        "assigned_committee": wf.get("assigned_committee"),
+        "assigned_committee_name": wf.get("assigned_committee_name"),
+        "submission_notes": wf.get("submission_notes"),
+        "approved_at": wf.get("approved_at"),
+        "content_hash": wf.get("content_hash"),
+        "signatures": wf.get("signatures", []),
+        "checklist": wf.get("checklist"),
+        "committee_members": wf.get("committee_members") or [],
+        "history": wf.get("history", [])[-30:],
+        "steps": [{"key": s["key"], "label": s["label"], "action_label": s["action_label"], "role": s["role"]} for s in WORKFLOW_STEPS],
+    }

@@ -1,0 +1,309 @@
+
+=== PAGE 1 ===
+ 
+College of Engineering Page 1 of 5 
+ 
+ 
+ 
+Republic of the Philippines 
+University of Southeastern Philippines   
+Iñigo St., Bo. Obrero, Davao City 8000 
+Telephone: (082) 227-8192 
+Website: www.usep.edu.ph 
+Email: president@usep.edu.ph 
+Form No. FM-USeP-MID-02 
+Issue Status 01 
+Revision No. 00 
+Date Effective 05 January 2026 
+Approved by President 
+SYLLABUS EVALUATION FORM 
+ 
+Choose One:  New  ☐ Major Revision 
+Faculty Name ELWIN JAY J. TANO 
+Program ELECTRICAL ENGINEERING Academic Unit ENGINEERING 
+Course Title AEE 321 – MICROPROCESSOR SYSTEMS 
+Course Description 
+The course includes history and evolution, principles, and applications of microprocessors. The 
+focus is on the basic understanding of the architectural design, functional parts, operations, 
+function, and programming. It also covers the study of various types of microprocessors and the 
+fundamental concepts of microcontrollers. 
+Semester 2ND SEMESTER Academic Year 2025-2026 
+ 
+Instructions: Use this form to evaluate course syllabi. For each statement below, place a check ( ✓) under the appropriate 
+column if the course F ULLY meets the requirement , PARTIALLY complying with,  or NOT FULFILLING the 
+requirements. For indicators that are not fully met, write down the observed gap and recommended action.  
+ 
+EVALUATION STATEMENT FULLY PARTIALLY NOT FULFILLING OBSERVED GAP 
+The USeP Vision, Mission, and Goals are correctly stated 
+in the syllabus.  ☐ ☐  
+The Institutional Graduate Attributes (IGAs) are fully listed 
+and accurate.  ☐ ☐  
+The course code, title, units, and prerequisites match the 
+approved curriculum.  ☐ ☐  
+The course description reflects the PSG or approved 
+Program Structure.  ☐ ☐  
+The IGA-PGO-PI alignment table is present and correctly 
+mapped.  ☐ ☐  
+The course outcomes (COs) are well-formulated (verb + 
+content + standard).  ☐ ☐  
+The COs align with the mapped PGOs and PIs.  ☐ ☐  
+The SDG alignment section is present and clearly 
+described.  ☐ ☐  
+The student workload is realistic and well-detailed.  ☐ ☐  
+Faculty information is complete with consultation hours.  ☐ ☐  
+Formative assessments are appropriate and aligned with 
+COs.  ☐ ☐  
+Summative assessments are comprehensive and mapped 
+to COs.  ☐ ☐  
+The measurement system (rubrics, assessment plan) is 
+clearly stated and appropriate.  ☐ ☐  
+The learning plan includes clear ILOs written in the 
+correct format.  ☐ ☐  
+The ILOs are aligned with the course outcomes (COs).  ☐ ☐  
+The TLAs reflect USeP’s educational philosophy:  ☐ ☐  
+- Student engagement is encouraged.  ☐ ☐  
+- Learners are given responsibility for their own 
+learning.  ☐ ☐  
+- Critical and reflective thinking is promoted.  ☐ ☐  
+
+=== PAGE 2 ===
+ 
+College of Engineering Page 2 of 5 
+ 
+- Feedback and revision opportunities are provided.  ☐ ☐  
+References are updated, relevant, and in APA format.  ☐ ☐  
+Classroom policies reflect professionalism, inclusivity, and 
+academic integrity.  ☐ ☐  
+Academic honesty and plagiarism policies are clearly 
+stated.  ☐ ☐  
+Responsible use of AI tools is clearly addressed.  ☐ ☐  
+ 
+Attached Checklist of Frameworks Integrated into Course Syllabus 
+ 
+INTEGRATION AREA FULLY PARTIALLY NOT FULFILLING OBSERVED GAP 
+The CDIO Framework (Conceive–Design–Implement–
+Operate) is embedded in COs, TLAs, or projects.  ☐ ☐  
+The Fourth Industrial Revolution (FIRe) skills are 
+explicitly addressed in content or activities.  ☐ ☐  
+The course integrates relevant Sustainable Development 
+Goals (SDGs) meaningfully.  ☐ ☐  
+The course applies Gender and Development (GAD) 
+principles in language, examples, and policy.  ☐ ☐  
+Cultural sensitivity and conflict sensitivity are considered 
+in content and classroom policies.  ☐ ☐  
+ 
+Recommendations for Course Syllabus Improvement 
+ 
+ 
+ 
+REVIEWED BY: CONFORME: 
+ 
+ 
+NIKKA SAMANTHA A. BASAN 
+ 
+ 
+DELAN ZOE H. ARENGA 
+ 
+ 
+KIM P. RAVIDA 
+(Course Committee) 
+ 
+Date: _____________ 
+ 
+ 
+ 
+ 
+ 
+ 
+ELWIN JAY J. TANO 
+Faculty 
+ 
+Date: _____________ 
+ 
+– TO BE FILLED UP BY THE FACULTY SYLLABUS WRITER -  
+OBSERVED GAP ACTION TAKEN 
+  
+  
+ 
+ENDORSED BY: APPROVED BY: 
+ 
+ 
+ 
+CHARITO O. CLARO 
+Program Head – Electrical Engineering 
+ 
+Date: _____________ 
+ 
+ 
+ 
+ 
+JOIE D. CATAYTAY 
+Dean 
+ 
+Date: _____________ 
+  
+=== PAGE 3 ===
+ 
+College of Engineering Page 3 of 5 
+ 
+Annex A 
+ 
+Checklist on Conceive, Design, Implement, Operate (Cdio) Framework, Fourth Industrial Revolution (Fire) 
+Framework, Cultural And Conflict Sensitivity, Sustainable Development Goals (SDG)  
+and Gender and Development (GAD) Framework 
+ 
+ 
+Direction: Tick the appropriate box to indicate the presence or absence of the following indicators in the course syllabus 
+reviewed.  
+ 
+COMPONENTS YES NO REMARKS 
+Conceive, Design, Implement, Operate (CDIO) Framework Checklist  
+● The course objectives are clearly defined and 
+encourage innovation and idea generation.  ☐  
+● The course provides opportunities for students 
+to engage in iterative design and refinement.  ☐  
+● The course includes hands-on activities and 
+practical implementation.  ☐  
+● The course includes real-world applications 
+and user feedback.  ☐  
+Fourth Industrial Revolution (FIRe) Checklist 
+● The syllabus promotes critical thinking, 
+creativity, communication, and collaboration 
+through learning activities. 
+ ☐  
+● The syllabus fosters character qualities such 
+as curiosity, initiative, persistence, adaptability, 
+leadership, and social and cultural awareness. 
+ ☐  
+● The syllabus includes content on innovation 
+and promotes inclusive practices in technology 
+use and development. 
+ ☐  
+● The syllabus incorporates discussions on the 
+circular economy, sustainability, and green 
+technologies. 
+ ☐  
+Cultural Sensitivity and Conflict Sensitivity Checklist 
+● The syllabus content includes localized or 
+culturally relevant examples, contexts, or 
+activities. 
+ ☐  
+● The instructional materials reflected in the 
+syllabus are respectful of local, ethnic, or 
+indigenous knowledge systems. 
+ ☐  
+● Activities promote multicultural awareness, 
+peace education, or community -based 
+perspectives. 
+ ☐  
+Sustainable Development Goals Framework Alignment 
+● Course topics explicitly or implicitly support one 
+or more SDGs (e.g., Quality Education, Gender 
+Equality, Climate Action) 
+ ☐  
+● Teaching-learning activities encourage 
+sustainability-oriented thinking and advocacy.  ☐  
+● Activities provide opportunities for students to 
+reflect on or act on global/local development 
+issues. 
+ ☐  
+Gender and Development Framework Checklist 
+Note: At least one indicator must be marked yes to indicate minimum compliance with each domain . 
+Domain 1: Intended Learning Outcomes 
+The syllabus contains Intended Learning Outcome/s (ILO) that expect students to demonstrate understanding of one or 
+more domains that can be applied within the context of the course. 
+1.1 Gender Equality: At least one or more ILOs 
+embrace the principle of equal learning 
+opportunities and expectations for all genders, 
+ ☐  
+=== PAGE 4 ===
+ 
+College of Engineering Page 4 of 5 
+ 
+ensuring fairness in student engagement and 
+achievement. 
+1.2 Gender Equity: At least one or more ILOs aim 
+to empower underrepresented or marginalized 
+genders in the discipline. 
+ ☐  
+1.3 Gender Sensitivity: At least one or more ILOs 
+promote gender fair values and perspectives.  ☐  
+Domain 2: Teaching-Learning Activities (TLAs) 
+The Teaching-Learning Activities (TLAs) in the syllabus provide equal opportunities for participation among all learners 
+regardless of their gender. 
+2.1 Gender Equality: At least one or more TLAs 
+employ classroom activities that ensure equal 
+engagement and participation for all learners.  
+ ☐  
+2.2 Gender Equity: At least one or more TLAs 
+employ classroom activities that support a learning 
+environment that promotes respect and value for all 
+genders. 
+ ☐  
+2.3 Gender Sensitivity: At least one or more TLAs 
+employ classroom activities encompassing various 
+perspectives. 
+ ☐  
+Domain 3: Learning Contents/Topics  
+The course syllabus’ learning contents integrate content knowledge on gender and women studies.  
+3.1 Gender Equality: At least one or more learning 
+content/s provide a balanced representation of 
+gender in texts, authors, and theories. 
+ ☐  
+3.2 Gender Equity: At least one or more learning 
+content/s includes discussion on gender issues 
+relevant to different social, cultural, or economic 
+groups. 
+ ☐  
+3.3 Gender Sensitivity: At least one or more 
+learning content/s explicitly include topics or 
+discussions related to gender.  
+ ☐  
+Domain 4: Assessment Tasks (ATs) 
+Assessment tasks (ATs), which include learning evidence/s (LEs) and assessment activities (AAs), are fair and responsive 
+to gender, use inclusive language, unbiased performance criteria, and accessible formats.  
+4.1 Gender Equality:  At least one or more ATs 
+provide equal opportunities for students of all 
+genders to demonstrate learning through varied 
+assessment formats. 
+ ☐  
+4.2 Gender Equity:  At least one or more ATs 
+include flexible assessment tasks provisions for 
+students experiencing gender-related challenges or 
+responsibilities. 
+ ☐  
+4.3 Gender Sensitivity: At least one or more ATs 
+and grading methods are free from gender biases 
+or assumptions. 
+ ☐  
+Curriculum Mapping Alignment 
+● Course Outcomes (COs) are clearly aligned 
+with Program Goals/Objectives (PGOs) and 
+Program Outcomes (PIs) 
+ ☐  
+● Intended Learning Outcomes (ILOs), Content, 
+TLAs, and Assessment Tasks are consistently 
+aligned and clearly mapped based on the 
+Assessment Plan. 
+ ☐  
+● The Revised Bloom’s Taxonomy is applied 
+across course learning outcomes and 
+assessments, consistent with the appropriate 
+PQF level. 
+ ☐  
+ 
+  
+=== PAGE 5 ===
+ 
+College of Engineering Page 5 of 5 
+ 
+Other Comments: 
+__________________________________________________________________________________________
+__________________________________________________________________________________________
+__________________________________________________________________________________________
+__________________________________________________________________________________________
+__________________________________________________________________________________________ 
+ 
+ 
+ 
+ 

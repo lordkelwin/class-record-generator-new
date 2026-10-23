@@ -1,0 +1,137 @@
+{
+  "admin": {
+    "full_name": "System Administrator",
+    "role": "admin",
+    "workflow_roles": [
+      "review_committee",
+      "program_head",
+      "qa_head",
+      "dean"
+    ],
+    "position_title": "System Administrator",
+    "college": "COLLEGE OF ENGINEERING",
+    "program_codes": [
+      "*"
+    ],
+    "password_hash": "scrypt:32768:8:1$McPGeHsM4jgtWLyu$2c5758f4eaa930e986d6a5d8d409f7486514ecfb58070c839c31ab11f9a2c6471f75ebe6dd02d4cc7477cac62bd5dc1d21e22908ab31fff666208075f1f76059",
+    "must_change_password": false,
+    "created_at": "2026-10-23T00:56:06",
+    "last_login": "2026-10-23T23:55:50"
+  },
+  "faculty_tano": {
+    "full_name": "Engr. Ramon G. Tano",
+    "role": "faculty",
+    "workflow_roles": [],
+    "position_title": "Instructor",
+    "program_codes": [
+      "EE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$hxaWtl9Fun4v5vIR$a0766e7bc713350e51b40f93192f30ec767678f935216e497d71c0893cfea51df0bedbca9a7320d15e9608da613905bc0f04b9ad484574cffeedaf2dc6555df2",
+    "must_change_password": false,
+    "created_at": "2026-10-23T15:27:35",
+    "last_login": "2026-10-24T00:34:14"
+  },
+  "committee_basan": {
+    "full_name": "Engr. Nikka Samantha A. Basan",
+    "role": "faculty",
+    "workflow_roles": [
+      "review_committee"
+    ],
+    "position_title": "Review Committee Chair",
+    "program_codes": [
+      "EE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$skp0X3pXwEs72Dbi$e5e41ea3db6fccae46f4946556366f9cbd774c47e43215d301a875f540c002ce90f75b7820375aad995f5a56455e9cc203fe27d3c7f5d2aeab193b4b9b5cf136",
+    "must_change_password": false,
+    "created_at": "2026-10-23T15:27:35",
+    "last_login": null,
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  },
+  "programhead_claro": {
+    "full_name": "Engr. Charito O. Claro, PECE",
+    "role": "faculty",
+    "workflow_roles": [
+      "program_head"
+    ],
+    "position_title": "Program Head - Electrical Engineering",
+    "program_codes": [
+      "EE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$mGhdPhvOkSfjFDEI$fce4581b00ebbd0c482e0a3f2676b49a8dab0c8dd124fded84e2debece25acda8a596295095e4235b697bb2f15b7b4d1a2d9a1b70f8b5590985aa9d9d90397d5",
+    "must_change_password": false,
+    "created_at": "2026-10-23T15:27:35",
+    "last_login": null,
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  },
+  "qahead_ce": {
+    "full_name": "Engr. College QA Head",
+    "role": "faculty",
+    "workflow_roles": [
+      "qa_head"
+    ],
+    "position_title": "College Quality Assurance Head",
+    "program_codes": [
+      "*"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$vD4DIYcJowGc5oyN$de2c324a60f63fbbbd710eff976d6de2a9805f08492a68f36b2dc8eacf776cec9834395cd947ec785ed3d3b08b80b3fb6a38b7ed8135e3436453aee850f4fe88",
+    "must_change_password": false,
+    "created_at": "2026-10-23T15:27:35",
+    "last_login": null,
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  },
+  "dean_cataytay": {
+    "full_name": "Engr. Joie D. Cataytay, Ph.D.",
+    "role": "faculty",
+    "workflow_roles": [
+      "dean"
+    ],
+    "position_title": "Dean, College of Engineering",
+    "program_codes": [
+      "*"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$cyW9fQ0R0sJtIBAv$bd107707b37771bad0d2b2991135f9d2e8fbd5b22694d388bb646e618916edcbc972fe7107340386e264695641723d6cda9680949f7d9cd04f96f069d2fee98f",
+    "must_change_password": false,
+    "created_at": "2026-10-23T15:27:35",
+    "last_login": null,
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  },
+  "committee_arenga": {
+    "full_name": "Engr. Delan Zoe H. Arenga",
+    "role": "faculty",
+    "workflow_roles": [
+      "review_committee"
+    ],
+    "position_title": "Review Committee Member",
+    "program_codes": [
+      "EE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$EeYCqEx17hE7mTF2$b1e7ee98dc1264e8a12955d88db5d47eae62e62df29cf808d0f7d46513f1b3a44a92215cff22108db9d07365b46064154f5d3d297c577450113dcab5ee991fc0",
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "must_change_password": false,
+    "created_at": "2026-10-23T15:00:00",
+    "last_login": null
+  },
+  "committee_ravida": {
+    "full_name": "Engr. Kim P. Ravida",
+    "role": "faculty",
+    "workflow_roles": [
+      "review_committee"
+    ],
+    "position_title": "Review Committee Member",
+    "program_codes": [
+      "EE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$Rp0Gh7EN1uAFnwQm$56aedcb8da20431398c3cb8cf1a53d6c1c3fd634298b8b49063be37776d35f42012fcef6a1c3f6aa298fa18aec0ae815ede63ac5784579a26e5ce6a24be7188a",
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "must_change_password": false,
+    "created_at": "2026-10-23T15:00:00",
+    "last_login": null
+  }
+}

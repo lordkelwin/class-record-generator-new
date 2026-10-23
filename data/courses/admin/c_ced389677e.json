@@ -1,0 +1,1721 @@
+{
+  "id": "c_ced389677e",
+  "owner": "admin",
+  "created_at": "2026-10-23T01:11:45",
+  "updated_at": "2026-10-23T01:11:45",
+  "course_code": "EE 211",
+  "course_title": "Electrical Circuits 1",
+  "section": "EE 2A",
+  "semester_ay": "1st Semester, A.Y. 2026-2027",
+  "blueprint": {
+    "metadata": {
+      "university": "University of Southeastern Philippines",
+      "college": "COLLEGE OF ENGINEERING",
+      "department": "Department of Electrical Engineering",
+      "address": "I\u00f1igo St., Bo. Obrero, Davao City 8000",
+      "program_name": "Bachelor of Science in Electrical Engineering",
+      "program_code": "EE",
+      "academic_unit": "Engineering",
+      "course_code": "EE 211",
+      "course_title": "Electrical Circuits 1",
+      "credit_units": "3.0 Units \u2013 Lecture",
+      "lec_lab": "Lecture",
+      "schedule": "MWF 08:00 AM - 09:00 AM",
+      "room": "304",
+      "semester_ay": "1st Semester, A.Y. 2026-2027",
+      "section": "EE 2A",
+      "faculty_name": "System Administrator",
+      "program_head": "CHARITO O. CLARO",
+      "dean_name": "JOIE D. CATAYTAY",
+      "transmutation_base": 50,
+      "passing_percentage": 75.0,
+      "grading_mode": "two_term",
+      "iga_framework": "new_5_igas",
+      "version_number": "2026\u20131.0",
+      "version_note": "New",
+      "describe_revision": "",
+      "year_level": "Second Year",
+      "office": "College of Engineering",
+      "course_description": "The course covers nodal and mesh analysis; application of network theorems in circuit analysis; analysis of circuits with controlled sources and ideal op-amps; fundamentals of capacitors and inductors; analysis of dc-driven RL, RC, and RLC circuits; sinusoidal steady-state analysis of general RLC circuits.",
+      "workload_description": "With 18 weeks at 3 contact hours per week (54 contact hours total) the expected student workload is as follows:\n\u2022 Group Activities for Formative Assessment\n\u2022 Total of 4 quizzes (2 for both Midterm and Final Term)\n\u2022 Midterm and Final Examinations\nIn instances where face-to-face sessions are impractical, online sessions, asynchronous class, or their equivalent will be provided.",
+      "passing_grade_conditions": "Students shall take all assessments and examinations and must have an attendance of not less than 80% in the class. In case of lacking output or examination, a grade of INC (Incomplete) shall be given in accordance with the existing rules and regulations reflected in the student handbook. In case of incurring absences of more than 20% of the total expected number of attendances, a grade of UW (Unauthorized Withdrawal) will be reflected in the grade sheet.",
+      "prerequisites": "NAT SCI 2 \u2013 PHYSICS FOR ENGINEERS; MATH 121 \u2013 ENGINEERING CALCULUS 2",
+      "corequisites": "EE 211L \u2013 ELECTRICAL CIRCUITS 1 LAB",
+      "contact_hours": "3 Hours/Week (54 Hours/Semester)",
+      "consultation_hours": "Monday-Friday, 8:00 AM \u2013 05:00 PM (excluding lunch break)",
+      "faculty_email": "ejjtano0120241110@usep.edu.ph",
+      "faculty_contact": "09262995868",
+      "sdg_alignments": "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure",
+      "prereq_coreq_table": [
+        {
+          "req_type": "Pre-requisite",
+          "course_code": "NAT SCI 2",
+          "course_title": "PHYSICS FOR ENGINEERS"
+        },
+        {
+          "req_type": "Pre-requisite",
+          "course_code": "MATH 121",
+          "course_title": "ENGINEERING CALCULUS 2"
+        },
+        {
+          "req_type": "Co-requisite",
+          "course_code": "EE 211L",
+          "course_title": "ELECTRICAL CIRCUITS 1 LAB"
+        }
+      ],
+      "sdg_table": [
+        {
+          "sdg": "7: Affordable and Clean Energy",
+          "description": "This course introduces the core concepts of electrical power, energy-storing elements (capacitors and inductors), and maximum power transfer. A rigorous understanding of voltage, current, and power calculation is the absolute prerequisite for designing, analyzing, and optimizing renewable energy systems, smart grids, and energy-efficient electrical networks in the future."
+        },
+        {
+          "sdg": "9: Industry, Innovation, and Infrastructure",
+          "description": "Circuit analysis is the fundamental language of all electrical infrastructure and technological innovation. By learning to simplify complex multi-source networks and analyze transient and steady-state responses, students develop the technical competencies required to innovate and maintain resilient industrial power systems, electronics, and communication infrastructures."
+        }
+      ],
+      "syllabus_assessment_activities": [
+        {
+          "type": "Formative",
+          "code": "FA1",
+          "activity": "Oral Recitation",
+          "description": "Oral recitations require students to explain, articulate, and analyze fundamental engineering concepts, laws, and operational principles. Emphasis is placed on demonstrating conceptual understanding, applying principles to practical engineering problems, and communicating technical reasoning clearly and logically.",
+          "clo_aligned": "CLO1",
+          "rubric_ref": "FA1: Oral Recitation Rubric"
+        },
+        {
+          "type": "Formative",
+          "code": "FA2",
+          "activity": "Group Activity",
+          "description": "Collaborative team-based exercises and simulation activities where students solve, analyze, and troubleshoot practical engineering systems and networks. Reinforces foundational problem-solving, collaborative teamwork, and technical documentation.",
+          "clo_aligned": "CLO2",
+          "rubric_ref": "FA2: Group Activity Rubric"
+        },
+        {
+          "type": "Summative",
+          "code": "SA1",
+          "activity": "Quizzes",
+          "description": "Periodic summative assessments comprising conceptual questions, short essays, and structured mathematical problem-solving scenarios. Designed to incrementally evaluate the students' analytical grasp of core principles prior to major examinations.",
+          "clo_aligned": "CLO1, CLO2",
+          "rubric_ref": "SA1/SA2: Problem Solving Rubric"
+        },
+        {
+          "type": "Summative",
+          "code": "SA2",
+          "activity": "Term Examination",
+          "description": "Comprehensive summative examinations evaluating students' overall mastery of course outcomes through a rigorous mix of conceptual analysis, multi-step problem solving, and analytical design scenarios.",
+          "clo_aligned": "CLO1, CLO2",
+          "rubric_ref": "SA1/SA2: Problem Solving Rubric"
+        }
+      ],
+      "learning_plan_table": [
+        {
+          "ilo": "\u2022 Recognize the university VMGO & Institutional Graduate Attributes.\n\u2022 Appreciates the significance of PEOs and PGOs of the programs.\n\u2022 Recognize the rules and regulations of the course and the grading system.",
+          "clo": "",
+          "time_frame": "1 hour",
+          "topics": "\u2022 Course Orientation\n\u2022 VMGO & IGA of the University\n\u2022 PEOs & PGOs of the program.\n\u2022 Rules and regulations of the course & grading system\n\u2022 Presentation of the course outline",
+          "tla": "\u2022 On-site or online meeting",
+          "required_reading": "\u2022 USeP Student Handbook (2016 edition)",
+          "assessment_activities": "\u2022 N/A"
+        },
+        {
+          "ilo": "\u2022 Formulate basic circuit equations using voltage and current laws to solve unknown variables in fundamental networks. (CDIO Skills: 1.2.1, 2.1.1)",
+          "clo": "CLO1",
+          "time_frame": "4 hours",
+          "topics": "\u2022 DC/AC SOURCES AND ELECTRICAL CIRCUIT COMPONENTS, VOLTAGE AND CURRENT LAWS",
+          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem sets\n\u2022 Lecture",
+          "required_reading": "\u2022 Ref01-08",
+          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+        },
+        {
+          "ilo": "\u2022 Set up and solve linear equations using general nodal and mesh analysis methods for complex circuit networks. (CDIO Skills: 1.2.1, 2.1.2)",
+          "clo": "CLO1",
+          "time_frame": "7 hours",
+          "topics": "\u2022 NODAL AND MESH ANALYSIS\n  o General mesh analysis\n  o General nodal analysis",
+          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem sets\n\u2022 Lecture",
+          "required_reading": "\u2022 Ref01-08",
+          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+        },
+        {
+          "ilo": "\u2022 Simplify multi-source electrical networks into equivalent circuits using standard theorems. (CDIO Skills: 1.2.1, 2.1.3, 2.1.4)",
+          "clo": "CLO2",
+          "time_frame": "12 hours",
+          "topics": "\u2022 CIRCUIT ANALYSIS TECHNIQUES\n  o Linearity and superposition\n  o Source transformation\n  o Thevenin and Norton equivalent circuits\n  o Maximum power transfer\n  o Delta-Wye conversion\n  o Circuits with controlled sources and the ideal op amp",
+          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem sets\n\u2022 Lecture",
+          "required_reading": "\u2022 Ref01-08",
+          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+        },
+        {
+          "ilo": "\u2022 Demonstrate mastery of foundational circuit analysis and network theorems.",
+          "clo": "CLO1\nCLO2",
+          "time_frame": "3 hours",
+          "topics": "MIDTERM EXAMINATION",
+          "tla": "\u2022 Conduct of Midterm Examination \u2013 Independent Assessment",
+          "required_reading": "",
+          "assessment_activities": "\u2022 SA2 \u2013 Term Examination"
+        },
+        {
+          "ilo": "\u2022 Explain the characteristics of energy-storing elements and calculate their voltage-current relationship. (CDIO Skills: 1.2.1, 2.1.1)",
+          "clo": "CLO1",
+          "time_frame": "4 hours",
+          "topics": "\u2022 CHARACTERISTICS OF ENERGY-STORING ELEMENTS\n  o Capacitors and capacitance\n  o Inductors and inductance",
+          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem Sets\n\u2022 Lecture",
+          "required_reading": "\u2022 Ref01-08",
+          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+        },
+        {
+          "ilo": "\u2022 Determine the transient and steady-state responses of source-free and driven first-order circuits. (CDIO Skills: 1.2.1, 2.1.2, 2.1.3)",
+          "clo": "CLO1\nCLO2",
+          "time_frame": "8 hours",
+          "topics": "\u2022 ANALYSIS OF RL AND RC CIRCUITS\n  o Source-free RL and RC circuits\n  o Driven RL and RC circuits",
+          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem Sets\n\u2022 Lecture",
+          "required_reading": "\u2022 Ref01-08",
+          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+        },
+        {
+          "ilo": "\u2022 Calculate the complete response of series and parallel second-order circuits. (CDIO Skills: 1.2.1, 2.1.2, 2.1.5)",
+          "clo": "CLO1\nCLO2",
+          "time_frame": "6 hours",
+          "topics": "\u2022 ANALYSIS OF RLC CIRCUITS\n  o Source-free series and parallel RLC circuits\n  o Complete response of RLC circuits",
+          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Learning Journals\n\u2022 Lecture",
+          "required_reading": "\u2022 Ref01-08",
+          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+        },
+        {
+          "ilo": "\u2022 Apply phasor concepts and impedance parameters to perform nodal and mesh analysis in the frequency domain. (CDIO Skills: 1.2.1, 2.1.2, 2.1.4)",
+          "clo": "CLO1\nCLO2",
+          "time_frame": "6 hours",
+          "topics": "\u2022 SINUSOIDAL STEADY-STATE ANALYSIS IN THE FREQUENCY DOMAIN\n  o The phasor concept and phasor diagram\n  o Concept of impedance and admittance\n  o Nodal and mesh analysis",
+          "tla": "\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Learning Journals\n\u2022 Lecture",
+          "required_reading": "\u2022 Ref01-08",
+          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+        },
+        {
+          "ilo": "\u2022 Demonstrate mastery of time-varying circuits, transient analysis, and frequency-domain steady-state analysis.",
+          "clo": "CLO1\nCLO2",
+          "time_frame": "3 hours",
+          "topics": "FINAL EXAMINATION",
+          "tla": "\u2022 Conduct of Final Examination \u2013 Independent Assessment",
+          "required_reading": "",
+          "assessment_activities": "\u2022 SA2 \u2013 Term Examination"
+        }
+      ],
+      "references_table": [
+        {
+          "code": "Ref01",
+          "reference": "Alexander, C.K. & Sadiku, M.N.O. (2020). Fundamentals of Electric Circuits (7th ed.). McGraw Hill"
+        },
+        {
+          "code": "Ref02",
+          "reference": "Grob, M. (2021). Grob's Basic Electronics (13th ed.). McGraw Hill"
+        },
+        {
+          "code": "Ref03",
+          "reference": "Hayt, W.H., Kemmerly, J.E., & Durbin, S.M. (2019). Engineering Circuit Analysis. Ninth edition. McGraw-Hill Education, New York, NY"
+        },
+        {
+          "code": "Ref04",
+          "reference": "Tan, J.C. (2004). Electric Circuit Analysis. National Bookstore"
+        },
+        {
+          "code": "Ref05",
+          "reference": "Nahvi, M. & Edminister, J.A. (2003). Schaum's Outline of Theory and Problems of Electric Circuits. Fourth edition. McGraw-Hill"
+        },
+        {
+          "code": "Ref06",
+          "reference": "Gussow, M. (2007). Schaum's Outline of Basic Electricity. Second edition. McGraw-Hill"
+        },
+        {
+          "code": "Ref07",
+          "reference": "Nahvi, M. & Edminister, J.A. (2018). Schaum's Outline of Theory and Problems of Electric Circuits. Seventh edition. McGraw-Hill"
+        },
+        {
+          "code": "Ref08",
+          "reference": "Siskind, C. (1965). Electrical Circuits: Direct and Alternating Current. Second edition. McGraw-Hill"
+        }
+      ],
+      "policies_table": [
+        {
+          "number": "1",
+          "title": "Attendance and Punctuality",
+          "description": "Classroom attendance is an integral part of the educational experience; therefore, it is the student's responsibility to attend class. Attendance will be checked at every meeting. A student who accumulates exceeding 20% of the prescribed number of class hours will automatically be dropped from the course (unexcused absences). Arriving 15 minutes after the scheduled start time constitutes a late mark. Three late marks equate to one unexcused absence."
+        },
+        {
+          "number": "2",
+          "title": "Behavior and Decorum",
+          "description": "Respectful, inclusive, and professional behavior is always expected. The use of polite and non-discriminatory language is strictly observed in line with the University's commitment to a gender-fair and inclusive learning environment, and adherence to RA 11313, also known as the Safe Spaces Act."
+        },
+        {
+          "number": "3",
+          "title": "Gadget Use",
+          "description": "Mobile phones, tablets, and laptops must be stowed away during standard lectures to minimize distractions. However, laptops are expressively permitted and encouraged during designated practical sessions, such as when developing scripts for laboratory data automation or running circuit simulations."
+        },
+        {
+          "number": "4",
+          "title": "Dress Code",
+          "description": "Wearing the prescribed university uniform is a must in accordance with the Student Handbook."
+        },
+        {
+          "number": "5",
+          "title": "Submission of Coursework",
+          "description": "Extensions and late submissions of requirements will only be considered if done in writing to the lecturer at least two days before the due date. Generally, no extension will be given for the assignments.\n\u2022 Should work be submitted after the due date without written approval for an extension, a penalty of 5% deduction from the grade will be incurred for every 2 days it is late.\n\u2022 Should the work be assessed as being close to a PASS grade, but the standard has not yet been fully met, the lecturer may offer the opportunity to resubmit."
+        },
+        {
+          "number": "6",
+          "title": "Use of AI Tools",
+          "description": "The responsible use of generative AI tools (e.g., ChatGPT, Grammarly, Quillbot) is permitted only when explicitly allowed by the instructor for specific tasks. All AI-assisted work must be properly cited or declared."
+        },
+        {
+          "number": "7",
+          "title": "Academic Honesty",
+          "description": "All USePians are bound to follow the rules and regulations stipulated in the student handbook of the University and the College. Academic dishonesty includes cheating in any form, plagiarism, and similar offenses.\n\u2022 Cheating on any assignment or examination incurs a minimum penalty of zero for that work and referral to OSAS.\n\u2022 Submitting AI-generated content as original work without disclosure is considered academic dishonesty (max 15% similarity threshold)."
+        },
+        {
+          "number": "8",
+          "title": "Conduct of Quizzes and Examinations",
+          "description": "\u2022 Keep calculator jackets, smartphones, and irrelevant items inside bags.\n\u2022 Do not round off intermediate values to avoid accumulated rounding errors; final answers must be in three decimal places.\n\u2022 Write legibly using black or blue ballpoint pen and show all pertinent solutions clearly.\n\u2022 Math plate is used during quizzes and bluebook for term examinations.\n\u2022 No special quizzes or examinations will be given except for valid, documented reasons."
+        },
+        {
+          "number": "9",
+          "title": "Use of Calculators",
+          "description": "Allowed calculators must follow the Professional Regulatory Commission (PRC) recommendations (https://www.prc.gov.ph/node/6984) for non-programmable calculators."
+        },
+        {
+          "number": "10",
+          "title": "Group Work and Independent Effort",
+          "description": "Every group must ensure equitable contributions from all members. Directly sharing completed circuits, code, or written reports across groups is considered plagiarism and will result in a zero (0) for all involved parties."
+        },
+        {
+          "number": "11",
+          "title": "Cleanliness and Energy Conservation",
+          "description": "Observe cleanliness before and after class. Ensure all plugged devices and lights are turned off before leaving the classroom."
+        },
+        {
+          "number": "12",
+          "title": "Communication Channels",
+          "description": "Official announcements and course updates will be posted via the USeP Virtual Environment (UVE), email, or official class group chat. Direct communication with the instructor must be conducted strictly during official working days and hours (Monday to Friday, 8:00 AM to 5:00 PM)."
+        }
+      ],
+      "learning_plan_topics": [],
+      "references": "",
+      "classroom_policies": ""
+    },
+    "terms": [
+      {
+        "term_name": "Midterm",
+        "weight_pct": 50.0
+      },
+      {
+        "term_name": "Finals",
+        "weight_pct": 50.0
+      }
+    ],
+    "course_outcomes": [
+      {
+        "co_id": "CLO1",
+        "description": "Given DC and AC circuit networks, the student will calculate unknown circuit variables by accurately solving necessary linear and differential equations.",
+        "program_outcomes": "PGO a",
+        "graduate_outcome_desc": "a) Apply knowledge of mathematics and sciences to solve engineering problems",
+        "performance_indicator": "a.1. Apply concepts in mathematics to solve engineering problems.",
+        "iga_aligned": "IGA2",
+        "target_score_pct": 75.0,
+        "target_class_pass_pct": 50.0
+      },
+      {
+        "co_id": "CLO2",
+        "description": "Given multi-source electrical networks and time-varying circuits, the student will determine equivalent circuits and complete electrical responses by correctly applying fundamental network theorems and circuit principles.",
+        "program_outcomes": "PGO e",
+        "graduate_outcome_desc": "e) Identify, formulate, and solve engineering problems",
+        "performance_indicator": "e.2. Apply concepts, theories, and principles in solving engineering problem(s)",
+        "iga_aligned": "IGA5",
+        "target_score_pct": 75.0,
+        "target_class_pass_pct": 50.0
+      }
+    ],
+    "categories": [
+      {
+        "category_id": "MID_FA1",
+        "term": "Midterm",
+        "assessment_type": "FA",
+        "assessment_code": "FA1",
+        "name": "Formative Assessment 1 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "items": [
+          {
+            "item_id": "A1",
+            "name": "FA1 Group Activity 1 (DC/AC Laws & Network Theorems)",
+            "max_score": 100.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 100.0,
+            "clo_points": {
+              "CLO1": 50.0,
+              "CLO2": 50.0
+            }
+          }
+        ]
+      },
+      {
+        "category_id": "MID_FA2",
+        "term": "Midterm",
+        "assessment_type": "FA",
+        "assessment_code": "FA2",
+        "name": "Formative Assessment 2 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "items": [
+          {
+            "item_id": "A2",
+            "name": "FA1 Group Activity 2 (Network Theorems Simulation)",
+            "max_score": 100.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 100.0,
+            "clo_points": {
+              "CLO1": 50.0,
+              "CLO2": 50.0
+            }
+          }
+        ]
+      },
+      {
+        "category_id": "MID_SA1",
+        "term": "Midterm",
+        "assessment_type": "SA",
+        "assessment_code": "SA1",
+        "name": "Summative Assessment 1 (Quizzes)",
+        "lec_lab": "Lecture",
+        "weight_pct": 40.0,
+        "items": [
+          {
+            "item_id": "Q1",
+            "name": "Quiz 1 (Nodal, Mesh & Equivalent Circuit Equations)",
+            "max_score": 30.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 20.0,
+            "clo_points": {
+              "CLO1": 15.0,
+              "CLO2": 15.0
+            }
+          },
+          {
+            "item_id": "Q2",
+            "name": "Quiz 2 (Superposition, Thevenin/Norton & Op-Amp Circuits)",
+            "max_score": 30.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 20.0,
+            "clo_points": {
+              "CLO1": 15.0,
+              "CLO2": 15.0
+            }
+          }
+        ]
+      },
+      {
+        "category_id": "MID_SA2",
+        "term": "Midterm",
+        "assessment_type": "SA",
+        "assessment_code": "SA2",
+        "name": "Summative Assessment 2 (Term Examination)",
+        "lec_lab": "Lecture",
+        "weight_pct": 60.0,
+        "items": [
+          {
+            "item_id": "MTE",
+            "name": "Midterm Examination (CLO1: Circuit Equations | CLO2: Network Theorems)",
+            "max_score": 60.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 60.0,
+            "clo_points": {
+              "CLO1": 30.0,
+              "CLO2": 30.0
+            }
+          }
+        ]
+      },
+      {
+        "category_id": "FIN_FA1",
+        "term": "Finals",
+        "assessment_type": "FA",
+        "assessment_code": "FA1",
+        "name": "Formative Assessment 1 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "items": [
+          {
+            "item_id": "A3",
+            "name": "FA1 Group Activity 3 (RL/RC/RLC Transient Simulation)",
+            "max_score": 100.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 100.0,
+            "clo_points": {
+              "CLO1": 50.0,
+              "CLO2": 50.0
+            }
+          }
+        ]
+      },
+      {
+        "category_id": "FIN_FA2",
+        "term": "Finals",
+        "assessment_type": "FA",
+        "assessment_code": "FA2",
+        "name": "Formative Assessment 2 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "items": [
+          {
+            "item_id": "A4",
+            "name": "FA1 Group Activity 4 (AC Sinusoidal Steady-State)",
+            "max_score": 100.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 100.0,
+            "clo_points": {
+              "CLO1": 50.0,
+              "CLO2": 50.0
+            }
+          }
+        ]
+      },
+      {
+        "category_id": "FIN_SA1",
+        "term": "Finals",
+        "assessment_type": "SA",
+        "assessment_code": "SA1",
+        "name": "Summative Assessment 1 (Quizzes)",
+        "lec_lab": "Lecture",
+        "weight_pct": 40.0,
+        "items": [
+          {
+            "item_id": "Q3",
+            "name": "Quiz 3 (Energy Elements & First/Second-Order Circuits)",
+            "max_score": 30.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 20.0,
+            "clo_points": {
+              "CLO1": 15.0,
+              "CLO2": 15.0
+            }
+          },
+          {
+            "item_id": "Q4",
+            "name": "Quiz 4 (Phasor & Frequency-Domain Circuit Analysis)",
+            "max_score": 30.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 20.0,
+            "clo_points": {
+              "CLO1": 15.0,
+              "CLO2": 15.0
+            }
+          }
+        ]
+      },
+      {
+        "category_id": "FIN_SA2",
+        "term": "Finals",
+        "assessment_type": "SA",
+        "assessment_code": "SA2",
+        "name": "Summative Assessment 2 (Term Examination)",
+        "lec_lab": "Lecture",
+        "weight_pct": 60.0,
+        "items": [
+          {
+            "item_id": "FTE",
+            "name": "Final Term Examination (CLO1: Differential/Phasor Equations | CLO2: Complete RLC/AC Responses)",
+            "max_score": 60.0,
+            "co_id": "CLO1, CLO2",
+            "weight_pct": 60.0,
+            "clo_points": {
+              "CLO1": 30.0,
+              "CLO2": 30.0
+            }
+          }
+        ]
+      }
+    ],
+    "students": [
+      {
+        "student_id": "2025-01881",
+        "last_name": "Abear",
+        "first_name": "Phave Bryl Perote",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 36,
+          "A1__CLO2": 42,
+          "A1": 78,
+          "A2__CLO1": 39,
+          "A2__CLO2": 44,
+          "A2": 83,
+          "Q1__CLO1": 12,
+          "Q1__CLO2": 11,
+          "Q1": 23,
+          "Q2__CLO1": 13,
+          "Q2__CLO2": 12,
+          "Q2": 25,
+          "MTE__CLO1": 22,
+          "MTE__CLO2": 26,
+          "MTE": 48,
+          "MTE_1__CLO1": 24,
+          "MTE_1": 24,
+          "MTE_2__CLO2": 25,
+          "MTE_2": 25,
+          "A3__CLO1": 44,
+          "A3__CLO2": 40,
+          "A3": 84,
+          "A4__CLO1": 38,
+          "A4__CLO2": 43,
+          "A4": 81,
+          "Q3__CLO1": 12,
+          "Q3__CLO2": 14,
+          "Q3": 26,
+          "Q4__CLO1": 13,
+          "Q4__CLO2": 12,
+          "Q4": 25,
+          "FTE__CLO1": 27,
+          "FTE__CLO2": 25,
+          "FTE": 52,
+          "FTE_1__CLO1": 23,
+          "FTE_1": 23,
+          "FTE_2__CLO2": 24,
+          "FTE_2": 24
+        }
+      },
+      {
+        "student_id": "2025-00148",
+        "last_name": "Acedilla",
+        "first_name": "Princess Aiky Amoin",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 37,
+          "A1__CLO2": 42,
+          "A1": 79,
+          "A2__CLO1": 40,
+          "A2__CLO2": 36,
+          "A2": 76,
+          "Q1__CLO1": 13,
+          "Q1__CLO2": 11,
+          "Q1": 24,
+          "Q2__CLO1": 10,
+          "Q2__CLO2": 12,
+          "Q2": 22,
+          "MTE__CLO1": 22,
+          "MTE__CLO2": 20,
+          "MTE": 42,
+          "MTE_1__CLO1": 24,
+          "MTE_1": 24,
+          "MTE_2__CLO2": 26,
+          "MTE_2": 26,
+          "A3__CLO1": 36,
+          "A3__CLO2": 41,
+          "A3": 77,
+          "A4__CLO1": 38,
+          "A4__CLO2": 34,
+          "A4": 72,
+          "Q3__CLO1": 12,
+          "Q3__CLO2": 11,
+          "Q3": 23,
+          "Q4__CLO1": 10,
+          "Q4__CLO2": 12,
+          "Q4": 22,
+          "FTE__CLO1": 22,
+          "FTE__CLO2": 25,
+          "FTE": 47,
+          "FTE_1__CLO1": 23,
+          "FTE_1": 23,
+          "FTE_2__CLO2": 25,
+          "FTE_2": 25
+        }
+      },
+      {
+        "student_id": "2025-00264",
+        "last_name": "Amomas",
+        "first_name": "Kristine Joy Failog",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 46,
+          "A1__CLO2": 42,
+          "A1": 88,
+          "A2__CLO1": 40,
+          "A2__CLO2": 45,
+          "A2": 85,
+          "Q1__CLO1": 13,
+          "Q1__CLO2": 14,
+          "Q1": 27,
+          "Q2__CLO1": 13,
+          "Q2__CLO2": 12,
+          "Q2": 25,
+          "MTE__CLO1": 28,
+          "MTE__CLO2": 26,
+          "MTE": 54,
+          "MTE_1__CLO1": 24,
+          "MTE_1": 24,
+          "MTE_2__CLO2": 26,
+          "MTE_2": 26,
+          "A3__CLO1": 45,
+          "A3__CLO2": 41,
+          "A3": 86,
+          "A4__CLO1": 48,
+          "A4__CLO2": 44,
+          "A4": 92,
+          "Q3__CLO1": 12,
+          "Q3__CLO2": 14,
+          "Q3": 26,
+          "Q4__CLO1": 13,
+          "Q4__CLO2": 15,
+          "Q4": 28,
+          "FTE__CLO1": 27,
+          "FTE__CLO2": 25,
+          "FTE": 52,
+          "FTE_1__CLO1": 29,
+          "FTE_1": 29,
+          "FTE_2__CLO2": 25,
+          "FTE_2": 25
+        }
+      },
+      {
+        "student_id": "2024-01487",
+        "last_name": "A\u00f1asco",
+        "first_name": "Jan Elie Alcoseba",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 31,
+          "A1__CLO2": 36,
+          "A1": 67,
+          "A2__CLO1": 33,
+          "A2__CLO2": 38,
+          "A2": 71,
+          "Q1__CLO1": 11,
+          "Q1__CLO2": 9,
+          "Q1": 20,
+          "Q2__CLO1": 11,
+          "Q2__CLO2": 10,
+          "Q2": 21,
+          "MTE__CLO1": 19,
+          "MTE__CLO2": 22,
+          "MTE": 41,
+          "MTE_1__CLO1": 20,
+          "MTE_1": 20,
+          "MTE_2__CLO2": 22,
+          "MTE_2": 22,
+          "A3__CLO1": 38,
+          "A3__CLO2": 34,
+          "A3": 72,
+          "A4__CLO1": 32,
+          "A4__CLO2": 37,
+          "A4": 69,
+          "Q3__CLO1": 10,
+          "Q3__CLO2": 9,
+          "Q3": 19,
+          "Q4__CLO1": 11,
+          "Q4__CLO2": 10,
+          "Q4": 21,
+          "FTE__CLO1": 18,
+          "FTE__CLO2": 21,
+          "FTE": 39,
+          "FTE_1__CLO1": 19,
+          "FTE_1": 19,
+          "FTE_2__CLO2": 21,
+          "FTE_2": 21
+        }
+      },
+      {
+        "student_id": "2025-00261",
+        "last_name": "Bucod",
+        "first_name": "Caster Troy Ceredon",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 37,
+          "A1__CLO2": 33,
+          "A1": 70,
+          "A2__CLO1": 40,
+          "A2__CLO2": 36,
+          "A2": 76,
+          "Q1__CLO1": 10,
+          "Q1__CLO2": 11,
+          "Q1": 21,
+          "Q2__CLO1": 10,
+          "Q2__CLO2": 12,
+          "Q2": 22,
+          "MTE__CLO1": 22,
+          "MTE__CLO2": 20,
+          "MTE": 42,
+          "MTE_1__CLO1": 24,
+          "MTE_1": 24,
+          "MTE_2__CLO2": 20,
+          "MTE_2": 20,
+          "A3__CLO1": 36,
+          "A3__CLO2": 41,
+          "A3": 77,
+          "A4__CLO1": 38,
+          "A4__CLO2": 34,
+          "A4": 72,
+          "Q3__CLO1": 12,
+          "Q3__CLO2": 11,
+          "Q3": 23,
+          "Q4__CLO1": 10,
+          "Q4__CLO2": 12,
+          "Q4": 22,
+          "FTE__CLO1": 22,
+          "FTE__CLO2": 25,
+          "FTE": 47,
+          "FTE_1__CLO1": 23,
+          "FTE_1": 23,
+          "FTE_2__CLO2": 25,
+          "FTE_2": 25
+        }
+      },
+      {
+        "student_id": "2025-00263",
+        "last_name": "Cabanilla",
+        "first_name": "Mary Queen Rectazo",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 49,
+          "A1__CLO2": 45,
+          "A1": 94,
+          "A2__CLO1": 42,
+          "A2__CLO2": 48,
+          "A2": 90,
+          "Q1__CLO1": 13,
+          "Q1__CLO2": 15,
+          "Q1": 28,
+          "Q2__CLO1": 14,
+          "Q2__CLO2": 13,
+          "Q2": 27,
+          "MTE__CLO1": 29,
+          "MTE__CLO2": 27,
+          "MTE": 56,
+          "MTE_1__CLO1": 26,
+          "MTE_1": 26,
+          "MTE_2__CLO2": 27,
+          "MTE_2": 27,
+          "A3__CLO1": 48,
+          "A3__CLO2": 44,
+          "A3": 92,
+          "A4__CLO1": 49,
+          "A4__CLO2": 46,
+          "A4": 95,
+          "Q3__CLO1": 13,
+          "Q3__CLO2": 15,
+          "Q3": 28,
+          "Q4__CLO1": 14,
+          "Q4__CLO2": 12,
+          "Q4": 26,
+          "FTE__CLO1": 29,
+          "FTE__CLO2": 26,
+          "FTE": 55,
+          "FTE_1__CLO1": 25,
+          "FTE_1": 25,
+          "FTE_2__CLO2": 26,
+          "FTE_2": 26
+        }
+      },
+      {
+        "student_id": "2025-01401",
+        "last_name": "Cartagena",
+        "first_name": "Jancart Gabito",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 20,
+          "A1__CLO2": 26,
+          "A1": 46,
+          "A2__CLO1": 22,
+          "A2__CLO2": 18,
+          "A2": 40,
+          "Q1__CLO1": 8,
+          "Q1__CLO2": 6,
+          "Q1": 14,
+          "Q2__CLO1": 5,
+          "Q2__CLO2": 7,
+          "Q2": 12,
+          "MTE__CLO1": 12,
+          "MTE__CLO2": 16,
+          "MTE": 28,
+          "MTE_1__CLO1": 14,
+          "MTE_1": 14,
+          "MTE_2__CLO2": 15,
+          "MTE_2": 15,
+          "A3__CLO1": 18,
+          "A3__CLO2": 24,
+          "A3": 42,
+          "A4__CLO1": 21,
+          "A4__CLO2": 26,
+          "A4": 47,
+          "Q3__CLO1": 7,
+          "Q3__CLO2": 6,
+          "Q3": 13,
+          "Q4__CLO1": 8,
+          "Q4__CLO2": 7,
+          "Q4": 15,
+          "FTE__CLO1": 11,
+          "FTE__CLO2": 15,
+          "FTE": 26,
+          "FTE_1__CLO1": 13,
+          "FTE_1": 13,
+          "FTE_2__CLO2": 14,
+          "FTE_2": 14
+        }
+      },
+      {
+        "student_id": "2025-00247",
+        "last_name": "Castillones",
+        "first_name": "Angelika Constantino",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 44,
+          "A1__CLO2": 40,
+          "A1": 84,
+          "A2__CLO1": 46,
+          "A2__CLO2": 42,
+          "A2": 88,
+          "Q1__CLO1": 12,
+          "Q1__CLO2": 13,
+          "Q1": 25,
+          "Q2__CLO1": 12,
+          "Q2__CLO2": 14,
+          "Q2": 26,
+          "MTE__CLO1": 26,
+          "MTE__CLO2": 24,
+          "MTE": 50,
+          "MTE_1__CLO1": 28,
+          "MTE_1": 28,
+          "MTE_2__CLO2": 24,
+          "MTE_2": 24,
+          "A3__CLO1": 42,
+          "A3__CLO2": 38,
+          "A3": 80,
+          "A4__CLO1": 44,
+          "A4__CLO2": 40,
+          "A4": 84,
+          "Q3__CLO1": 14,
+          "Q3__CLO2": 13,
+          "Q3": 27,
+          "Q4__CLO1": 12,
+          "Q4__CLO2": 14,
+          "Q4": 26,
+          "FTE__CLO1": 26,
+          "FTE__CLO2": 23,
+          "FTE": 49,
+          "FTE_1__CLO1": 27,
+          "FTE_1": 27,
+          "FTE_2__CLO2": 23,
+          "FTE_2": 23
+        }
+      },
+      {
+        "student_id": "2025-00271",
+        "last_name": "Castrodes",
+        "first_name": "Timothy John Cai\u00f1a",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 44,
+          "A1__CLO2": 40,
+          "A1": 84,
+          "A2__CLO1": 37,
+          "A2__CLO2": 43,
+          "A2": 80,
+          "Q1__CLO1": 12,
+          "Q1__CLO2": 11,
+          "Q1": 23,
+          "Q2__CLO1": 13,
+          "Q2__CLO2": 11,
+          "Q2": 24,
+          "MTE__CLO1": 21,
+          "MTE__CLO2": 24,
+          "MTE": 45,
+          "MTE_1__CLO1": 22,
+          "MTE_1": 22,
+          "MTE_2__CLO2": 24,
+          "MTE_2": 24,
+          "A3__CLO1": 43,
+          "A3__CLO2": 38,
+          "A3": 81,
+          "A4__CLO1": 36,
+          "A4__CLO2": 41,
+          "A4": 77,
+          "Q3__CLO1": 11,
+          "Q3__CLO2": 13,
+          "Q3": 24,
+          "Q4__CLO1": 12,
+          "Q4__CLO2": 11,
+          "Q4": 23,
+          "FTE__CLO1": 26,
+          "FTE__CLO2": 23,
+          "FTE": 49,
+          "FTE_1__CLO1": 22,
+          "FTE_1": 22,
+          "FTE_2__CLO2": 23,
+          "FTE_2": 23
+        }
+      },
+      {
+        "student_id": "2025-00278",
+        "last_name": "Dinoy",
+        "first_name": "Rica Attos",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 26,
+          "A1__CLO2": 32,
+          "A1": 58,
+          "A2__CLO1": 29,
+          "A2__CLO2": 25,
+          "A2": 54,
+          "Q1__CLO1": 9,
+          "Q1__CLO2": 8,
+          "Q1": 17,
+          "Q2__CLO1": 7,
+          "Q2__CLO2": 9,
+          "Q2": 16,
+          "MTE__CLO1": 16,
+          "MTE__CLO2": 20,
+          "MTE": 36,
+          "MTE_1__CLO1": 18,
+          "MTE_1": 18,
+          "MTE_2__CLO2": 19,
+          "MTE_2": 19,
+          "A3__CLO1": 25,
+          "A3__CLO2": 31,
+          "A3": 56,
+          "A4__CLO1": 28,
+          "A4__CLO2": 24,
+          "A4": 52,
+          "Q3__CLO1": 9,
+          "Q3__CLO2": 8,
+          "Q3": 17,
+          "Q4__CLO1": 10,
+          "Q4__CLO2": 9,
+          "Q4": 19,
+          "FTE__CLO1": 15,
+          "FTE__CLO2": 19,
+          "FTE": 34,
+          "FTE_1__CLO1": 17,
+          "FTE_1": 17,
+          "FTE_2__CLO2": 18,
+          "FTE_2": 18
+        }
+      },
+      {
+        "student_id": "2025-00251",
+        "last_name": "Flores",
+        "first_name": "Louie Adrian Villarin",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 23,
+          "A1__CLO2": 19,
+          "A1": 42,
+          "A2__CLO1": 26,
+          "A2__CLO2": 22,
+          "A2": 48,
+          "Q1__CLO1": 6,
+          "Q1__CLO2": 7,
+          "Q1": 13,
+          "Q2__CLO1": 6,
+          "Q2__CLO2": 5,
+          "Q2": 11,
+          "MTE__CLO1": 14,
+          "MTE__CLO2": 12,
+          "MTE": 26,
+          "MTE_1__CLO1": 10,
+          "MTE_1": 10,
+          "MTE_2__CLO2": 11,
+          "MTE_2": 11,
+          "A3__CLO1": 22,
+          "A3__CLO2": 18,
+          "A3": 40,
+          "A4__CLO1": 24,
+          "A4__CLO2": 20,
+          "A4": 44,
+          "Q3__CLO1": 5,
+          "Q3__CLO2": 7,
+          "Q3": 12,
+          "Q4__CLO1": 6,
+          "Q4__CLO2": 8,
+          "Q4": 14,
+          "FTE__CLO1": 13,
+          "FTE__CLO2": 11,
+          "FTE": 24,
+          "FTE_1__CLO1": 15,
+          "FTE_1": 15,
+          "FTE_2__CLO2": 10,
+          "FTE_2": 10
+        }
+      },
+      {
+        "student_id": "2025-00253",
+        "last_name": "Galon",
+        "first_name": "Gabriel Jhon Melecio",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 37,
+          "A1__CLO2": 42,
+          "A1": 79,
+          "A2__CLO1": 39,
+          "A2__CLO2": 44,
+          "A2": 83,
+          "Q1__CLO1": 12,
+          "Q1__CLO2": 11,
+          "Q1": 23,
+          "Q2__CLO1": 13,
+          "Q2__CLO2": 12,
+          "Q2": 25,
+          "MTE__CLO1": 22,
+          "MTE__CLO2": 26,
+          "MTE": 48,
+          "MTE_1__CLO1": 24,
+          "MTE_1": 24,
+          "MTE_2__CLO2": 25,
+          "MTE_2": 25,
+          "A3__CLO1": 44,
+          "A3__CLO2": 40,
+          "A3": 84,
+          "A4__CLO1": 38,
+          "A4__CLO2": 43,
+          "A4": 81,
+          "Q3__CLO1": 12,
+          "Q3__CLO2": 11,
+          "Q3": 23,
+          "Q4__CLO1": 13,
+          "Q4__CLO2": 12,
+          "Q4": 25,
+          "FTE__CLO1": 27,
+          "FTE__CLO2": 25,
+          "FTE": 52,
+          "FTE_1__CLO1": 23,
+          "FTE_1": 23,
+          "FTE_2__CLO2": 24,
+          "FTE_2": 24
+        }
+      },
+      {
+        "student_id": "2025-00245",
+        "last_name": "Gella",
+        "first_name": "Clark Vergel Yares",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 24,
+          "A1__CLO2": 20,
+          "A1": 44,
+          "A2__CLO1": 26,
+          "A2__CLO2": 22,
+          "A2": 48,
+          "Q1__CLO1": 9,
+          "Q1__CLO2": 7,
+          "Q1": 16,
+          "Q2__CLO1": 6,
+          "Q2__CLO2": 8,
+          "Q2": 14,
+          "MTE__CLO1": 14,
+          "MTE__CLO2": 12,
+          "MTE": 26,
+          "MTE_1__CLO1": 16,
+          "MTE_1": 16,
+          "MTE_2__CLO2": 12,
+          "MTE_2": 12,
+          "A3__CLO1": 22,
+          "A3__CLO2": 28,
+          "A3": 50,
+          "A4__CLO1": 24,
+          "A4__CLO2": 20,
+          "A4": 44,
+          "Q3__CLO1": 8,
+          "Q3__CLO2": 7,
+          "Q3": 15,
+          "Q4__CLO1": 6,
+          "Q4__CLO2": 8,
+          "Q4": 14,
+          "FTE__CLO1": 13,
+          "FTE__CLO2": 17,
+          "FTE": 30,
+          "FTE_1__CLO1": 15,
+          "FTE_1": 15,
+          "FTE_2__CLO2": 16,
+          "FTE_2": 16
+        }
+      },
+      {
+        "student_id": "2025-00281",
+        "last_name": "Gemone",
+        "first_name": "Angelei Rose Cencia",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 42,
+          "A1__CLO2": 38,
+          "A1": 80,
+          "A2__CLO1": 34,
+          "A2__CLO2": 40,
+          "A2": 74,
+          "Q1__CLO1": 11,
+          "Q1__CLO2": 13,
+          "Q1": 24,
+          "Q2__CLO1": 12,
+          "Q2__CLO2": 11,
+          "Q2": 23,
+          "MTE__CLO1": 25,
+          "MTE__CLO2": 23,
+          "MTE": 48,
+          "MTE_1__CLO1": 21,
+          "MTE_1": 21,
+          "MTE_2__CLO2": 22,
+          "MTE_2": 22,
+          "A3__CLO1": 40,
+          "A3__CLO2": 36,
+          "A3": 76,
+          "A4__CLO1": 42,
+          "A4__CLO2": 38,
+          "A4": 80,
+          "Q3__CLO1": 11,
+          "Q3__CLO2": 12,
+          "Q3": 23,
+          "Q4__CLO1": 11,
+          "Q4__CLO2": 10,
+          "Q4": 21,
+          "FTE__CLO1": 24,
+          "FTE__CLO2": 22,
+          "FTE": 46,
+          "FTE_1__CLO1": 26,
+          "FTE_1": 26,
+          "FTE_2__CLO2": 22,
+          "FTE_2": 22
+        }
+      },
+      {
+        "student_id": "2025-00268",
+        "last_name": "Gonzales",
+        "first_name": "Anjelene Macias",
+        "middle_initial": "",
+        "program_year": "EE 2A",
+        "scores": {
+          "A1__CLO1": 39,
+          "A1__CLO2": 44,
+          "A1": 83,
+          "A2__CLO1": 42,
+          "A2__CLO2": 38,
+          "A2": 80,
+          "Q1__CLO1": 13,
+          "Q1__CLO2": 12,
+          "Q1": 25,
+          "Q2__CLO1": 14,
+          "Q2__CLO2": 13,
+          "Q2": 27,
+          "MTE__CLO1": 24,
+          "MTE__CLO2": 27,
+          "MTE": 51,
+          "MTE_1__CLO1": 25,
+          "MTE_1": 25,
+          "MTE_2__CLO2": 27,
+          "MTE_2": 27,
+          "A3__CLO1": 38,
+          "A3__CLO2": 43,
+          "A3": 81,
+          "A4__CLO1": 40,
+          "A4__CLO2": 45,
+          "A4": 85,
+          "Q3__CLO1": 13,
+          "Q3__CLO2": 12,
+          "Q3": 25,
+          "Q4__CLO1": 13,
+          "Q4__CLO2": 12,
+          "Q4": 25,
+          "FTE__CLO1": 23,
+          "FTE__CLO2": 26,
+          "FTE": 49,
+          "FTE_1__CLO1": 24,
+          "FTE_1": 24,
+          "FTE_2__CLO2": 26,
+          "FTE_2": 26
+        }
+      }
+    ],
+    "cqi_plan": {
+      "date_of_evaluation": "October 2026",
+      "indicators": [
+        {
+          "category": "I. Instructor-Related Factors",
+          "number": 1,
+          "title": "1. Subject Matter Expertise and Currency",
+          "subtitle": "Depth of knowledge, current trends, curriculum updates.",
+          "mark": "\u2713",
+          "remarks": "Course topics and circuit simulation examples were aligned with current engineering standards."
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "number": 2,
+          "title": "2. Pedagogical Skills and Teaching Methodology",
+          "subtitle": "Use of diverse strategies (Problem-based learning, active learning etc.), clarity of objectives, critical thinking stimulation.",
+          "mark": "\u2713",
+          "remarks": "Flipped classroom, collaborative team learning, and structured problem sets were actively utilized."
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "number": 3,
+          "title": "3. Instructional Design and Course Structure",
+          "subtitle": "Alignment of objectives, appropriate materials, logical flow, library access.",
+          "mark": "\u2713",
+          "remarks": "Course Learning Outcomes (CLO1 & CLO2) were constructively aligned with FA1, SA1, and SA2."
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "number": 4,
+          "title": "4. Feedback and Assessment Practices",
+          "subtitle": "Timely & constructive feedback, variety of assessments, clear rubrics, application opportunities.",
+          "mark": "\u2713",
+          "remarks": "Analytic rubrics (Problem Formulation 40%, Correctness 40%, Clarity 20%) were provided and returned promptly."
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "number": 5,
+          "title": "5. Classroom Management and Environment",
+          "subtitle": "Engaging & disciplined environment, positive instructor-student relations, openness, rule enforcement.",
+          "mark": "\u2713",
+          "remarks": "Conducive learning environment maintained in accordance with University policies."
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "number": 6,
+          "title": "6. Adaptability and Responsiveness",
+          "subtitle": "Adaptability to learning styles, responsiveness to needs, adjustments based on feedback, tech integration.",
+          "mark": "\u2713",
+          "remarks": "Consultation hours and virtual environment (UVE) resources were made accessible to all learners."
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "number": 1,
+          "title": "1. Prior Academic Preparation",
+          "subtitle": "Performance in prerequisites, aptitude in Math/Science, relevant prior knowledge.",
+          "mark": "\u2717",
+          "remarks": "Several students needed refresher drills on solving systems of linear and differential equations (Math 121)."
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "number": 2,
+          "title": "2. Motivation and Self-Efficacy",
+          "subtitle": "Student interest, effort, belief in success, perceived value, self-regulation.",
+          "mark": "\u2713",
+          "remarks": "Students demonstrated high interest during collaborative circuit analysis and simulation activities."
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "number": 3,
+          "title": "3. Engagement and Participation",
+          "subtitle": "Active participation (discussions, activities), time on coursework, engagement with materials, attendance, online forums.",
+          "mark": "\u2713",
+          "remarks": "High attendance and active participation in formative group activities (FA1)."
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "number": 4,
+          "title": "4. Study Skills and Habits",
+          "subtitle": "Note-taking, test-taking, time management, responsibility (reading, preparation).",
+          "mark": "\u2717",
+          "remarks": "Independent problem-solving practice outside class hours needs reinforcement before summative exams."
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "number": 5,
+          "title": "5. Learning Styles and Preferences",
+          "subtitle": "Preference for visual/auditory/kinesthetic, adaptability to approaches.",
+          "mark": "\u2713",
+          "remarks": "Visual circuit schematics and interactive simulations supported diverse learner preferences."
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "number": 1,
+          "title": "1. Curriculum Relevance and Alignment",
+          "subtitle": "Relevance to industry, alignment with PEOs/SOs, interdisciplinary integration.",
+          "mark": "\u2713",
+          "remarks": "Directly aligned with PGO a (a.1) and PGO e (e.2) as well as SDG 7 and SDG 9."
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "number": 2,
+          "title": "2. Availability and Quality of Learning Resources",
+          "subtitle": "Access to materials (textbooks, online), lab facilities/equipment, software/simulation tools.",
+          "mark": "\u2713",
+          "remarks": "Primary references (Alexander & Sadiku, Hayt) and circuit simulation tools were readily available."
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "number": 3,
+          "title": "3. Class Size and Structure",
+          "subtitle": "Impact of class size on interaction, frequency/duration of lectures/tutorials.",
+          "mark": "\u2713",
+          "remarks": "3 contact hours per week (54 hours total) allowed structured lecture and group problem-solving."
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "number": 4,
+          "title": "4. Technology Integration",
+          "subtitle": "Effective use of EdTech (LMS, simulations, virtual labs), internet reliability, hardware/platform quality.",
+          "mark": "\u2713",
+          "remarks": "Circuit simulation software was integrated into FA1 to verify Thevenin/Norton and RLC responses."
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "number": 5,
+          "title": "5. Course Load and Difficulty",
+          "subtitle": "Appropriateness of workload, perceived difficulty relative to student preparation.",
+          "mark": "\u2713",
+          "remarks": "4 summative quizzes, 2 term exams, and formative group activities provided balanced assessment."
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "number": 1,
+          "title": "1. Institutional Support",
+          "subtitle": "Faculty development, tech support, student services, library resources.",
+          "mark": "\u2713",
+          "remarks": "Adequate library and institutional LMS support provided."
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "number": 2,
+          "title": "2. Curriculum Design and Program Quality",
+          "subtitle": "Overall curriculum coherence, theory/practice integration, interdisciplinary skills, program responsiveness.",
+          "mark": "\u2713",
+          "remarks": "Curriculum sequence effectively links Calculus/Physics prerequisites to Electrical Circuits 1."
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "number": 3,
+          "title": "3. Socioeconomic Factors",
+          "subtitle": "Impact of socioeconomic status on achievement and resource access.",
+          "mark": "\u2713",
+          "remarks": "Open-source / accessible simulation tools and digital handouts ensured equitable access."
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "number": 4,
+          "title": "4. External Context/Unforeseen Circumstances",
+          "subtitle": "Impact of global crises, rapid industry changes on curriculum.",
+          "mark": "\u2713",
+          "remarks": "Flexible asynchronous/online contingency provisions were in place per syllabus guidelines."
+        }
+      ],
+      "key_strengths": "Course delivery strictly followed the OBE syllabus learning plan, utilizing problem-based learning, collaborative group activities (FA1), and structured rubric-based summative assessments (SA1 & SA2).",
+      "areas_for_improvement": "Some students encountered difficulties in setting up multi-loop nodal/mesh differential equations and time-domain RLC transient analysis under time constraints during major examinations.",
+      "action_plan": "1. Increase guided problem-solving drills and simulation verification during formative group activities (FA1).\n2. Conduct targeted remedial review sessions prior to term examinations focusing on CLOs with <75% average score.\n3. Provide step-by-step rubric exemplars for multi-source network theorem and transient problems."
+    },
+    "parser_notes": [
+      "Loaded USeP EE 211 (Electrical Circuits 1) OBE Syllabus Blueprint (FM-USeP-MID-01).",
+      "Linked CLO1 -> PGO a (PI a.1, IGA2) and CLO2 -> PGO e (PI e.2, IGA5).",
+      "Configured Base-50 Grading System (Passing = 75 -> 3.00): FA1 (Formative 0%), SA1 Quizzes (40%), SA2 Term Examination (60%).",
+      "Included CLO Grade section, Course Learning Outcome Assessment Report, CO Assessment Tool, and CQI Plan."
+    ],
+    "raw_text_preview": "",
+    "rubrics": [
+      {
+        "rubric_id": "rubric_fa1",
+        "title": "FA1: Oral Recitation",
+        "assessment_code": "FA1",
+        "used_for": "Formative Assessment 1 (Oral Recitation / Conceptual Explanation)",
+        "clo_ids": [
+          "CLO1"
+        ],
+        "scale_type": "points_5",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (5)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (4)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (3)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (2)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (1)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Conceptual Understanding",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Excellent understanding; fully accurate and thorough explanation.",
+              "Good understanding; mostly correct.",
+              "Partial understanding; minor errors.",
+              "Basic understanding; some correct points.",
+              "Very limited understanding; mostly incorrect.",
+              "No understanding; cannot explain topic."
+            ]
+          },
+          {
+            "name": "Application & Examples",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Fully correct and relevant application to course principles, hardware, and analytical examples.",
+              "Mostly correct application.",
+              "Partial application; minor errors.",
+              "Some application; partially correct.",
+              "Very limited or incorrect application.",
+              "No application."
+            ]
+          },
+          {
+            "name": "Clarity & Communication",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Very clear, confident, logical, and precise explanation.",
+              "Mostly clear and organized delivery.",
+              "Partial clarity; understandable but not structured.",
+              "Some clarity; partially organized.",
+              "Very poor; hard to understand.",
+              "Incoherent; cannot communicate."
+            ]
+          }
+        ],
+        "notes": "Scores are based on the standard USeP 6-level rating scale (5 to 0)."
+      },
+      {
+        "rubric_id": "rubric_fa2",
+        "title": "FA2: Group Activity",
+        "assessment_code": "FA2",
+        "used_for": "Formative Assessment 2 (Collaborative Problem Solving & System Simulation)",
+        "clo_ids": [
+          "CLO2"
+        ],
+        "scale_type": "points_5",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (5)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (4)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (3)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (2)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (1)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Task Completion & Accuracy",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Fully completed; functional, accurate, meets objective.",
+              "Completed correctly; mostly functional.",
+              "Mostly completed; minor errors.",
+              "Partially completed; some correct elements.",
+              "Very minimal completion; mostly incorrect.",
+              "Not completed."
+            ]
+          },
+          {
+            "name": "Problem-Solving & Troubleshooting",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Excellent problem identification, solution, and reasoning.",
+              "Mostly correct identification and solutions.",
+              "Partial identification and solutions.",
+              "Identifies some issues; solutions are partially correct.",
+              "Very limited or incorrect solutions.",
+              "No problem-solving demonstrated."
+            ]
+          },
+          {
+            "name": "Collaboration & Documentation",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Excellent teamwork, complete, and clear documentation/report/presentation.",
+              "Good teamwork; mostly clear documentation.",
+              "Partial teamwork; documentation acceptable.",
+              "Some teamwork; documentation barely acceptable.",
+              "Very limited participation or poor documentation.",
+              "No teamwork or documentation."
+            ]
+          }
+        ],
+        "notes": "Team performance rubric applied to group outputs and presentations."
+      },
+      {
+        "rubric_id": "rubric_sa1",
+        "title": "SA1/SA2: Problem Solving Rubric",
+        "assessment_code": "SA1",
+        "used_for": "Summative Assessments (Quizzes and Term Examinations - Problem Solving)",
+        "clo_ids": [
+          "CLO1",
+          "CLO2"
+        ],
+        "scale_type": "percent_100",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (100%)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (80%)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (60%)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (40%)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (20%)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0%)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Conceptual Analysis",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Excellent understanding; fully accurate and thorough analysis.",
+              "Good understanding; mostly correct.",
+              "Partial understanding; minor errors.",
+              "Basic understanding; minor errors.",
+              "Very limited understanding; mostly incorrect.",
+              "No understanding; cannot analyze problem."
+            ]
+          },
+          {
+            "name": "Problem-Solving & Application",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Fully correct, efficient, and logically sound solution.",
+              "Mostly correct solution; minor issues.",
+              "Adequate solution; partially correct.",
+              "Partially correct solution; minor errors.",
+              "Very limited solution; mostly incorrect.",
+              "No attempt or completely incorrect."
+            ]
+          },
+          {
+            "name": "Accuracy & Logical Reasoning",
+            "weight_pct": 20.0,
+            "descriptors": [
+              "Fully logical, stepwise, and accurate.",
+              "Mostly logical and accurate.",
+              "Reasonable logic; some minor errors.",
+              "Some logical steps; partial correctness.",
+              "Very limited reasoning; mostly incorrect.",
+              "Completely illogical or wrong."
+            ]
+          }
+        ],
+        "notes": "Applied to non-objective problem solving portions of Quizzes and Term Examinations."
+      },
+      {
+        "rubric_id": "rubric_sa2",
+        "title": "SA1/SA2: Short Essay Rubric",
+        "assessment_code": "SA2",
+        "used_for": "Summative Assessments (Quizzes and Term Examinations - Short Essay / Design Questions)",
+        "clo_ids": [
+          "CLO1",
+          "CLO2"
+        ],
+        "scale_type": "percent_100",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (100%)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (80%)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (60%)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (40%)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (20%)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0%)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Conceptual Understanding",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Excellent understanding; fully accurate, thorough, and insightful.",
+              "Good understanding; mostly correct.",
+              "Partial understanding; minor errors.",
+              "Basic understanding; some correct points.",
+              "Very limited understanding; mostly incorrect.",
+              "Shows no understanding; explanation missing or incorrect."
+            ]
+          },
+          {
+            "name": "Application & Examples",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Fully correct, relevant, and well-illustrated examples.",
+              "Mostly correct application.",
+              "Partial application; minor errors.",
+              "Some application; partially correct.",
+              "Very limited or incorrect application.",
+              "No application."
+            ]
+          },
+          {
+            "name": "Clarity, Organization, & Reasoning",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Excellent clarity, highly logical, well-structured, and precise.",
+              "Good clarity; mostly logical and organized.",
+              "Partial clarity; understandable but not structured.",
+              "Some clarity; partially organized.",
+              "Very poor; hard to understand.",
+              "Completely incoherent."
+            ]
+          }
+        ],
+        "notes": "Applied to theoretical, design rationale, and short essay exam items."
+      }
+    ]
+  }
+}

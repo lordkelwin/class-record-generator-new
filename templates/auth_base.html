@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}USeP OBE Faculty Studio{% endblock %}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(234, 179, 8, 0.18), transparent 40%),
+        linear-gradient(135deg, #7f1d1d 0%, #1e3a8a 100%);
+      display: flex;
+      flex-direction: column;
+    }
+    .auth-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+    .auth-card {
+      width: 100%;
+      max-width: {% block card_width %}420px{% endblock %};
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+      padding: 30px 32px;
+    }
+    .seal { display: block; width: 92px; height: 92px; margin: 0 auto 12px; border-radius: 50%; box-shadow: 0 4px 14px rgba(0,0,0,0.18); }
+    .auth-title { text-align: center; margin: 0; font-size: 1.22rem; color: #7f1d1d; letter-spacing: 0.01em; }
+    .auth-sub { text-align: center; margin: 4px 0 22px; font-size: 0.85rem; color: #475569; }
+    label { display: block; font-size: 0.76rem; font-weight: 700; color: #475569; text-transform: uppercase; margin: 14px 0 5px; }
+    input[type=text], input[type=password], select {
+      width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.93rem; font-family: inherit;
+    }
+    input:focus, select:focus { outline: 2px solid #93c5fd; border-color: #2563eb; }
+    .btn {
+      border: 1px solid transparent; border-radius: 8px; padding: 10px 16px; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-block { width: 100%; margin-top: 22px; }
+    .btn-primary { background: #7f1d1d; color: #fff; }
+    .btn-primary:hover { background: #991b1b; }
+    .btn-light { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+    .btn-light:hover { background: #e2e8f0; }
+    .btn-danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .btn-sm { padding: 6px 10px; font-size: 0.78rem; }
+    .alert { border-radius: 8px; padding: 10px 12px; font-size: 0.86rem; margin-bottom: 12px; }
+    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .alert-info { background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+    .hint { font-size: 0.78rem; color: #64748b; margin-top: 6px; }
+    .footer { text-align: center; color: #e2e8f0; font-size: 0.76rem; padding: 0 0 18px; }
+    .pw-wrap { position: relative; }
+    .pw-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #475569; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    {% block extra_style %}{% endblock %}
+  </style>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ 'error' if cat == 'error' else ('success' if cat == 'success' else 'info') }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+  <div class="footer">University of Southeastern Philippines &middot; College of Engineering &middot; OBE Faculty Studio</div>
+  <script>
+    document.querySelectorAll(".pw-toggle").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const inp = btn.parentElement.querySelector("input");
+        const show = inp.type === "password";
+        inp.type = show ? "text" : "password";
+        btn.textContent = show ? "HIDE" : "SHOW";
+      });
+    });
+  </script>
+</body>
+</html>

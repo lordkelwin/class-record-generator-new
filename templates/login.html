@@ -1,0 +1,24 @@
+{% extends "auth_base.html" %}
+{% block title %}Sign In | USeP OBE Faculty Studio{% endblock %}
+{% block content %}
+  <img class="seal" src="{{ url_for('static', filename='logo_1_Image39.jpg') }}" alt="USeP Seal" />
+  <h1 class="auth-title">USeP OBE Faculty Studio</h1>
+  <p class="auth-sub">Syllabus Creator &amp; Class Record Generator<br />Sign in with your faculty account</p>
+
+  {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+
+  <form method="post" autocomplete="on">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" value="{{ username }}" required autofocus autocomplete="username" />
+
+    <label for="password">Password</label>
+    <div class="pw-wrap">
+      <input type="password" id="password" name="password" required autocomplete="current-password" />
+      <button type="button" class="pw-toggle">SHOW</button>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+  </form>
+  <p class="hint" style="text-align:center; margin-top:16px;">No account yet? Ask your administrator to create one for you.</p>
+{% endblock %}

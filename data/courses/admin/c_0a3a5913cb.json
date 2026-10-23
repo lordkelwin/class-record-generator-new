@@ -1,0 +1,1105 @@
+{
+  "id": "c_0a3a5913cb",
+  "owner": "admin",
+  "created_at": "2026-10-23T08:34:35",
+  "updated_at": "2026-10-23T16:13:24",
+  "course_code": "AEE 321",
+  "course_title": "Microprocessor Systems",
+  "section": "BSEE 3A",
+  "semester_ay": "2nd Semester, A.Y. 2025-2026",
+  "blueprint": {
+    "categories": [
+      {
+        "assessment_code": "FA1",
+        "assessment_type": "FA",
+        "category_id": "MID_FA1",
+        "items": [
+          {
+            "clo_points": {
+              "CLO1": 15
+            },
+            "co_id": "CLO1",
+            "item_id": "OR1",
+            "max_score": 15,
+            "name": "FA1 Oral Recitation (Chapters 1 & 2)",
+            "weight_pct": 100
+          },
+          {
+            "clo_points": {
+              "CLO1": 10
+            },
+            "co_id": "CLO1",
+            "item_id": "OR2",
+            "max_score": 10,
+            "name": "FA1 Oral Recitation (Chapters 3)",
+            "weight_pct": 100
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Formative Assessment 1 (Oral Recitation)",
+        "term": "Midterm",
+        "weight_pct": 0
+      },
+      {
+        "assessment_code": "FA2",
+        "assessment_type": "FA",
+        "category_id": "MID_FA3",
+        "items": [
+          {
+            "clo_points": {
+              "CLO2": 10
+            },
+            "co_id": "CLO2",
+            "item_id": "GA1",
+            "max_score": 10,
+            "name": "FA2 Group Activity (Chapters 1 & 2)",
+            "weight_pct": 100
+          },
+          {
+            "clo_points": {
+              "CLO2": 10
+            },
+            "co_id": "CLO2",
+            "item_id": "GA2",
+            "max_score": 10,
+            "name": "FA2 Group Activity (Chapter 3)",
+            "weight_pct": 100
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Formative Assessment 2 (Group Activity)",
+        "term": "Midterm",
+        "weight_pct": 0
+      },
+      {
+        "assessment_code": "SA1",
+        "assessment_type": "SA",
+        "category_id": "MID_SA1",
+        "items": [
+          {
+            "clo_points": {
+              "CLO1": 65
+            },
+            "co_id": "CLO1",
+            "item_id": "Q1",
+            "max_score": 65,
+            "name": "Quiz 1 (Chapters 1 & 2)",
+            "weight_pct": 20
+          },
+          {
+            "clo_points": {
+              "CLO2": 50
+            },
+            "co_id": "CLO2",
+            "item_id": "Q2",
+            "max_score": 50,
+            "name": "Quiz 2 (Chapter 3)",
+            "weight_pct": 20
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Summative Assessment 1 (Quizzes)",
+        "term": "Midterm",
+        "weight_pct": 40
+      },
+      {
+        "assessment_code": "SA2",
+        "assessment_type": "SA",
+        "category_id": "MID_SA2",
+        "items": [
+          {
+            "clo_points": {
+              "CLO1": 65,
+              "CLO2": 35
+            },
+            "co_id": "CLO1, CLO2",
+            "item_id": "MTE",
+            "max_score": 100,
+            "name": "Midterm Exam",
+            "weight_pct": 60
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Summative Assessment 2 (Term Examination)",
+        "term": "Midterm",
+        "weight_pct": 60
+      },
+      {
+        "assessment_code": "FA1",
+        "assessment_type": "FA",
+        "category_id": "FIN_FA1_5",
+        "items": [
+          {
+            "clo_points": {
+              "CLO1": 10
+            },
+            "co_id": "CLO1",
+            "item_id": "OR3",
+            "max_score": 10,
+            "name": "FA1 Oral Recitation (Chapter 4)",
+            "weight_pct": 100
+          },
+          {
+            "clo_points": {
+              "CLO2": 10
+            },
+            "co_id": "CLO2",
+            "item_id": "OR4",
+            "max_score": 10,
+            "name": "FA1 Oral Recitation (Chapter 5)",
+            "weight_pct": 100
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Formative Assessment 1 (Oral Recitation)",
+        "term": "Finals",
+        "weight_pct": 0
+      },
+      {
+        "assessment_code": "FA1",
+        "assessment_type": "FA",
+        "category_id": "FIN_FA1_6",
+        "items": [
+          {
+            "clo_points": {
+              "CLO1": 10
+            },
+            "co_id": "CLO1",
+            "item_id": "GA3",
+            "max_score": 10,
+            "name": "FA2 Group Activity (Chapter 4)",
+            "weight_pct": 100
+          },
+          {
+            "clo_points": {
+              "CLO2": 10
+            },
+            "co_id": "CLO2",
+            "item_id": "GA4",
+            "max_score": 10,
+            "name": "FA2 Group Activity (Chapter 5)",
+            "weight_pct": 100
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Formative Assessment 2 (Group Activity)",
+        "term": "Finals",
+        "weight_pct": 0
+      },
+      {
+        "assessment_code": "SA1",
+        "assessment_type": "SA",
+        "category_id": "FIN_SA1_7",
+        "items": [
+          {
+            "clo_points": {
+              "CLO1": 55
+            },
+            "co_id": "CLO1",
+            "item_id": "Q3",
+            "max_score": 55,
+            "name": "Quiz 3 (Chapter 4)",
+            "weight_pct": 20
+          },
+          {
+            "clo_points": {
+              "CLO2": 75
+            },
+            "co_id": "CLO2",
+            "item_id": "Q4",
+            "max_score": 75,
+            "name": "Quiz 4 (Chapter 5)",
+            "weight_pct": 20
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Summative Assessment 1 (Quizzes)",
+        "term": "Finals",
+        "weight_pct": 40
+      },
+      {
+        "assessment_code": "SA2",
+        "assessment_type": "SA",
+        "category_id": "FIN_SA1_8",
+        "items": [
+          {
+            "clo_points": {
+              "CLO1": 60,
+              "CLO2": 40
+            },
+            "co_id": "CLO1, CLO2",
+            "item_id": "FTE",
+            "max_score": 100,
+            "name": "Final Exam",
+            "weight_pct": 60
+          }
+        ],
+        "lec_lab": "Lecture",
+        "name": "Summative Assessment 2 (Term Examination)",
+        "term": "Finals",
+        "weight_pct": 60
+      }
+    ],
+    "course_outcomes": [
+      {
+        "co_id": "CLO1",
+        "description": "Analyze and compute the operations of ALU, CU, and registers in microprocessors/microcontrollers using mathematical methods.",
+        "graduate_outcome_desc": "a) Apply knowledge of mathematics and sciences to solve engineering problems",
+        "iga_aligned": "IGA2",
+        "performance_indicator": "a.1. Apply concepts in mathematics to solve engineering problems.",
+        "program_outcomes": "PGO a",
+        "target_class_pass_pct": 50,
+        "target_score_pct": 75
+      },
+      {
+        "co_id": "CLO2",
+        "description": "Design and troubleshoot a microcontroller based I/O interfacing systems involving data movement and control.",
+        "graduate_outcome_desc": "e) Identify, formulate, and solve engineering problems",
+        "iga_aligned": "IGA5",
+        "performance_indicator": "e.2. Apply concepts, theories, and principles in solving engineering problem(s)",
+        "program_outcomes": "PGO e",
+        "target_class_pass_pct": 50,
+        "target_score_pct": 75
+      }
+    ],
+    "cqi_plan": {
+      "action_plan": "1. Increase guided problem-solving drills and simulation verification during formative group activities (FA1).\n2. Conduct targeted remedial review sessions prior to term examinations focusing on CLOs with <75% average score.\n3. Provide step-by-step rubric exemplars for multi-source network theorem and transient problems.",
+      "areas_for_improvement": "Some students encountered difficulties in setting up multi-loop nodal/mesh differential equations and time-domain RLC transient analysis under time constraints during major examinations.",
+      "date_of_evaluation": "October 2026",
+      "indicators": [
+        {
+          "category": "I. Instructor-Related Factors",
+          "mark": "\u2713",
+          "number": 1,
+          "remarks": "Course topics and circuit simulation examples were aligned with current engineering standards.",
+          "subtitle": "Depth of knowledge, current trends, curriculum updates.",
+          "title": "1. Subject Matter Expertise and Currency"
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "mark": "\u2713",
+          "number": 2,
+          "remarks": "Flipped classroom, collaborative team learning, and structured problem sets were actively utilized.",
+          "subtitle": "Use of diverse strategies (Problem-based learning, active learning etc.), clarity of objectives, critical thinking stimulation.",
+          "title": "2. Pedagogical Skills and Teaching Methodology"
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "mark": "\u2713",
+          "number": 3,
+          "remarks": "Course Learning Outcomes (CLO1 & CLO2) were constructively aligned with FA1, SA1, and SA2.",
+          "subtitle": "Alignment of objectives, appropriate materials, logical flow, library access.",
+          "title": "3. Instructional Design and Course Structure"
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "mark": "\u2713",
+          "number": 4,
+          "remarks": "Analytic rubrics (Problem Formulation 40%, Correctness 40%, Clarity 20%) were provided and returned promptly.",
+          "subtitle": "Timely & constructive feedback, variety of assessments, clear rubrics, application opportunities.",
+          "title": "4. Feedback and Assessment Practices"
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "mark": "\u2713",
+          "number": 5,
+          "remarks": "Conducive learning environment maintained in accordance with University policies.",
+          "subtitle": "Engaging & disciplined environment, positive instructor-student relations, openness, rule enforcement.",
+          "title": "5. Classroom Management and Environment"
+        },
+        {
+          "category": "I. Instructor-Related Factors",
+          "mark": "\u2713",
+          "number": 6,
+          "remarks": "Consultation hours and virtual environment (UVE) resources were made accessible to all learners.",
+          "subtitle": "Adaptability to learning styles, responsiveness to needs, adjustments based on feedback, tech integration.",
+          "title": "6. Adaptability and Responsiveness"
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "mark": "\u2717",
+          "number": 1,
+          "remarks": "Several students needed refresher drills on solving systems of linear and differential equations (Math 121).",
+          "subtitle": "Performance in prerequisites, aptitude in Math/Science, relevant prior knowledge.",
+          "title": "1. Prior Academic Preparation"
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "mark": "\u2713",
+          "number": 2,
+          "remarks": "Students demonstrated high interest during collaborative circuit analysis and simulation activities.",
+          "subtitle": "Student interest, effort, belief in success, perceived value, self-regulation.",
+          "title": "2. Motivation and Self-Efficacy"
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "mark": "\u2713",
+          "number": 3,
+          "remarks": "High attendance and active participation in formative group activities (FA1).",
+          "subtitle": "Active participation (discussions, activities), time on coursework, engagement with materials, attendance, online forums.",
+          "title": "3. Engagement and Participation"
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "mark": "\u2717",
+          "number": 4,
+          "remarks": "Independent problem-solving practice outside class hours needs reinforcement before summative exams.",
+          "subtitle": "Note-taking, test-taking, time management, responsibility (reading, preparation).",
+          "title": "4. Study Skills and Habits"
+        },
+        {
+          "category": "II. Student-Related Factors",
+          "mark": "\u2713",
+          "number": 5,
+          "remarks": "Visual circuit schematics and interactive simulations supported diverse learner preferences.",
+          "subtitle": "Preference for visual/auditory/kinesthetic, adaptability to approaches.",
+          "title": "5. Learning Styles and Preferences"
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "mark": "\u2713",
+          "number": 1,
+          "remarks": "Directly aligned with PGO a (a.1) and PGO e (e.2) as well as SDG 7 and SDG 9.",
+          "subtitle": "Relevance to industry, alignment with PEOs/SOs, interdisciplinary integration.",
+          "title": "1. Curriculum Relevance and Alignment"
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "mark": "\u2713",
+          "number": 2,
+          "remarks": "Primary references (Alexander & Sadiku, Hayt) and circuit simulation tools were readily available.",
+          "subtitle": "Access to materials (textbooks, online), lab facilities/equipment, software/simulation tools.",
+          "title": "2. Availability and Quality of Learning Resources"
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "mark": "\u2713",
+          "number": 3,
+          "remarks": "3 contact hours per week (54 hours total) allowed structured lecture and group problem-solving.",
+          "subtitle": "Impact of class size on interaction, frequency/duration of lectures/tutorials.",
+          "title": "3. Class Size and Structure"
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "mark": "\u2713",
+          "number": 4,
+          "remarks": "Circuit simulation software was integrated into FA1 to verify Thevenin/Norton and RLC responses.",
+          "subtitle": "Effective use of EdTech (LMS, simulations, virtual labs), internet reliability, hardware/platform quality.",
+          "title": "4. Technology Integration"
+        },
+        {
+          "category": "III. Course Design and Resources Factors",
+          "mark": "\u2713",
+          "number": 5,
+          "remarks": "4 summative quizzes, 2 term exams, and formative group activities provided balanced assessment.",
+          "subtitle": "Appropriateness of workload, perceived difficulty relative to student preparation.",
+          "title": "5. Course Load and Difficulty"
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "mark": "\u2713",
+          "number": 1,
+          "remarks": "Adequate library and institutional LMS support provided.",
+          "subtitle": "Faculty development, tech support, student services, library resources.",
+          "title": "1. Institutional Support"
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "mark": "\u2713",
+          "number": 2,
+          "remarks": "Curriculum sequence effectively links Calculus/Physics prerequisites to Electrical Circuits 1.",
+          "subtitle": "Overall curriculum coherence, theory/practice integration, interdisciplinary skills, program responsiveness.",
+          "title": "2. Curriculum Design and Program Quality"
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "mark": "\u2713",
+          "number": 3,
+          "remarks": "Open-source / accessible simulation tools and digital handouts ensured equitable access.",
+          "subtitle": "Impact of socioeconomic status on achievement and resource access.",
+          "title": "3. Socioeconomic Factors"
+        },
+        {
+          "category": "IV. Institutional and External Factors",
+          "mark": "\u2713",
+          "number": 4,
+          "remarks": "Flexible asynchronous/online contingency provisions were in place per syllabus guidelines.",
+          "subtitle": "Impact of global crises, rapid industry changes on curriculum.",
+          "title": "4. External Context/Unforeseen Circumstances"
+        }
+      ],
+      "key_strengths": "Course delivery strictly followed the OBE syllabus learning plan, utilizing problem-based learning, collaborative group activities (FA1), and structured rubric-based summative assessments (SA1 & SA2)."
+    },
+    "metadata": {
+      "academic_unit": "Engineering",
+      "address": "I\u00f1igo St., Bo. Obrero, Davao City 8000",
+      "classroom_policies": "",
+      "college": "COLLEGE OF ENGINEERING",
+      "consultation_hours": "Monday-Friday, 8:00 AM \u2013 05:00 PM (excluding lunch break)",
+      "contact_hours": "2 Hours/Week (2 hours Lecture)",
+      "corequisites": "AEE 321L - Microprocessor Systems Lab",
+      "course_code": "AEE 321",
+      "course_description": "The course includes history and evolution, principles, and applications of microprocessors. The focus is on the basic understanding of the architectural design, functional parts, operations, function, and programming. It also covers the study of various types of microprocessors and the fundamental concepts of microcontrollers.",
+      "course_title": "Microprocessor Systems",
+      "credit_units": "2.0 Units \u2013 Lecture",
+      "dean_name": "JOIE D. CATAYTAY",
+      "department": "Department of Electrical Engineering",
+      "describe_revision": "",
+      "faculty_contact": "09262995868",
+      "faculty_email": "ejjtano0120241110@usep.edu.ph",
+      "faculty_name": "Elwin Jay J. Tano",
+      "grading_mode": "two_term",
+      "iga_framework": "new_5_igas",
+      "learning_plan_table": [
+        {
+          "assessment_activities": "\u2022 N/A",
+          "clo": "",
+          "ilo": "\u2022 Recognize the university VMGO & Institutional Graduate Attributes.\n\u2022 Appreciates the significance of PEOs and PGOs of the programs.\n\u2022 Recognize the rules and regulations of the course and the grading system.",
+          "required_reading": "\u2022 USeP Student Handbook (2016 edition)",
+          "time_frame": "1 hour",
+          "tla": "\u2022 On-site or online meeting",
+          "topics": "\u2022 Course Orientation\n\u2022 VMGO & IGA of the University\n\u2022 PEOs & PGOs of the program.\n\u2022 Rules and regulations of the course & grading system\n\u2022 Presentation of the course outline"
+        },
+        {
+          "assessment_activities": "\u2022\nFA1 \u2013 Oral Recitation\n\u2022\nFA2 \u2013 Group Activity\n\u2022\nSA1 \u2013 Quiz",
+          "clo": "CLO1",
+          "ilo": "\u2022\nAnalyze the interactions between structural components of a microprocessor/microcontroller to explain how they work together to perform tasks. (CDIO Skills: 1.1, 1.2, 2.1)",
+          "required_reading": "\u2022\nRef01\n\u2022\nRef04-08",
+          "time_frame": "4 hours",
+          "tla": "\u2022\nInteractive demonstration and discussions.\n\u2022\nOral Recitation",
+          "topics": "\u2022 STRUCTURAL COMPONENTS OF MICROPROCESSOR/MICROCONTROLLER\no\nInternal CPU Interconnection\no\nArithmetic Logic Unit\no\nControl Unit\no\nRegisters"
+        },
+        {
+          "assessment_activities": "\u2022\nFA1 \u2013 Oral Recitation\n\u2022\nFA2 \u2013 Group Activity\n\u2022\nSA1 \u2013 Quiz",
+          "clo": "CLO1",
+          "ilo": "\u2022\nEvaluate the fetch-decode-execute cycle to determine the timing and sequencing of instructions in a microprocessor. (CDIO Skills: 1.2, 2.1, 2.3)",
+          "required_reading": "\u2022\nRef01\n\u2022\nRef05\n\u2022\nRef07-08",
+          "time_frame": "5 hours",
+          "tla": "\u2022\nInteractive demonstration and discussions.\n\u2022\nOral Recitation",
+          "topics": "\u2022\nFETCH-DECODE-EXECUTE CYCLE\no\nFetch Stage\no\nDecode Stage\no\nExecute Stage\no\nStore Stage\no\nExecution Time and Instruction Time"
+        },
+        {
+          "assessment_activities": "\u2022\nFA1 \u2013 Oral Recitation\n\u2022\nFA2 \u2013 Group Activity\n\u2022\nSA1 \u2013 Quiz",
+          "clo": "CLO2",
+          "ilo": "\u2022\nDevelop a program that implements data movement, processing, and control using a microcontroller to meet specific functional requirements. (CDIO Skills: 1.2, 2.1, 3.1)",
+          "required_reading": "\u2022\nRef01\n\u2022\nRef05-08",
+          "time_frame": "6 hours",
+          "tla": "\u2022\nInteractive demonstration and discussions.\n\u2022\nOral Recitation",
+          "topics": "\u2022\nFUNCTIONAL OPERATIONS OF MICROPROCESSORS/MICROCONTROLLER\no\nData Movement\no\nData Processing\no\nControl\no\nData Storage"
+        },
+        {
+          "assessment_activities": "\u2022 SA2 \u2013 Term Examination",
+          "clo": "CLO1\nCLO2",
+          "ilo": "\u2022 Pass the midterm examination",
+          "required_reading": "",
+          "time_frame": "2 hours",
+          "tla": "\u2022 Conduct of Midterm Examination \u2013 Independent Assessment",
+          "topics": "MIDTERM EXAMINATION"
+        },
+        {
+          "assessment_activities": "\u2022\nFA1 \u2013 Oral Recitation\n\u2022\nFA2 \u2013 Group Activity\n\u2022\nSA1 \u2013 Quiz",
+          "clo": "CLO1",
+          "ilo": "\u2022\nApply the microcontroller\u2019s instruction set to perform arithmetic, logical, and data transfer operations. (CDIO Skills: 1.2, 2.1, 3",
+          "required_reading": "\u2022\nRef01-08",
+          "time_frame": "8 hours",
+          "tla": "\u2022\nInteractive demonstration and discussions.\n\u2022\nOral Recitation",
+          "topics": "\u2022\nINSTRUCTION SET\no\nATMega328P Opcodes\no\nInstruction Cycle\no\nInstruction Categories:\n\u25aa\nData transfer\n\u25aa\nArithmetic/Logic\n\u25aa\nControl Flow\n\u25aa\nBit Manipulation\n\u25aa\nStack/Subroutine\n\u25aa\nInterrupt Control\n\u25aa\nTiming/Performance"
+        },
+        {
+          "assessment_activities": "\u2022\nFA1 \u2013 Oral Recitation\n\u2022\nFA2 \u2013 Group Activity\n\u2022\nSA1 \u2013 Quiz",
+          "clo": "CLO2",
+          "ilo": "\u2022 Determine the transient and steady-state responses of source-free and driven first-order circuits. (CDIO Skills: 1.2.1, 2.1.2, 2.1.3)",
+          "required_reading": "\u2022\nRef01-08",
+          "time_frame": "8 hours",
+          "tla": "\u2022\nInteractive demonstration and discussions.\n\u2022\nOral Recitation",
+          "topics": "\u2022\nI/O INTERFACING\no\nInterfacing of Input/Output Devices\no\nInterface Devices\no\nTime-Based I/O\no\nHandshaking"
+        },
+        {
+          "assessment_activities": "\u2022 SA2 \u2013 Term Examination",
+          "clo": "CLO1\nCLO2",
+          "ilo": "\u2022 Demonstrate mastery of time-varying circuits, transient analysis, and frequency-domain steady-state analysis.",
+          "required_reading": "",
+          "time_frame": "3 hours",
+          "tla": "\u2022 Conduct of Final Examination \u2013 Independent Assessment",
+          "topics": "FINAL EXAMINATION"
+        }
+      ],
+      "learning_plan_topics": [],
+      "lec_lab": "Lecture",
+      "office": "College of Engineering",
+      "passing_grade_conditions": "Students shall take all assessments and examinations and must have an attendance of not less than 80% in the class. In case of lacking output or examination, a grade of INC (Incomplete) shall be given in accordance with the existing rules and regulations reflected in the student handbook. In case of incurring absences of more than 20% of the total expected number of attendances, a grade of UW (Unauthorized Withdrawal) will be reflected in the grade sheet.",
+      "passing_percentage": 75,
+      "policies_table": [
+        {
+          "description": "Classroom attendance is an integral part of the educational experience; therefore, it is the student's responsibility to attend class. Attendance will be checked at every meeting. A student who accumulates exceeding 20% of the prescribed number of class hours will automatically be dropped from the course (unexcused absences). Arriving 15 minutes after the scheduled start time constitutes a late mark. Three late marks equate to one unexcused absence.",
+          "number": "1",
+          "title": "Attendance and Punctuality"
+        },
+        {
+          "description": "Respectful, inclusive, and professional behavior is always expected. The use of polite and non-discriminatory language is strictly observed in line with the University's commitment to a gender-fair and inclusive learning environment, and adherence to RA 11313, also known as the Safe Spaces Act.",
+          "number": "2",
+          "title": "Behavior and Decorum"
+        },
+        {
+          "description": "Mobile phones, tablets, and laptops must be stowed away during standard lectures to minimize distractions. However, laptops are expressively permitted and encouraged during designated practical sessions, such as when developing scripts for laboratory data automation or running circuit simulations.",
+          "number": "3",
+          "title": "Gadget Use"
+        },
+        {
+          "description": "Wearing the prescribed university uniform is a must in accordance with the Student Handbook.",
+          "number": "4",
+          "title": "Dress Code"
+        },
+        {
+          "description": "Extensions and late submissions of requirements will only be considered if done in writing to the lecturer at least two days before the due date. Generally, no extension will be given for the assignments.\n\u2022 Should work be submitted after the due date without written approval for an extension, a penalty of 5% deduction from the grade will be incurred for every 2 days it is late.\n\u2022 Should the work be assessed as being close to a PASS grade, but the standard has not yet been fully met, the lecturer may offer the opportunity to resubmit.",
+          "number": "5",
+          "title": "Submission of Coursework"
+        },
+        {
+          "description": "The responsible use of generative AI tools (e.g., ChatGPT, Grammarly, Quillbot) is permitted only when explicitly allowed by the instructor for specific tasks. All AI-assisted work must be properly cited or declared.",
+          "number": "6",
+          "title": "Use of AI Tools"
+        },
+        {
+          "description": "All USePians are bound to follow the rules and regulations stipulated in the student handbook of the University and the College. Academic dishonesty includes cheating in any form, plagiarism, and similar offenses.\n\u2022 Cheating on any assignment or examination incurs a minimum penalty of zero for that work and referral to OSAS.\n\u2022 Submitting AI-generated content as original work without disclosure is considered academic dishonesty (max 15% similarity threshold).",
+          "number": "7",
+          "title": "Academic Honesty"
+        },
+        {
+          "description": "\u2022 Keep calculator jackets, smartphones, and irrelevant items inside bags.\n\u2022 Do not round off intermediate values to avoid accumulated rounding errors; final answers must be in three decimal places.\n\u2022 Write legibly using black or blue ballpoint pen and show all pertinent solutions clearly.\n\u2022 Math plate is used during quizzes and bluebook for term examinations.\n\u2022 No special quizzes or examinations will be given except for valid, documented reasons.",
+          "number": "8",
+          "title": "Conduct of Quizzes and Examinations"
+        },
+        {
+          "description": "Allowed calculators must follow the Professional Regulatory Commission (PRC) recommendations (https://www.prc.gov.ph/node/6984) for non-programmable calculators.",
+          "number": "9",
+          "title": "Use of Calculators"
+        },
+        {
+          "description": "Every group must ensure equitable contributions from all members. Directly sharing completed circuits, code, or written reports across groups is considered plagiarism and will result in a zero (0) for all involved parties.",
+          "number": "10",
+          "title": "Group Work and Independent Effort"
+        },
+        {
+          "description": "Observe cleanliness before and after class. Ensure all plugged devices and lights are turned off before leaving the classroom.",
+          "number": "11",
+          "title": "Cleanliness and Energy Conservation"
+        },
+        {
+          "description": "Official announcements and course updates will be posted via the USeP Virtual Environment (UVE), email, or official class group chat. Direct communication with the instructor must be conducted strictly during official working days and hours (Monday to Friday, 8:00 AM to 5:00 PM).",
+          "number": "12",
+          "title": "Communication Channels"
+        }
+      ],
+      "prereq_coreq_table": [
+        {
+          "course_code": "AEE 313",
+          "course_title": "LOGIC CIRCUITS DESIGN AND SWITCHING THEORY",
+          "req_type": "Pre-requisite"
+        },
+        {
+          "course_code": "AEE 311L",
+          "course_title": "LOGIC CIRCUITS DESIGN AND SWITCHING THEORY LAB",
+          "req_type": "Pre-requisite"
+        }
+      ],
+      "prerequisites": "AEE 313 - Logic Circuit Design and Switching Theory",
+      "program_code": "EE",
+      "program_head": "CHARITO O. CLARO",
+      "program_name": "Bachelor of Science in Electrical Engineering",
+      "references": "",
+      "references_table": [
+        {
+          "code": "Ref01",
+          "reference": "Hughes, J.M. (2016). Arduino: A Technical Reference. O\u2019Reilly Media, Inc."
+        },
+        {
+          "code": "Ref02",
+          "reference": "Norris, D. (2015). The Internet of Things: Do-It-Yourself Projects with Arduino, Raspberry Pi, and BeagleBone Black. McGraw-Hill Education"
+        },
+        {
+          "code": "Ref03",
+          "reference": "Guptha, M.A. (2021). Internet of Things & Its Applications. Malla Reddy College of Engineering & Technology"
+        },
+        {
+          "code": "Ref04",
+          "reference": "Monk, S. (2016). Programming Arduino\u2122: Getting Started with Sketches (2nd ed.). McGraw-Hill Education"
+        },
+        {
+          "code": "Ref05",
+          "reference": "Blum, J. (2013). Exploring Arduino: Tools and Techniques for Engineering Wizardry. John Wiley & Sons, Inc."
+        },
+        {
+          "code": "Ref06",
+          "reference": "Margolis, M. (2011). Arduino Cookbook. O\u2019Reilly Media, Inc."
+        },
+        {
+          "code": "Ref07",
+          "reference": "Nussey, J. (2018). Arduino for dummies (2nd ed.)"
+        },
+        {
+          "code": "Ref08",
+          "reference": "Atmel. (2015). Atmega328P Datasheet"
+        }
+      ],
+      "room": "307",
+      "schedule": "MWF 08:00 AM - 09:00 AM",
+      "sdg_alignments": "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure",
+      "sdg_table": [
+        {
+          "description": "Microprocessors and microcontrollers are foundation technologies for industrial automation, smart devices, and digital infrastructure. Arduino-based system design fosters innovation and practical engineering skills.",
+          "sdg": "9: Industry, Innovation, and Infrastructure"
+        },
+        {
+          "description": "The course includes history and evolution, principles, and applications of microprocessors. The focus is on the basic understanding of the architectural design, functional parts, operations, function, and programming. It also covers the study of various types of microprocessors and the fundamental concepts of microcontrollers.",
+          "sdg": "11: Sustainable Cities and Communities"
+        }
+      ],
+      "section": "BSEE 3A",
+      "semester_ay": "2nd Semester, A.Y. 2025-2026",
+      "syllabus_assessment_activities": [
+        {
+          "activity": "Oral Recitation",
+          "clo_aligned": "CLO1",
+          "code": "FA1",
+          "description": "Oral recitations require students to explain and analyze the functional operations of microprocessors and microcontrollers\u2014such as ALU processing, control unit sequencing, and instruction execution\u2014using Arduino-based examples. Emphasis is placed on articulating how these internal operations support the development of reliable and innovative embedded systems used in modern infrastructure and smart community applications.",
+          "items_per_term": 2,
+          "type": "Formative",
+          "weight_pct": 0
+        },
+        {
+          "activity": "Group Activity",
+          "clo_aligned": "CLO2",
+          "code": "FA2",
+          "description": "Group activities engage students in the collaborative design, implementation, and troubleshooting of Arduino-based microcontroller systems involving data movement, control logic, and I/O interfacing. Through teamwork and hands-on system development, students simulate real-world engineering practices while creating embedded solutions relevant to intelligent infrastructure and sustainable community technologies.",
+          "items_per_term": 2,
+          "type": "Formative",
+          "weight_pct": 0
+        },
+        {
+          "activity": "Quizzes",
+          "clo_aligned": "CLO1, CLO2",
+          "code": "SA1",
+          "description": "Quizzes assess students\u2019 ability to analyze and solve problems related to microprocessor/microcontroller structures, instruction sets, and functional operations. These assessments reinforce the foundational knowledge required to develop dependable microcontroller-based systems that underpin innovative industrial applications and efficient, technology-driven urban environments.",
+          "items_per_term": 1,
+          "type": "Summative",
+          "weight_pct": 40
+        },
+        {
+          "activity": "Term Examination",
+          "clo_aligned": "CLO1, CLO2",
+          "code": "SA2",
+          "description": "The term examination comprehensively evaluates students\u2019 understanding of microprocessor and microcontroller principles through problem-solving, analytical, and design-oriented questions centered on Arduino-based systems. Students are expected to integrate theoretical concepts and practical reasoning to demonstrate how embedded systems contribute to innovative technological infrastructure and sustainable, smart community solutions.",
+          "items_per_term": 1,
+          "type": "Summative",
+          "weight_pct": 60
+        }
+      ],
+      "transmutation_base": 50,
+      "university": "University of Southeastern Philippines",
+      "version_note": "New",
+      "version_number": "2026\u20131.0",
+      "workload_description": "With 18 weeks at 2 contact hours per week (36 contact hours total), the expected student workload is as follows:\n\u2022 Total of 4 quizzes (2 for both Midterm and Final Term)\n\u2022 Post-discussion oral recitation or group activity\n\u2022 Midterm and Final Examinations\nIn instances where face-to-face sessions are impractical, simulated experiments or their equivalent will be provided.",
+      "year_level": "Third Year"
+    },
+    "parser_notes": [
+      "Loaded USeP EE 211 (Electrical Circuits 1) OBE Syllabus Blueprint (FM-USeP-MID-01).",
+      "Linked CLO1 -> PGO a (PI a.1, IGA2) and CLO2 -> PGO e (PI e.2, IGA5).",
+      "Configured Base-50 Grading System (Passing = 75 -> 3.00): FA1 (Formative 0%), SA1 Quizzes (40%), SA2 Term Examination (60%).",
+      "Included CLO Grade section, Course Learning Outcome Assessment Report, CO Assessment Tool, and CQI Plan."
+    ],
+    "raw_text_preview": "",
+    "students": [
+      {
+        "first_name": "Joshua Tablang",
+        "last_name": "ABERIA",
+        "program_year": "BSEE 3A",
+        "scores": {
+          "FTE": 76,
+          "FTE__CLO1": 50,
+          "FTE__CLO2": 26,
+          "GA1": 10,
+          "GA1__CLO2": 10,
+          "GA2": 10,
+          "GA2__CLO2": 10,
+          "GA3": 10,
+          "GA3__CLO1": 10,
+          "GA4": 10,
+          "GA4__CLO2": 10,
+          "MTE": 52,
+          "MTE__CLO1": 32,
+          "MTE__CLO2": 20,
+          "OR1": 15,
+          "OR1__CLO1": 15,
+          "OR2": 10,
+          "OR2__CLO1": 10,
+          "OR3": 10,
+          "OR3__CLO1": 10,
+          "OR4": 10,
+          "OR4__CLO2": 10,
+          "Q1": 37,
+          "Q1__CLO1": 37,
+          "Q2": 23,
+          "Q2__CLO2": 23,
+          "Q3": 24,
+          "Q3__CLO1": 24,
+          "Q4": 57,
+          "Q4__CLO2": 57
+        },
+        "student_id": "2022-00613"
+      },
+      {
+        "first_name": "Jemuel Christopher Cabasisi",
+        "last_name": "PASTRANA",
+        "program_year": "BSEE 3A",
+        "scores": {
+          "FTE": 53,
+          "FTE__CLO1": 31,
+          "FTE__CLO2": 22,
+          "GA1": 10,
+          "GA1__CLO2": 10,
+          "GA2": 10,
+          "GA2__CLO2": 10,
+          "GA3": 10,
+          "GA3__CLO1": 10,
+          "GA4": 10,
+          "GA4__CLO2": 10,
+          "MTE": 31,
+          "MTE__CLO1": 21,
+          "MTE__CLO2": 10,
+          "OR1": 15,
+          "OR1__CLO1": 15,
+          "OR2": 10,
+          "OR2__CLO1": 10,
+          "OR3": 10,
+          "OR3__CLO1": 10,
+          "OR4": 10,
+          "OR4__CLO2": 10,
+          "Q1": 23,
+          "Q1__CLO1": 23,
+          "Q2": 18,
+          "Q2__CLO2": 18,
+          "Q3": 38,
+          "Q3__CLO1": 38,
+          "Q4": 45,
+          "Q4__CLO2": 45
+        },
+        "student_id": "2021-03403"
+      }
+    ],
+    "terms": [
+      {
+        "term_name": "Midterm",
+        "weight_pct": 50
+      },
+      {
+        "term_name": "Finals",
+        "weight_pct": 50
+      }
+    ],
+    "rubrics": [
+      {
+        "rubric_id": "rubric_fa1",
+        "title": "FA1: Oral Recitation",
+        "assessment_code": "FA1",
+        "used_for": "Formative Assessment 1 (Oral Recitation / Conceptual Explanation)",
+        "clo_ids": [
+          "CLO1"
+        ],
+        "scale_type": "points_5",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (5)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (4)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (3)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (2)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (1)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Conceptual Understanding",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Excellent understanding; fully accurate and thorough explanation.",
+              "Good understanding; mostly correct.",
+              "Partial understanding; minor errors.",
+              "Basic understanding; some correct points.",
+              "Very limited understanding; mostly incorrect.",
+              "No understanding; cannot explain topic."
+            ]
+          },
+          {
+            "name": "Application & Examples",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Fully correct and relevant application to course principles, hardware, and analytical examples.",
+              "Mostly correct application.",
+              "Partial application; minor errors.",
+              "Some application; partially correct.",
+              "Very limited or incorrect application.",
+              "No application."
+            ]
+          },
+          {
+            "name": "Clarity & Communication",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Very clear, confident, logical, and precise explanation.",
+              "Mostly clear and organized delivery.",
+              "Partial clarity; understandable but not structured.",
+              "Some clarity; partially organized.",
+              "Very poor; hard to understand.",
+              "Incoherent; cannot communicate."
+            ]
+          }
+        ],
+        "notes": "Scores are based on the standard USeP 6-level rating scale (5 to 0)."
+      },
+      {
+        "rubric_id": "rubric_fa2",
+        "title": "FA2: Group Activity",
+        "assessment_code": "FA2",
+        "used_for": "Formative Assessment 2 (Collaborative Problem Solving & System Simulation)",
+        "clo_ids": [
+          "CLO2"
+        ],
+        "scale_type": "points_5",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (5)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (4)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (3)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (2)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (1)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Task Completion & Accuracy",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Fully completed; functional, accurate, meets objective.",
+              "Completed correctly; mostly functional.",
+              "Mostly completed; minor errors.",
+              "Partially completed; some correct elements.",
+              "Very minimal completion; mostly incorrect.",
+              "Not completed."
+            ]
+          },
+          {
+            "name": "Problem-Solving & Troubleshooting",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Excellent problem identification, solution, and reasoning.",
+              "Mostly correct identification and solutions.",
+              "Partial identification and solutions.",
+              "Identifies some issues; solutions are partially correct.",
+              "Very limited or incorrect solutions.",
+              "No problem-solving demonstrated."
+            ]
+          },
+          {
+            "name": "Collaboration & Documentation",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Excellent teamwork, complete, and clear documentation/report/presentation.",
+              "Good teamwork; mostly clear documentation.",
+              "Partial teamwork; documentation acceptable.",
+              "Some teamwork; documentation barely acceptable.",
+              "Very limited participation or poor documentation.",
+              "No teamwork or documentation."
+            ]
+          }
+        ],
+        "notes": "Team performance rubric applied to group outputs and presentations."
+      },
+      {
+        "rubric_id": "rubric_sa1",
+        "title": "SA1/SA2: Problem Solving Rubric",
+        "assessment_code": "SA1",
+        "used_for": "Summative Assessments (Quizzes and Term Examinations - Problem Solving)",
+        "clo_ids": [
+          "CLO1",
+          "CLO2"
+        ],
+        "scale_type": "percent_100",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (100%)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (80%)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (60%)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (40%)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (20%)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0%)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Conceptual Analysis",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Excellent understanding; fully accurate and thorough analysis.",
+              "Good understanding; mostly correct.",
+              "Partial understanding; minor errors.",
+              "Basic understanding; minor errors.",
+              "Very limited understanding; mostly incorrect.",
+              "No understanding; cannot analyze problem."
+            ]
+          },
+          {
+            "name": "Problem-Solving & Application",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Fully correct, efficient, and logically sound solution.",
+              "Mostly correct solution; minor issues.",
+              "Adequate solution; partially correct.",
+              "Partially correct solution; minor errors.",
+              "Very limited solution; mostly incorrect.",
+              "No attempt or completely incorrect."
+            ]
+          },
+          {
+            "name": "Accuracy & Logical Reasoning",
+            "weight_pct": 20.0,
+            "descriptors": [
+              "Fully logical, stepwise, and accurate.",
+              "Mostly logical and accurate.",
+              "Reasonable logic; some minor errors.",
+              "Some logical steps; partial correctness.",
+              "Very limited reasoning; mostly incorrect.",
+              "Completely illogical or wrong."
+            ]
+          }
+        ],
+        "notes": "Applied to non-objective problem solving portions of Quizzes and Term Examinations."
+      },
+      {
+        "rubric_id": "rubric_sa2",
+        "title": "SA1/SA2: Short Essay Rubric",
+        "assessment_code": "SA2",
+        "used_for": "Summative Assessments (Quizzes and Term Examinations - Short Essay / Design Questions)",
+        "clo_ids": [
+          "CLO1",
+          "CLO2"
+        ],
+        "scale_type": "percent_100",
+        "levels": [
+          {
+            "level": 5,
+            "label": "Excellent (100%)"
+          },
+          {
+            "level": 4,
+            "label": "Very Good (80%)"
+          },
+          {
+            "level": 3,
+            "label": "Satisfactory (60%)"
+          },
+          {
+            "level": 2,
+            "label": "Needs Improvement (40%)"
+          },
+          {
+            "level": 1,
+            "label": "Unsatisfactory (20%)"
+          },
+          {
+            "level": 0,
+            "label": "Unacceptable (0%)"
+          }
+        ],
+        "criteria": [
+          {
+            "name": "Conceptual Understanding",
+            "weight_pct": 40.0,
+            "descriptors": [
+              "Excellent understanding; fully accurate, thorough, and insightful.",
+              "Good understanding; mostly correct.",
+              "Partial understanding; minor errors.",
+              "Basic understanding; some correct points.",
+              "Very limited understanding; mostly incorrect.",
+              "Shows no understanding; explanation missing or incorrect."
+            ]
+          },
+          {
+            "name": "Application & Examples",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Fully correct, relevant, and well-illustrated examples.",
+              "Mostly correct application.",
+              "Partial application; minor errors.",
+              "Some application; partially correct.",
+              "Very limited or incorrect application.",
+              "No application."
+            ]
+          },
+          {
+            "name": "Clarity, Organization, & Reasoning",
+            "weight_pct": 30.0,
+            "descriptors": [
+              "Excellent clarity, highly logical, well-structured, and precise.",
+              "Good clarity; mostly logical and organized.",
+              "Partial clarity; understandable but not structured.",
+              "Some clarity; partially organized.",
+              "Very poor; hard to understand.",
+              "Completely incoherent."
+            ]
+          }
+        ],
+        "notes": "Applied to theoretical, design rationale, and short essay exam items."
+      }
+    ]
+  }
+}
