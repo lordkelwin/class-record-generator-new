@@ -193,13 +193,16 @@ def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[
     step = step or current_step(wf)
     if not step or not user:
         return False
-    if doc.get("owner") == user.get("username"):
-        return False  # nobody reviews/approves their own syllabus
     if user.get("role") == "admin":
         return True
+    if doc.get("owner") == user.get("username"):
+        return False  # nobody reviews/approves their own syllabus
     if step["key"] == "committee":
         comm_unames = [m.get("username") for m in (wf.get("committee_members") or []) if m.get("username")]
-        if comm_unames and user["username"] in comm_unames:
+        import auth
+        user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
+        comm_canonicals = [auth.LEGACY_USERNAME_ALIASES.get(u, u) for u in comm_unames]
+        if user_canonical in comm_canonicals or user["username"] in comm_unames:
             return True
         return ("review_committee" in (user.get("workflow_roles") or [])) and in_scope(user, doc, step)
     if step["role"] not in (user.get("workflow_roles") or []):
@@ -309,7 +312,7 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
         raise WorkflowError("This syllabus is not awaiting any signature.")
     if not user_can_act(user, doc, step):
         raise WorkflowError(f"Only the {step['label']} assigned to this program/college can act on this step.")
-    if not user.get("has_signature"):
+    if decision == "approve" and not user.get("has_signature"):
         raise WorkflowError("Please upload or draw your e-signature first (My E-Signature).")
 
     bp = doc.get("blueprint") or {}

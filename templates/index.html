@@ -2105,6 +2105,7 @@
       <div style="font-size:0.75rem; color:#64748b;" id="evalLastSavedStatus"></div>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-secondary btn-sm" onclick="closeEvaluationToolModal()">Close</button>
+        <button id="btnReturnEvaluation" class="btn btn-outline-danger btn-sm" onclick="saveEvaluationAndReturn()" style="font-weight:700;">↩️ Return for Revision</button>
         <button id="btnSaveEvaluation" class="btn btn-success btn-sm" onclick="saveEvaluationChecklist(false)">💾 Save Evaluation Checklist</button>
         <button id="btnSignAndForwardCommittee" class="btn btn-primary btn-sm" onclick="saveEvaluationChecklist(true)">✍️ Sign &amp; Recommend Approval</button>
       </div>
@@ -6267,15 +6268,21 @@
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
               ${c.user_can_act ? `
                 <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:700;">
-                  📝 Fill Review Checklist (FM-USeP-MID-02)
+                  📝 ${status === 'for_committee_review' ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
                 </button>
                 <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
-                  ✍️ Sign &amp; Approve (with E-Signature &amp; Timestamp)
+                  ✍️ ${status === 'for_committee_review' ? 'Sign & Recommend Approval' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : 'Sign & Endorse')}
                 </button>
-                <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')">
+                <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
                   ↩️ Return for Revision
                 </button>
-              ` : ''}
+              ` : `
+                ${(status !== 'draft') ? `
+                  <button class="btn btn-sm btn-outline-secondary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:600;">
+                    📋 View Review Checklist (FM-USeP-MID-02)
+                  </button>
+                ` : ''}
+              `}
 
               ${(c.is_owner && status === 'for_committee_review' && (!wf.signatures || wf.signatures.length === 0)) ? `
                 <button class="btn btn-sm btn-outline-danger" onclick="withdrawSyllabusRequestDirect('${c.id}')">
@@ -6290,21 +6297,31 @@
   }
 
   async function openCourseFromRequest(courseId, targetTab) {
-    if (courseId !== currentCourseId) {
-      await switchCourse(courseId);
-    }
-    if (targetTab === 'checklist') {
-      openEvaluationToolModal();
-    } else {
-      switchTab('tab-syllabus', document.querySelectorAll(".tabs .tab-btn")[1]);
+    try {
+      if (courseId !== currentCourseId || !blueprint) {
+        await loadCourse(courseId);
+      }
+      if (targetTab === 'checklist') {
+        await openEvaluationToolModal();
+      } else {
+        switchTab('tab-syllabus');
+      }
+    } catch(err) {
+      console.error("Error opening course from request:", err);
+      alert("Error opening course: " + err.message);
     }
   }
 
   async function quickSignRequest(courseId, decision) {
-    if (courseId !== currentCourseId) {
-      await switchCourse(courseId);
+    try {
+      if (courseId !== currentCourseId || !blueprint) {
+        await loadCourse(courseId);
+      }
+      openSignatureModal(decision);
+    } catch(err) {
+      console.error("Error opening signature modal:", err);
+      alert("Error opening signature modal: " + err.message);
     }
-    openSignatureModal(decision);
   }
 
   async function withdrawSyllabusRequestDirect(courseId) {
@@ -7637,8 +7654,10 @@
     // Save & Sign Buttons visibility
     const btnSave = document.getElementById("btnSaveEvaluation");
     const btnSign = document.getElementById("btnSignAndForwardCommittee");
+    const btnReturn = document.getElementById("btnReturnEvaluation");
     if (btnSave) btnSave.style.display = isLocked ? "none" : "inline-block";
     if (btnSign) btnSign.style.display = (isLocked || currentWorkflow?.status !== "for_committee_review") ? "none" : "inline-block";
+    if (btnReturn) btnReturn.style.display = (isLocked || currentWorkflow?.status !== "for_committee_review") ? "none" : "inline-block";
 
     // Summary metadata
     const meta = blueprint?.metadata || {};
@@ -7870,6 +7889,12 @@
     window.open(`/api/courses/${currentCourseId}/export-evaluation-pdf`, "_blank");
   }
 
+  async function saveEvaluationAndReturn() {
+    await saveEvaluationChecklist(false);
+    closeEvaluationToolModal();
+    openSignatureModal("return");
+  }
+
   // ==========================================================================
   // E-SIGNATURE DRAWING PAD & SIGNING MODAL
   // ==========================================================================
@@ -7980,7 +8005,12 @@
 
     // Title & role info
     const roleInfo = currentWorkflow?.current_step_label || "Signatory";
-    document.getElementById("sigModalRoleLabel").innerHTML = `<strong>Role:</strong> ${escapeHtml(roleInfo)} (${escapeHtml(currentUser?.full_name || '')})`;
+    const userTitle = currentUser?.position_title || currentUser?.role || '';
+    const nameStr = currentUser?.full_name || currentUser?.username || '';
+    const roleEl = document.getElementById("sigModalRoleLabel");
+    if (roleEl) {
+      roleEl.innerHTML = `<strong>Role:</strong> ${escapeHtml(roleInfo)} &bull; <strong>Signatory:</strong> ${escapeHtml(nameStr)} ${userTitle ? `(${escapeHtml(userTitle)})` : ''}`;
+    }
 
     setTimeout(() => {
       initSignatureCanvas();
@@ -8008,6 +8038,32 @@
   function toggleSigRemarksRequired(isReturn) {
     const badge = document.getElementById("sigRemarksReqBadge");
     if (badge) badge.style.display = isReturn ? "inline" : "none";
+
+    const titleEl = document.getElementById("sigModalTitle");
+    const btnSubmit = document.getElementById("btnSubmitSignature");
+
+    if (isReturn) {
+      if (titleEl) titleEl.innerHTML = "↩️ Return Syllabus for Revision";
+      if (btnSubmit) {
+        btnSubmit.textContent = "↩️ Confirm Return for Revision";
+        btnSubmit.className = "btn btn-danger btn-sm";
+      }
+      const remarks = document.getElementById("sigRemarksInput");
+      if (remarks) {
+        remarks.placeholder = "Please explain the specific gaps or required revisions (required)...";
+        setTimeout(() => remarks.focus(), 100);
+      }
+    } else {
+      if (titleEl) titleEl.innerHTML = "✍️ Official E-Signature & Endorsement";
+      if (btnSubmit) {
+        btnSubmit.textContent = "Confirm & Seal Signature";
+        btnSubmit.className = "btn btn-primary btn-sm";
+      }
+      const remarks = document.getElementById("sigRemarksInput");
+      if (remarks) {
+        remarks.placeholder = "Write observations or recommendations...";
+      }
+    }
   }
 
   async function submitWorkflowSignature() {
@@ -8022,7 +8078,7 @@
       return;
     }
 
-    if (!sigPadState.hasDrawn && !currentUser?.has_signature) {
+    if (decision === "approve" && !sigPadState.hasDrawn && !currentUser?.has_signature) {
       alert("Please draw or upload your e-signature first to seal this approval.");
       return;
     }
@@ -8032,7 +8088,7 @@
     const btn = document.getElementById("btnSubmitSignature");
     if (btn) {
       btn.disabled = true;
-      btn.textContent = "Sealing Signature...";
+      btn.textContent = decision === "return" ? "Returning Syllabus..." : "Sealing Signature...";
     }
 
     try {
@@ -8047,13 +8103,14 @@
       });
       const data = await res.json();
       if (!res.ok) {
-        alert("Signature Failed: " + (data.error || ""));
+        alert("Action Failed: " + (data.error || ""));
         return;
       }
       closeSignatureModal();
       currentWorkflow = data.workflow;
       renderWorkflowStepper();
-      loadCoursesList();
+      await loadCoursesList();
+      loadApprovalRequests(true);
       alert("✅ " + data.message);
     } catch (e) {
       console.error("Signature submission failed:", e);
@@ -8061,7 +8118,7 @@
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "Confirm & Seal Signature";
+        btn.textContent = decision === "return" ? "↩️ Confirm Return for Revision" : "Confirm & Seal Signature";
       }
     }
   }

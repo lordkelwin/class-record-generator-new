@@ -1122,19 +1122,13 @@ def api_get_workflow_requests():
     for c in all_courses:
 
         doc_raw = c.pop("doc_raw", None)
-
         wf = c.get("workflow") or {}
-
         is_owner = (c.get("owner") == user["username"])
-
+        is_admin = (user.get("role") == "admin")
         can_act = False
-
-        if doc_raw and not is_owner:
-
+        if doc_raw and (is_admin or not is_owner):
             can_act = syllabus_workflow.user_can_act(user, doc_raw)
-
         c["user_can_act"] = can_act
-
         c["is_owner"] = is_owner
 
 
@@ -1331,7 +1325,7 @@ def api_get_evaluation_form(course_id):
 
     wf = syllabus_workflow.get_workflow(doc)
 
-    can_edit = ("review_committee" in (user.get("workflow_roles") or [])) or (user.get("role") == "admin")
+    can_edit = (syllabus_workflow.user_can_act(user, doc) and wf.get("status") == "for_committee_review") or (user.get("role") == "admin")
 
     return jsonify({
 

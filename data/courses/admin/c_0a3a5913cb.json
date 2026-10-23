@@ -2,7 +2,7 @@
   "id": "c_0a3a5913cb",
   "owner": "admin",
   "created_at": "2026-10-23T08:34:35",
-  "updated_at": "2026-10-23T16:13:24",
+  "updated_at": "2026-10-24T07:10:30",
   "course_code": "AEE 321",
   "course_title": "Microprocessor Systems",
   "section": "BSEE 3A",
@@ -1099,6 +1099,71 @@
           }
         ],
         "notes": "Applied to theoretical, design rationale, and short essay exam items."
+      }
+    ]
+  },
+  "workflow": {
+    "status": "for_committee_review",
+    "cycle": 1,
+    "content_hash": "d0c6fa4693ca2196134a5cdbae9f1d6edcaecaf17359b251180c5c0dce655c35",
+    "submitted_at": "2026-10-24T07:10:30",
+    "submitted_by": "admin",
+    "submitted_by_name": "System Administrator",
+    "assigned_committee": "faculty_basan",
+    "assigned_committee_name": "Engr. Nikka Samantha A. Basan, Engr. Delan Zoe H. Arenga, Engr. Kim P. Ravida",
+    "submission_notes": "",
+    "approved_at": null,
+    "signatures": [],
+    "checklist": {
+      "responses": {},
+      "comments": {},
+      "overall_recommendation": "",
+      "general_remarks": "",
+      "updated_by": null,
+      "updated_at": null,
+      "committee_members": [
+        {
+          "username": "faculty_basan",
+          "name": "Engr. Nikka Samantha A. Basan",
+          "role": "Review Committee Chair"
+        },
+        {
+          "username": "faculty_arenga",
+          "name": "Engr. Delan Zoe H. Arenga",
+          "role": "Review Committee Member"
+        },
+        {
+          "username": "faculty_ravida",
+          "name": "Engr. Kim P. Ravida",
+          "role": "Review Committee Member"
+        }
+      ]
+    },
+    "history": [
+      {
+        "at": "2026-10-24T07:10:30",
+        "by": "admin",
+        "action": "submitted",
+        "step": "faculty",
+        "remarks": "",
+        "cycle": 1
+      }
+    ],
+    "committee_members": [
+      {
+        "username": "faculty_basan",
+        "name": "Engr. Nikka Samantha A. Basan",
+        "role": "Review Committee Chair"
+      },
+      {
+        "username": "faculty_arenga",
+        "name": "Engr. Delan Zoe H. Arenga",
+        "role": "Review Committee Member"
+      },
+      {
+        "username": "faculty_ravida",
+        "name": "Engr. Kim P. Ravida",
+        "role": "Review Committee Member"
       }
     ]
   }
