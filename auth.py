@@ -97,10 +97,14 @@ def ensure_default_admin() -> None:
         # Seed standard signatory/workflow test accounts
         seed_accounts = [
             ("faculty_tano", "Engr. Elwin Jay J. Tano", "faculty", ["review_committee"], "Faculty Member", "EE"),
-            ("committee_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Review Committee Chair", "EE"),
-            ("committee_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["review_committee"], "Review Committee Member", "EE"),
-            ("committee_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Review Committee Member", "EE"),
+            ("committee_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
+            ("faculty_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
+            ("committee_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["review_committee"], "Faculty Member", "ECE"),
+            ("faculty_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["review_committee"], "Faculty Member", "ECE"),
+            ("committee_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
+            ("faculty_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
             ("programhead_claro", "Engr. Charito O. Claro, PECE", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
+            ("faculty_claro", "Engr. Charito O. Claro, PECE", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
             ("qahead_ce", "Engr. College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
             ("dean_cataytay", "Engr. Joie D. Cataytay, Ph.D.", "faculty", ["dean", "review_committee"], "Dean, College of Engineering", "*"),
         ]
@@ -130,25 +134,33 @@ def ensure_default_admin() -> None:
             for dept_code, groups in OFFICIAL_FACULTY_ROSTER.items():
                 is_staff = (dept_code == "STAFF")
                 for fac in (groups.get("full_time", []) + groups.get("part_time", [])):
-                    u = fac.get("username")
-                    if not u:
-                        continue
-                    if u not in users:
-                        users[u] = {
-                            "full_name": fac.get("name", u),
-                            "role": "staff" if is_staff else "faculty",
-                            "workflow_roles": ["review_committee"] if (fac.get("type") == "Full-Time" and not is_staff) else [],
-                            "position_title": fac.get("title", "Faculty Member"),
-                            "program_codes": ["*"] if is_staff else [dept_code],
-                            "college": "COLLEGE OF ENGINEERING",
-                            "password_hash": default_hash,
-                            "must_change_password": False,
-                            "created_at": now_ts,
-                            "last_login": None,
-                        }
-                    else:
-                        users[u]["full_name"] = fac.get("name", users[u]["full_name"])
-                        users[u]["position_title"] = fac.get("title", users[u]["position_title"])
+                    target_unames = [fac.get("username")]
+                    if fac.get("alias"):
+                        target_unames.append(fac.get("alias"))
+                    for u in target_unames:
+                        if not u:
+                            continue
+                        roles = fac.get("roles", [])
+                        if not roles and fac.get("type") == "Full-Time" and not is_staff:
+                            roles = ["review_committee"]
+                        if u not in users:
+                            users[u] = {
+                                "full_name": fac.get("name", u),
+                                "role": "staff" if is_staff else "faculty",
+                                "workflow_roles": roles,
+                                "position_title": fac.get("title", "Faculty Member"),
+                                "program_codes": ["*"] if is_staff else [dept_code],
+                                "college": "COLLEGE OF ENGINEERING",
+                                "password_hash": default_hash,
+                                "must_change_password": False,
+                                "created_at": now_ts,
+                                "last_login": None,
+                            }
+                        else:
+                            users[u]["full_name"] = fac.get("name", users[u]["full_name"])
+                            users[u]["position_title"] = fac.get("title", users[u]["position_title"])
+                            if roles:
+                                users[u]["workflow_roles"] = roles
 
             # Attach transparent e-signatures from static/signatures if present
             sig_dir = os.path.join(BASE_DIR, "static", "signatures")

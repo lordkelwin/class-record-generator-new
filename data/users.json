@@ -16,7 +16,7 @@
     "password_hash": "scrypt:32768:8:1$McPGeHsM4jgtWLyu$2c5758f4eaa930e986d6a5d8d409f7486514ecfb58070c839c31ab11f9a2c6471f75ebe6dd02d4cc7477cac62bd5dc1d21e22908ab31fff666208075f1f76059",
     "must_change_password": false,
     "created_at": "2026-10-23T00:56:06",
-    "last_login": "2026-10-24T05:23:16"
+    "last_login": "2026-10-24T06:45:32"
   },
   "faculty_tano": {
     "full_name": "Engr. Elwin Jay J. Tano",
@@ -40,7 +40,7 @@
     "workflow_roles": [
       "review_committee"
     ],
-    "position_title": "Review Committee Chair",
+    "position_title": "Faculty Member",
     "program_codes": [
       "EE"
     ],
@@ -55,8 +55,8 @@
     "full_name": "Engr. Charito O. Claro, PECE",
     "role": "faculty",
     "workflow_roles": [
-      "review_committee",
-      "program_head"
+      "program_head",
+      "review_committee"
     ],
     "position_title": "Program Head - Electrical Engineering",
     "program_codes": [
@@ -95,7 +95,7 @@
     ],
     "position_title": "Dean, College of Engineering",
     "program_codes": [
-      "*"
+      "ABE"
     ],
     "college": "COLLEGE OF ENGINEERING",
     "password_hash": "scrypt:32768:8:1$cyW9fQ0R0sJtIBAv$bd107707b37771bad0d2b2991135f9d2e8fbd5b22694d388bb646e618916edcbc972fe7107340386e264695641723d6cda9680949f7d9cd04f96f069d2fee98f",
@@ -110,9 +110,9 @@
     "workflow_roles": [
       "review_committee"
     ],
-    "position_title": "Review Committee Member",
+    "position_title": "Faculty Member",
     "program_codes": [
-      "EE"
+      "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
     "password_hash": "scrypt:32768:8:1$EeYCqEx17hE7mTF2$b1e7ee98dc1264e8a12955d88db5d47eae62e62df29cf808d0f7d46513f1b3a44a92215cff22108db9d07365b46064154f5d3d297c577450113dcab5ee991fc0",
@@ -127,9 +127,9 @@
     "workflow_roles": [
       "review_committee"
     ],
-    "position_title": "Review Committee Member",
+    "position_title": "Faculty Member",
     "program_codes": [
-      "EE"
+      "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
     "password_hash": "scrypt:32768:8:1$Rp0Gh7EN1uAFnwQm$56aedcb8da20431398c3cb8cf1a53d6c1c3fd634298b8b49063be37776d35f42012fcef6a1c3f6aa298fa18aec0ae815ede63ac5784579a26e5ce6a24be7188a",
@@ -174,7 +174,7 @@
     "full_name": "Engr. Jayson P. Lolo",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "EE"
     ],
@@ -220,9 +220,10 @@
     "full_name": "Engr. Rosanna C. Ucat",
     "role": "faculty",
     "workflow_roles": [
+      "program_head",
       "review_committee"
     ],
-    "position_title": "Faculty Member",
+    "position_title": "Program Head - Electronics Engineering",
     "program_codes": [
       "ECE"
     ],
@@ -252,7 +253,7 @@
     "full_name": "Engr. Kim Andripa",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ECE"
     ],
@@ -266,7 +267,7 @@
     "full_name": "Engr. Cherry Vic O. Camposo",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ECE"
     ],
@@ -280,7 +281,7 @@
     "full_name": "Engr. Hans Marc C. Simplicio",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ECE"
     ],
@@ -358,7 +359,7 @@
     "full_name": "Engr. Glemar O. Guarin",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ME"
     ],
@@ -404,9 +405,10 @@
     "full_name": "Engr. Fillmore D. Masancay",
     "role": "faculty",
     "workflow_roles": [
+      "program_head",
       "review_committee"
     ],
-    "position_title": "Faculty Member",
+    "position_title": "Program Head - Geodetic Engineering",
     "program_codes": [
       "GE"
     ],
@@ -420,7 +422,7 @@
     "full_name": "Engr. Niron James Abas",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "GE"
     ],
@@ -450,22 +452,6 @@
     "full_name": "Engr. Mark John S. Pag-alaman",
     "role": "faculty",
     "workflow_roles": [
-      "review_committee"
-    ],
-    "position_title": "Faculty Member",
-    "program_codes": [
-      "MinE"
-    ],
-    "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$MseqgJuthGB8q2Xn$5c21e41885e6fae272c60dcb43724040caadf557f6b8dde3966cf519b47d5405aa6e39a9deffe379a62d68f4a7e0485651543d2422a9242493871b4f8011be0d",
-    "must_change_password": false,
-    "created_at": "2026-10-24T05:13:01",
-    "last_login": null
-  },
-  "faculty_rapal": {
-    "full_name": "Engr. Elma Jane D. Rapal",
-    "role": "faculty",
-    "workflow_roles": [
       "program_head",
       "review_committee"
     ],
@@ -479,11 +465,27 @@
     "created_at": "2026-10-24T05:13:01",
     "last_login": null
   },
+  "faculty_rapal": {
+    "full_name": "Engr. Elma Jane D. Rapal",
+    "role": "faculty",
+    "workflow_roles": [
+      "review_committee"
+    ],
+    "position_title": "Faculty Member",
+    "program_codes": [
+      "MinE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$MseqgJuthGB8q2Xn$5c21e41885e6fae272c60dcb43724040caadf557f6b8dde3966cf519b47d5405aa6e39a9deffe379a62d68f4a7e0485651543d2422a9242493871b4f8011be0d",
+    "must_change_password": false,
+    "created_at": "2026-10-24T05:13:01",
+    "last_login": null
+  },
   "faculty_castillo": {
     "full_name": "Engr. Lorel M. Castillo",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "MinE"
     ],
@@ -545,9 +547,10 @@
     "full_name": "Dean Lester P. Rejas",
     "role": "faculty",
     "workflow_roles": [
+      "program_head",
       "review_committee"
     ],
-    "position_title": "Faculty Member",
+    "position_title": "Program Head - Geology",
     "program_codes": [
       "BSGeo"
     ],
@@ -561,9 +564,10 @@
     "full_name": "Engr. Bonifacio T. Aznar Jr.",
     "role": "faculty",
     "workflow_roles": [
+      "program_head",
       "review_committee"
     ],
-    "position_title": "Faculty Member",
+    "position_title": "Program Head - Civil Engineering",
     "program_codes": [
       "CE"
     ],
@@ -673,7 +677,7 @@
     "full_name": "Engr. Ernesto B. Lim Jr.",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "CE"
     ],
@@ -687,7 +691,7 @@
     "full_name": "Engr. Florizel Ramas",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "CE"
     ],
@@ -715,9 +719,10 @@
     "full_name": "Engr. Sheena S. Arcega",
     "role": "faculty",
     "workflow_roles": [
+      "program_head",
       "review_committee"
     ],
-    "position_title": "Faculty Member",
+    "position_title": "Program Head - Sanitary Engineering",
     "program_codes": [
       "SE"
     ],
@@ -764,7 +769,7 @@
     "full_name": "Engr. Jayvee Moore S. Dy",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "SE"
     ],
@@ -938,7 +943,7 @@
     "full_name": "Engr. Kristine Faith Agato",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ABE"
     ],
@@ -952,7 +957,7 @@
     "full_name": "Engr. Ireneo P. Amplayo",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ABE"
     ],
@@ -966,7 +971,7 @@
     "full_name": "Engr. Irvin C. Generalao",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ABE"
     ],
@@ -980,7 +985,7 @@
     "full_name": "Engr. Filbert John Millan",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ABE"
     ],
@@ -994,7 +999,7 @@
     "full_name": "Engr. Ben-Hur C. Rofosala",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ABE"
     ],
@@ -1008,7 +1013,7 @@
     "full_name": "Engr. Aldrin I. Villacuer",
     "role": "faculty",
     "workflow_roles": [],
-    "position_title": "Part-Time Faculty",
+    "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ABE"
     ],
@@ -1114,6 +1119,105 @@
     "password_hash": "scrypt:32768:8:1$MseqgJuthGB8q2Xn$5c21e41885e6fae272c60dcb43724040caadf557f6b8dde3966cf519b47d5405aa6e39a9deffe379a62d68f4a7e0485651543d2422a9242493871b4f8011be0d",
     "must_change_password": false,
     "created_at": "2026-10-24T05:13:01",
+    "last_login": null
+  },
+  "faculty_basan": {
+    "full_name": "Engr. Nikka Samantha A. Basan",
+    "role": "faculty",
+    "workflow_roles": [
+      "review_committee"
+    ],
+    "position_title": "Faculty Member",
+    "program_codes": [
+      "EE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
+    "must_change_password": false,
+    "created_at": "2026-10-24T06:42:46",
+    "last_login": null
+  },
+  "faculty_claro": {
+    "full_name": "Engr. Charito O. Claro, PECE",
+    "role": "faculty",
+    "workflow_roles": [
+      "program_head",
+      "review_committee"
+    ],
+    "position_title": "Program Head - Electrical Engineering",
+    "program_codes": [
+      "EE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
+    "must_change_password": false,
+    "created_at": "2026-10-24T06:42:46",
+    "last_login": null
+  },
+  "faculty_arenga": {
+    "full_name": "Engr. Delan Zoe H. Arenga",
+    "role": "faculty",
+    "workflow_roles": [
+      "review_committee"
+    ],
+    "position_title": "Faculty Member",
+    "program_codes": [
+      "ECE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
+    "must_change_password": false,
+    "created_at": "2026-10-24T06:42:46",
+    "last_login": null
+  },
+  "faculty_ravida": {
+    "full_name": "Engr. Kim P. Ravida",
+    "role": "faculty",
+    "workflow_roles": [
+      "review_committee"
+    ],
+    "position_title": "Faculty Member",
+    "program_codes": [
+      "ECE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
+    "must_change_password": false,
+    "created_at": "2026-10-24T06:42:46",
+    "last_login": null
+  },
+  "faculty_tongson": {
+    "full_name": "Engr. Randy B. Tongson",
+    "role": "faculty",
+    "workflow_roles": [
+      "program_head",
+      "review_committee"
+    ],
+    "position_title": "Program Head - Mechanical Engineering",
+    "program_codes": [
+      "ME"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
+    "must_change_password": false,
+    "created_at": "2026-10-24T06:42:46",
+    "last_login": null
+  },
+  "faculty_tuyogon": {
+    "full_name": "Engr. Ruel Tuyogon",
+    "role": "faculty",
+    "workflow_roles": [
+      "program_head",
+      "review_committee"
+    ],
+    "position_title": "Program Head - Agricultural & Biosystems Engineering",
+    "program_codes": [
+      "ABE"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
+    "must_change_password": false,
+    "created_at": "2026-10-24T06:42:46",
     "last_login": null
   }
 }

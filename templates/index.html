@@ -1089,9 +1089,9 @@
           <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('admin')">Admin (Full)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_tano')">Faculty (Tano)</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_basan')">Review Comm 1 (Basan - Chair)</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_arenga')">Review Comm 2 (Arenga)</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_ravida')">Review Comm 3 (Ravida)</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_basan')">Faculty (Basan)</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_arenga')">Faculty (Arenga)</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_ravida')">Faculty (Ravida)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('programhead_claro')">Program Head (Claro)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('qahead_ce')">QA Head</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('dean_cataytay')">Dean (Cataytay)</button>
@@ -5896,9 +5896,9 @@
     const container = document.getElementById("submitCommitteeList");
     if (!container) return;
     const signatories = (approvalsState.signatories && approvalsState.signatories.review_committee) || [
-      { username: "committee_basan", full_name: "Engr. Nikka Samantha A. Basan", position_title: "Review Committee Chair" },
-      { username: "committee_arenga", full_name: "Engr. Delan Zoe H. Arenga", position_title: "Review Committee Member" },
-      { username: "committee_ravida", full_name: "Engr. Kim P. Ravida", position_title: "Review Committee Member" }
+      { username: "faculty_basan", full_name: "Engr. Nikka Samantha A. Basan", position_title: "Faculty Member" },
+      { username: "faculty_arenga", full_name: "Engr. Delan Zoe H. Arenga", position_title: "Faculty Member" },
+      { username: "faculty_ravida", full_name: "Engr. Kim P. Ravida", position_title: "Faculty Member" }
     ];
 
     container.innerHTML = submitModalCommitteeState.map((mem, idx) => `
