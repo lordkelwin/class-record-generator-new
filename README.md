@@ -94,16 +94,31 @@ Sign in using any of the default accounts listed below.
 
 The platform enforces strict role-based access control (RBAC). A convenient **Role Test Switcher** is embedded in the top testing banner of Tab 1 for frictionless testing between signatories:
 
-| Username | Password | Full Name | Official Role | Workflow Jurisdiction |
+| Username | Password | Full Name | Official Role | Workflow Jurisdiction & Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| `faculty_tano` | `password123` | Engr. Ramon G. Tano | Faculty in Charge | Drafts syllabus, submits requests, inputs student scores |
-| `committee_basan` | `password123` | Engr. Nikka Samantha A. Basan | Review Committee Chair | Evaluates *FM-USeP-MID-02* checklist and signs (EE) |
-| `committee_arenga`| `password123` | Engr. Delan Zoe H. Arenga | Review Committee Member | Evaluates *FM-USeP-MID-02* checklist and signs (EE) |
-| `committee_ravida`| `password123` | Engr. Kim P. Ravida | Review Committee Member | Evaluates *FM-USeP-MID-02* checklist and signs (EE) |
-| `programhead_claro`| `password123` | Engr. Charito O. Claro, PECE | Program Head | Recommending approval and endorsement (BSEE) |
-| `qahead_ce` | `password123` | Engr. College QA Head | College QA Head | Quality Assurance countersign (College of Engineering) |
-| `dean_cataytay` | `password123` | Engr. Joie D. Cataytay, Ph.D. | College Dean | Final approval & lock-in (College of Engineering) |
 | `admin` | `admin123` | System Administrator | System Admin | Full administrative control, user account management |
+| `faculty_tano` | `password123` | Engr. Elwin Jay J. Tano | Faculty Member | Authoring faculty in charge (EE Dept) |
+| `committee_basan` | `password123` | Engr. Nikka Samantha A. Basan | Review Committee Chair | Evaluates *FM-USeP-MID-02* checklist and signs (EE) |
+| `committee_arenga`| `password123` | Engr. Delan Zoe H. Arenga | Review Committee Member | Evaluates *FM-USeP-MID-02* checklist and signs (ECE) |
+| `committee_ravida`| `password123` | Engr. Kim P. Ravida | Review Committee Member | Evaluates *FM-USeP-MID-02* checklist and signs (ECE) |
+| `programhead_claro`| `password123` | Engr. Charito O. Claro, PECE | Program Head | Recommending approval and endorsement (EE) |
+| `qahead_ce` | `password123` | Engr. College QA Head | College QA Head | Quality Assurance countersign (College of Engineering) |
+| `dean_cataytay` | `password123` | Engr. Joie D. Cataytay, Ph.D. | College Dean | Final approval & lock-in *(Integrated real e-signature)* |
+| `faculty_arcega` | `password123` | Engr. Sheena S. Arcega | Faculty Member | Sanitary Engineering *(Integrated real e-signature)* |
+
+### Official College of Engineering Faculty Roster (1st Sem S.Y. 2026-2027)
+Extracted directly from the official USeP roster document (`FACULTY PROGRAM LIST - 1ST  SEM S.Y. 26-27.docx.pdf`). All full-time faculty have review committee authorization for multi-tier syllabus review:
+
+* **Electrical Engineering (EE):** Engr. Nikka Samantha A. Basan (FT), Engr. Charito O. Claro, PECE (Program Head), Engr. Ramil Alvin B. Ramos (FT), Engr. Elwin Jay J. Tano (FT), Engr. Donley Glenn Mabunga (FT), Engr. Jayson P. Lolo (PT).
+* **Electronics Engineering (ECE):** Engr. Delan Zoe H. Arenga (FT), Engr. Roberto I. Canda (FT), Engr. Filmann T. Simpao (FT), Engr. Rosanna C. Ucat (FT), Engr. Kim P. Ravida (FT), Engr. Ernani Villasencio (FT), Engr. Kim Andripa (PT), Engr. Cherry Vic O. Camposo (PT), Engr. Hans Marc C. Simplicio (PT).
+* **Mechanical Engineering (ME):** Engr. Aquileo B. Estrera (FT), Engr. Christopher C. Gonzales (FT), Engr. John Nerie L. Payao (FT), Engr. Dennis G. Rebuta (FT), Engr. Glemar O. Guarin (PT).
+* **Geodetic Engineering (GE):** Engr. Pherly Grace I. Bungao (FT), Engr. Kevin G. Cañada (FT), Engr. Fillmore D. Masancay (FT), Engr. Niron James Abas (PT).
+* **Mining Engineering (MinE):** Engr. Norvein L. Calibo (FT), Engr. Mark John S. Pag-alaman (FT), Engr. Elma Jane D. Rapal (FT / Program Head), Engr. Lorel M. Castillo (PT).
+* **Geology (BSGeo):** Christian Paul F. Escarian (FT), Jerowen C. Licayan (FT), Marjorie T. Rebuyon (FT), Dean Lester P. Rejas (FT).
+* **Civil Engineering (CE):** Engr. Bonifacio T. Aznar Jr. (FT), Engr. Maria Cynthia Donita Caparida (FT), Engr. Ma. Dely P. Esberto (FT), Engr. Jeremias M. Lawas (FT), Engr. Reymar S. Ledesma (FT), Engr. Eduardo S. Torrico Jr. (FT), Engr. Dalia M. Reconalla (FT), Engr. Ernesto B. Lim Jr. (PT), Engr. Florizel Ramas (PT), Engr. Maria Cynthia Donita Villasencio (PT).
+* **Sanitary Engineering (SE):** Engr. Sheena S. Arcega (FT / E-Signature), Engr. Rheanie R. Arnuco (FT), Engr. Kathleen C. Cedeño (FT), Engr. Jayvee Moore S. Dy (PT).
+* **Agricultural & Biosystems Engineering (ABE):** Engr. Ryan M. Abenoja (FT), Engr. Roland R. Bayron (FT), Engr. Ruben V. Cantones (FT), Engr. Joie D. Cataytay, Ph.D. (Dean / E-Signature), Engr. Alona J. Che-Tangyie (FT), Engr. Sheila C. Cogay (FT), Engr. Honeybee S. Limbaro (FT), Engr. Ronnie O. Lusares (FT), Engr. Roger C. Montepio, Ph.D. (FT), Engr. Renato C. Pareñas (FT), Engr. Teofilo Sevilla Jr. (FT), Engr. Kristine Faith Agato (PT), Engr. Ireneo P. Amplayo (PT), Engr. Irvin C. Generalao (PT), Engr. Filbert John Millan (PT), Engr. Ben-Hur C. Rofosala (PT), Engr. Aldrin I. Villacuer (PT).
+* **College Staff:** Ayanekith L. Ababon (Technical Staff), Lemmor T. Benilan (Center Staff), Joyce Magdales (Technical Staff), Girlie Prevendido (Admin Aide IV), Reynaldo Eltagonde Jr. (Lab Tech), Hans Marc C. Simplicio (Lab Tech), Maxwell A. Soller Jr. (Technical Staff).
 
 ---
 

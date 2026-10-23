@@ -96,13 +96,13 @@ def ensure_default_admin() -> None:
 
         # Seed standard signatory/workflow test accounts
         seed_accounts = [
-            ("faculty_tano", "Engr. Ramon G. Tano", "faculty", [], "Instructor", "EE"),
+            ("faculty_tano", "Engr. Elwin Jay J. Tano", "faculty", ["review_committee"], "Faculty Member", "EE"),
             ("committee_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Review Committee Chair", "EE"),
             ("committee_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["review_committee"], "Review Committee Member", "EE"),
             ("committee_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Review Committee Member", "EE"),
-            ("programhead_claro", "Engr. Charito O. Claro, PECE", "faculty", ["program_head"], "Program Head - Electrical Engineering", "EE"),
+            ("programhead_claro", "Engr. Charito O. Claro, PECE", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
             ("qahead_ce", "Engr. College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
-            ("dean_cataytay", "Engr. Joie D. Cataytay, Ph.D.", "faculty", ["dean"], "Dean, College of Engineering", "*"),
+            ("dean_cataytay", "Engr. Joie D. Cataytay, Ph.D.", "faculty", ["dean", "review_committee"], "Dean, College of Engineering", "*"),
         ]
         for uname, fname, role, w_roles, pos, prog in seed_accounts:
             if uname not in users:
@@ -118,6 +118,52 @@ def ensure_default_admin() -> None:
                     "created_at": now_ts,
                     "last_login": None,
                 }
+            else:
+                users[uname]["full_name"] = fname
+                users[uname]["position_title"] = pos
+
+        # Seed official faculty roster from catalog_data
+        try:
+            import base64
+            from catalog_data import OFFICIAL_FACULTY_ROSTER
+            default_hash = generate_password_hash("password123")
+            for dept_code, groups in OFFICIAL_FACULTY_ROSTER.items():
+                is_staff = (dept_code == "STAFF")
+                for fac in (groups.get("full_time", []) + groups.get("part_time", [])):
+                    u = fac.get("username")
+                    if not u:
+                        continue
+                    if u not in users:
+                        users[u] = {
+                            "full_name": fac.get("name", u),
+                            "role": "staff" if is_staff else "faculty",
+                            "workflow_roles": ["review_committee"] if (fac.get("type") == "Full-Time" and not is_staff) else [],
+                            "position_title": fac.get("title", "Faculty Member"),
+                            "program_codes": ["*"] if is_staff else [dept_code],
+                            "college": "COLLEGE OF ENGINEERING",
+                            "password_hash": default_hash,
+                            "must_change_password": False,
+                            "created_at": now_ts,
+                            "last_login": None,
+                        }
+                    else:
+                        users[u]["full_name"] = fac.get("name", users[u]["full_name"])
+                        users[u]["position_title"] = fac.get("title", users[u]["position_title"])
+
+            # Attach transparent e-signatures from static/signatures if present
+            sig_dir = os.path.join(BASE_DIR, "static", "signatures")
+            p_joie = os.path.join(sig_dir, "dean_cataytay.png")
+            if os.path.exists(p_joie) and "dean_cataytay" in users:
+                with open(p_joie, "rb") as f:
+                    users["dean_cataytay"]["signature_data"] = "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+
+            p_sheena = os.path.join(sig_dir, "sheena_arcega.png")
+            if os.path.exists(p_sheena) and "faculty_arcega" in users:
+                with open(p_sheena, "rb") as f:
+                    users["faculty_arcega"]["signature_data"] = "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+        except Exception:
+            pass
+
         _save_users(users)
 
 

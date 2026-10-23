@@ -1086,15 +1086,18 @@
         <!-- Testing Account / Role Quick Switcher -->
         <div style="margin-top:10px; padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:0.73rem; color:#475569; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
           <div><strong style="color:#0f172a;">⚡ Role Test Switcher:</strong> Switch active user to test every workflow step:</div>
-          <div style="display:flex; gap:5px; flex-wrap:wrap;">
+          <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('admin')">Admin (Full)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_tano')">Faculty (Tano)</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_basan')">Review Comm 1 (Basan - Chair)</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_arenga')">Review Comm 2 (Arenga)</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_basan')">Review Comm 1 (Basan - Chair)</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_arenga')">Review Comm 2 (Arenga)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('committee_ravida')">Review Comm 3 (Ravida)</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('programhead_claro')">Program Head</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('programhead_claro')">Program Head (Claro)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('qahead_ce')">QA Head</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('dean_cataytay')">Dean</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('dean_cataytay')">Dean (Cataytay)</button>
+            <select id="moreFacultySwitcher" onchange="if(this.value){ switchTestAccount(this.value); this.value=''; }" style="font-size:0.7rem; padding:2px 6px; border-radius:4px; border:1px solid #cbd5e1; background:#ffffff; color:#1e293b; font-weight:600;">
+              <option value="">More Faculty (Official Roster)...</option>
+            </select>
           </div>
         </div>
       </div>
@@ -1177,16 +1180,22 @@
           <input type="text" id="meta_semester_ay" oninput="syncMetaFromInputs()" />
         </div>
         <div class="form-group">
-          <label>Faculty Name</label>
-          <input type="text" id="meta_faculty_name" oninput="syncMetaFromInputs()" />
+          <label>Faculty Name (Auto-Suggest Roster)</label>
+          <input type="text" id="meta_faculty_name" list="facultyListPresets" placeholder="e.g. Engr. Elwin Jay J. Tano" oninput="syncMetaFromInputs()" />
+          <datalist id="facultyListPresets"></datalist>
         </div>
         <div class="form-group">
           <label>Program Head (Reviewer)</label>
-          <input type="text" id="meta_program_head" oninput="syncMetaFromInputs()" />
+          <input type="text" id="meta_program_head" list="programHeadListPresets" oninput="syncMetaFromInputs()" />
+          <datalist id="programHeadListPresets"></datalist>
         </div>
         <div class="form-group">
           <label>Dean (Approver)</label>
-          <input type="text" id="meta_dean_name" oninput="syncMetaFromInputs()" />
+          <input type="text" id="meta_dean_name" list="deanListPresets" oninput="syncMetaFromInputs()" />
+          <datalist id="deanListPresets">
+            <option value="JOIE D. CATAYTAY">Dr. Joie D. Cataytay (Dean, College of Engineering)</option>
+            <option value="Engr. Joie D. Cataytay, Ph.D.">Engr. Joie D. Cataytay, Ph.D. (Dean, College of Engineering)</option>
+          </datalist>
         </div>
         <div class="form-group">
           <label>Base-50 Passing Cutoff (75 = 3.00)</label>
@@ -2260,6 +2269,9 @@
     try {
       const catRes = await fetch("/api/catalog");
       catalogData = await catRes.json();
+      if (typeof populateFacultyPresetsAndSwitcher === "function") {
+        populateFacultyPresetsAndSwitcher();
+      }
     } catch (e) {
       console.error("Failed to load catalog:", e);
     }
@@ -2810,6 +2822,73 @@
       courseOptionsHtml = `<option value="${escapeHtml(curCode)}" selected>${escapeHtml(curCode)} &ndash; ${escapeHtml(m.course_title || "Custom Course")}</option>` + courseOptionsHtml;
     }
     courseSel.innerHTML = courseOptionsHtml;
+    populateFacultyPresetsAndSwitcher();
+  }
+
+  function populateFacultyPresetsAndSwitcher() {
+    const selectedDept = document.getElementById("meta_department") ? document.getElementById("meta_department").value : "";
+    const selectedCollege = document.getElementById("meta_college") ? document.getElementById("meta_college").value : "";
+    const collegeObj = (catalogData.colleges || []).find(c => c.college === selectedCollege) || (catalogData.colleges || [])[0];
+    const deptObj = (collegeObj?.departments || []).find(d => d.department === selectedDept);
+
+    // 1. Populate Faculty List Presets
+    const facultyDatalist = document.getElementById("facultyListPresets");
+    if (facultyDatalist) {
+      const deptFaculty = (deptObj && deptObj.faculty) || [];
+      const roster = catalogData.faculty_roster || {};
+      const allFacultyMap = new Map();
+
+      // Put department faculty first
+      deptFaculty.forEach(f => allFacultyMap.set(f.name, { ...f, isDept: true }));
+
+      // Add rest of college faculty
+      Object.keys(roster).forEach(code => {
+        const grp = roster[code];
+        (grp.full_time || []).forEach(f => {
+          if (!allFacultyMap.has(f.name)) allFacultyMap.set(f.name, { ...f, dept: code, isDept: false });
+        });
+        (grp.part_time || []).forEach(f => {
+          if (!allFacultyMap.has(f.name)) allFacultyMap.set(f.name, { ...f, dept: code, isDept: false });
+        });
+      });
+
+      let optionsHtml = "";
+      allFacultyMap.forEach(f => {
+        const badge = f.isDept ? `[${deptObj?.program_code || 'Dept'} ${f.type || 'Faculty'}]` : `[${f.dept || 'Engineering'}]`;
+        optionsHtml += `<option value="${escapeHtml(f.name)}">${escapeHtml(f.name)} ${badge}</option>`;
+      });
+      facultyDatalist.innerHTML = optionsHtml;
+    }
+
+    // 2. Populate Program Head List Presets
+    const headDatalist = document.getElementById("programHeadListPresets");
+    if (headDatalist && collegeObj) {
+      const heads = (collegeObj.departments || []).map(d => ({ name: d.program_head, prog: d.program_code }));
+      headDatalist.innerHTML = heads
+        .filter(h => h.name)
+        .map(h => `<option value="${escapeHtml(h.name)}">${escapeHtml(h.name)} (Program Head - ${h.prog})</option>`)
+        .join("");
+    }
+
+    // 3. Populate Quick Role Test Switcher "More Faculty" dropdown
+    const switcher = document.getElementById("moreFacultySwitcher");
+    if (switcher && catalogData.faculty_roster) {
+      const roster = catalogData.faculty_roster;
+      let optHtml = `<option value="">More Faculty (Official Roster)...</option>`;
+      const deptOrder = ["EE", "CE", "ECE", "ME", "SE", "ABE", "GE", "MinE", "BSGeo", "STAFF"];
+      deptOrder.forEach(code => {
+        const grp = roster[code];
+        if (!grp) return;
+        const members = (grp.full_time || []).concat(grp.part_time || []);
+        if (members.length === 0) return;
+        optHtml += `<optgroup label="${code}">`;
+        members.forEach(m => {
+          optHtml += `<option value="${escapeHtml(m.username)}">${escapeHtml(m.name)} (${escapeHtml(m.title || code)})</option>`;
+        });
+        optHtml += `</optgroup>`;
+      });
+      switcher.innerHTML = optHtml;
+    }
   }
 
   function onCollegeChange() {

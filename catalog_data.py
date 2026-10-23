@@ -1975,6 +1975,142 @@ BSGEO_COURSES: List[Dict[str, Any]] = [
 
 
 # ==============================================================================
+# OFFICIAL FACULTY ROSTER (1ST SEM S.Y. 2026-2027)
+# Source: FACULTY PROGRAM LIST - 1ST SEM S.Y. 26-27.docx.pdf
+# ==============================================================================
+OFFICIAL_FACULTY_ROSTER: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
+    "EE": {
+        "full_time": [
+            {"name": "Engr. Nikka Samantha A. Basan", "title": "Review Committee Chair", "username": "committee_basan", "type": "Full-Time"},
+            {"name": "Engr. Charito O. Claro, PECE", "title": "Program Head - Electrical Engineering", "username": "programhead_claro", "type": "Full-Time"},
+            {"name": "Engr. Ramil Alvin B. Ramos", "title": "Faculty Member", "username": "faculty_ramos", "type": "Full-Time"},
+            {"name": "Engr. Elwin Jay J. Tano", "title": "Faculty Member", "username": "faculty_tano", "type": "Full-Time"},
+            {"name": "Engr. Donley Glenn Mabunga", "title": "Faculty Member", "username": "faculty_mabunga", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Jayson P. Lolo", "title": "Part-Time Faculty", "username": "faculty_lolo", "type": "Part-Time"},
+        ]
+    },
+    "ECE": {
+        "full_time": [
+            {"name": "Engr. Delan Zoe H. Arenga", "title": "Review Committee Member", "username": "committee_arenga", "type": "Full-Time"},
+            {"name": "Engr. Roberto I. Canda", "title": "Faculty Member", "username": "faculty_canda", "type": "Full-Time"},
+            {"name": "Engr. Filmann T. Simpao", "title": "Faculty Member", "username": "faculty_simpao", "type": "Full-Time"},
+            {"name": "Engr. Rosanna C. Ucat", "title": "Faculty Member", "username": "faculty_ucat", "type": "Full-Time"},
+            {"name": "Engr. Kim P. Ravida", "title": "Review Committee Member", "username": "committee_ravida", "type": "Full-Time"},
+            {"name": "Engr. Ernani Villasencio", "title": "Faculty Member", "username": "faculty_villasencio_e", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Kim Andripa", "title": "Part-Time Faculty", "username": "faculty_andripa", "type": "Part-Time"},
+            {"name": "Engr. Cherry Vic O. Camposo", "title": "Part-Time Faculty", "username": "faculty_camposo", "type": "Part-Time"},
+            {"name": "Engr. Hans Marc C. Simplicio", "title": "Part-Time Faculty", "username": "faculty_simplicio", "type": "Part-Time"},
+        ]
+    },
+    "ME": {
+        "full_time": [
+            {"name": "Engr. Aquileo B. Estrera", "title": "Faculty Member", "username": "faculty_estrera", "type": "Full-Time"},
+            {"name": "Engr. Christopher C. Gonzales", "title": "Faculty Member", "username": "faculty_gonzales", "type": "Full-Time"},
+            {"name": "Engr. John Nerie L. Payao", "title": "Faculty Member", "username": "faculty_payao", "type": "Full-Time"},
+            {"name": "Engr. Dennis G. Rebuta", "title": "Faculty Member", "username": "faculty_rebuta", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Glemar O. Guarin", "title": "Part-Time Faculty", "username": "faculty_guarin", "type": "Part-Time"},
+        ]
+    },
+    "GE": {
+        "full_time": [
+            {"name": "Engr. Pherly Grace I. Bungao", "title": "Faculty Member", "username": "faculty_bungao", "type": "Full-Time"},
+            {"name": "Engr. Kevin G. Cañada", "title": "Faculty Member", "username": "faculty_canada", "type": "Full-Time"},
+            {"name": "Engr. Fillmore D. Masancay", "title": "Faculty Member", "username": "faculty_masancay", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Niron James Abas", "title": "Part-Time Faculty", "username": "faculty_abas", "type": "Part-Time"},
+        ]
+    },
+    "MinE": {
+        "full_time": [
+            {"name": "Engr. Norvein L. Calibo", "title": "Faculty Member", "username": "faculty_calibo", "type": "Full-Time"},
+            {"name": "Engr. Mark John S. Pag-alaman", "title": "Faculty Member", "username": "faculty_pagalaman", "type": "Full-Time"},
+            {"name": "Engr. Elma Jane D. Rapal", "title": "Program Head - Mining Engineering", "username": "faculty_rapal", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Lorel M. Castillo", "title": "Part-Time Faculty", "username": "faculty_castillo", "type": "Part-Time"},
+        ]
+    },
+    "BSGeo": {
+        "full_time": [
+            {"name": "Christian Paul F. Escarian", "title": "Faculty Member", "username": "faculty_escarian", "type": "Full-Time"},
+            {"name": "Jerowen C. Licayan", "title": "Faculty Member", "username": "faculty_licayan", "type": "Full-Time"},
+            {"name": "Marjorie T. Rebuyon", "title": "Faculty Member", "username": "faculty_rebuyon", "type": "Full-Time"},
+            {"name": "Dean Lester P. Rejas", "title": "Faculty Member", "username": "faculty_rejas", "type": "Full-Time"},
+        ],
+        "part_time": []
+    },
+    "CE": {
+        "full_time": [
+            {"name": "Engr. Bonifacio T. Aznar Jr.", "title": "Faculty Member", "username": "faculty_aznar", "type": "Full-Time"},
+            {"name": "Engr. Maria Cynthia Donita Caparida", "title": "Faculty Member", "username": "faculty_caparida", "type": "Full-Time"},
+            {"name": "Engr. Ma. Dely P. Esberto", "title": "Faculty Member", "username": "faculty_esberto", "type": "Full-Time"},
+            {"name": "Engr. Jeremias M. Lawas", "title": "Faculty Member", "username": "faculty_lawas", "type": "Full-Time"},
+            {"name": "Engr. Reymar S. Ledesma", "title": "Faculty Member", "username": "faculty_ledesma", "type": "Full-Time"},
+            {"name": "Engr. Eduardo S. Torrico Jr.", "title": "Faculty Member", "username": "faculty_torrico", "type": "Full-Time"},
+            {"name": "Engr. Dalia M. Reconalla", "title": "Faculty Member", "username": "faculty_reconalla", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Ernesto B. Lim Jr.", "title": "Part-Time Faculty", "username": "faculty_lim", "type": "Part-Time"},
+            {"name": "Engr. Florizel Ramas", "title": "Part-Time Faculty", "username": "faculty_ramas", "type": "Part-Time"},
+            {"name": "Engr. Maria Cynthia Donita Villasencio", "title": "Part-Time Faculty", "username": "faculty_villasencio_m", "type": "Part-Time"},
+        ]
+    },
+    "SE": {
+        "full_time": [
+            {"name": "Engr. Sheena S. Arcega", "title": "Faculty Member", "username": "faculty_arcega", "type": "Full-Time"},
+            {"name": "Engr. Rheanie R. Arnuco", "title": "Faculty Member", "username": "faculty_arnuco", "type": "Full-Time"},
+            {"name": "Engr. Kathleen C. Cedeño", "title": "Faculty Member", "username": "faculty_cedeno", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Jayvee Moore S. Dy", "title": "Part-Time Faculty", "username": "faculty_dy", "type": "Part-Time"},
+        ]
+    },
+    "ABE": {
+        "full_time": [
+            {"name": "Engr. Ryan M. Abenoja", "title": "Faculty Member", "username": "faculty_abenoja", "type": "Full-Time"},
+            {"name": "Engr. Roland R. Bayron", "title": "Faculty Member", "username": "faculty_bayron", "type": "Full-Time"},
+            {"name": "Engr. Ruben V. Cantones", "title": "Faculty Member", "username": "faculty_cantones", "type": "Full-Time"},
+            {"name": "Engr. Joie D. Cataytay, Ph.D.", "title": "Dean, College of Engineering", "username": "dean_cataytay", "type": "Full-Time"},
+            {"name": "Engr. Alona J. Che-Tangyie", "title": "Faculty Member", "username": "faculty_chetangyie", "type": "Full-Time"},
+            {"name": "Engr. Sheila C. Cogay", "title": "Faculty Member", "username": "faculty_cogay", "type": "Full-Time"},
+            {"name": "Engr. Honeybee S. Limbaro", "title": "Faculty Member", "username": "faculty_limbaro", "type": "Full-Time"},
+            {"name": "Engr. Ronnie O. Lusares", "title": "Faculty Member", "username": "faculty_lusares", "type": "Full-Time"},
+            {"name": "Engr. Roger C. Montepio, Ph.D.", "title": "Faculty Member", "username": "faculty_montepio", "type": "Full-Time"},
+            {"name": "Engr. Renato C. Pareñas", "title": "Faculty Member", "username": "faculty_parenas", "type": "Full-Time"},
+            {"name": "Engr. Teofilo Sevilla Jr.", "title": "Faculty Member", "username": "faculty_sevilla", "type": "Full-Time"},
+        ],
+        "part_time": [
+            {"name": "Engr. Kristine Faith Agato", "title": "Part-Time Faculty", "username": "faculty_agato", "type": "Part-Time"},
+            {"name": "Engr. Ireneo P. Amplayo", "title": "Part-Time Faculty", "username": "faculty_amplayo", "type": "Part-Time"},
+            {"name": "Engr. Irvin C. Generalao", "title": "Part-Time Faculty", "username": "faculty_generalao", "type": "Part-Time"},
+            {"name": "Engr. Filbert John Millan", "title": "Part-Time Faculty", "username": "faculty_millan", "type": "Part-Time"},
+            {"name": "Engr. Ben-Hur C. Rofosala", "title": "Part-Time Faculty", "username": "faculty_rofosala", "type": "Part-Time"},
+            {"name": "Engr. Aldrin I. Villacuer", "title": "Part-Time Faculty", "username": "faculty_villacuer", "type": "Part-Time"},
+        ]
+    },
+    "STAFF": {
+        "full_time": [
+            {"name": "Ayanekith L. Ababon", "title": "Technical Staff", "username": "staff_ababon", "type": "Full-Time"},
+            {"name": "Lemmor T. Benilan", "title": "Center Staff", "username": "staff_benilan", "type": "Full-Time"},
+            {"name": "Joyce Magdales", "title": "Technical Staff", "username": "staff_magdales", "type": "Full-Time"},
+            {"name": "Girlie Prevendido", "title": "Admin Aide IV", "username": "staff_prevendido", "type": "Full-Time"},
+            {"name": "Reynaldo Eltagonde Jr.", "title": "Laboratory Technician", "username": "staff_eltagonde", "type": "Full-Time"},
+            {"name": "Hans Marc C. Simplicio", "title": "Laboratory Technician", "username": "staff_simplicio_lab", "type": "Full-Time"},
+            {"name": "Maxwell A. Soller Jr.", "title": "Technical Staff", "username": "staff_soller", "type": "Full-Time"},
+        ],
+        "part_time": []
+    }
+}
+
+
+# ==============================================================================
 # 3. HIERARCHICAL COLLEGE -> DEPARTMENT -> COURSES CATALOG
 # ==============================================================================
 COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
@@ -1987,7 +2123,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Electrical Engineering",
                 "program_name": "Bachelor of Science in Electrical Engineering",
                 "program_code": "EE",
-                "program_head": "CHARITO O. CLARO",
+                "program_head": "CHARITO O. CLARO, PECE",
+                "faculty": OFFICIAL_FACULTY_ROSTER["EE"]["full_time"] + OFFICIAL_FACULTY_ROSTER["EE"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["EE"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["EE"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["EE"]["peos"],
@@ -1998,7 +2135,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Civil Engineering",
                 "program_name": "Bachelor of Science in Civil Engineering",
                 "program_code": "CE",
-                "program_head": "DEPT. CHAIRPERSON (BSCE)",
+                "program_head": "JEREMIAS M. LAWAS",
+                "faculty": OFFICIAL_FACULTY_ROSTER["CE"]["full_time"] + OFFICIAL_FACULTY_ROSTER["CE"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["CE"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["CE"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["CE"]["peos"],
@@ -2009,7 +2147,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Electronics Engineering",
                 "program_name": "Bachelor of Science in Electronics Engineering",
                 "program_code": "ECE",
-                "program_head": "DEPT. CHAIRPERSON (BSECE)",
+                "program_head": "DELAN ZOE H. ARENGA",
+                "faculty": OFFICIAL_FACULTY_ROSTER["ECE"]["full_time"] + OFFICIAL_FACULTY_ROSTER["ECE"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["ECE"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["ECE"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["ECE"]["peos"],
@@ -2020,7 +2159,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Mechanical Engineering",
                 "program_name": "Bachelor of Science in Mechanical Engineering",
                 "program_code": "ME",
-                "program_head": "DEPT. CHAIRPERSON (BSME)",
+                "program_head": "AQUILEO B. ESTRERA",
+                "faculty": OFFICIAL_FACULTY_ROSTER["ME"]["full_time"] + OFFICIAL_FACULTY_ROSTER["ME"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["ME"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["ME"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["ME"]["peos"],
@@ -2031,7 +2171,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Sanitary Engineering",
                 "program_name": "Bachelor of Science in Sanitary Engineering",
                 "program_code": "SE",
-                "program_head": "ENGR. FLORENCIO S. CHUA",
+                "program_head": "SHEENA S. ARCEGA",
+                "faculty": OFFICIAL_FACULTY_ROSTER["SE"]["full_time"] + OFFICIAL_FACULTY_ROSTER["SE"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["SE"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["SE"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["SE"]["peos"],
@@ -2042,7 +2183,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Agricultural and Biosystems Engineering",
                 "program_name": "Bachelor of Science in Agricultural and Biosystems Engineering",
                 "program_code": "ABE",
-                "program_head": "DEPT. CHAIRPERSON (BSABE)",
+                "program_head": "ROGER C. MONTEPIO, Ph.D.",
+                "faculty": OFFICIAL_FACULTY_ROSTER["ABE"]["full_time"] + OFFICIAL_FACULTY_ROSTER["ABE"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["ABE"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["ABE"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["ABE"]["peos"],
@@ -2053,7 +2195,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Geodetic Engineering",
                 "program_name": "Bachelor of Science in Geodetic Engineering",
                 "program_code": "GE",
-                "program_head": "DEPT. CHAIRPERSON (BSGE)",
+                "program_head": "FILLMORE D. MASANCAY",
+                "faculty": OFFICIAL_FACULTY_ROSTER["GE"]["full_time"] + OFFICIAL_FACULTY_ROSTER["GE"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["GE"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["GE"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["GE"]["peos"],
@@ -2064,7 +2207,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Mining Engineering",
                 "program_name": "Bachelor of Science in Mining Engineering",
                 "program_code": "MinE",
-                "program_head": "ENGR. ELMA JANE D. RAPAL",
+                "program_head": "ELMA JANE D. RAPAL",
+                "faculty": OFFICIAL_FACULTY_ROSTER["MinE"]["full_time"] + OFFICIAL_FACULTY_ROSTER["MinE"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["MinE"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["MinE"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["MinE"]["peos"],
@@ -2075,7 +2219,8 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "department": "Department of Geology",
                 "program_name": "Bachelor of Science in Geology",
                 "program_code": "BSGeo",
-                "program_head": "ABIGAIL JUNE L. AGUS",
+                "program_head": "CHRISTIAN PAUL F. ESCARIAN",
+                "faculty": OFFICIAL_FACULTY_ROSTER["BSGeo"]["full_time"] + OFFICIAL_FACULTY_ROSTER["BSGeo"]["part_time"],
                 "source_file": PROGRAM_STRUCTURES_BY_CODE["BSGeo"]["source_file"],
                 "cmo_reference": PROGRAM_STRUCTURES_BY_CODE["BSGeo"]["cmo_reference"],
                 "peos": PROGRAM_STRUCTURES_BY_CODE["BSGeo"]["peos"],
@@ -2127,6 +2272,7 @@ UN_SDG_CATALOG: List[Dict[str, str]] = [
 def get_full_catalog() -> Dict[str, Any]:
     return {
         "colleges": COLLEGE_DEPARTMENT_CATALOG,
+        "faculty_roster": OFFICIAL_FACULTY_ROSTER,
         "pgo_pi_catalog": PGO_PI_CATALOG,
         "program_structures": PROGRAM_STRUCTURES_BY_CODE,
         "iga_catalog": {
