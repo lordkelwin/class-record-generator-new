@@ -510,13 +510,28 @@ def generate_syllabus_evaluation_pdf(doc: Dict[str, Any], user_info: Optional[Di
     pdf.cell(0, 4.0, "REVIEWED BY (Syllabus Review Committee):", 0, 1, "L")
     pdf.ln(2)
 
-    comm_sig = signatures_by_role.get("review_committee")
     start_y = pdf.get_y()
     for idx, member in enumerate(comm_members[:3]):
         x_pos = 10 + idx * 64
+        # Match specific signature for this committee member
+        mem_sig = None
+        m_uname = member.get("username")
+        m_name = (member.get("name") or "").upper()
+        for s in wf.get("signatures", []):
+            if m_uname and s.get("username") == m_uname:
+                mem_sig = s
+                break
+            if m_name and s.get("full_name") and (m_name in s["full_name"].upper() or s["full_name"].upper() in m_name):
+                mem_sig = s
+                break
+        if not mem_sig and member.get("role") == "Review Committee Chair":
+            mem_sig = signatures_by_role.get("review_committee_chair") or signatures_by_role.get("review_committee")
+        if not mem_sig:
+            mem_sig = signatures_by_role.get("review_committee")
+
         # Draw signature image if present
-        if comm_sig and comm_sig.get("signature_data"):
-            tmp_img = _save_data_url_image(comm_sig["signature_data"])
+        if mem_sig and mem_sig.get("signature_data"):
+            tmp_img = _save_data_url_image(mem_sig["signature_data"])
             if tmp_img:
                 sig_files.append(tmp_img)
                 try:

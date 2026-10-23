@@ -24,11 +24,20 @@ from typing import Any, Dict, List, Optional
 # --------------------------------------------------------------------------
 WORKFLOW_STEPS: List[Dict[str, Any]] = [
     {
-        "key": "committee",
+        "key": "committee_members",
         "role": "review_committee",
-        "label": "Syllabus Review Committee",
-        "action_label": "Reviewed by",
+        "label": "Review Committee Members",
+        "action_label": "Reviewed by Members",
         "status": "for_committee_review",
+        "requires_checklist": True,
+        "scope": "program",
+    },
+    {
+        "key": "committee_chair",
+        "role": "review_committee_chair",
+        "label": "Review Committee Chair",
+        "action_label": "Endorsed by Chair",
+        "status": "for_committee_chair",
         "requires_checklist": True,
         "scope": "program",
     },
@@ -66,11 +75,12 @@ WORKFLOW_ROLES = {s["role"]: s["label"] for s in WORKFLOW_STEPS}
 STATUS_LABELS = {
     "draft": "Draft",
     "returned": "Returned for Revision",
-    "for_committee_review": "For Review Committee",
+    "for_committee_review": "For Committee Members Review",
+    "for_committee_chair": "For Committee Chair Endorsement",
     "for_program_head": "For Program Head Approval",
     "for_qa_countersign": "For QA Head Countersign",
     "for_dean_approval": "For Dean's Approval",
-    "approved": "Approved",
+    "approved": "Approved & Locked",
 }
 
 EDITABLE_STATUSES = {"draft", "returned"}
@@ -197,14 +207,33 @@ def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[
         return True
     if doc.get("owner") == user.get("username"):
         return False  # nobody reviews/approves their own syllabus
-    if step["key"] == "committee":
-        comm_unames = [m.get("username") for m in (wf.get("committee_members") or []) if m.get("username")]
-        import auth
-        user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
-        comm_canonicals = [auth.LEGACY_USERNAME_ALIASES.get(u, u) for u in comm_unames]
-        if user_canonical in comm_canonicals or user["username"] in comm_unames:
-            return True
-        return ("review_committee" in (user.get("workflow_roles") or [])) and in_scope(user, doc, step)
+
+    import auth
+    user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
+    comm_list = wf.get("committee_members") or []
+
+    # Step 1: Committee Members Review (Non-chair members must approve first)
+    if step["key"] == "committee_members":
+        non_chair = [m for m in comm_list if m.get("role") != "Review Committee Chair"]
+        if not non_chair:
+            # If no non-chair members configured, allow committee members
+            comm_canonicals = [auth.LEGACY_USERNAME_ALIASES.get(m.get("username"), m.get("username")) for m in comm_list]
+            return user_canonical in comm_canonicals
+        non_chair_canonicals = [auth.LEGACY_USERNAME_ALIASES.get(m.get("username"), m.get("username")) for m in non_chair]
+        signed_canonicals = {auth.LEGACY_USERNAME_ALIASES.get(s.get("username"), s.get("username")) for s in wf.get("signatures", []) if s.get("step") == "committee_members"}
+        # Must be an assigned non-chair member and not yet signed in this cycle
+        return user_canonical in non_chair_canonicals and user_canonical not in signed_canonicals
+
+    # Step 2: Committee Chair Endorsement (After members have approved)
+    if step["key"] == "committee_chair":
+        chair = next((m for m in comm_list if m.get("role") == "Review Committee Chair"), None)
+        chair_canonical = auth.LEGACY_USERNAME_ALIASES.get(chair.get("username"), chair.get("username")) if chair else None
+        signed_chair = {auth.LEGACY_USERNAME_ALIASES.get(s.get("username"), s.get("username")) for s in wf.get("signatures", []) if s.get("step") == "committee_chair"}
+        if chair_canonical:
+            return user_canonical == chair_canonical and user_canonical not in signed_chair
+        assigned_comm = auth.LEGACY_USERNAME_ALIASES.get(wf.get("assigned_committee"), wf.get("assigned_committee"))
+        return user_canonical == assigned_comm and user_canonical not in signed_chair
+
     if step["role"] not in (user.get("workflow_roles") or []):
         return False
     return in_scope(user, doc, step)
@@ -291,7 +320,12 @@ def save_checklist(doc: Dict[str, Any], user: Dict[str, Any], data: Dict[str, An
     step = current_step(wf)
     if not step or not step.get("requires_checklist"):
         raise WorkflowError("The review checklist can only be filled while the syllabus is with the Review Committee.")
-    if not user_can_act(user, doc, step):
+    import auth
+    user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
+    comm_list = wf.get("committee_members") or []
+    comm_canonicals = [auth.LEGACY_USERNAME_ALIASES.get(m.get("username"), m.get("username")) for m in comm_list]
+    is_comm = (user_canonical in comm_canonicals) or ("review_committee" in (user.get("workflow_roles") or [])) or (user.get("role") == "admin")
+    if not is_comm:
         raise WorkflowError("Only members of the Syllabus Review Committee can fill out the review checklist.")
     cl = wf["checklist"]
     cl["responses"] = {str(k): str(v) for k, v in (data.get("responses") or {}).items()}
@@ -339,12 +373,65 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
         if not cl.get("overall_recommendation"):
             raise WorkflowError("Please select the committee's overall recommendation before signing.")
 
+    import auth
+    user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
+
+    # Handle Step 1: committee_members review
+    if step["key"] == "committee_members":
+        wf["signatures"].append({
+            "step": "committee_members",
+            "role": "review_committee",
+            "label": "Review Committee Member",
+            "action_label": "Reviewed by",
+            "username": user_canonical,
+            "full_name": user.get("full_name") or user["username"],
+            "title": user.get("position_title") or "Review Committee Member",
+            "decision": "approved",
+            "remarks": remarks or "",
+            "signed_at": _now(),
+            "signature_data": user.get("signature_data") or "",
+            "content_hash": wf["content_hash"],
+        })
+        _log(wf, user["username"], "signed", remarks=remarks, step="committee_members")
+
+        comm_list = wf.get("committee_members") or []
+        non_chair = [m for m in comm_list if m.get("role") != "Review Committee Chair"]
+        signed_canonicals = {auth.LEGACY_USERNAME_ALIASES.get(s.get("username"), s.get("username")) for s in wf.get("signatures", []) if s.get("step") == "committee_members"}
+        all_non_chair_signed = all(auth.LEGACY_USERNAME_ALIASES.get(m.get("username"), m.get("username")) in signed_canonicals for m in non_chair)
+
+        if all_non_chair_signed or not non_chair:
+            wf["status"] = "for_committee_chair"
+        else:
+            wf["status"] = "for_committee_review"
+        return wf
+
+    # Handle Step 2: committee_chair endorsement
+    if step["key"] == "committee_chair":
+        wf["signatures"].append({
+            "step": "committee_chair",
+            "role": "review_committee_chair",
+            "label": "Review Committee Chair",
+            "action_label": "Endorsed by Chair",
+            "username": user_canonical,
+            "full_name": user.get("full_name") or user["username"],
+            "title": user.get("position_title") or "Review Committee Chair",
+            "decision": "approved",
+            "remarks": remarks or "",
+            "signed_at": _now(),
+            "signature_data": user.get("signature_data") or "",
+            "content_hash": wf["content_hash"],
+        })
+        _log(wf, user["username"], "signed", remarks=remarks, step="committee_chair")
+        wf["status"] = "for_program_head"
+        return wf
+
+    # Steps 3-5: Program Head, QA Head, Dean
     wf["signatures"].append({
         "step": step["key"],
         "role": step["role"],
         "label": step["label"],
         "action_label": step["action_label"],
-        "username": user["username"],
+        "username": user_canonical,
         "full_name": user.get("full_name") or user["username"],
         "title": user.get("position_title") or step["label"],
         "decision": "approved",
@@ -403,5 +490,24 @@ def public_view(doc: Dict[str, Any]) -> Dict[str, Any]:
         "checklist": wf.get("checklist"),
         "committee_members": wf.get("committee_members") or [],
         "history": wf.get("history", [])[-30:],
+        "revision_reason": wf.get("revision_reason", ""),
         "steps": [{"key": s["key"], "label": s["label"], "action_label": s["action_label"], "role": s["role"]} for s in WORKFLOW_STEPS],
     }
+
+
+def request_revision(doc: Dict[str, Any], user: Dict[str, Any], reason: str = "") -> Dict[str, Any]:
+    wf = get_workflow(doc)
+    is_owner = (doc.get("owner") == user.get("username"))
+    is_admin = (user.get("role") == "admin")
+    if not (is_owner or is_admin):
+        raise WorkflowError("Only the faculty who owns this syllabus can request a revision.")
+    if wf.get("status") != "approved":
+        raise WorkflowError("A revision request can only be submitted for an approved syllabus.")
+
+    wf["status"] = "draft"
+    wf["cycle"] = int(wf.get("cycle", 1)) + 1
+    wf["signatures"] = []
+    wf["approved_at"] = None
+    wf["revision_reason"] = (reason or "").strip()
+    _log(wf, user["username"], "revision_requested", remarks=reason, step="faculty")
+    return wf

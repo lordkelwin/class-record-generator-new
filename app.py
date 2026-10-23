@@ -715,6 +715,7 @@ def api_get_course(course_id):
     wf_view["can_withdraw"] = (doc.get("owner") == username) and (wf_view["status"] == "for_committee_review") and not wf_view["signatures"]
 
     wf_view["can_sign"] = syllabus_workflow.user_can_act(user, doc)
+    wf_view["can_request_revision"] = (doc.get("owner") == (user.get("username") if user else "") or (user and user.get("role") == "admin")) and (wf_view["status"] == "approved")
 
     return jsonify({
 
@@ -991,6 +992,7 @@ def api_get_course_workflow(course_id):
     wf_view["can_withdraw"] = (doc.get("owner") == uname) and (wf_view["status"] == "for_committee_review") and not wf_view["signatures"]
 
     wf_view["can_sign"] = syllabus_workflow.user_can_act(user, doc)
+    wf_view["can_request_revision"] = (doc.get("owner") == (user.get("username") if user else "") or (user and user.get("role") == "admin")) and (wf_view["status"] == "approved")
 
     wf_view["can_edit_checklist"] = (
 
@@ -1108,10 +1110,12 @@ def api_get_workflow_requests():
 
 
     pending_action_for_me = []
-
     my_submitted_requests = []
-
     institutional_requests = []
+
+    w_roles = user.get("workflow_roles") or []
+    is_admin = (user.get("role") == "admin")
+    can_view_institutional = is_admin or any(r in w_roles for r in ["program_head", "qa_head", "dean"])
 
 
 
@@ -1137,27 +1141,21 @@ def api_get_workflow_requests():
 
 
 
-        if can_act and wf.get("status") in {"for_committee_review", "for_program_head", "for_qa_countersign", "for_dean_approval"}:
-
+        if can_act and wf.get("status") in {"for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"}:
             pending_action_for_me.append(c)
 
-
-
-
-
-
-
         if is_owner:
-
             my_submitted_requests.append(c)
 
-
-
-
-
-
-
-        institutional_requests.append(c)
+        if can_view_institutional:
+            # If program head without college-wide rights, only show their program's courses
+            if "program_head" in w_roles and not (is_admin or "dean" in w_roles or "qa_head" in w_roles):
+                p_codes = user.get("program_codes") or []
+                c_prog = (c.get("program_code") or "").upper()
+                if not p_codes or "*" in p_codes or c_prog in p_codes:
+                    institutional_requests.append(c)
+            else:
+                institutional_requests.append(c)
 
 
 
@@ -1168,6 +1166,7 @@ def api_get_workflow_requests():
     return jsonify({
 
         "pending_count": len(pending_action_for_me),
+        "can_view_institutional": can_view_institutional,
 
         "pending_action_for_me": pending_action_for_me,
 
@@ -1473,13 +1472,16 @@ def api_sign_workflow_step(course_id):
 
         step_label = (syllabus_workflow.current_step(wf) or {}).get("label") or "Next Step"
 
-        action_msg = "Syllabus returned for revision." if decision == "return" else (
-
-            "Syllabus approved and locked! Class record is now unlocked." if wf.get("status") == "approved" else
-
-            f"Step signed and forwarded to {step_label}."
-
-        )
+        if decision == "return":
+            action_msg = "Syllabus returned for revision."
+        elif wf.get("status") == "approved":
+            action_msg = "Syllabus approved and locked! Class record is now unlocked."
+        elif wf.get("status") == "for_committee_chair":
+            action_msg = "All committee members approved. Forwarded to Review Committee Chair for final committee endorsement."
+        elif wf.get("status") == "for_committee_review":
+            action_msg = "Member signature recorded. Waiting for other committee member(s) to sign."
+        else:
+            action_msg = f"Step signed and forwarded to {step_label}." 
 
         return jsonify({
 
@@ -1592,6 +1594,130 @@ def api_export_course_syllabus_pdf(course_id):
 
 
 
+
+
+@app.route("/api/courses/<course_id>/workflow/request-revision", methods=["POST"])
+def api_request_syllabus_revision(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or data.get("revision_reason") or "").strip()
+    try:
+        wf = syllabus_workflow.request_revision(doc, user, reason=reason)
+        courses_store.save_course_doc(doc)
+        wf_view = syllabus_workflow.public_view(doc)
+        wf_view["can_submit"] = (doc.get("owner") == user["username"])
+        return jsonify({
+            "success": True,
+            "message": "Request for revision submitted. Syllabus has been unlocked for updates.",
+            "workflow": wf_view,
+        })
+    except syllabus_workflow.WorkflowError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/admin/faculty-list", methods=["GET"])
+def api_admin_faculty_list():
+    user = current_user()
+    if not user or user.get("role") != "admin":
+        return jsonify({"error": "Admin access required."}), 403
+    from auth import _load_users
+    users = _load_users()
+    rows = []
+    for uname, u in users.items():
+        if uname.startswith("committee_") or uname.startswith("programhead_"):
+            continue
+        rows.append({
+            "username": uname,
+            "full_name": u.get("full_name") or uname,
+            "role": u.get("role") or "faculty",
+            "position_title": u.get("position_title") or "Faculty Member",
+            "workflow_roles": u.get("workflow_roles") or [],
+            "program_codes": u.get("program_codes") or ["EE"],
+            "college": u.get("college") or "COLLEGE OF ENGINEERING",
+        })
+    rows.sort(key=lambda x: x["full_name"])
+    return jsonify({"faculty": rows})
+
+
+@app.route("/api/admin/users/<username>/update-role", methods=["POST"])
+def api_admin_update_user_role(username):
+    user = current_user()
+    if not user or user.get("role") != "admin":
+        return jsonify({"error": "Admin access required."}), 403
+    from auth import _load_users, _save_users, _lock
+    import auth
+    data = request.get_json(silent=True) or {}
+
+    designation = (data.get("designation") or "faculty").strip().lower()
+    prog_code = (data.get("program_code") or "").strip().upper()
+    custom_title = (data.get("position_title") or "").strip()
+    is_admin_flag = bool(data.get("is_admin"))
+
+    PROGRAM_FULL_NAMES = {
+        "EE": "Electrical Engineering",
+        "ECE": "Electronics Engineering",
+        "ME": "Mechanical Engineering",
+        "CE": "Civil Engineering",
+        "GE": "Geodetic Engineering",
+        "MinE": "Mining Engineering",
+        "BSGeo": "Geology",
+        "SE": "Sanitary Engineering",
+        "ABE": "Agricultural and Biosystems Engineering",
+    }
+
+    with _lock:
+        all_users = _load_users()
+        uname = auth.LEGACY_USERNAME_ALIASES.get(username, username)
+        if uname not in all_users:
+            return jsonify({"error": f"Faculty account '{username}' not found."}), 404
+        target = all_users[uname]
+
+        if designation == "program_head":
+            prog = prog_code or (target.get("program_codes", ["EE"])[0] if target.get("program_codes") else "EE")
+            target["workflow_roles"] = ["program_head", "review_committee"]
+            target["program_codes"] = [prog]
+            p_name = PROGRAM_FULL_NAMES.get(prog, prog)
+            target["position_title"] = custom_title or f"Program Head - {p_name}"
+        elif designation == "qa_head":
+            target["workflow_roles"] = ["qa_head", "review_committee"]
+            target["program_codes"] = ["*"]
+            target["position_title"] = custom_title or "College Quality Assurance Head"
+        elif designation == "dean":
+            target["workflow_roles"] = ["dean", "review_committee"]
+            target["program_codes"] = ["*"]
+            target["position_title"] = custom_title or "Dean, College of Engineering"
+        elif designation == "admin":
+            target["role"] = "admin"
+            target["workflow_roles"] = ["admin", "review_committee", "program_head", "qa_head", "dean"]
+            target["position_title"] = custom_title or "System Administrator"
+        else: # faculty
+            target["workflow_roles"] = ["review_committee"]
+            target["position_title"] = custom_title or "Faculty Member"
+
+        if is_admin_flag:
+            target["role"] = "admin"
+        elif designation != "admin" and target.get("role") == "admin" and uname != "admin":
+            target["role"] = "faculty"
+
+        _save_users(all_users)
+
+    return jsonify({
+        "success": True,
+        "message": f"Successfully updated role for {target.get('full_name') or uname} to {target.get('position_title')}.",
+        "user": {
+            "username": uname,
+            "full_name": target.get("full_name"),
+            "role": target.get("role"),
+            "position_title": target.get("position_title"),
+            "workflow_roles": target.get("workflow_roles"),
+            "program_codes": target.get("program_codes"),
+        }
+    })
 
 if __name__ == "__main__":
 

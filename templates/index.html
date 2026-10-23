@@ -850,7 +850,10 @@
         <div class="u-name">{{ current_user.full_name }}</div>
         <div class="u-role">{{ current_user.role }} &middot; {{ current_user.username }}</div>
       </div>
-      {% if current_user.role == 'admin' %}<a href="{{ url_for('auth.manage_users') }}">Manage Users</a>{% endif %}
+      {% if current_user.role == 'admin' %}
+        <a href="javascript:void(0)" onclick="openAdminRoleModal()" style="font-weight:700; color:#b45309; text-decoration:none;">⚙️ Assign Roles</a>
+        <a href="{{ url_for('auth.manage_users') }}">Manage Users</a>
+      {% endif %}
       <a href="{{ url_for('auth.change_password') }}">Change Password</a>
       <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0;"><button type="submit">Sign Out</button></form>
     </div>
@@ -1047,34 +1050,40 @@
             <div id="wfProgressBar" style="height:100%; width:0%; background:#2563eb; transition:width 0.3s ease;"></div>
           </div>
           <!-- Step 1: Draft -->
-          <div class="wf-step" id="step_draft" style="position:relative; z-index:2; text-align:center; min-width:85px;">
-            <div class="wf-circle" id="circle_draft" style="width:36px; height:36px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-weight:700; font-size:0.85rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">1</div>
-            <div style="font-size:0.75rem; font-weight:700; color:#1e293b;">Faculty Prep</div>
-            <div style="font-size:0.68rem; color:#64748b;">Drafting</div>
+          <div class="wf-step" id="step_draft" style="position:relative; z-index:2; text-align:center; min-width:80px;">
+            <div class="wf-circle" id="circle_draft" style="width:34px; height:34px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">1</div>
+            <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">Faculty Prep</div>
+            <div style="font-size:0.65rem; color:#64748b;">Drafting</div>
           </div>
-          <!-- Step 2: Review Committee -->
-          <div class="wf-step" id="step_committee" style="position:relative; z-index:2; text-align:center; min-width:115px;">
-            <div class="wf-circle" id="circle_committee" style="width:36px; height:36px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-weight:700; font-size:0.85rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">2</div>
-            <div style="font-size:0.75rem; font-weight:700; color:#1e293b;">Review Committee</div>
-            <div style="font-size:0.68rem; color:#64748b;">FM-USeP-MID-02</div>
+          <!-- Step 2: Committee Members -->
+          <div class="wf-step" id="step_committee_members" style="position:relative; z-index:2; text-align:center; min-width:95px;">
+            <div class="wf-circle" id="circle_committee_members" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">2</div>
+            <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">Members Review</div>
+            <div style="font-size:0.65rem; color:#64748b;">Checklist &amp; Signs</div>
           </div>
-          <!-- Step 3: Program Head -->
-          <div class="wf-step" id="step_program_head" style="position:relative; z-index:2; text-align:center; min-width:105px;">
-            <div class="wf-circle" id="circle_program_head" style="width:36px; height:36px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-weight:700; font-size:0.85rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">3</div>
-            <div style="font-size:0.75rem; font-weight:700; color:#1e293b;">Program Head</div>
-            <div style="font-size:0.68rem; color:#64748b;">Endorsement</div>
+          <!-- Step 3: Committee Chair -->
+          <div class="wf-step" id="step_committee_chair" style="position:relative; z-index:2; text-align:center; min-width:95px;">
+            <div class="wf-circle" id="circle_committee_chair" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">3</div>
+            <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">Committee Chair</div>
+            <div style="font-size:0.65rem; color:#64748b;">Endorsement</div>
           </div>
-          <!-- Step 4: QA Head Countersign -->
-          <div class="wf-step" id="step_qa_head" style="position:relative; z-index:2; text-align:center; min-width:115px;">
-            <div class="wf-circle" id="circle_qa_head" style="width:36px; height:36px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-weight:700; font-size:0.85rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">4</div>
-            <div style="font-size:0.75rem; font-weight:700; color:#1e293b;">College QA Head</div>
-            <div style="font-size:0.68rem; color:#64748b;">Countersign (1st)</div>
+          <!-- Step 4: Program Head -->
+          <div class="wf-step" id="step_program_head" style="position:relative; z-index:2; text-align:center; min-width:90px;">
+            <div class="wf-circle" id="circle_program_head" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">4</div>
+            <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">Program Head</div>
+            <div style="font-size:0.65rem; color:#64748b;">Endorsement</div>
           </div>
-          <!-- Step 5: Dean Approval -->
-          <div class="wf-step" id="step_dean" style="position:relative; z-index:2; text-align:center; min-width:100px;">
-            <div class="wf-circle" id="circle_dean" style="width:36px; height:36px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-weight:700; font-size:0.85rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">5</div>
-            <div style="font-size:0.75rem; font-weight:700; color:#1e293b;">Dean Approval</div>
-            <div style="font-size:0.68rem; color:#64748b;">Lock-In &amp; Release</div>
+          <!-- Step 5: QA Head Countersign -->
+          <div class="wf-step" id="step_qa_head" style="position:relative; z-index:2; text-align:center; min-width:95px;">
+            <div class="wf-circle" id="circle_qa_head" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">5</div>
+            <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">College QA Head</div>
+            <div style="font-size:0.65rem; color:#64748b;">Countersign</div>
+          </div>
+          <!-- Step 6: Dean Approval -->
+          <div class="wf-step" id="step_dean" style="position:relative; z-index:2; text-align:center; min-width:90px;">
+            <div class="wf-circle" id="circle_dean" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">6</div>
+            <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">Dean Approval</div>
+            <div style="font-size:0.65rem; color:#64748b;">Lock-In &amp; Release</div>
           </div>
         </div>
 
@@ -1082,6 +1091,27 @@
           <div id="wfStatusDescription">Loading approval status...</div>
           <div id="wfSignaturesSummary" style="font-size:0.75rem; color:#475569;"></div>
         </div>
+
+    <!-- Official Syllabus Approved Lock Banner -->
+    <div id="syllabusApprovedLockBanner" style="display:none; background:#fef2f2; border:1.5px solid #f87171; border-radius:10px; padding:14px 18px; margin-bottom:16px; box-shadow:0 2px 6px rgba(220,38,38,0.08);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:2rem; line-height:1;">🔒</span>
+          <div>
+            <h4 style="margin:0 0 3px; color:#991b1b; font-size:1.02rem;">Official Syllabus is Approved &amp; Locked</h4>
+            <div style="font-size:0.8rem; color:#7f1d1d; line-height:1.4;">
+              This course syllabus has completed all sequential approval stages and is officially locked.
+              Faculty cannot edit syllabus content directly. To make revisions, submit an official Request for Revision.
+            </div>
+          </div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-danger btn-sm" onclick="promptRequestSyllabusRevision()" style="font-weight:700; padding:7px 15px; box-shadow:0 2px 4px rgba(220,38,38,0.25);">
+            📝 Request Revision (Unlock Syllabus)
+          </button>
+        </div>
+      </div>
+    </div>
 
         <!-- Testing Account / Role Quick Switcher -->
         <div style="margin-top:10px; padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:0.73rem; color:#475569; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
@@ -1825,6 +1855,7 @@
           </p>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn btn-warning btn-sm" id="btnApprovalsAssignRoles" onclick="openAdminRoleModal()" style="display:none; font-weight:700; color:#78350f; background:#fef3c7; border:1px solid #fde68a;">⚙️ Assign Faculty Roles</button>
           <button class="btn btn-light btn-sm" onclick="loadApprovalRequests(true)" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1);">🔄 Refresh Requests</button>
         </div>
       </div>
@@ -2148,12 +2179,13 @@
 
       <!-- Sequential Approval Chain Flow -->
       <div style="margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px;">
-        <div style="font-size:0.74rem; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px;">Sequential 4-Step Approval Flow:</div>
+        <div style="font-size:0.74rem; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px;">Sequential 5-Step Approval Flow:</div>
         <div style="font-size:0.76rem; color:#334155; line-height:1.65;">
-          <div>1️⃣ <strong>Review Committee:</strong> <span id="chainCommitteeName">Engr. Nikka Samantha A. Basan</span> (FM-USeP-MID-02 Review)</div>
-          <div>2️⃣ <strong>Program Head:</strong> <span id="chainProgramHeadName">Engr. Charito O. Claro</span> (Endorsement)</div>
-          <div>3️⃣ <strong>College QA Head:</strong> <span id="chainQaHeadName">College QA Head</span> (Countersign)</div>
-          <div>4️⃣ <strong>Dean:</strong> <span id="chainDeanName">Engr. Joie D. Cataytay, Ph.D.</span> (Final Approval &amp; Lock-in)</div>
+          <div>1️⃣ <strong>Review Committee Members:</strong> <span id="chainMembersName">Committee Members (FM-USeP-MID-02 Checklist &amp; Signatures)</span></div>
+          <div>2️⃣ <strong>Review Committee Chair:</strong> <span id="chainCommitteeName">Engr. Nikka Samantha A. Basan</span> (Endorsement to Program Head)</div>
+          <div>3️⃣ <strong>Program Head:</strong> <span id="chainProgramHeadName">Engr. Charito O. Claro</span> (Endorsement)</div>
+          <div>4️⃣ <strong>College QA Head:</strong> <span id="chainQaHeadName">College QA Head</span> (Countersign)</div>
+          <div>5️⃣ <strong>Dean:</strong> <span id="chainDeanName">Engr. Joie D. Cataytay, Ph.D.</span> (Final Approval &amp; Lock-in)</div>
         </div>
       </div>
 
@@ -5581,7 +5613,7 @@
     return null;
   }
 
-  // Render Workflow Stepper & Actions
+  // Render Workflow Stepper & Actions (Sequential 6 Stages)
   function renderWorkflowStepper() {
     if (!currentWorkflow) return;
     const wf = currentWorkflow;
@@ -5597,6 +5629,8 @@
         badge.style.background = "#fee2e2"; badge.style.color = "#991b1b";
       } else if (wf.status === "for_committee_review") {
         badge.style.background = "#fef3c7"; badge.style.color = "#92400e";
+      } else if (wf.status === "for_committee_chair") {
+        badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
       } else if (wf.status === "for_program_head") {
         badge.style.background = "#e0e7ff"; badge.style.color = "#3730a3";
       } else if (wf.status === "for_qa_countersign") {
@@ -5611,37 +5645,38 @@
     const cycleBadge = document.getElementById("wfCycleBadge");
     if (cycleBadge) cycleBadge.textContent = `Cycle ${wf.cycle || 1}`;
 
-    // Update Progress Stepper Circles & Bar
-    const stepOrder = ["draft", "committee", "program_head", "qa_head", "dean", "approved"];
+    // Update Progress Stepper Circles & Bar (0 to 5)
     const statusToIdx = {
       "draft": 0, "returned": 0,
       "for_committee_review": 1,
-      "for_program_head": 2,
-      "for_qa_countersign": 3,
-      "for_dean_approval": 4,
-      "approved": 5,
+      "for_committee_chair": 2,
+      "for_program_head": 3,
+      "for_qa_countersign": 4,
+      "for_dean_approval": 5,
+      "approved": 6,
     };
     const curIdx = statusToIdx[wf.status] ?? 0;
 
     const pBar = document.getElementById("wfProgressBar");
     if (pBar) {
-      const pct = Math.min(100, Math.round((curIdx / 4) * 100));
+      const pct = Math.min(100, Math.round((curIdx / 5) * 100));
       pBar.style.width = `${pct}%`;
       pBar.style.background = wf.status === "approved" ? "#16a34a" : "#2563eb";
     }
 
     const circleMap = {
       0: "circle_draft",
-      1: "circle_committee",
-      2: "circle_program_head",
-      3: "circle_qa_head",
-      4: "circle_dean",
+      1: "circle_committee_members",
+      2: "circle_committee_chair",
+      3: "circle_program_head",
+      4: "circle_qa_head",
+      5: "circle_dean",
     };
 
-    const stepKeys = ["draft", "committee", "program_head", "qa_head", "dean"];
+    const stepKeys = ["draft", "committee_members", "committee_chair", "program_head", "qa_head", "dean"];
     const sigs = wf.signatures || [];
 
-    for (let i = 0; i <= 4; i++) {
+    for (let i = 0; i <= 5; i++) {
       const el = document.getElementById(circleMap[i]);
       if (!el) continue;
       if (i < curIdx || wf.status === "approved") {
@@ -5672,12 +5707,33 @@
         }
         if (i === 0) {
           subTextEl.innerHTML = wf.submitted_at ? `<span style="color:#16a34a; font-weight:700;">Submitted:</span> ${formatWorkflowTimestamp(wf.submitted_at)}` : `<span style="color:#64748b;">In Drafting</span>`;
-        } else {
+        } else if (i === 1) { // committee_members
+          const memList = (wf.committee_members || []).filter(m => m.role !== "Review Committee Chair");
+          const memSigs = sigs.filter(s => s.step === "committee_members" || (s.step === "committee" && s.role !== "Review Committee Chair"));
+          if (curIdx > 1 || wf.status === "approved") {
+            subTextEl.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ Members (${memSigs.length}/${memList.length || memSigs.length})</span>`;
+          } else if (curIdx === 1) {
+            subTextEl.innerHTML = `<span style="color:#d97706; font-weight:700;">⏳ Members (${memSigs.length}/${memList.length || 2} signed)</span>`;
+          } else {
+            subTextEl.innerHTML = `<span style="color:#94a3b8;">Pending Prior Step</span>`;
+          }
+        } else if (i === 2) { // committee_chair
+          const chairSig = sigs.find(s => s.step === "committee_chair" || (s.step === "committee" && s.role === "Review Committee Chair"));
+          if (chairSig) {
+            subTextEl.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ Chair: ${escapeHtml(chairSig.full_name)}</span><br><span style="color:#475569;">🕒 ${formatWorkflowTimestamp(chairSig.signed_at)}</span>`;
+          } else if (curIdx === 2) {
+            const chairMem = (wf.committee_members || []).find(m => m.role === "Review Committee Chair");
+            const chairName = chairMem ? chairMem.name : (wf.assigned_committee_name || 'Committee Chair');
+            subTextEl.innerHTML = `<span style="color:#d97706; font-weight:700;">⏳ Waiting:</span> <span style="color:#0f172a; font-weight:600;">${escapeHtml(chairName)}</span>`;
+          } else {
+            subTextEl.innerHTML = `<span style="color:#94a3b8;">Pending Members</span>`;
+          }
+        } else { // 3: program_head, 4: qa_head, 5: dean
           const sig = sigs.find(s => s.step === stepKeys[i]);
           if (sig) {
             subTextEl.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ ${escapeHtml(sig.full_name)}</span><br><span style="color:#475569;">🕒 ${formatWorkflowTimestamp(sig.signed_at)}</span>`;
           } else if (i === curIdx) {
-            const who = (i === 1 && wf.assigned_committee_name) ? wf.assigned_committee_name : (i === 2 ? 'Program Head' : (i === 3 ? 'College QA Head' : 'Dean'));
+            const who = (i === 3 ? 'Program Head' : (i === 4 ? 'College QA Head' : 'Dean'));
             subTextEl.innerHTML = `<span style="color:#d97706; font-weight:700;">⏳ Waiting:</span> <span style="color:#0f172a; font-weight:600;">${escapeHtml(who)}</span>`;
           } else {
             subTextEl.innerHTML = `<span style="color:#94a3b8;">Pending Prior Step</span>`;
@@ -5720,7 +5776,13 @@
       if (wf.can_sign) {
         const btnSign = document.createElement("button");
         btnSign.className = "btn btn-success btn-sm";
-        btnSign.innerHTML = `✍️ Sign &amp; ${wf.status === 'for_dean_approval' ? 'Approve Syllabus' : (wf.status === 'for_qa_countersign' ? 'Countersign' : 'Recommend Approval')}`;
+        let signBtnText = "✍️ Sign & Approve";
+        if (wf.status === "for_committee_review") signBtnText = "✍️ Sign & Approve Checklist (Member)";
+        else if (wf.status === "for_committee_chair") signBtnText = "✍️ Endorse Committee Review (Chair)";
+        else if (wf.status === "for_program_head") signBtnText = "✍️ Sign & Endorse (Program Head)";
+        else if (wf.status === "for_qa_countersign") signBtnText = "✍️ Countersign Syllabus (QA Head)";
+        else if (wf.status === "for_dean_approval") signBtnText = "✍️ Final Approval & Lock-in (Dean)";
+        btnSign.innerHTML = signBtnText;
         btnSign.onclick = () => openSignatureModal("approve");
         btnContainer.appendChild(btnSign);
 
@@ -5731,7 +5793,17 @@
         btnContainer.appendChild(btnReturn);
       }
 
-      // 5. Download syllabus PDF & Evaluation Tool PDF
+      // 5. Request Revision button (when approved or can_request_revision)
+      if (wf.status === "approved" || wf.can_request_revision) {
+        const btnRev = document.createElement("button");
+        btnRev.className = "btn btn-outline-danger btn-sm";
+        btnRev.innerHTML = "📝 Request Revision";
+        btnRev.title = "Submit official revision request to unlock syllabus for editing";
+        btnRev.onclick = () => promptRequestSyllabusRevision();
+        btnContainer.appendChild(btnRev);
+      }
+
+      // 6. Download syllabus PDF & Evaluation Tool PDF
       const btnPdf = document.createElement("button");
       btnPdf.className = "btn btn-secondary btn-sm";
       btnPdf.innerHTML = "📄 Download Syllabus PDF";
@@ -5761,15 +5833,17 @@
         const rem = lastRet ? ` Remarks: "${escapeHtml(lastRet.remarks)}"` : "";
         descEl.innerHTML = `<strong style="color:#b91c1c;">Status: Returned for Revision.</strong>${rem} Revise the indicated portions and resubmit.`;
       } else if (wf.status === "for_committee_review") {
-        descEl.innerHTML = "<strong>Status: With Syllabus Review Committee.</strong> Committee members evaluate syllabus using <em>FM-USeP-MID-02</em> and sign.";
+        descEl.innerHTML = "<strong>Status: With Review Committee Members.</strong> Committee members evaluate syllabus using <em>FM-USeP-MID-02</em> and sign before chair endorsement.";
+      } else if (wf.status === "for_committee_chair") {
+        descEl.innerHTML = "<strong>Status: With Committee Chair.</strong> Committee members have signed. Review Committee Chair conducts final committee review and endorses to Program Head.";
       } else if (wf.status === "for_program_head") {
-        descEl.innerHTML = "<strong>Status: With Program Head.</strong> Recommending approval and endorsing syllabus.";
+        descEl.innerHTML = "<strong>Status: With Program Head.</strong> Recommending approval and endorsing syllabus to College QA Head.";
       } else if (wf.status === "for_qa_countersign") {
         descEl.innerHTML = "<strong>Status: With College QA Head.</strong> Countersigning syllabus (required before Dean's approval).";
       } else if (wf.status === "for_dean_approval") {
-        descEl.innerHTML = "<strong>Status: With Dean.</strong> Final Dean approval and lock-in.";
+        descEl.innerHTML = "<strong>Status: With Dean.</strong> Final Dean approval and official lock-in.";
       } else if (wf.status === "approved") {
-        descEl.innerHTML = "<strong style=" + '"color:#166534;"' + ">Status: APPROVED &amp; LOCKED &#128274;.</strong> Syllabus is officially approved. Class record setup and score recording are completely unlocked.";
+        descEl.innerHTML = "<strong style=" + '"color:#166534;"' + ">Status: APPROVED &amp; LOCKED &#128274;.</strong> Syllabus is officially approved and locked from direct edits. Class record setup and grade recording are completely unlocked.";
       }
     }
 
@@ -5781,12 +5855,13 @@
         sigSumEl.textContent = "Signatures: None yet in this cycle";
       } else {
         const names = sigs.map(s => `${s.label} (${s.full_name})`).join(" &bull; ");
-        sigSumEl.innerHTML = `<strong>Signed (${sigs.length}/4):</strong> ${names}`;
+        sigSumEl.innerHTML = `<strong>Signed (${sigs.length}/5):</strong> ${names}`;
       }
     }
 
-    // Enforce class record lock
+    // Enforce class record lock & syllabus lock
     checkClassRecordLock();
+    checkSyllabusLock();
   }
 
   // Enforce Class Record Lock Barrier on Tabs 2 & 3
@@ -5807,6 +5882,77 @@
     if (gradebookContent) {
       gradebookContent.style.opacity = isApproved ? "1" : "0.55";
       gradebookContent.style.pointerEvents = isApproved ? "auto" : "none";
+    }
+  }
+
+  // Enforce Syllabus Lock on Tab 1 when approved
+  function checkSyllabusLock() {
+    const isApproved = currentWorkflow && (currentWorkflow.status === "approved");
+    const banner = document.getElementById("syllabusApprovedLockBanner");
+    if (banner) {
+      banner.style.display = isApproved ? "block" : "none";
+    }
+
+    const tabSyllabus = document.getElementById("tab-syllabus");
+    if (!tabSyllabus) return;
+
+    // Disable / enable syllabus form inputs (excluding the workflow card itself)
+    const fields = tabSyllabus.querySelectorAll("input, select, textarea");
+    fields.forEach(el => {
+      if (el.closest("#syllabusWorkflowCard") || el.closest("#syllabusApprovedLockBanner") || el.id === "moreFacultySwitcher") return;
+      el.disabled = isApproved;
+    });
+
+    // Disable / enable modifying buttons inside syllabus cards
+    const buttons = tabSyllabus.querySelectorAll("button");
+    buttons.forEach(btn => {
+      if (btn.closest("#syllabusWorkflowCard") || btn.closest("#syllabusApprovedLockBanner")) return;
+      const txt = (btn.textContent || "").trim();
+      // Keep viewing, download, export, and quick jump buttons active
+      if (txt.includes("Download") || txt.includes("Generate") || txt.includes("Part ") || btn.getAttribute("onclick")?.includes("scrollToSyllabusSection") || btn.getAttribute("onclick")?.includes("exportSyllabusPdf")) {
+        return;
+      }
+      btn.disabled = isApproved;
+    });
+
+    const saveBtn = document.getElementById("btnSaveCourse");
+    if (saveBtn) {
+      saveBtn.disabled = isApproved;
+      if (isApproved) saveBtn.title = "Syllabus is approved and locked. Submit a revision request to make changes.";
+    }
+  }
+
+  // Request revision for an approved syllabus (unlocks for Cycle resubmission)
+  async function promptRequestSyllabusRevision(courseId) {
+    const cid = courseId || currentCourseId;
+    if (!cid) return;
+    const reason = prompt("Official Syllabus Revision Request:\n\nPlease state the specific reason for requesting syllabus revision (e.g., updating OBE assessment activities, textbook changes, rubric scaling):");
+    if (reason === null) return;
+    if (!reason.trim()) {
+      alert("A revision reason is required to submit a revision request.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(cid)}/workflow/request-revision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to request revision.");
+        return;
+      }
+      alert("✅ " + data.message);
+      if (cid === currentCourseId) {
+        await loadCourse(cid);
+      }
+      await loadApprovalRequests(true);
+      await loadCoursesList();
+    } catch(e) {
+      console.error("Error requesting revision:", e);
+      alert("Error requesting syllabus revision: " + e.message);
     }
   }
 
@@ -5917,7 +6063,13 @@
       }
     });
 
-    // Dynamically update the sequential flow indicator with the appointed chair
+    // Dynamically update the sequential flow indicator with committee members & appointed chair
+    const nonChairs = submitModalCommitteeState.filter(m => m.role !== "Review Committee Chair");
+    const chainMemsEl = document.getElementById("chainMembersName");
+    if (chainMemsEl) {
+      chainMemsEl.textContent = nonChairs.map(m => m.name || m.username).join(", ") || "Committee Members";
+    }
+
     const chair = submitModalCommitteeState.find(m => m.role === "Review Committee Chair") || submitModalCommitteeState[0];
     const chainCommEl = document.getElementById("chainCommitteeName");
     if (chainCommEl && chair) {
@@ -6102,6 +6254,26 @@
       approvalsState.institutionalRequests = data.institutional_requests || [];
       approvalsState.userInfo = data.user_info || {};
 
+      // Enforce Institutional Requests Visibility
+      const canViewInst = Boolean(data.can_view_institutional);
+      const btnAll = document.getElementById("btnFilterAllRequests");
+      if (btnAll) {
+        btnAll.style.display = canViewInst ? "inline-block" : "none";
+      }
+
+      // Show/hide Assign Roles button for Admin
+      const btnAdminRoles = document.getElementById("btnApprovalsAssignRoles");
+      if (btnAdminRoles) {
+        btnAdminRoles.style.display = (approvalsState.userInfo && approvalsState.userInfo.role === "admin") ? "inline-block" : "none";
+      }
+
+      // Auto-fallback if regular faculty cannot view institutional requests
+      if (!canViewInst && approvalsState.filter === "all") {
+        approvalsState.filter = approvalsState.pendingActionForMe.length > 0 ? "action" : "submissions";
+        document.getElementById("btnFilterPendingAction")?.classList.toggle("active", approvalsState.filter === "action");
+        document.getElementById("btnFilterMySubmissions")?.classList.toggle("active", approvalsState.filter === "submissions");
+      }
+
       // Update badge
       const badge = document.getElementById("approvalsBadge");
       const pCount = data.pending_count || 0;
@@ -6131,9 +6303,14 @@
           approvalsState.filter = "action";
         } else if (approvalsState.mySubmissions.length > 0) {
           approvalsState.filter = "submissions";
-        } else {
+        } else if (canViewInst) {
           approvalsState.filter = "all";
+        } else {
+          approvalsState.filter = "submissions";
         }
+        document.getElementById("btnFilterPendingAction")?.classList.toggle("active", approvalsState.filter === "action");
+        document.getElementById("btnFilterMySubmissions")?.classList.toggle("active", approvalsState.filter === "submissions");
+        document.getElementById("btnFilterAllRequests")?.classList.toggle("active", approvalsState.filter === "all");
       }
 
       renderApprovalsList();
@@ -6268,10 +6445,10 @@
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
               ${c.user_can_act ? `
                 <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:700;">
-                  📝 ${status === 'for_committee_review' ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
+                  📝 ${(status === 'for_committee_review' || status === 'for_committee_chair') ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
                 </button>
                 <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
-                  ✍️ ${status === 'for_committee_review' ? 'Sign & Recommend Approval' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : 'Sign & Endorse')}
+                  ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : 'Sign & Endorse')))}
                 </button>
                 <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
                   ↩️ Return for Revision
@@ -6283,6 +6460,12 @@
                   </button>
                 ` : ''}
               `}
+
+              ${(c.is_owner && isApproved) ? `
+                <button class="btn btn-sm btn-outline-danger" onclick="promptRequestSyllabusRevision('${c.id}')" style="font-weight:700;">
+                  📝 Request Revision
+                </button>
+              ` : ''}
 
               ${(c.is_owner && status === 'for_committee_review' && (!wf.signatures || wf.signatures.length === 0)) ? `
                 <button class="btn btn-sm btn-outline-danger" onclick="withdrawSyllabusRequestDirect('${c.id}')">
@@ -7651,13 +7834,17 @@
       }
     }
 
-    // Save & Sign Buttons visibility
+    // Save & Sign Buttons visibility (Both Committee Members & Chair)
     const btnSave = document.getElementById("btnSaveEvaluation");
     const btnSign = document.getElementById("btnSignAndForwardCommittee");
     const btnReturn = document.getElementById("btnReturnEvaluation");
+    const canSignComm = !isLocked && (currentWorkflow?.status === "for_committee_review" || currentWorkflow?.status === "for_committee_chair");
     if (btnSave) btnSave.style.display = isLocked ? "none" : "inline-block";
-    if (btnSign) btnSign.style.display = (isLocked || currentWorkflow?.status !== "for_committee_review") ? "none" : "inline-block";
-    if (btnReturn) btnReturn.style.display = (isLocked || currentWorkflow?.status !== "for_committee_review") ? "none" : "inline-block";
+    if (btnSign) {
+      btnSign.style.display = canSignComm ? "inline-block" : "none";
+      btnSign.textContent = currentWorkflow?.status === "for_committee_chair" ? "✍️ Endorse Committee Review (Chair)" : "✍️ Sign & Approve Checklist (Member)";
+    }
+    if (btnReturn) btnReturn.style.display = canSignComm ? "inline-block" : "none";
 
     // Summary metadata
     const meta = blueprint?.metadata || {};
@@ -8144,6 +8331,236 @@
   }
 
 
+
+  // ==========================================================================
+  // ADMIN FACULTY ROLE MANAGEMENT ENGINE (NO SEPARATE ACCOUNTS REQUIRED)
+  // ==========================================================================
+  let adminFacultyList = [];
+
+  async function openAdminRoleModal() {
+    const modal = document.getElementById("adminRoleModal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    await loadAdminFacultyRoster();
+  }
+
+  function closeAdminRoleModal() {
+    const modal = document.getElementById("adminRoleModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function loadAdminFacultyRoster() {
+    const select = document.getElementById("adminRoleFacultySelect");
+    if (!select) return;
+    select.innerHTML = '<option value="">Loading faculty roster...</option>';
+    try {
+      const res = await fetch("/api/admin/faculty-list");
+      if (!res.ok) {
+        select.innerHTML = '<option value="">Error loading faculty list</option>';
+        return;
+      }
+      const data = await res.json();
+      adminFacultyList = data.faculty || [];
+      select.innerHTML = '<option value="">-- Choose a faculty member --</option>' +
+        adminFacultyList.map(f => {
+          return `<option value="${escapeHtml(f.username)}">${escapeHtml(f.full_name)} (${escapeHtml(f.position_title || f.role)})</option>`;
+        }).join('');
+    } catch(e) {
+      console.error("Failed to load admin faculty list:", e);
+      select.innerHTML = '<option value="">Failed to load roster</option>';
+    }
+  }
+
+  function onAdminSelectFaculty(uname) {
+    if (!uname) return;
+    const faculty = adminFacultyList.find(f => f.username === uname);
+    if (!faculty) return;
+
+    const desigSelect = document.getElementById("adminRoleDesignationSelect");
+    const progSelect = document.getElementById("adminRoleProgramSelect");
+    const titleInput = document.getElementById("adminRoleTitleInput");
+    const adminCheck = document.getElementById("adminRoleIsAdminCheckbox");
+    const progGroup = document.getElementById("adminRoleProgramGroup");
+
+    let desig = "faculty";
+    const wfRoles = faculty.workflow_roles || [];
+    if (wfRoles.includes("dean")) desig = "dean";
+    else if (wfRoles.includes("qa_head")) desig = "qa_head";
+    else if (wfRoles.includes("program_head")) desig = "program_head";
+    else if (faculty.role === "admin") desig = "admin";
+
+    if (desigSelect) desigSelect.value = desig;
+    if (progGroup) progGroup.style.display = desig === "program_head" ? "block" : "none";
+    if (progSelect && faculty.program_codes && faculty.program_codes.length) {
+      progSelect.value = faculty.program_codes[0];
+    }
+    if (titleInput) titleInput.value = faculty.position_title || "";
+    if (adminCheck) adminCheck.checked = (faculty.role === "admin");
+  }
+
+  function onAdminDesignationChange(val) {
+    const progGroup = document.getElementById("adminRoleProgramGroup");
+    const titleInput = document.getElementById("adminRoleTitleInput");
+    const adminCheck = document.getElementById("adminRoleIsAdminCheckbox");
+    if (progGroup) progGroup.style.display = val === "program_head" ? "block" : "none";
+
+    if (val === "program_head") {
+      const prog = document.getElementById("adminRoleProgramSelect")?.value || "EE";
+      onAdminProgramChange(prog);
+    } else if (val === "qa_head") {
+      if (titleInput) titleInput.value = "College Quality Assurance Head";
+    } else if (val === "dean") {
+      if (titleInput) titleInput.value = "Dean, College of Engineering";
+    } else if (val === "admin") {
+      if (titleInput) titleInput.value = "System Administrator";
+      if (adminCheck) adminCheck.checked = true;
+    } else {
+      if (titleInput) titleInput.value = "Faculty Member";
+    }
+  }
+
+  function onAdminProgramChange(prog) {
+    const titleInput = document.getElementById("adminRoleTitleInput");
+    const names = {
+      "EE": "Electrical Engineering",
+      "ECE": "Electronics Engineering",
+      "ME": "Mechanical Engineering",
+      "CE": "Civil Engineering",
+      "GE": "Geodetic Engineering",
+      "MinE": "Mining Engineering",
+      "BSGeo": "Geology",
+      "SE": "Sanitary Engineering",
+      "ABE": "Agricultural and Biosystems Engineering"
+    };
+    if (titleInput) {
+      titleInput.value = `Program Head - ${names[prog] || prog}`;
+    }
+  }
+
+  async function saveAdminFacultyRole() {
+    const select = document.getElementById("adminRoleFacultySelect");
+    const uname = select ? select.value : "";
+    if (!uname) {
+      alert("Please select a faculty member first.");
+      return;
+    }
+
+    const desig = document.getElementById("adminRoleDesignationSelect")?.value || "faculty";
+    const prog = document.getElementById("adminRoleProgramSelect")?.value || "EE";
+    const title = document.getElementById("adminRoleTitleInput")?.value.trim() || "";
+    const isAdmin = document.getElementById("adminRoleIsAdminCheckbox")?.checked || false;
+
+    const btn = document.getElementById("btnSaveAdminRole");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+    }
+
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(uname)}/update-role`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          designation: desig,
+          program_code: prog,
+          position_title: title,
+          is_admin: isAdmin
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to update role.");
+        return;
+      }
+      alert("✅ " + (data.message || "Role updated successfully!"));
+      closeAdminRoleModal();
+      await loadSignatories();
+      await loadApprovalRequests(true);
+      if (currentCourseId) {
+        await fetchWorkflow(currentCourseId);
+        renderWorkflowStepper();
+      }
+    } catch(e) {
+      alert("Error updating faculty role: " + e.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "💾 Save & Apply Role";
+      }
+    }
+  }
+
 </script>
+
+<!-- Modal: Admin Role & Designation Assignment -->
+<div class="modal-overlay" id="adminRoleModal" style="display:none;" onclick="if(event.target===this) closeAdminRoleModal();">
+  <div class="modal-box" style="max-width:560px; width:92%;">
+    <div class="modal-header">
+      <h3 style="margin:0; font-size:1.15rem; color:#1e3a8a;">⚙️ Assign Faculty Roles &amp; Designations</h3>
+      <button class="modal-close-btn" onclick="closeAdminRoleModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:18px 22px;">
+      <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:0.8rem; color:#0369a1; line-height:1.5;">
+        <strong>Admin Role Management:</strong> Update institutional designations (Program Head, College QA Head, College Dean, Faculty) on any faculty member's existing account. No separate accounts needed.
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Select Faculty Account <span style="color:#dc2626;">*</span></label>
+        <select id="adminRoleFacultySelect" onchange="onAdminSelectFaculty(this.value)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; font-weight:600;">
+          <option value="">Loading faculty roster...</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Institutional Role / Designation <span style="color:#dc2626;">*</span></label>
+        <select id="adminRoleDesignationSelect" onchange="onAdminDesignationChange(this.value)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; font-weight:700; color:#1e3a8a; background:#f8fafc;">
+          <option value="faculty">👨‍🏫 Regular Faculty Member (Review Committee / Course Owner)</option>
+          <option value="program_head">👔 Program Head (Sequential Stage 3 Endorsement)</option>
+          <option value="qa_head">🛡️ College QA Head (Sequential Stage 4 Countersign)</option>
+          <option value="dean">🏛️ College Dean (Sequential Stage 5 Final Approval)</option>
+          <option value="admin">⚙️ System Administrator (All Access)</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="adminRoleProgramGroup" style="margin-bottom:14px; display:none;">
+        <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Engineering Program Assigned</label>
+        <select id="adminRoleProgramSelect" onchange="onAdminProgramChange(this.value)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
+          <option value="EE">Electrical Engineering (EE)</option>
+          <option value="ECE">Electronics Engineering (ECE)</option>
+          <option value="ME">Mechanical Engineering (ME)</option>
+          <option value="CE">Civil Engineering (CE)</option>
+          <option value="GE">Geodetic Engineering (GE)</option>
+          <option value="MinE">Mining Engineering (MinE)</option>
+          <option value="BSGeo">Geology (BSGeo)</option>
+          <option value="SE">Sanitary Engineering (SE)</option>
+          <option value="ABE">Agricultural and Biosystems Engineering (ABE)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Official Printed Position / Title</label>
+        <input type="text" id="adminRoleTitleInput" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;" placeholder="e.g. Program Head - Electrical Engineering" />
+        <div style="font-size:0.72rem; color:#64748b; margin-top:3px;">This title appears automatically on official syllabus headers, endorsement blocks, and PDF evaluation forms.</div>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; color:#1e293b; cursor:pointer;">
+          <input type="checkbox" id="adminRoleIsAdminCheckbox" />
+          <span>Grant System Administrator privileges</span>
+        </label>
+      </div>
+
+      <div id="adminRoleModalStatus" style="font-size:0.8rem; margin-bottom:10px; display:none;"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn btn-light" onclick="closeAdminRoleModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btnSaveAdminRole" onclick="saveAdminFacultyRole()" style="font-weight:700; padding:7px 16px;">
+          💾 Save &amp; Apply Role
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
