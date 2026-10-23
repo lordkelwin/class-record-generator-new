@@ -101,7 +101,7 @@ The platform enforces strict role-based access control (RBAC). A convenient **Ro
 | `faculty_basan` / `committee_basan` | `password123` | Engr. Nikka Samantha A. Basan | Faculty Member | Faculty Member (EE Dept), Review Committee eligible |
 | `faculty_arenga` / `committee_arenga`| `password123` | Engr. Delan Zoe H. Arenga | Faculty Member | Faculty Member (ECE Dept), Review Committee eligible |
 | `faculty_ravida` / `committee_ravida`| `password123` | Engr. Kim P. Ravida | Faculty Member | Faculty Member (ECE Dept), Review Committee eligible |
-| `faculty_claro` / `programhead_claro`| `password123` | Engr. Charito O. Claro, PECE | Program Head | Recommending approval & endorsement (EE Dept) |
+| `faculty_claro` / `programhead_claro`| `password123` | Engr. Charito O. Claro | Program Head | Recommending approval & endorsement (EE Dept) |
 | `faculty_ucat` | `password123` | Engr. Rosanna C. Ucat | Program Head | Recommending approval & endorsement (ECE Dept) |
 | `faculty_tongson` | `password123` | Engr. Randy B. Tongson | Program Head | Recommending approval & endorsement (ME Dept) |
 | `faculty_masancay` | `password123` | Engr. Fillmore D. Masancay | Program Head | Recommending approval & endorsement (GE Dept) |
@@ -116,7 +116,7 @@ The platform enforces strict role-based access control (RBAC). A convenient **Ro
 ### Official College of Engineering Faculty Roster (1st Sem S.Y. 2026-2027)
 Extracted directly from the official USeP roster document (`FACULTY PROGRAM LIST - 1ST  SEM S.Y. 26-27.docx.pdf`). All full-time faculty have review committee authorization for multi-tier syllabus review:
 
-* **Electrical Engineering (EE):** Engr. Nikka Samantha A. Basan (FT / Faculty Member), Engr. Charito O. Claro, PECE (Program Head), Engr. Ramil Alvin B. Ramos (FT / Faculty Member), Engr. Elwin Jay J. Tano (FT / Faculty Member), Engr. Donley Glenn Mabunga (FT / Faculty Member), Engr. Jayson P. Lolo (PT).
+* **Electrical Engineering (EE):** Engr. Nikka Samantha A. Basan (FT / Faculty Member), Engr. Charito O. Claro (Program Head), Engr. Ramil Alvin B. Ramos (FT / Faculty Member), Engr. Elwin Jay J. Tano (FT / Faculty Member), Engr. Donley Glenn Mabunga (FT / Faculty Member), Engr. Jayson P. Lolo (PT).
 * **Electronics Engineering (ECE):** Engr. Rosanna C. Ucat (Program Head), Engr. Delan Zoe H. Arenga (FT / Faculty Member), Engr. Roberto I. Canda (FT / Faculty Member), Engr. Filmann T. Simpao (FT / Faculty Member), Engr. Kim P. Ravida (FT / Faculty Member), Engr. Ernani Villasencio (FT / Faculty Member), Engr. Kim Andripa (PT), Engr. Cherry Vic O. Camposo (PT), Engr. Hans Marc C. Simplicio (PT).
 * **Mechanical Engineering (ME):** Engr. Randy B. Tongson (Program Head), Engr. Aquileo B. Estrera (FT / Faculty Member), Engr. Christopher C. Gonzales (FT / Faculty Member), Engr. John Nerie L. Payao (FT / Faculty Member), Engr. Dennis G. Rebuta (FT / Faculty Member), Engr. Glemar O. Guarin (PT).
 * **Geodetic Engineering (GE):** Engr. Fillmore D. Masancay (Program Head), Engr. Pherly Grace I. Bungao (FT / Faculty Member), Engr. Kevin G. Cañada (FT / Faculty Member), Engr. Niron James Abas (PT).
@@ -228,7 +228,7 @@ To lock in syllabus integrity and unlock the Class Record for grading, the sylla
 5. Click **`✍️ Sign & Recommend Approval`** (or **`↩️ Return for Revision`** with remarks). The e-signature, name, and exact timestamp are sealed, advancing the request to the Program Head.
 
 #### Step 3: Program Head Endorsement
-1. Log in as `programhead_claro` (Engr. Charito O. Claro, PECE).
+1. Log in as `programhead_claro` (Engr. Charito O. Claro).
 2. Open **`📥 Requests for Approval`** $\rightarrow$ review syllabus details and committee findings.
 3. Click **`✍️ Sign & Endorse`** to apply digital endorsement and timestamp. The status advances to the College QA Head.
 

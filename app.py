@@ -1052,32 +1052,31 @@ def api_get_workflow_signatories():
 
         }
 
-        if "review_committee" in w_roles or is_admin:
-
+        if "review_committee" in w_roles:
             committee_members.append(item)
-
         if "program_head" in w_roles or is_admin:
-
             program_heads.append(item)
-
         if "qa_head" in w_roles or is_admin:
-
             qa_heads.append(item)
-
         if "dean" in w_roles or is_admin:
-
             deans.append(item)
 
+    def _dedupe_items(items):
+        seen = set()
+        res = []
+        for it in items:
+            fn = (it.get("full_name") or "").strip().lower()
+            if fn and fn not in seen:
+                seen.add(fn)
+                res.append(it)
+        res.sort(key=lambda x: x.get("full_name", ""))
+        return res
+
     return jsonify({
-
-        "review_committee": committee_members,
-
-        "program_heads": program_heads,
-
-        "qa_heads": qa_heads,
-
-        "deans": deans,
-
+        "review_committee": _dedupe_items(committee_members),
+        "program_heads": _dedupe_items(program_heads),
+        "qa_heads": _dedupe_items(qa_heads),
+        "deans": _dedupe_items(deans),
     })
 
 

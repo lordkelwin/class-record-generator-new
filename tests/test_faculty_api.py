@@ -63,7 +63,7 @@ assert dean_user["has_signature"] is True, "Dean Cataytay should have e-signatur
 # Verify Program Heads from updated document
 head_names = [h['full_name'] for h in sigs['program_heads']]
 expected_heads = [
-    "Engr. Charito O. Claro, PECE",
+    "Engr. Charito O. Claro",
     "Engr. Rosanna C. Ucat",
     "Engr. Randy B. Tongson",
     "Engr. Fillmore D. Masancay",
@@ -76,5 +76,19 @@ expected_heads = [
 for eh in expected_heads:
     assert any(eh in hn for hn in head_names), f"Expected program head {eh} not found in {head_names}"
 print(f"All 9 official Program Heads verified in signatories: {expected_heads}")
+
+# Verify no duplicate names in Review Committee or Program Heads
+comm_names = [s['full_name'] for s in sigs['review_committee']]
+assert len(comm_names) == len(set(comm_names)), f"Duplicates found in review committee: {[x for x in comm_names if comm_names.count(x) > 1]}"
+
+head_names = [s['full_name'] for s in sigs['program_heads']]
+assert len(head_names) == len(set(head_names)), f"Duplicates found in program heads: {[x for x in head_names if head_names.count(x) > 1]}"
+print("Verified ZERO duplicates in review committee and program heads dropdown lists!")
+
+# Verify Claro has no PECE
+claro = next(s for s in sigs['program_heads'] if 'Claro' in s['full_name'])
+assert 'PECE' not in claro['full_name'], f"Claro should not have PECE: {claro['full_name']}"
+print(f"Verified Claro without PECE: {claro['full_name']}")
+
 
 print(">>> ALL FACULTY & SIGNATORY VERIFICATIONS PASSED! <<<")

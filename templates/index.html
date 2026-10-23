@@ -1092,7 +1092,7 @@
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_basan')">Faculty (Basan)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_arenga')">Faculty (Arenga)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_ravida')">Faculty (Ravida)</button>
-            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('programhead_claro')">Program Head (Claro)</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_claro')">Program Head (Claro)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('qahead_ce')">QA Head</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('dean_cataytay')">Dean (Cataytay)</button>
             <select id="moreFacultySwitcher" onchange="if(this.value){ switchTestAccount(this.value); this.value=''; }" style="font-size:0.7rem; padding:2px 6px; border-radius:4px; border:1px solid #cbd5e1; background:#ffffff; color:#1e293b; font-weight:600;">
@@ -2150,7 +2150,7 @@
         <div style="font-size:0.74rem; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px;">Sequential 4-Step Approval Flow:</div>
         <div style="font-size:0.76rem; color:#334155; line-height:1.65;">
           <div>1️⃣ <strong>Review Committee:</strong> <span id="chainCommitteeName">Engr. Nikka Samantha A. Basan</span> (FM-USeP-MID-02 Review)</div>
-          <div>2️⃣ <strong>Program Head:</strong> <span id="chainProgramHeadName">Engr. Charito O. Claro, PECE</span> (Endorsement)</div>
+          <div>2️⃣ <strong>Program Head:</strong> <span id="chainProgramHeadName">Engr. Charito O. Claro</span> (Endorsement)</div>
           <div>3️⃣ <strong>College QA Head:</strong> <span id="chainQaHeadName">College QA Head</span> (Countersign)</div>
           <div>4️⃣ <strong>Dean:</strong> <span id="chainDeanName">Engr. Joie D. Cataytay, Ph.D.</span> (Final Approval &amp; Lock-in)</div>
         </div>
@@ -2863,10 +2863,16 @@
     // 2. Populate Program Head List Presets
     const headDatalist = document.getElementById("programHeadListPresets");
     if (headDatalist && collegeObj) {
-      const heads = (collegeObj.departments || []).map(d => ({ name: d.program_head, prog: d.program_code }));
-      headDatalist.innerHTML = heads
-        .filter(h => h.name)
-        .map(h => `<option value="${escapeHtml(h.name)}">${escapeHtml(h.name)} (Program Head - ${h.prog})</option>`)
+      const seenHeads = new Set();
+      headDatalist.innerHTML = (collegeObj.departments || [])
+        .filter(d => {
+          if (!d.program_head) return false;
+          const k = d.program_head.trim().toLowerCase();
+          if (seenHeads.has(k)) return false;
+          seenHeads.add(k);
+          return true;
+        })
+        .map(d => `<option value="${escapeHtml(d.program_head)}">${escapeHtml(d.program_head)} (Program Head - ${d.program_code})</option>`)
         .join("");
     }
 
@@ -5887,19 +5893,28 @@
   }
 
   let submitModalCommitteeState = [
-    { username: "committee_basan", name: "Engr. Nikka Samantha A. Basan", role: "Review Committee Chair" },
-    { username: "committee_arenga", name: "Engr. Delan Zoe H. Arenga", role: "Review Committee Member" },
-    { username: "committee_ravida", name: "Engr. Kim P. Ravida", role: "Review Committee Member" }
+    { username: "faculty_basan", name: "Engr. Nikka Samantha A. Basan", role: "Review Committee Chair" },
+    { username: "faculty_arenga", name: "Engr. Delan Zoe H. Arenga", role: "Review Committee Member" },
+    { username: "faculty_ravida", name: "Engr. Kim P. Ravida", role: "Review Committee Member" }
   ];
 
   function renderSubmitCommitteeRows() {
     const container = document.getElementById("submitCommitteeList");
     if (!container) return;
-    const signatories = (approvalsState.signatories && approvalsState.signatories.review_committee) || [
+    const rawSignatories = (approvalsState.signatories && approvalsState.signatories.review_committee) || [
       { username: "faculty_basan", full_name: "Engr. Nikka Samantha A. Basan", position_title: "Faculty Member" },
       { username: "faculty_arenga", full_name: "Engr. Delan Zoe H. Arenga", position_title: "Faculty Member" },
       { username: "faculty_ravida", full_name: "Engr. Kim P. Ravida", position_title: "Faculty Member" }
     ];
+    const seenSigs = new Set();
+    const signatories = [];
+    rawSignatories.forEach(s => {
+      const key = (s.full_name || s.username || "").toLowerCase().trim();
+      if (!seenSigs.has(key)) {
+        seenSigs.add(key);
+        signatories.push(s);
+      }
+    });
 
     container.innerHTML = submitModalCommitteeState.map((mem, idx) => `
       <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:8px 10px; display:flex; align-items:center; gap:8px;">

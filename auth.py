@@ -26,7 +26,14 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 SECRET_KEY_FILE = os.path.join(DATA_DIR, "secret_key")
 
-DEFAULT_ADMIN_USERNAME = "admin"
+LEGACY_USERNAME_ALIASES = {
+    "committee_basan": "faculty_basan",
+    "committee_arenga": "faculty_arenga",
+    "committee_ravida": "faculty_ravida",
+    "programhead_claro": "faculty_claro",
+}
+
+DEFAULT_ADMIN_USERNAME = "admin" 
 DEFAULT_ADMIN_PASSWORD = "admin123"
 MIN_PASSWORD_LENGTH = 8
 
@@ -94,17 +101,18 @@ def ensure_default_admin() -> None:
                 "last_login": None,
             }
 
+        # Clean legacy duplicate accounts from users
+        for leg in ["committee_basan", "committee_arenga", "committee_ravida", "programhead_claro"]:
+            if leg in users:
+                del users[leg]
+
         # Seed standard signatory/workflow test accounts
         seed_accounts = [
             ("faculty_tano", "Engr. Elwin Jay J. Tano", "faculty", ["review_committee"], "Faculty Member", "EE"),
-            ("committee_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
             ("faculty_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
-            ("committee_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["review_committee"], "Faculty Member", "ECE"),
             ("faculty_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["review_committee"], "Faculty Member", "ECE"),
-            ("committee_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
             ("faculty_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
-            ("programhead_claro", "Engr. Charito O. Claro, PECE", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
-            ("faculty_claro", "Engr. Charito O. Claro, PECE", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
+            ("faculty_claro", "Engr. Charito O. Claro", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
             ("qahead_ce", "Engr. College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
             ("dean_cataytay", "Engr. Joie D. Cataytay, Ph.D.", "faculty", ["dean", "review_committee"], "Dean, College of Engineering", "*"),
         ]
@@ -180,7 +188,8 @@ def ensure_default_admin() -> None:
 
 
 def _normalize_username(raw: str) -> str:
-    return (raw or "").strip().lower()
+    uname = (raw or "").strip().lower()
+    return LEGACY_USERNAME_ALIASES.get(uname, uname)
 
 
 def _valid_username(username: str) -> bool:
@@ -202,6 +211,7 @@ def current_user():
     username = session.get("username")
     if not username:
         return None
+    username = LEGACY_USERNAME_ALIASES.get(username, username)
     user = _load_users().get(username)
     if not user:
         session.clear()

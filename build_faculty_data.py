@@ -24,7 +24,7 @@ OFFICIAL_FACULTY_ROSTER = {
     "EE": {
         "full_time": [
             {"name": "Engr. Nikka Samantha A. Basan", "title": "Faculty Member", "username": "faculty_basan", "alias": "committee_basan", "roles": ["review_committee"]},
-            {"name": "Engr. Charito O. Claro, PECE", "title": "Program Head - Electrical Engineering", "username": "faculty_claro", "alias": "programhead_claro", "roles": ["program_head", "review_committee"]},
+            {"name": "Engr. Charito O. Claro", "title": "Program Head - Electrical Engineering", "username": "faculty_claro", "alias": "programhead_claro", "roles": ["program_head", "review_committee"]},
             {"name": "Engr. Ramil Alvin B. Ramos", "title": "Faculty Member", "username": "faculty_ramos", "roles": ["review_committee"]},
             {"name": "Engr. Elwin Jay J. Tano", "title": "Faculty Member", "username": "faculty_tano", "roles": ["review_committee"]},
             {"name": "Engr. Donley Glenn Mabunga", "title": "Faculty Member", "username": "faculty_mabunga", "roles": ["review_committee"]},
@@ -182,9 +182,6 @@ def sync_users_json():
         for fac in all_members:
             uname = fac["username"]
             target_unames = [uname]
-            if "alias" in fac:
-                target_unames.append(fac["alias"])
-
             for u in target_unames:
                 if u not in users:
                     users[u] = {
