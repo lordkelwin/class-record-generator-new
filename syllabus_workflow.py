@@ -248,9 +248,9 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     # Committee must have at least three (3) members
     if committee_members is None:
         committee_members = [
-            {"username": "committee_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Chair"},
-            {"username": "committee_arenga", "name": "Engr. Delan Zoe H. Arenga", "role": "Review Committee Member"},
-            {"username": "committee_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Member"},
+            {"username": "faculty_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Chair"},
+            {"username": "faculty_arenga", "name": "Engr. Delan Zoe H. Arenga", "role": "Review Committee Member"},
+            {"username": "faculty_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Member"},
         ]
     if len(committee_members) < 3:
         raise WorkflowError(f"The Syllabus Review Committee must have at least three (3) members (currently has {len(committee_members)}).")
@@ -262,7 +262,8 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     wf["submitted_by_name"] = user.get("full_name") or user["username"]
     wf["committee_members"] = committee_members
     wf["checklist"]["committee_members"] = committee_members
-    wf["assigned_committee"] = committee_members[0].get("username") or assigned_committee or "committee_basan"
+    chair_member = next((m for m in committee_members if m.get("role") == "Review Committee Chair"), committee_members[0])
+    wf["assigned_committee"] = chair_member.get("username") or assigned_committee or "faculty_basan"
     wf["assigned_committee_name"] = ", ".join(m.get("name") for m in committee_members)
     wf["submission_notes"] = (submission_notes or "").strip()
     wf["signatures"] = []
