@@ -1066,7 +1066,7 @@
     "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
     "must_change_password": false,
     "created_at": "2026-10-24T06:42:46",
-    "last_login": "2026-10-24T08:40:11",
+    "last_login": "2026-10-24T08:48:03",
     "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
   },
   "faculty_claro": {
@@ -1101,7 +1101,7 @@
     "password_hash": "scrypt:32768:8:1$MLqNpktajimgFHTp$bd33a4cbb36ae100290d84a5d826a9094423b9c788162d2b78477c2134e0c2ca090a62c61043fcc5143933667169e6e9e93ff744ad8b187d8da3a18c72aa6064",
     "must_change_password": false,
     "created_at": "2026-10-24T06:42:46",
-    "last_login": "2026-10-24T08:37:53",
+    "last_login": "2026-10-24T08:48:40",
     "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
   },
   "faculty_ravida": {
@@ -1166,9 +1166,9 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$n1cpZyMyhRZumQj6$88ec7d4e7a2a4d9061935a378863b4515b1ed610d4f5f13149bf5b585fa1eba6bd45f018a1cf81c089b2789303396ef3d34341790c4201c91e05fcaee3c854dd",
+    "password_hash": "scrypt:32768:8:1$hgXBpf5s4CTKhfv7$3306bfab338800c2e391c39ddc84cdbfd3d0b1a72b4fa919e8555007c2c075d0520628684773523c9d4b58b95f5fd87f4ab838689b6b0aa3d0eb0ce88698ca5a",
     "must_change_password": false,
-    "created_at": "2026-10-24T08:46:52",
+    "created_at": "2026-10-24T08:53:35",
     "last_login": null
   },
   "committee_ravida": {
@@ -1182,9 +1182,9 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$n1cpZyMyhRZumQj6$88ec7d4e7a2a4d9061935a378863b4515b1ed610d4f5f13149bf5b585fa1eba6bd45f018a1cf81c089b2789303396ef3d34341790c4201c91e05fcaee3c854dd",
+    "password_hash": "scrypt:32768:8:1$hgXBpf5s4CTKhfv7$3306bfab338800c2e391c39ddc84cdbfd3d0b1a72b4fa919e8555007c2c075d0520628684773523c9d4b58b95f5fd87f4ab838689b6b0aa3d0eb0ce88698ca5a",
     "must_change_password": false,
-    "created_at": "2026-10-24T08:46:52",
+    "created_at": "2026-10-24T08:53:35",
     "last_login": null
   },
   "committee_basan": {
@@ -1198,9 +1198,9 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$n1cpZyMyhRZumQj6$88ec7d4e7a2a4d9061935a378863b4515b1ed610d4f5f13149bf5b585fa1eba6bd45f018a1cf81c089b2789303396ef3d34341790c4201c91e05fcaee3c854dd",
+    "password_hash": "scrypt:32768:8:1$hgXBpf5s4CTKhfv7$3306bfab338800c2e391c39ddc84cdbfd3d0b1a72b4fa919e8555007c2c075d0520628684773523c9d4b58b95f5fd87f4ab838689b6b0aa3d0eb0ce88698ca5a",
     "must_change_password": false,
-    "created_at": "2026-10-24T08:46:52",
+    "created_at": "2026-10-24T08:53:35",
     "last_login": null
   },
   "programhead_claro": {
@@ -1215,9 +1215,9 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$n1cpZyMyhRZumQj6$88ec7d4e7a2a4d9061935a378863b4515b1ed610d4f5f13149bf5b585fa1eba6bd45f018a1cf81c089b2789303396ef3d34341790c4201c91e05fcaee3c854dd",
+    "password_hash": "scrypt:32768:8:1$hgXBpf5s4CTKhfv7$3306bfab338800c2e391c39ddc84cdbfd3d0b1a72b4fa919e8555007c2c075d0520628684773523c9d4b58b95f5fd87f4ab838689b6b0aa3d0eb0ce88698ca5a",
     "must_change_password": false,
-    "created_at": "2026-10-24T08:46:52",
+    "created_at": "2026-10-24T08:53:35",
     "last_login": null
   }
 }
