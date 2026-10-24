@@ -970,9 +970,14 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
 
             part_str = f" [Graded Portion: {rub['target_part']}]" if rub.get("target_part") else ""
 
+            codes_list = [str(c).strip() for c in (rub.get("assessment_codes") or []) if str(c).strip()]
+            if not codes_list and rub.get("assessment_code"):
+                codes_list = [c.strip() for c in str(rub.get("assessment_code")).split(",") if c.strip()]
+            codes_str = f" [Accommodated Assessments: {', '.join(codes_list)}]" if len(codes_list) > 1 else ""
+
             pdf.set_font("Helvetica", "B", 8.5)
 
-            pdf.cell(0, 4.8, _clean_text(f"Assessment Activity: {r_title}{part_str}"), new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 4.8, _clean_text(f"Assessment Activity: {r_title}{codes_str}{part_str}"), new_x="LMARGIN", new_y="NEXT")
 
 
 
@@ -1026,7 +1031,7 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
 
                     w_pct = crit.get("weight_pct", 0)
 
-                    clo_tag = f" ({crit.get('clo_id')})" if crit.get("clo_id") else ""
+                    clo_tag = f" ({crit.get('clo_id')})" if (rub.get("enable_criteria_clos") and crit.get("clo_id")) else ""
 
                     lbl = f"{crit_name}{clo_tag}" + (f" ({w_pct:.0f}%)" if w_pct else "")
 
@@ -1138,7 +1143,13 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
 
                 if not aligned_set or co.co_id.strip().upper() in aligned_set:
 
-                    matching_rubs = [r for r in rubrics if (r.get("assessment_code") or "").upper().strip() == code or code in (r.get("title") or "").upper()]
+                    matching_rubs = [
+                        r for r in rubrics
+                        if code in [str(c).upper().strip() for c in (r.get("assessment_codes") or [])]
+                        or code in [c.upper().strip() for c in str(r.get("assessment_code") or "").split(",") if c.strip()]
+                        or (r.get("assessment_code") or "").upper().strip() == code
+                        or code in (r.get("title") or "").upper()
+                    ]
                     if matching_rubs:
                         r.cell(_clean_text(matching_rubs[0].get("title", "Measurement Rubric")))
                     else:
