@@ -735,6 +735,7 @@ def api_get_course(course_id):
     wf_view["can_withdraw"] = (doc.get("owner") == username) and (wf_view["status"] == "for_committee_review") and not wf_view["signatures"]
 
     wf_view["can_sign"] = syllabus_workflow.user_can_act(user, doc)
+    wf_view["user_can_act"] = syllabus_workflow.user_can_act(user, doc)
     wf_view["can_request_revision"] = (doc.get("owner") == (user.get("username") if user else "") or (user and user.get("role") == "admin")) and (wf_view["status"] == "approved")
 
     cr_view = class_record_workflow.public_cr_view(doc, user)
@@ -1003,6 +1004,7 @@ def api_get_course_workflow(course_id):
     wf_view["can_withdraw"] = (doc.get("owner") == uname) and (wf_view["status"] == "for_committee_review") and not wf_view["signatures"]
 
     wf_view["can_sign"] = syllabus_workflow.user_can_act(user, doc)
+    wf_view["user_can_act"] = syllabus_workflow.user_can_act(user, doc)
     wf_view["can_request_revision"] = (doc.get("owner") == (user.get("username") if user else "") or (user and user.get("role") == "admin")) and (wf_view["status"] == "approved")
 
     wf_view["can_edit_checklist"] = (
@@ -1148,7 +1150,12 @@ def api_get_workflow_requests():
         c["user_can_sign_cr"] = can_sign_cr
         c["is_owner"] = is_owner
 
-        if can_act and wf.get("status") in {"for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"}:
+        ACTIVE_SYL_REVIEW_STATUSES = {
+            "for_committee_review", "for_committee_chair", "for_program_head",
+            "for_qa_countersign", "for_dean_approval",
+            "revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"
+        }
+        if can_act and wf.get("status") in ACTIVE_SYL_REVIEW_STATUSES:
             pending_action_for_me.append(c)
 
         if is_owner:
@@ -1621,10 +1628,45 @@ def api_request_syllabus_revision(course_id):
         wf = syllabus_workflow.request_revision(doc, user, reason=reason)
         courses_store.save_course_doc(doc)
         wf_view = syllabus_workflow.public_view(doc)
-        wf_view["can_submit"] = (doc.get("owner") == user["username"])
+        wf_view["can_submit"] = False
+        target_role = "Associate Dean" if (wf_view.get("revision_request") or {}).get("owner_is_program_head") else "Program Head"
         return jsonify({
             "success": True,
-            "message": "Request for revision submitted. Syllabus has been unlocked for updates.",
+            "message": f"Syllabus revision request submitted successfully. Forwarded to {target_role} and Dean for approval.",
+            "workflow": wf_view,
+        })
+    except syllabus_workflow.WorkflowError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/workflow/revision-action", methods=["POST"])
+@faculty_tools_required
+def api_syllabus_revision_action(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    data = request.get_json(silent=True) or {}
+    action = data.get("action") or data.get("decision") or ""
+    remarks = (data.get("remarks") or "").strip()
+    try:
+        wf = syllabus_workflow.handle_revision_action(doc, user, action=action, remarks=remarks)
+        courses_store.save_course_doc(doc)
+        wf_view = syllabus_workflow.public_view(doc)
+        status = wf_view.get("status")
+        if status == "draft":
+            msg = f"Syllabus revision request approved by Dean! Syllabus is now unlocked for Cycle {wf_view.get('cycle', 2)} updates."
+        elif status == "revision_for_dean":
+            msg = "Syllabus revision request endorsed and forwarded to the Dean for final approval."
+        elif status == "approved":
+            msg = "Syllabus revision request was rejected. The syllabus remains approved and locked."
+        else:
+            msg = "Revision request updated."
+        return jsonify({
+            "success": True,
+            "message": msg,
             "workflow": wf_view,
         })
     except syllabus_workflow.WorkflowError as e:

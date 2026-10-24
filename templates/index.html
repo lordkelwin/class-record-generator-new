@@ -7822,6 +7822,8 @@
         badge.style.background = "#dbeafe"; badge.style.color = "#1e40af";
       } else if (wf.status === "approved") {
         badge.style.background = "#dcfce7"; badge.style.color = "#166534";
+      } else if (["revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"].includes(wf.status)) {
+        badge.style.background = "#fef3c7"; badge.style.color = "#92400e";
       }
     }
 
@@ -8027,6 +8029,12 @@
         descEl.innerHTML = "<strong>Status: With Dean.</strong> Final Dean approval and official lock-in.";
       } else if (wf.status === "approved") {
         descEl.innerHTML = "<strong style=" + '"color:#166534;"' + ">Status: APPROVED &amp; LOCKED &#128274;.</strong> Syllabus is officially approved and locked from direct edits. Class record setup and grade recording are completely unlocked.";
+      } else if (wf.status === "revision_for_program_head") {
+        descEl.innerHTML = "<strong style='color:#92400e;'>Status: REVISION REQUEST PENDING &#128221;.</strong> Awaiting Program Head endorsement. Forwarded to Dean for final approval.";
+      } else if (wf.status === "revision_for_associate_dean") {
+        descEl.innerHTML = "<strong style='color:#92400e;'>Status: REVISION REQUEST PENDING &#128221;.</strong> Awaiting Associate Dean endorsement (Program Head Course). Forwarded to Dean for final approval.";
+      } else if (wf.status === "revision_for_dean") {
+        descEl.innerHTML = "<strong style='color:#92400e;'>Status: REVISION REQUEST PENDING &#128221;.</strong> Awaiting Dean's final approval to unlock syllabus for editing.";
       }
     }
 
@@ -8106,9 +8114,59 @@
   // Enforce Syllabus Lock on Tab 1 when approved
   function checkSyllabusLock() {
     const isApproved = currentWorkflow && (currentWorkflow.status === "approved");
+    const isRevisionPending = currentWorkflow && ["revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"].includes(currentWorkflow.status);
+    const isLocked = isApproved || isRevisionPending;
     const banner = document.getElementById("syllabusApprovedLockBanner");
     if (banner) {
-      banner.style.display = isApproved ? "block" : "none";
+      if (isRevisionPending) {
+        banner.style.display = "block";
+        banner.style.background = "#fffbeb";
+        banner.style.borderColor = "#f59e0b";
+        banner.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:2rem; line-height:1;">📝</span>
+              <div>
+                <h4 style="margin:0 0 3px; color:#92400e; font-size:1.02rem;">Syllabus Revision Request In Review (${escapeHtml(currentWorkflow.status_label || 'Pending Approval')})</h4>
+                <div style="font-size:0.8rem; color:#78350f; line-height:1.4;">
+                  Revision request submitted with reason: <em>"${escapeHtml(currentWorkflow.revision_reason || '')}"</em>.<br/>
+                  The syllabus remains locked until final approval is granted by the College Dean.
+                </div>
+              </div>
+            </div>
+            <div>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:800; font-size:0.78rem; padding:6px 12px; border-radius:6px; border:1px solid #f59e0b;">
+                ⏳ Awaiting ${escapeHtml(currentWorkflow.current_step_label || 'Approval')}
+              </span>
+            </div>
+          </div>
+        `;
+      } else if (isApproved) {
+        banner.style.display = "block";
+        banner.style.background = "#fef2f2";
+        banner.style.borderColor = "#f87171";
+        banner.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:2rem; line-height:1;">🔒</span>
+              <div>
+                <h4 style="margin:0 0 3px; color:#991b1b; font-size:1.02rem;">Official Syllabus is Approved &amp; Locked</h4>
+                <div style="font-size:0.8rem; color:#7f1d1d; line-height:1.4;">
+                  This course syllabus has completed all sequential approval stages and is officially locked.
+                  Faculty cannot edit syllabus content directly. To make revisions, submit an official Request for Revision.
+                </div>
+              </div>
+            </div>
+            <div>
+              <button type="button" class="btn btn-danger btn-sm" onclick="promptRequestSyllabusRevision()" style="font-weight:700; padding:7px 15px; box-shadow:0 2px 4px rgba(220,38,38,0.25);">
+                📝 Request Revision (Unlock Syllabus)
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        banner.style.display = "none";
+      }
     }
 
     const tabSyllabus = document.getElementById("tab-syllabus");
@@ -8118,7 +8176,7 @@
     const fields = tabSyllabus.querySelectorAll("input, select, textarea");
     fields.forEach(el => {
       if (el.closest("#syllabusWorkflowCard") || el.closest("#syllabusApprovedLockBanner") || el.id === "moreFacultySwitcher") return;
-      el.disabled = isApproved;
+      el.disabled = isLocked;
     });
 
     // Disable / enable modifying buttons inside syllabus cards
@@ -8130,13 +8188,52 @@
       if (txt.includes("Download") || txt.includes("Generate") || txt.includes("Part ") || btn.getAttribute("onclick")?.includes("scrollToSyllabusSection") || btn.getAttribute("onclick")?.includes("exportSyllabusPdf")) {
         return;
       }
-      btn.disabled = isApproved;
+      btn.disabled = isLocked;
     });
 
     const saveBtn = document.getElementById("btnSaveCourse");
     if (saveBtn) {
-      saveBtn.disabled = isApproved;
-      if (isApproved) saveBtn.title = "Syllabus is approved and locked. Submit a revision request to make changes.";
+      saveBtn.disabled = isLocked;
+      if (isLocked) saveBtn.title = "Syllabus is locked.";
+    }
+  }
+
+  // Endorse, approve, or reject syllabus revision request
+  async function reviewRevisionRequestDirect(courseId, action) {
+    const isApprove = (action === 'approve' || action === 'endorse');
+    const promptMsg = isApprove
+      ? (action === 'approve'
+         ? "Official Syllabus Revision Approval (Dean):\n\nEnter approval remarks to unlock the syllabus for the new revision cycle (optional):"
+         : "Official Syllabus Revision Endorsement:\n\nEnter endorsement remarks to forward this request to the Dean (optional):")
+      : "Reject Syllabus Revision Request:\n\nPlease enter the reason for rejecting this revision request (required):";
+    const defaultText = isApprove ? (action === 'approve' ? "Approved for syllabus updates." : "Reviewed and recommended for revision approval.") : "";
+    const remarks = prompt(promptMsg, defaultText);
+    if (remarks === null) return;
+    if (!isApprove && !remarks.trim()) {
+      alert("Remarks are required when rejecting a revision request.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(courseId)}/workflow/revision-action`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, remarks: (remarks || "").trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to process revision action.");
+        return;
+      }
+      alert("✅ " + data.message);
+      if (courseId === currentCourseId) {
+        await loadCourse(courseId);
+      }
+      await loadApprovalRequests(true);
+      await loadCoursesList();
+    } catch(e) {
+      console.error("Error processing revision action:", e);
+      alert("Network error while processing revision action.");
     }
   }
 
@@ -8596,7 +8693,7 @@
     if (statusFilt === "ongoing") {
       items = items.filter(c => {
         const s = (c.workflow && c.workflow.status) || "";
-        return ["for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"].includes(s);
+        return ["for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval", "revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"].includes(s);
       });
     } else if (statusFilt === "approved") {
       items = items.filter(c => (c.workflow && c.workflow.status) === "approved");
@@ -8624,7 +8721,7 @@
     const allInst = approvalsState.institutionalRequests || [];
     const statTot = document.getElementById("statTotalRequests");
     if (statTot) statTot.textContent = allInst.length;
-    const ongoingItems = allInst.filter(c => ["for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"].includes((c.workflow && c.workflow.status) || ""));
+    const ongoingItems = allInst.filter(c => ["for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval", "revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"].includes((c.workflow && c.workflow.status) || ""));
     const statOng = document.getElementById("statOngoingRequests");
     if (statOng) statOng.textContent = ongoingItems.length;
     const appItems = allInst.filter(c => (c.workflow && c.workflow.status) === "approved");
@@ -8654,12 +8751,14 @@
       const status = wf.status || "draft";
       const isApproved = status === "approved";
       const isReturned = status === "returned";
+      const isRevPending = ["revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"].includes(status);
       const isPending = !isApproved && !isReturned && status !== "draft";
 
       let statusBadgeColor = "#2563eb";
       let statusBgColor = "#dbeafe";
       if (isApproved) { statusBadgeColor = "#166534"; statusBgColor = "#dcfce7"; }
       else if (isReturned) { statusBadgeColor = "#991b1b"; statusBgColor = "#fee2e2"; }
+      else if (isRevPending) { statusBadgeColor = "#92400e"; statusBgColor = "#fef3c7"; }
       else if (isPending) { statusBadgeColor = "#854d0e"; statusBgColor = "#fef9c3"; }
 
       return `
@@ -8746,25 +8845,34 @@
                 </button>
                 ${isApproved ? `<span class="badge" style="background:#dcfce7; color:#166534; font-weight:700;">🔒 Approved &amp; Officially Sealed</span>` : (isReturned ? `<span class="badge" style="background:#fee2e2; color:#991b1b; font-weight:700;">↩️ Returned to Faculty</span>` : `<span class="badge" style="background:#fef3c7; color:#854d0e; font-weight:700;">⏳ Awaiting: ${escapeHtml(wf.current_step_label || 'Review')}</span>`)}
               ` : `
-                ${c.user_can_act ? `
-                  <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:700;">
-                    📝 ${(status === 'for_committee_review' || status === 'for_committee_chair') ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
-                  </button>
-                  <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
-                    ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : 'Sign & Endorse')))}
-                  </button>
-                  <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
-                    ↩️ Return for Revision
-                  </button>
-                ` : `
-                  ${(status !== 'draft') ? `
+                ${c.user_can_act ? (
+                  isRevPending ? `
+                    <button class="btn btn-sm btn-primary" onclick="reviewRevisionRequestDirect('${c.id}', '${status === 'revision_for_dean' ? 'approve' : 'endorse'}')" style="font-weight:700;">
+                      ${status === 'revision_for_dean' ? '✅ Approve Revision Request (Unlock Syllabus)' : '✍️ Endorse Revision Request to Dean'}
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="reviewRevisionRequestDirect('${c.id}', 'reject')" style="font-weight:700;">
+                      ❌ Reject Revision Request
+                    </button>
+                  ` : `
+                    <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:700;">
+                      📝 ${(status === 'for_committee_review' || status === 'for_committee_chair') ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
+                      ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : 'Sign & Endorse')))}
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
+                      ↩️ Return for Revision
+                    </button>
+                  `
+                ) : `
+                  ${(status !== 'draft' && !isRevPending) ? `
                     <button class="btn btn-sm btn-outline-secondary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:600;">
                       📋 View Review Checklist (FM-USeP-MID-02)
                     </button>
                   ` : ''}
                 `}
 
-                ${(c.is_owner && isApproved) ? `
+                ${(c.is_owner && isApproved && !isRevPending) ? `
                   <button class="btn btn-sm btn-outline-danger" onclick="promptRequestSyllabusRevision('${c.id}')" style="font-weight:700;">
                     📝 Request Revision
                   </button>

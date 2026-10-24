@@ -261,12 +261,54 @@ class ComprehensiveWorkflowTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         rev_data = res.get_json()
         wf_rev = rev_data["workflow"]
-        self.assertEqual(wf_rev["status"], "draft")
-        self.assertEqual(wf_rev["cycle"], 2)
-        self.assertEqual(len(wf_rev["signatures"]), 0)
-        self.assertTrue(wf_rev["can_submit"])
-        self.assertEqual(wf_rev.get("revision_reason"), rev_reason)
-        print("PASS: Revision request approved. Syllabus unlocked for editing, cycle incremented to 2, signatures reset.")
+        self.assertEqual(wf_rev["status"], "revision_for_program_head")
+        self.assertFalse(wf_rev.get("user_can_act", False))
+        print("PASS: Revision request submitted! Status routed to 'revision_for_program_head'.")
+
+        # Step 4a: Program Head endorses revision request
+        with self.app.session_transaction() as sess:
+            sess["username"] = "faculty_claro"
+        res = self.app.get(f"/api/courses/{course_id}/workflow")
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.get_json().get("user_can_act"))
+
+        res = self.app.post(f"/api/courses/{course_id}/workflow/revision-action", json={
+            "action": "endorse",
+            "remarks": "Endorsed by Program Head for syllabus revision."
+        })
+        self.assertEqual(res.status_code, 200)
+        wf_endorsed = res.get_json()["workflow"]
+        self.assertEqual(wf_endorsed["status"], "revision_for_dean")
+        print("PASS: Program Head endorsed revision request! Status routed to 'revision_for_dean'.")
+
+        # Step 4b: Dean approves revision request -> unlocked for cycle 2
+        with self.app.session_transaction() as sess:
+            sess["username"] = "dean_cataytay"
+        res = self.app.get(f"/api/courses/{course_id}/workflow")
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.get_json().get("user_can_act"))
+
+        res = self.app.post(f"/api/courses/{course_id}/workflow/revision-action", json={
+            "action": "approve",
+            "remarks": "Approved by Dean for Cycle 2 revisions."
+        })
+        self.assertEqual(res.status_code, 200)
+        wf_final = res.get_json()["workflow"]
+        self.assertEqual(wf_final["status"], "draft")
+        self.assertEqual(wf_final["cycle"], 2)
+        self.assertEqual(len(wf_final["signatures"]), 0)
+        self.assertEqual(wf_final.get("revision_reason"), rev_reason)
+
+        # Faculty owner sees syllabus unlocked in draft state with can_submit = True
+        with self.app.session_transaction() as sess:
+            sess["username"] = "faculty_tano"
+        res = self.app.get(f"/api/courses/{course_id}/workflow")
+        self.assertEqual(res.status_code, 200)
+        wf_owner = res.get_json()
+        self.assertEqual(wf_owner["status"], "draft")
+        self.assertEqual(wf_owner["cycle"], 2)
+        self.assertTrue(wf_owner["can_submit"])
+        print("PASS: Dean approved revision request. Syllabus unlocked for editing, cycle incremented to 2, signatures reset.")
 
         # Clean up test course
         self.app.delete(f"/api/courses/{course_id}")

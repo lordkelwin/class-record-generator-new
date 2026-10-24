@@ -81,8 +81,12 @@ STATUS_LABELS = {
     "for_qa_countersign": "For QA Head Countersign",
     "for_dean_approval": "For Dean's Approval",
     "approved": "Approved & Locked",
+    "revision_for_program_head": "Revision Request: Awaiting Program Head Endorsement",
+    "revision_for_associate_dean": "Revision Request: Awaiting Associate Dean Endorsement (Program Head Course)",
+    "revision_for_dean": "Revision Request: Awaiting Dean's Final Approval",
 }
 
+REVISION_STATUSES = {"revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"}
 EDITABLE_STATUSES = {"draft", "returned"}
 
 # Metadata fields that belong to the individual class/section (not the syllabus content)
@@ -92,6 +96,18 @@ SECTION_LEVEL_META_FIELDS = {"section", "schedule", "room", "transmutation_base"
 
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
+
+
+def is_owner_program_head(owner_username: str) -> bool:
+    """Check if the owner of the course holds the Program Head role."""
+    import auth
+    users = auth._load_users()
+    uname = auth.LEGACY_USERNAME_ALIASES.get(owner_username, owner_username)
+    u = users.get(uname)
+    if not u:
+        return False
+    w_roles = u.get("workflow_roles") or []
+    return "program_head" in w_roles or u.get("role") == "program_head"
 
 
 def default_workflow() -> Dict[str, Any]:
@@ -110,6 +126,7 @@ def default_workflow() -> Dict[str, Any]:
         "checklist": {"responses": {}, "comments": {}, "overall_recommendation": "", "general_remarks": "",
                       "updated_by": None, "updated_at": None},
         "history": [],  # [{at, by, action, step, remarks, cycle}]
+        "revision_request": None,
     }
 
 
@@ -129,8 +146,39 @@ def status_label(status: str) -> str:
 
 
 def current_step(wf: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    status = wf.get("status")
+    if status == "revision_for_program_head":
+        return {
+            "key": "revision_program_head",
+            "role": "program_head",
+            "label": "Program Head (Revision Endorsement)",
+            "action_label": "Endorsed by Program Head",
+            "status": "revision_for_program_head",
+            "requires_checklist": False,
+            "scope": "program",
+        }
+    if status == "revision_for_associate_dean":
+        return {
+            "key": "revision_associate_dean",
+            "role": "associate_dean",
+            "label": "Associate Dean (Revision Endorsement - Program Head Course)",
+            "action_label": "Endorsed by Associate Dean",
+            "status": "revision_for_associate_dean",
+            "requires_checklist": False,
+            "scope": "college",
+        }
+    if status == "revision_for_dean":
+        return {
+            "key": "revision_dean",
+            "role": "dean",
+            "label": "Dean (Final Revision Approval)",
+            "action_label": "Approved by Dean",
+            "status": "revision_for_dean",
+            "requires_checklist": False,
+            "scope": "college",
+        }
     for s in WORKFLOW_STEPS:
-        if s["status"] == wf.get("status"):
+        if s["status"] == status:
             return s
     return None
 
@@ -140,7 +188,8 @@ def is_syllabus_locked(doc: Dict[str, Any]) -> bool:
 
 
 def is_approved(doc: Dict[str, Any]) -> bool:
-    return get_workflow(doc)["status"] == "approved"
+    wf = get_workflow(doc)
+    return wf.get("status") == "approved" or (wf.get("status") in REVISION_STATUSES and wf.get("approved_at") is not None)
 
 
 # --------------------------------------------------------------------------
@@ -210,6 +259,21 @@ def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[
         return False  # nobody reviews/approves their own syllabus
     if user.get("role") == "staff" or (user.get("is_staff") and not user.get("can_access_faculty_tools", True)):
         return False  # staff has oversight only and cannot sign review stages
+
+    status = wf.get("status")
+    user_roles = set(user.get("workflow_roles") or [])
+
+    # Revision Request Steps
+    if status == "revision_for_program_head":
+        if "program_head" not in user_roles and user.get("role") != "admin":
+            return False
+        return in_scope(user, doc, {"scope": "program"})
+
+    if status == "revision_for_associate_dean":
+        return "associate_dean" in user_roles or user.get("role") == "admin"
+
+    if status == "revision_for_dean":
+        return "dean" in user_roles or user.get("role") == "admin"
 
     import auth
     user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
@@ -355,6 +419,8 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
     step = current_step(wf)
     if not step:
         raise WorkflowError("This syllabus is not awaiting any signature.")
+    if wf.get("status") in REVISION_STATUSES:
+        return handle_revision_action(doc, user, action=decision, remarks=remarks)
     if not user_can_act(user, doc, step):
         raise WorkflowError(f"Only the {step['label']} assigned to this program/college can act on this step.")
     if decision == "approve" and not user.get("has_signature"):
@@ -509,6 +575,8 @@ def public_view(doc: Dict[str, Any]) -> Dict[str, Any]:
         "committee_members": wf.get("committee_members") or [],
         "history": wf.get("history", [])[-30:],
         "revision_reason": wf.get("revision_reason", ""),
+        "revision_request": wf.get("revision_request"),
+        "is_revision_pending": wf.get("status") in REVISION_STATUSES,
         "steps": [{"key": s["key"], "label": s["label"], "action_label": s["action_label"], "role": s["role"]} for s in WORKFLOW_STEPS],
     }
 
@@ -521,11 +589,101 @@ def request_revision(doc: Dict[str, Any], user: Dict[str, Any], reason: str = ""
         raise WorkflowError("Only the faculty who owns this syllabus can request a revision.")
     if wf.get("status") != "approved":
         raise WorkflowError("A revision request can only be submitted for an approved syllabus.")
+    if not (reason or "").strip():
+        raise WorkflowError("Please state the specific official reason for requesting syllabus revision.")
 
-    wf["status"] = "draft"
-    wf["cycle"] = int(wf.get("cycle", 1)) + 1
-    wf["signatures"] = []
-    wf["approved_at"] = None
+    owner = doc.get("owner", user["username"])
+    is_ph = is_owner_program_head(owner)
+
+    now_ts = _now()
+    user_name = user.get("full_name") or user.get("username")
+    target_status = "revision_for_associate_dean" if is_ph else "revision_for_program_head"
+
+    wf["status"] = target_status
     wf["revision_reason"] = (reason or "").strip()
-    _log(wf, user["username"], "revision_requested", remarks=reason, step="faculty")
+    wf["revision_request"] = {
+        "requested_by": user["username"],
+        "requested_by_name": user_name,
+        "requested_at": now_ts,
+        "reason": (reason or "").strip(),
+        "owner_is_program_head": is_ph,
+        "current_reviewer": "associate_dean" if is_ph else "program_head",
+        "endorsements": [],
+        "status": "pending",
+    }
+    _log(wf, user["username"], "revision_requested", remarks=reason.strip(), step="faculty")
+    return wf
+
+
+def handle_revision_action(doc: Dict[str, Any], user: Dict[str, Any], action: str, remarks: str = "") -> Dict[str, Any]:
+    """
+    Handle endorsement, approval, or rejection of a syllabus revision request.
+    action: 'endorse' / 'approve' or 'reject'
+    """
+    wf = get_workflow(doc)
+    status = wf.get("status")
+    if status not in REVISION_STATUSES:
+        raise WorkflowError("This course does not have an active revision request pending action.")
+
+    if not user_can_act(user, doc):
+        step = current_step(wf)
+        label = step["label"] if step else "authorized reviewer"
+        raise WorkflowError(f"Only the {label} can act on this revision request.")
+
+    action_clean = str(action or "").lower().strip()
+    is_approve_or_endorse = action_clean in {"approve", "endorse", "yes", "accept"}
+    is_reject = action_clean in {"reject", "return", "deny", "no"}
+    if not (is_approve_or_endorse or is_reject):
+        raise WorkflowError("Invalid action. Must be 'endorse'/'approve' or 'reject'.")
+
+    rev_req = wf.get("revision_request") or {}
+    now_ts = _now()
+    user_name = user.get("full_name") or user.get("username")
+
+    if is_reject:
+        if not (remarks or "").strip():
+            raise WorkflowError("Please provide remarks explaining why the revision request was rejected.")
+        wf["status"] = "approved"
+        rev_req["status"] = "rejected"
+        rev_req["rejected_by"] = user["username"]
+        rev_req["rejected_by_name"] = user_name
+        rev_req["rejected_at"] = now_ts
+        rev_req["rejection_remarks"] = remarks.strip()
+        wf["revision_request"] = rev_req
+        _log(wf, user["username"], "revision_rejected", remarks=remarks.strip(), step=status)
+        return wf
+
+    # Endorse / Approve
+    if status in {"revision_for_program_head", "revision_for_associate_dean"}:
+        endorsement_step = "program_head" if status == "revision_for_program_head" else "associate_dean"
+        rev_req["endorsements"] = rev_req.get("endorsements") or []
+        rev_req["endorsements"].append({
+            "step": endorsement_step,
+            "by": user["username"],
+            "name": user_name,
+            "at": now_ts,
+            "remarks": (remarks or "").strip(),
+        })
+        rev_req["current_reviewer"] = "dean"
+        wf["revision_request"] = rev_req
+        wf["status"] = "revision_for_dean"
+        _log(wf, user["username"], "revision_endorsed", remarks=(remarks or "").strip(), step=endorsement_step)
+        return wf
+
+    if status == "revision_for_dean":
+        # Dean approves -> unlock syllabus into draft for cycle increment
+        prev_cycle = int(wf.get("cycle", 1))
+        wf["status"] = "draft"
+        wf["cycle"] = prev_cycle + 1
+        wf["signatures"] = []
+        wf["approved_at"] = None
+        rev_req["status"] = "approved"
+        rev_req["approved_by"] = user["username"]
+        rev_req["approved_by_name"] = user_name
+        rev_req["approved_at"] = now_ts
+        rev_req["approval_remarks"] = (remarks or "").strip()
+        wf["revision_request"] = rev_req
+        _log(wf, user["username"], "revision_approved", remarks=(remarks or "").strip(), step="dean")
+        return wf
+
     return wf
