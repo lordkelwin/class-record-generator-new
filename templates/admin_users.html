@@ -187,7 +187,15 @@
           {% if u.username == current_user.username %}<span class="hint" style="color:#1e40af; font-weight:700;">(you)</span>{% endif %}
         </td>
         <td style="font-weight:600;">{{ u.full_name }}</td>
-        <td style="color:#1d4ed8; font-size:0.8rem; font-family:monospace; word-break:break-all;">{{ u.email }}</td>
+        <td>
+          <div style="color:#1d4ed8; font-size:0.8rem; font-family:monospace; word-break:break-all; font-weight:600;">
+            {{ u.email or 'No email set' }}
+          </div>
+          <button type="button" class="btn btn-light btn-sm" style="font-size:0.72rem; padding:2px 7px; margin-top:4px; font-weight:600; color:#2563eb; border:1px solid #bfdbfe; background:#eff6ff;"
+            onclick="openEmailModal('{{ u.username }}', '{{ u.full_name|e }}', '{{ u.email|e }}')">
+            ✉️ Edit Email
+          </button>
+        </td>
         <td>
           <div style="display:flex; flex-wrap:wrap; gap:3px;">
             {% for b in u.badges %}
@@ -293,6 +301,13 @@
           </div>
 
           <div class="form-group">
+            <label>Official Notification Email <span style="color:#dc2626;">*</span></label>
+            <input type="email" name="email" id="modalEmailInput" placeholder="e.g. user@usep.edu.ph" required />
+            <div class="hint" style="font-size:0.72rem; color:#64748b; margin-top:3px;">
+              Syllabus review requests, committee endorsements, and 3-day queue reminders will be delivered to this email address.
+            </div>
+          </div>
+          <div class="form-group">
             <label>Official Printed Position / Title</label>
             <input type="text" name="position_title" id="modalTitleInput" placeholder="e.g. Program Head - Electrical Engineering & Associate Dean" />
             <div class="hint" style="font-size:0.72rem; color:#64748b; margin-top:3px;">
@@ -309,7 +324,49 @@
     </div>
   </div>
 
+  <!-- Dedicated Email Edit Modal for Existing Accounts -->
+  <div class="modal-overlay" id="emailModal" onclick="if(event.target===this) closeEmailModal();" style="display:none;">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h3>✉️ Update Notification Email</h3>
+        <button class="modal-close-btn" onclick="closeEmailModal()">&times;</button>
+      </div>
+      <form id="emailModalForm" method="post" action="">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />
+        <div class="modal-body">
+          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; color:#1e40af;">
+            Updating email for: <strong id="emailModalUserName" style="color:#1e3a8a;"></strong> (<code id="emailModalUserUname"></code>)
+          </div>
+          <div class="form-group">
+            <label>Notification Email Address <span style="color:#dc2626;">*</span></label>
+            <input type="email" name="email" id="quickEmailInput" placeholder="e.g. firstname.lastname@usep.edu.ph" required style="width:100%; padding:9px 12px; font-size:0.85rem;" />
+            <div class="hint" style="font-size:0.72rem; color:#64748b; margin-top:4px;">
+              Official review notifications, sequential endorsements, and 3-day queue bottleneck reminders will be delivered to this address.
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+            <button type="button" class="btn btn-light" onclick="closeEmailModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="font-weight:700; padding:8px 18px;">💾 Save Email</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
+    // Email Modal Helpers
+    function openEmailModal(uname, fullName, email) {
+      document.getElementById("emailModalUserName").textContent = fullName || uname;
+      document.getElementById("emailModalUserUname").textContent = uname;
+      document.getElementById("quickEmailInput").value = email || "";
+      document.getElementById("emailModalForm").action = `/admin/users/${encodeURIComponent(uname)}/email`;
+      document.getElementById("emailModal").style.display = "flex";
+    }
+
+    function closeEmailModal() {
+      document.getElementById("emailModal").style.display = "none";
+    }
+
     const PROGRAM_MAP = {
       {% for code, name in programs.items() %}
         "{{ code }}": "{{ name }}",
@@ -381,7 +438,8 @@
       });
 
       document.getElementById("modalTitleInput").value = title || buildCombinedTitle(wf, progs);
-      document.getElementById("modalEmailInput").value = email || "";
+      const elEmail = document.getElementById("modalEmailInput");
+      if (elEmail) elEmail.value = email || "";
       document.getElementById("roleModal").style.display = "flex";
     }
 

@@ -709,6 +709,27 @@ def update_user_role(username):
     return redirect(url_for("auth.manage_users"))
 
 
+@auth_bp.route("/admin/users/<username>/email", methods=["POST"])
+@admin_required
+def update_user_email(username):
+    _check_csrf()
+    username = _normalize_username(username)
+    email = (request.form.get("email") or "").strip().lower()
+    if not email:
+        flash("Email address cannot be empty.", "error")
+        return redirect(url_for("auth.manage_users"))
+    with _lock:
+        users = _load_users()
+        uname = LEGACY_USERNAME_ALIASES.get(username, username)
+        if uname not in users:
+            abort(404)
+        users[uname]["email"] = email
+        _save_users(users)
+
+    flash(f"Updated notification email for '{username}' to '{email}'.", "success")
+    return redirect(url_for("auth.manage_users"))
+
+
 @auth_bp.route("/admin/users/<username>/reset", methods=["POST"])
 @admin_required
 def reset_user_password(username):
