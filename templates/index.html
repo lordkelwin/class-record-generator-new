@@ -1732,6 +1732,35 @@
         <button class="btn btn-outline-primary btn-sm" onclick="openEvaluationToolModal()">Open Syllabus Evaluation Tool</button>
       </div>
     </div>
+
+    <!-- CLASS RECORD SEQUENTIAL SIGN-OFF & GRADE FREEZE WORKFLOW BANNER -->
+    <div id="crWorkflowBanner" class="card" style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:10px; padding:16px 20px; margin-bottom:16px; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:0.78rem; font-weight:800; color:#334155; text-transform:uppercase; letter-spacing:0.04em;">Class Record Sign-Off Status:</span>
+            <span id="crStatusBadge" class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px;">Draft (Scores Editable)</span>
+            <span id="crGradeFreezeBadge" class="badge" style="display:none; background:#fef2f2; color:#991b1b; border:1px solid #fecaca; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:6px;">🔒 FINAL GRADES LOCKED</span>
+          </div>
+          <div id="crStatusDetail" style="font-size:0.78rem; color:#64748b; margin-top:4px;">
+            Student scores and grades are editable. Once finalized, grades will freeze and sequential institutional sign-off will begin.
+          </div>
+        </div>
+        <div id="crActionButtons" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <!-- Dynamically populated: Finalize & Submit / Sign / Request Revision -->
+        </div>
+      </div>
+
+      <!-- Stepper Track -->
+      <div id="crStepperContainer" style="margin-top:14px; padding-top:12px; border-top:1px solid #e2e8f0;">
+        <!-- Filled by renderClassRecordWorkflowBar -->
+      </div>
+    </div>
+
+    <!-- Active Grade Freeze Notice -->
+    <div id="classRecordFrozenBanner" style="display:none; background:#fefce8; border:1.5px solid #fde047; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:0.82rem; color:#854d0e;">
+      🔒 <strong>Official Grade Lock Active:</strong> All student scores, assessment items, and transmuted grades for this class record are sealed and locked against editing (<span id="crFreezeStageLabel" style="font-weight:700;"></span>).
+    </div>
     <div class="card">
       <div class="card-header">
         <div>
@@ -1742,8 +1771,8 @@
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <input type="file" id="rosterFileInput" accept=".csv,.xlsx,.xls" style="font-size:0.78rem;" />
-          <button class="btn btn-light btn-sm" onclick="uploadStudentRoster()">Import Roster (.csv/.xlsx)</button>
-          <button class="btn btn-primary btn-sm" onclick="addStudentRow()">+ Add Student</button>
+          <button id="btnCrImportRoster" class="btn btn-light btn-sm" onclick="uploadStudentRoster()">Import Roster (.csv/.xlsx)</button>
+          <button id="btnCrAddStudent" class="btn btn-primary btn-sm" onclick="addStudentRow()">+ Add Student</button>
           <button class="btn btn-primary btn-sm" style="background:#0284c7; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
           <button class="btn btn-success btn-sm" onclick="exportExcelWorkbook()">Download Full USeP Excel Workbook (.xlsx)</button>
         </div>
@@ -1895,81 +1924,267 @@
             Manage and track syllabus submissions, evaluate checklists (FM-USeP-MID-02), sign with electronic signatures &amp; verified timestamps, and monitor pending approvals.
           </p>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <a href="/api/workflow/oversight-report" target="_blank" class="btn btn-light btn-sm" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); text-decoration:none; display:inline-flex; align-items:center; gap:5px;" title="Auto-generate and download official compliance audit PDF">
+            📄 Auto-Generate Oversight Report (.pdf)
+          </a>
+          <button class="btn btn-light btn-sm" onclick="printOversightSummary()" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1);" title="Open printable audit summary">
+            🖨️ Printable Summary
+          </button>
           <button class="btn btn-warning btn-sm" id="btnApprovalsAssignRoles" onclick="openAdminRoleModal()" style="display:none; font-weight:700; color:#78350f; background:#fef3c7; border:1px solid #fde68a;">⚙️ Assign Faculty Roles</button>
-          <button class="btn btn-light btn-sm" onclick="loadApprovalRequests(true)" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1);">🔄 Refresh Requests</button>
+          <button class="btn btn-light btn-sm" onclick="loadApprovalRequests(true)" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1);">🔄 Refresh</button>
         </div>
       </div>
     </div>
 
-    <!-- Oversight KPI Summary Cards -->
-    <div id="approvalsKpiRow" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
-      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #3b82f6; background:#f8fafc;">
-        <div style="font-size:0.72rem; font-weight:700; color:#64748b; text-transform:uppercase;">Total Tracked Requests</div>
-        <div style="font-size:1.6rem; font-weight:800; color:#1e293b; margin-top:2px;" id="statTotalRequests">0</div>
-        <div style="font-size:0.7rem; color:#94a3b8;">Institutional Submissions</div>
+    <!-- Portal View Switcher: Syllabi / Class Records / Analytics -->
+    <div style="margin-bottom:16px; display:flex; gap:6px; flex-wrap:wrap; background:#e2e8f0; padding:4px; border-radius:10px; width:fit-content;">
+      <button id="btnPortalViewSyllabi" class="btn btn-sm active" onclick="switchPortalView('syllabi')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:#ffffff; color:#1e3a8a; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        📜 Course Syllabi Review (<span id="countPortalSyllabi">0</span>)
+      </button>
+      <button id="btnPortalViewClassRecords" class="btn btn-sm" onclick="switchPortalView('class_records')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:transparent; color:#475569;">
+        📊 Class Records Finalization (<span id="countPortalClassRecords">0</span>)
+      </button>
+      <button id="btnPortalViewAnalytics" class="btn btn-sm" onclick="switchPortalView('analytics')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:transparent; color:#475569;">
+        📈 Institutional Analytics &amp; Reports
+      </button>
+    </div>
+
+    <!-- VIEW 1: COURSE SYLLABI REVIEW -->
+    <div id="portalViewSyllabi">
+      <!-- Oversight KPI Summary Cards -->
+      <div id="approvalsKpiRow" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #3b82f6; background:#f8fafc;">
+          <div style="font-size:0.72rem; font-weight:700; color:#64748b; text-transform:uppercase;">Total Tracked Requests</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#1e293b; margin-top:2px;" id="statTotalRequests">0</div>
+          <div style="font-size:0.7rem; color:#94a3b8;">Institutional Submissions</div>
+        </div>
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #eab308; background:#fefce8;">
+          <div style="font-size:0.72rem; font-weight:700; color:#854d0e; text-transform:uppercase;">On-Going / Under Review</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#a16207; margin-top:2px;" id="statOngoingRequests">0</div>
+          <div style="font-size:0.7rem; color:#ca8a04;">Awaiting accommodation/steps</div>
+        </div>
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #22c55e; background:#f0fdf4;">
+          <div style="font-size:0.72rem; font-weight:700; color:#166534; text-transform:uppercase;">Approved &amp; Locked Syllabi</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#15803d; margin-top:2px;" id="statApprovedRequests">0</div>
+          <div style="font-size:0.7rem; color:#16a34a;">Compliant with all 4 review stages</div>
+        </div>
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #ef4444; background:#fef2f2;">
+          <div style="font-size:0.72rem; font-weight:700; color:#991b1b; text-transform:uppercase;">Returned for Revision</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#b91c1c; margin-top:2px;" id="statReturnedRequests">0</div>
+          <div style="font-size:0.7rem; color:#dc2626;">Awaiting faculty updates</div>
+        </div>
       </div>
-      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #eab308; background:#fefce8;">
-        <div style="font-size:0.72rem; font-weight:700; color:#854d0e; text-transform:uppercase;">On-Going / Under Review</div>
-        <div style="font-size:1.6rem; font-weight:800; color:#a16207; margin-top:2px;" id="statOngoingRequests">0</div>
-        <div style="font-size:0.7rem; color:#ca8a04;">Awaiting accommodation/steps</div>
+
+      <!-- Filter Pills & Search Toolbar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f1f5f9; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div class="seg" id="approvalsFilterSeg">
+          <button id="btnFilterPendingAction" class="active" onclick="switchApprovalsFilter('action')">
+            ⚡ Action Required (<span id="countActionRequired">0</span>)
+          </button>
+          <button id="btnFilterMySubmissions" onclick="switchApprovalsFilter('submissions')">
+            📋 My Submissions (<span id="countMySubmissions">0</span>)
+          </button>
+          <button id="btnFilterAllRequests" onclick="switchApprovalsFilter('all')">
+            🏛️ All Institutional (<span id="countAllRequests">0</span>)
+          </button>
+        </div>
+
+        <!-- Oversight Sub-filters: Program & Status & Search -->
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <select id="approvalsStatusFilter" onchange="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+            <option value="all">All Statuses</option>
+            <option value="ongoing">🟡 On-going / Under Review</option>
+            <option value="approved">🟢 Approved &amp; Locked</option>
+            <option value="returned">🔴 Returned for Revision</option>
+          </select>
+          <select id="approvalsProgFilter" onchange="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+            <option value="all">All Programs</option>
+            <option value="EE">EE - Electrical Eng.</option>
+            <option value="ECE">ECE - Electronics Eng.</option>
+            <option value="ME">ME - Mechanical Eng.</option>
+            <option value="CE">CE - Civil Eng.</option>
+            <option value="GE">GE - Geodetic Eng.</option>
+            <option value="MINE">MinE - Mining Eng.</option>
+            <option value="BSGEO">BSGeo - Geology</option>
+            <option value="SE">SE - Sanitary Eng.</option>
+            <option value="ABE">ABE - Biosystems Eng.</option>
+          </select>
+          <input type="text" id="approvalsSearchInput" placeholder="🔍 Search course, title, faculty..." oninput="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; border:1px solid #cbd5e1; border-radius:6px; width:220px; background:#fff;" />
+        </div>
+        <div style="font-size:0.78rem; color:#64748b; width:100%; text-align:right;">
+          <span id="approvalsSummaryText">Showing requests</span>
+        </div>
       </div>
-      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #22c55e; background:#f0fdf4;">
-        <div style="font-size:0.72rem; font-weight:700; color:#166534; text-transform:uppercase;">Approved &amp; Locked Syllabi</div>
-        <div style="font-size:1.6rem; font-weight:800; color:#15803d; margin-top:2px;" id="statApprovedRequests">0</div>
-        <div style="font-size:0.7rem; color:#16a34a;">Compliant with all 4 review stages</div>
-      </div>
-      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #ef4444; background:#fef2f2;">
-        <div style="font-size:0.72rem; font-weight:700; color:#991b1b; text-transform:uppercase;">Returned for Revision</div>
-        <div style="font-size:1.6rem; font-weight:800; color:#b91c1c; margin-top:2px;" id="statReturnedRequests">0</div>
-        <div style="font-size:0.7rem; color:#dc2626;">Awaiting faculty updates</div>
+
+      <!-- Container for dynamic request cards -->
+      <div id="approvalsListContainer" style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Dynamically generated request cards -->
       </div>
     </div>
 
-    <!-- Filter Pills & Search Toolbar -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f1f5f9; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0;">
-      <div class="seg" id="approvalsFilterSeg">
-        <button id="btnFilterPendingAction" class="active" onclick="switchApprovalsFilter('action')">
-          ⚡ Action Required (<span id="countActionRequired">0</span>)
-        </button>
-        <button id="btnFilterMySubmissions" onclick="switchApprovalsFilter('submissions')">
-          📋 My Submissions (<span id="countMySubmissions">0</span>)
-        </button>
-        <button id="btnFilterAllRequests" onclick="switchApprovalsFilter('all')">
-          🏛️ All Institutional (<span id="countAllRequests">0</span>)
-        </button>
+    <!-- VIEW 2: CLASS RECORDS FINALIZATION & SIGNATURES -->
+    <div id="portalViewClassRecords" style="display:none;">
+      <!-- Class Records KPI Summary Cards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #3b82f6; background:#f8fafc;">
+          <div style="font-size:0.72rem; font-weight:700; color:#64748b; text-transform:uppercase;">Total Class Records</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#1e293b; margin-top:2px;" id="statTotalCr">0</div>
+          <div style="font-size:0.7rem; color:#94a3b8;">Monitored course offerings</div>
+        </div>
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #eab308; background:#fefce8;">
+          <div style="font-size:0.72rem; font-weight:700; color:#854d0e; text-transform:uppercase;">Under Institutional Sign-Off</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#a16207; margin-top:2px;" id="statOngoingCr">0</div>
+          <div style="font-size:0.7rem; color:#ca8a04;">Signatures in progress</div>
+        </div>
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #16a34a; background:#f0fdf4;">
+          <div style="font-size:0.72rem; font-weight:700; color:#166534; text-transform:uppercase;">Finalized &amp; Locked</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#15803d; margin-top:2px;" id="statFinalizedCr">0</div>
+          <div style="font-size:0.7rem; color:#16a34a;">Sealed with Dean Approval</div>
+        </div>
+        <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #ef4444; background:#fef2f2;">
+          <div style="font-size:0.72rem; font-weight:700; color:#991b1b; text-transform:uppercase;">Returned for Grade Revision</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#b91c1c; margin-top:2px;" id="statReturnedCr">0</div>
+          <div style="font-size:0.7rem; color:#dc2626;">Awaiting grade adjustments</div>
+        </div>
       </div>
 
-      <!-- Oversight Sub-filters: Program & Status & Search -->
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <select id="approvalsStatusFilter" onchange="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
-          <option value="all">All Statuses</option>
-          <option value="ongoing">🟡 On-going / Under Review</option>
-          <option value="approved">🟢 Approved &amp; Locked</option>
-          <option value="returned">🔴 Returned for Revision</option>
-        </select>
-        <select id="approvalsProgFilter" onchange="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
-          <option value="all">All Programs</option>
-          <option value="EE">EE - Electrical Eng.</option>
-          <option value="ECE">ECE - Electronics Eng.</option>
-          <option value="ME">ME - Mechanical Eng.</option>
-          <option value="CE">CE - Civil Eng.</option>
-          <option value="GE">GE - Geodetic Eng.</option>
-          <option value="MINE">MinE - Mining Eng.</option>
-          <option value="BSGEO">BSGeo - Geology</option>
-          <option value="SE">SE - Sanitary Eng.</option>
-          <option value="ABE">ABE - Biosystems Eng.</option>
-        </select>
-        <input type="text" id="approvalsSearchInput" placeholder="🔍 Search course, title, faculty..." oninput="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; border:1px solid #cbd5e1; border-radius:6px; width:220px; background:#fff;" />
+      <!-- Class Records Filter Toolbar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f1f5f9; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div class="seg" id="crFilterSeg">
+          <button id="btnFilterCrAction" class="active" onclick="switchCrFilter('action')">
+            ⚡ Action Required (<span id="countCrActionRequired">0</span>)
+          </button>
+          <button id="btnFilterCrSubmissions" onclick="switchCrFilter('submissions')">
+            📋 My Class Records (<span id="countCrMySubmissions">0</span>)
+          </button>
+          <button id="btnFilterCrAll" onclick="switchCrFilter('all')">
+            🏛️ All Institutional (<span id="countCrAllRequests">0</span>)
+          </button>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <select id="crStatusFilter" onchange="renderPortalClassRecordsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+            <option value="all">All Class Record Stages</option>
+            <option value="draft">Draft (Scores Editable)</option>
+            <option value="in_signoff">🟡 In Sign-Off (PH / Assoc. Dean / QA / Dean)</option>
+            <option value="finalized">🟢 Finalized &amp; Locked 🔒</option>
+            <option value="returned">🔴 Returned for Grade Revision</option>
+          </select>
+          <select id="crProgFilter" onchange="renderPortalClassRecordsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+            <option value="all">All Programs</option>
+            <option value="EE">EE - Electrical Eng.</option>
+            <option value="ECE">ECE - Electronics Eng.</option>
+            <option value="ME">ME - Mechanical Eng.</option>
+            <option value="CE">CE - Civil Eng.</option>
+            <option value="GE">GE - Geodetic Eng.</option>
+            <option value="MINE">MinE - Mining Eng.</option>
+            <option value="BSGEO">BSGeo - Geology</option>
+            <option value="SE">SE - Sanitary Eng.</option>
+            <option value="ABE">ABE - Biosystems Eng.</option>
+          </select>
+          <input type="text" id="crSearchInput" placeholder="🔍 Search class record..." oninput="renderPortalClassRecordsList()" style="padding:6px 10px; font-size:0.8rem; border:1px solid #cbd5e1; border-radius:6px; width:220px; background:#fff;" />
+        </div>
+        <div style="font-size:0.78rem; color:#64748b; width:100%; text-align:right;">
+          <span id="crSummaryText">Showing class records</span>
+        </div>
       </div>
-      <div style="font-size:0.78rem; color:#64748b; width:100%; text-align:right;">
-        <span id="approvalsSummaryText">Showing requests</span>
+
+      <!-- Container for dynamic Class Record cards -->
+      <div id="portalClassRecordsListContainer" style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Dynamically populated class record cards -->
       </div>
     </div>
 
-    <!-- Container for dynamic request cards -->
-    <div id="approvalsListContainer" style="display:flex; flex-direction:column; gap:16px;">
-      <!-- Dynamically generated request cards -->
+    <!-- VIEW 3: INSTITUTIONAL ANALYTICS & COMPLIANCE DASHBOARD -->
+    <div id="portalViewAnalytics" style="display:none;">
+      <!-- Executive Summary Cards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-bottom:18px;">
+        <div class="card" style="margin:0; padding:18px; border-radius:10px; border-left:4px solid #1e3a8a; background:#f8fafc;">
+          <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase;">Syllabus Approval Compliance</div>
+          <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;">
+            <div style="font-size:2rem; font-weight:800; color:#1e3a8a;" id="anSyllabusPct">0%</div>
+            <div style="font-size:0.8rem; color:#475569;" id="anSyllabusRatio">(0 / 0 Approved)</div>
+          </div>
+          <div style="background:#e2e8f0; border-radius:10px; height:8px; overflow:hidden; margin-top:8px;">
+            <div id="anSyllabusBar" style="background:#1e3a8a; width:0%; height:100%; transition:width 0.4s ease;"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin:0; padding:18px; border-radius:10px; border-left:4px solid #16a34a; background:#f0fdf4;">
+          <div style="font-size:0.75rem; font-weight:700; color:#166534; text-transform:uppercase;">Class Record Finalization Rate</div>
+          <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;">
+            <div style="font-size:2rem; font-weight:800; color:#15803d;" id="anCrPct">0%</div>
+            <div style="font-size:0.8rem; color:#166534;" id="anCrRatio">(0 / 0 Finalized)</div>
+          </div>
+          <div style="background:#bbf7d0; border-radius:10px; height:8px; overflow:hidden; margin-top:8px;">
+            <div id="anCrBar" style="background:#16a34a; width:0%; height:100%; transition:width 0.4s ease;"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin:0; padding:18px; border-radius:10px; border-left:4px solid #eab308; background:#fefce8;">
+          <div style="font-size:0.75rem; font-weight:700; color:#854d0e; text-transform:uppercase;">Queue Bottlenecks</div>
+          <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;">
+            <div style="font-size:2rem; font-weight:800; color:#a16207;" id="anBottlenecksTotal">0</div>
+            <div style="font-size:0.8rem; color:#854d0e;">Requests awaiting review / endorsement</div>
+          </div>
+          <div style="font-size:0.74rem; color:#a16207; margin-top:8px;">
+            Staff oversight monitors queue velocity across all academic chairs &amp; heads.
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Banner: Auto-Generate Report -->
+      <div class="card" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; padding:18px 22px; border-radius:10px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h3 style="color:#ffffff; margin:0 0 4px; font-size:1.05rem;">📄 Auto-Generated Institutional Compliance &amp; Audit Report</h3>
+          <p style="margin:0; font-size:0.8rem; color:#cbd5e1; max-width:650px;">
+            Instantly auto-generates a publication-ready PDF audit containing the college-wide executive summary, program compliance matrix, signatory queue bottlenecks, and itemized course roster.
+          </p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <a href="/api/workflow/oversight-report" target="_blank" class="btn btn-primary btn-sm" style="background:#3b82f6; border-color:#2563eb; font-weight:700; padding:8px 16px;">
+            📥 Download Official Report (.pdf)
+          </a>
+          <button class="btn btn-outline-light btn-sm" onclick="printOversightSummary()" style="color:#ffffff; border-color:#94a3b8; font-weight:700; padding:8px 14px;">
+            🖨️ Print View
+          </button>
+        </div>
+      </div>
+
+      <!-- Program-by-Program Compliance Breakdown Matrix -->
+      <div class="card" style="margin-bottom:18px; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:1rem; color:#0f172a;">📊 Program-by-Program Compliance Breakdown</h3>
+          <span style="font-size:0.75rem; color:#64748b;">Includes Syllabi Approvals &amp; Class Record Finalizations</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.8rem;" id="anProgramMatrixTable">
+            <thead>
+              <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1; color:#334155; text-align:left;">
+                <th style="padding:8px 12px;">Program Code</th>
+                <th style="padding:8px 12px; text-align:center;">Total Courses</th>
+                <th style="padding:8px 12px; text-align:center;">Syllabi Approved</th>
+                <th style="padding:8px 12px; text-align:center;">Syllabi In Review</th>
+                <th style="padding:8px 12px; text-align:center;">CR Finalized</th>
+                <th style="padding:8px 12px; text-align:center;">CR In Sign-Off</th>
+                <th style="padding:8px 12px; text-align:center;">Compliance Rate</th>
+              </tr>
+            </thead>
+            <tbody id="anProgramMatrixTbody">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bottleneck Analysis Cards -->
+      <div class="card" style="margin-bottom:18px; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
+        <h3 style="margin:0 0 12px; font-size:1rem; color:#0f172a;">⏳ Signatory Queue Bottleneck Analysis</h3>
+        <div id="anBottlenecksGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2375,6 +2590,133 @@
 
 
 
+<!-- Modal: Finalize & Submit Class Record -->
+<div class="modal-overlay" id="modalSubmitClassRecord" style="display:none;" onclick="if(event.target===this) closeSubmitClassRecordModal();">
+  <div class="modal-box" style="max-width:560px; width:90%;">
+    <div class="modal-header">
+      <h3>🔒 Finalize &amp; Submit Class Record for Institutional Sign-Off</h3>
+      <button class="modal-close-btn" onclick="closeSubmitClassRecordModal()">&times;</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div style="background:#fffbeb; border-left:4px solid #f59e0b; padding:10px 14px; border-radius:6px; font-size:0.8rem; color:#92400e; margin-bottom:14px;">
+        <strong>Notice of Grade Lock-In:</strong> By submitting, you certify that student scores and grades are finalized. All score inputs will be <strong>strictly locked and frozen</strong> against editing while under review by the Program Head (or Associate Dean), College QA Head, and College Dean.
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:700; display:block; margin-bottom:4px;">Submission Notes / Faculty Certification:</label>
+        <textarea id="crSubmitNotesInput" rows="2" style="width:100%; font-size:0.8rem;" placeholder="e.g. All student midterm and final scores have been verified and computed according to the syllabus grading criteria..."></textarea>
+      </div>
+
+      <!-- Electronic Signature Section -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="font-size:0.8rem; font-weight:700;">Faculty E-Signature:</label>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-outline-secondary btn-sm" style="font-size:0.7rem; padding:2px 7px;" onclick="clearCrSubmitCanvas()">Clear</button>
+            <label class="btn btn-outline-secondary btn-sm" style="font-size:0.7rem; padding:2px 7px; cursor:pointer; margin:0;">
+              Upload <input type="file" id="crSubmitUploadInput" accept="image/*" style="display:none;" onchange="handleCrSubmitImageUpload(this)" />
+            </label>
+          </div>
+        </div>
+        <div style="border:2px dashed #94a3b8; border-radius:6px; background:#fafafa; text-align:center; position:relative;">
+          <canvas id="crSubmitCanvas" width="500" height="130" style="width:100%; height:130px; touch-action:none; display:block; cursor:crosshair;"></canvas>
+          <div id="crSubmitPlaceholder" style="position:absolute; top:40%; left:0; right:0; color:#94a3b8; font-size:0.78rem; pointer-events:none;">
+            Sign inside this box to finalize and seal student grades
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:10px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeSubmitClassRecordModal()">Cancel</button>
+      <button id="btnConfirmSubmitCr" class="btn btn-primary btn-sm" style="background:#0284c7; border-color:#0369a1; font-weight:700;" onclick="submitClassRecordFinal()">🔒 Finalize &amp; Lock Grades</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Sign & Endorse Class Record (Program Head, Assoc Dean, QA Head, Dean) -->
+<div class="modal-overlay" id="modalSignClassRecord" style="display:none;" onclick="if(event.target===this) closeSignClassRecordModal();">
+  <div class="modal-box" style="max-width:560px; width:90%;">
+    <div class="modal-header">
+      <h3 id="crSignModalTitle">✍️ Official Class Record Endorsement &amp; Sign-Off</h3>
+      <button class="modal-close-btn" onclick="closeSignClassRecordModal()">&times;</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div style="background:#eff6ff; border-left:4px solid #3b82f6; padding:10px 14px; border-radius:6px; font-size:0.8rem; color:#1e40af; margin-bottom:14px;">
+        <div id="crSignModalRoleLabel" style="font-weight:700;">Signatory Stage: Program Head Endorsement</div>
+        <div id="crSignModalDesc" style="font-size:0.74rem; color:#475569; margin-top:2px;">Your verified electronic signature will be cryptographically sealed on the official class record.</div>
+      </div>
+
+      <!-- Decision -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:700; display:block; margin-bottom:4px;">Sign-Off Action:</label>
+        <div style="display:flex; gap:16px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; cursor:pointer;">
+            <input type="radio" name="crSignDecision" value="approve" checked onchange="toggleCrRemarksReq(false)" />
+            <span style="color:#166534; font-weight:700;" id="crApproveActionText">Sign &amp; Forward to Next Stage</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; cursor:pointer;">
+            <input type="radio" name="crSignDecision" value="return" onchange="toggleCrRemarksReq(true)" />
+            <span style="color:#b91c1c; font-weight:700;">Return for Grade Revision</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label id="crSignRemarksLabel" style="font-size:0.8rem; font-weight:700; display:block; margin-bottom:4px;">
+          Remarks / Endorsement Notes: <span id="crSignRemarksReqBadge" style="display:none; color:#ef4444;">*Required when returning</span>
+        </label>
+        <textarea id="crSignRemarksInput" rows="2" style="width:100%; font-size:0.8rem;" placeholder="Add verification remarks or adjustment directives..."></textarea>
+      </div>
+
+      <!-- E-Signature Section -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="font-size:0.8rem; font-weight:700;">Electronic Signature:</label>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-outline-secondary btn-sm" style="font-size:0.7rem; padding:2px 7px;" onclick="clearCrSignCanvas()">Clear</button>
+            <label class="btn btn-outline-secondary btn-sm" style="font-size:0.7rem; padding:2px 7px; cursor:pointer; margin:0;">
+              Upload <input type="file" id="crSignUploadInput" accept="image/*" style="display:none;" onchange="handleCrSignImageUpload(this)" />
+            </label>
+          </div>
+        </div>
+        <div style="border:2px dashed #94a3b8; border-radius:6px; background:#fafafa; text-align:center; position:relative;">
+          <canvas id="crSignCanvas" width="500" height="130" style="width:100%; height:130px; touch-action:none; display:block; cursor:crosshair;"></canvas>
+          <div id="crSignPlaceholder" style="position:absolute; top:40%; left:0; right:0; color:#94a3b8; font-size:0.78rem; pointer-events:none;">
+            Sign inside this box to endorse
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:10px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeSignClassRecordModal()">Cancel</button>
+      <button id="btnConfirmSignCr" class="btn btn-success btn-sm" style="font-weight:700;" onclick="submitClassRecordSignAction()">✍️ Confirm &amp; Sign</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Request Class Record Grade Revision -->
+<div class="modal-overlay" id="modalRequestCRRevision" style="display:none;" onclick="if(event.target===this) closeRequestCRRevisionModal();">
+  <div class="modal-box" style="max-width:500px; width:90%;">
+    <div class="modal-header">
+      <h3>🔓 Request Grade Revision</h3>
+      <button class="modal-close-btn" onclick="closeRequestCRRevisionModal()">&times;</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div style="background:#fef2f2; border-left:4px solid #ef4444; padding:10px 14px; border-radius:6px; font-size:0.8rem; color:#991b1b; margin-bottom:14px;">
+        <strong>Grade Revision Directive:</strong> Unlocking finalized grades requires an official academic justification. Once approved, the class record returns to Draft, grades become editable, and all previous signatures are archived into a new sign-off cycle.
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:700; display:block; margin-bottom:4px;">Official Reason for Grade Revision: *</label>
+        <textarea id="crRevisionReasonInput" rows="3" style="width:100%; font-size:0.8rem;" placeholder="e.g. Correction of encoding error in Final Exam problem solving section for Student ID 2024-00123..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:10px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeRequestCRRevisionModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" style="font-weight:700;" onclick="submitRequestCRRevisionFinal()">🔓 Unlock Class Record</button>
+    </div>
+  </div>
+</div>
+
 <script>
   window.CURRENT_USER = {{ current_user|tojson if current_user else 'null' }};
   let blueprint = null;
@@ -2573,6 +2915,8 @@
 
       blueprint = data.blueprint;
       transmutation = data.transmutation;
+      currentWorkflow = data.workflow;
+      currentClassRecordWorkflow = data.class_record_workflow;
       ensureDefaultRubricsExist();
 
       // Update active subject bar
@@ -2580,6 +2924,9 @@
 
       // Render full studio (Syllabus, Setup, Gradebook, CLO Report, CQI, Dashboard)
       renderAll();
+      renderWorkflowStepper();
+      renderClassRecordWorkflowBar();
+      checkClassRecordLock();
 
       // Highlight active card in sidebar
       document.querySelectorAll(".subject-card").forEach(el => el.classList.remove("active"));
@@ -4783,6 +5130,17 @@
   function renderLiveGradebookAndReports() {
     if (!blueprint) return;
     const tbl = document.getElementById("liveGradebookTable");
+    const isCrLocked = currentClassRecordWorkflow && Boolean(currentClassRecordWorkflow.is_locked);
+    const btnAddSt = document.getElementById("btnCrAddStudent");
+    if (btnAddSt) {
+      btnAddSt.disabled = isCrLocked;
+      btnAddSt.title = isCrLocked ? "Class record is locked during sign-off / finalization" : "+ Add Student";
+    }
+    const btnImpRoster = document.getElementById("btnCrImportRoster");
+    if (btnImpRoster) {
+      btnImpRoster.disabled = isCrLocked;
+      btnImpRoster.title = isCrLocked ? "Class record is locked during sign-off / finalization" : "Import Roster";
+    }
     // Expand every assessment item into separated per-CLO score columns!
     const allCloCols = [];
     const itemGroups = [];
@@ -4969,15 +5327,16 @@
       return `
         <tr>
           <td>${sIdx + 1}</td>
-          <td><input type="text" style="width:95px;" value="${escapeHtml(st.student_id)}" onchange="blueprint.students[${sIdx}].student_id=this.value;" /></td>
-          <td><input type="text" style="width:170px;" value="${escapeHtml(st.last_name)}, ${escapeHtml(st.first_name)}"
-            onchange="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim();" /></td>
+          <td><input type="text" style="width:95px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.student_id)}" onchange="blueprint.students[${sIdx}].student_id=this.value;" ${isCrLocked ? 'disabled' : ''} /></td>
+          <td><input type="text" style="width:170px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.last_name)}, ${escapeHtml(st.first_name)}"
+            onchange="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim();" ${isCrLocked ? 'disabled' : ''} /></td>
           ${allCloCols.map(col => {
             const val = getStudentCloScore(st, col);
             return `<td style="text-align:center;">
-              <input type="number" style="width:62px; text-align:center;" min="0" max="${col.max_score}" value="${val}"
+              <input type="number" style="width:62px; text-align:center; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" min="0" max="${col.max_score}" value="${val}"
                 title="${escapeHtml(col.item_id)} - ${escapeHtml(col.clo_id)} (Max: ${col.max_score})"
-                onchange="updateStudentCloScore(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value)" />
+                onchange="updateStudentCloScore(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value)"
+                ${isCrLocked ? 'disabled' : ''} />
             </td>`;
           }).join("")}
           <td style="text-align:center; font-weight:700; background:#f0f9ff;">${mg.toFixed(2)}</td>
@@ -4987,7 +5346,7 @@
           <td style="text-align:center;"><span class="badge ${passed ? 'badge-pass' : 'badge-fail'}">${passed ? 'PASSED' : 'FAILED'}</span></td>
           ${studentSaCloGrades.map(g => `<td style="text-align:center; background:#f8fafc;">${g.toFixed(2)}</td>`).join("")}
           ${studentCloFinalGrades.map(g => `<td style="text-align:center; font-weight:700; background:#eff6ff;">${g.toFixed(2)}</td>`).join("")}
-          <td><button class="btn btn-danger btn-sm" onclick="removeStudentRow(${sIdx})">&times;</button></td>
+          <td>${isCrLocked ? '<span title="Locked during review / finalization" style="font-size:0.85rem; color:#94a3b8;">🔒</span>' : `<button class="btn btn-danger btn-sm" onclick="removeStudentRow(${sIdx})">&times;</button>`}</td>
         </tr>
       `;
     }).join("") : `<tr><td colspan="100" style="text-align:center; padding:28px; color:#64748b; font-size:0.9rem;">
@@ -5744,6 +6103,7 @@
   // SYLLABUS WORKFLOW, REVIEW TOOL (FM-USeP-MID-02), RUBRICS & LOCK ENFORCEMENT
   // ==========================================================================
   let currentWorkflow = null;
+  let currentClassRecordWorkflow = null;
   let currentUser = null;
   let evalFormData = null;
 
@@ -6031,24 +6391,35 @@
     checkSyllabusLock();
   }
 
-  // Enforce Class Record Lock Barrier on Tabs 2 & 3
+  // Enforce Class Record Lock Barrier on Tabs 2 & 3 & Grade Freeze
   function checkClassRecordLock() {
-    const isApproved = currentWorkflow && (currentWorkflow.status === "approved");
+    const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
     const b2 = document.getElementById("classRecordLockBannerAssessments");
     const b3 = document.getElementById("classRecordLockBannerGradebook");
-    if (b2) b2.style.display = isApproved ? "none" : "block";
-    if (b3) b3.style.display = isApproved ? "none" : "block";
+    if (b2) b2.style.display = isSyllabusApproved ? "none" : "block";
+    if (b3) b3.style.display = isSyllabusApproved ? "none" : "block";
 
-    // Disable / Dim setup and gradebook interactive controls if not approved
+    // Disable / Dim setup and gradebook interactive controls if syllabus not approved
     const setupContent = document.getElementById("setupTabContent");
     if (setupContent) {
-      setupContent.style.opacity = isApproved ? "1" : "0.55";
-      setupContent.style.pointerEvents = isApproved ? "auto" : "none";
+      setupContent.style.opacity = isSyllabusApproved ? "1" : "0.55";
+      setupContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
     }
     const gradebookContent = document.getElementById("gradebookTabContent");
     if (gradebookContent) {
-      gradebookContent.style.opacity = isApproved ? "1" : "0.55";
-      gradebookContent.style.pointerEvents = isApproved ? "auto" : "none";
+      gradebookContent.style.opacity = isSyllabusApproved ? "1" : "0.55";
+      gradebookContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
+    }
+
+    // Class record grade freeze banner
+    const isCrLocked = currentClassRecordWorkflow && Boolean(currentClassRecordWorkflow.is_locked);
+    const crFreezeBanner = document.getElementById("classRecordFrozenBanner");
+    if (crFreezeBanner) {
+      crFreezeBanner.style.display = isCrLocked ? "block" : "none";
+      if (isCrLocked && currentClassRecordWorkflow) {
+        const stageEl = document.getElementById("crFreezeStageLabel");
+        if (stageEl) stageEl.textContent = currentClassRecordWorkflow.status_label || currentClassRecordWorkflow.status;
+      }
     }
   }
 
@@ -6126,10 +6497,16 @@
   // Submit syllabus to committee
   // --- APPROVALS PORTAL & COMMITTEE SELECTION ENGINE ---
   let approvalsState = {
+    view: "syllabi", // "syllabi", "class_records", "analytics"
     filter: "action", // "action", "submissions", "all"
+    crFilter: "all", // "all", "action", "submissions"
     pendingActionForMe: [],
+    pendingCrActionForMe: [],
     mySubmissions: [],
+    mySubmittedClassRecords: [],
     institutionalRequests: [],
+    institutionalClassRecords: [],
+    analytics: null,
     signatories: null,
     userInfo: null
   };
@@ -6417,8 +6794,12 @@
       if (!res.ok) return;
       const data = await res.json();
       approvalsState.pendingActionForMe = data.pending_action_for_me || [];
+      approvalsState.pendingCrActionForMe = data.pending_cr_action_for_me || [];
       approvalsState.mySubmissions = data.my_submitted_requests || [];
+      approvalsState.mySubmittedClassRecords = data.my_submitted_class_records || [];
       approvalsState.institutionalRequests = data.institutional_requests || [];
+      approvalsState.institutionalClassRecords = data.institutional_class_records || [];
+      approvalsState.analytics = data.analytics || null;
       approvalsState.userInfo = data.user_info || {};
 
       // Enforce Institutional Requests Visibility
@@ -6463,6 +6844,20 @@
       const elAll = document.getElementById("countAllRequests");
       if (elAll) elAll.textContent = approvalsState.institutionalRequests.length;
 
+      // Update Portal Navigation Counters
+      const elPortSyl = document.getElementById("countPortalSyllabi");
+      if (elPortSyl) elPortSyl.textContent = approvalsState.institutionalRequests.length;
+      const elPortCr = document.getElementById("countPortalClassRecords");
+      if (elPortCr) elPortCr.textContent = approvalsState.institutionalClassRecords.length;
+
+      // Update Class Record Tab Counters
+      const elCrAct = document.getElementById("countCrActionRequired");
+      if (elCrAct) elCrAct.textContent = approvalsState.pendingCrActionForMe.length;
+      const elCrSub = document.getElementById("countCrMySubmissions");
+      if (elCrSub) elCrSub.textContent = approvalsState.mySubmittedClassRecords.length;
+      const elCrAll = document.getElementById("countCrAllRequests");
+      if (elCrAll) elCrAll.textContent = approvalsState.institutionalClassRecords.length;
+
       // Update user role pill
       const roleBadge = document.getElementById("approvalsRoleBadge");
       if (roleBadge && approvalsState.userInfo) {
@@ -6489,6 +6884,8 @@
       document.getElementById("btnFilterAllRequests")?.classList.toggle("active", approvalsState.filter === "all");
 
       renderApprovalsList();
+      renderPortalClassRecordsList();
+      renderPortalAnalyticsDashboard();
     } catch(err) {
       console.error("Error loading approval requests:", err);
     }
@@ -8786,6 +9183,804 @@
         btn.textContent = "💾 Save & Apply Role";
       }
     }
+  }
+
+
+  // =========================================================================
+  // CLASS RECORD WORKFLOW & GRADE LOCK-IN ENGINE (Tab 3 & Staff Oversight)
+  // =========================================================================
+
+  let activeCrSignCourseId = null;
+  let activeCrRevisionCourseId = null;
+
+  function renderClassRecordWorkflowBar() {
+    const banner = document.getElementById("crWorkflowBanner");
+    if (!banner) return;
+    const wf = currentClassRecordWorkflow || {
+      status: "draft",
+      status_label: "Draft (Scores Editable)",
+      is_locked: false,
+      is_finalized: false,
+      signatures: [],
+      can_submit: true,
+      can_sign: false,
+      can_request_revision: false
+    };
+
+    const statusBadge = document.getElementById("crStatusBadge");
+    const freezeBadge = document.getElementById("crGradeFreezeBadge");
+    const statusDetail = document.getElementById("crStatusDetail");
+    const actionButtons = document.getElementById("crActionButtons");
+    const stepperContainer = document.getElementById("crStepperContainer");
+
+    const isFinalized = wf.status === "finalized";
+    const isReturned = wf.status === "returned";
+    const isUnderReview = ["for_program_head", "for_associate_dean", "for_qa_countersign", "for_dean_approval"].includes(wf.status);
+
+    if (statusBadge) {
+      statusBadge.textContent = wf.status_label || wf.status;
+      if (isFinalized) {
+        statusBadge.style.background = "#dcfce7";
+        statusBadge.style.color = "#15803d";
+      } else if (isReturned) {
+        statusBadge.style.background = "#fee2e2";
+        statusBadge.style.color = "#991b1b";
+      } else if (isUnderReview) {
+        statusBadge.style.background = "#fef3c7";
+        statusBadge.style.color = "#92400e";
+      } else {
+        statusBadge.style.background = "#e0f2fe";
+        statusBadge.style.color = "#0369a1";
+      }
+    }
+
+    if (freezeBadge) {
+      freezeBadge.style.display = wf.is_locked ? "inline-block" : "none";
+    }
+
+    if (statusDetail) {
+      if (isFinalized) {
+        statusDetail.innerHTML = `<strong>Official Final Grades Locked:</strong> All signatures verified &amp; sealed (${wf.finalized_at ? formatWorkflowTimestamp(wf.finalized_at) : 'Sealed'}). Grades cannot be edited.`;
+      } else if (isReturned) {
+        statusDetail.innerHTML = `<span style="color:#b91c1c; font-weight:700;">Returned for Revision:</span> "${escapeHtml(wf.return_remarks || 'Please revise scores.')}"`;
+      } else if (isUnderReview) {
+        statusDetail.innerHTML = `<strong>Sign-Off in Progress:</strong> Currently awaiting ${escapeHtml(wf.current_step_label || 'Next Step')}. Scores are locked from editing.`;
+      } else {
+        statusDetail.textContent = "Student scores and grades are editable. Once finalized, grades will freeze and sequential institutional sign-off will begin.";
+      }
+    }
+
+    // Action buttons
+    if (actionButtons) {
+      let btnsHtml = "";
+      if (wf.can_submit && (wf.status === "draft" || isReturned)) {
+        btnsHtml += `
+          <button class="btn btn-warning btn-sm" style="font-weight:700; color:#78350f; background:#fef3c7; border:1px solid #fde68a;" onclick="openSubmitClassRecordModal()">
+            🔒 Finalize &amp; Submit Class Record
+          </button>
+        `;
+      }
+      if (wf.can_sign) {
+        btnsHtml += `
+          <button class="btn btn-success btn-sm" style="font-weight:700;" onclick="openSignClassRecordModal('${escapeHtml(currentCourseId)}')">
+            ✍️ Review &amp; Sign / Endorse
+          </button>
+        `;
+      }
+      if (wf.can_request_revision) {
+        btnsHtml += `
+          <button class="btn btn-outline-danger btn-sm" style="font-weight:700;" onclick="openRequestCRRevisionModal('${escapeHtml(currentCourseId)}')">
+            🔓 Request Grade Revision
+          </button>
+        `;
+      }
+      actionButtons.innerHTML = btnsHtml;
+    }
+
+    // Stepper track
+    if (stepperContainer) {
+      const isOwnerPH = Boolean(wf.is_owner_program_head);
+      const step1Label = isOwnerPH ? "Associate Dean" : "Program Head";
+      const step1Key = isOwnerPH ? "associate_dean" : "program_head";
+
+      const sigMap = {};
+      (wf.signatures || []).forEach(s => {
+        sigMap[s.role_key || s.step] = s;
+      });
+
+      const facultySig = sigMap["faculty"] || sigMap["faculty_submission"];
+      const step1Sig = sigMap[step1Key];
+      const qaSig = sigMap["qa_head"];
+      const deanSig = sigMap["dean"];
+
+      const stepsDef = [
+        { key: "faculty", title: "Faculty in Charge", subtitle: "Submit & Seal", sig: facultySig, isCurrent: wf.status === "draft" || isReturned },
+        { key: step1Key, title: step1Label, subtitle: isOwnerPH ? "Endorsement (PH Course)" : "Review & Endorse", sig: step1Sig, isCurrent: wf.status === "for_program_head" || wf.status === "for_associate_dean" },
+        { key: "qa_head", title: "College QA Head", subtitle: "Countersign", sig: qaSig, isCurrent: wf.status === "for_qa_countersign" },
+        { key: "dean", title: "College Dean", subtitle: "Final Approval & Seal", sig: deanSig, isCurrent: wf.status === "for_dean_approval" }
+      ];
+
+      stepperContainer.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+          ${stepsDef.map((s, idx) => {
+            const isSigned = Boolean(s.sig);
+            const isCurrent = s.isCurrent && !isSigned;
+            const stepNum = idx + 1;
+
+            let circleBg = "#e2e8f0";
+            let circleColor = "#64748b";
+            let circleBorder = "2px solid #cbd5e1";
+            if (isSigned) {
+              circleBg = "#dcfce7";
+              circleColor = "#15803d";
+              circleBorder = "2px solid #22c55e";
+            } else if (isCurrent) {
+              circleBg = "#fef3c7";
+              circleColor = "#b45309";
+              circleBorder = "2px solid #f59e0b";
+            }
+
+            return `
+              <div style="flex:1; min-width:140px; display:flex; align-items:center; gap:8px;">
+                <div style="width:32px; height:32px; border-radius:50%; background:${circleBg}; color:${circleColor}; border:${circleBorder}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem; flex-shrink:0;">
+                  ${isSigned ? '✓' : stepNum}
+                </div>
+                <div style="font-size:0.75rem; line-height:1.2;">
+                  <div style="font-weight:700; color:${isSigned ? '#166534' : (isCurrent ? '#b45309' : '#475569')};">
+                    ${escapeHtml(s.title)}
+                  </div>
+                  <div style="font-size:0.68rem; color:#64748b;">
+                    ${isSigned ? `${escapeHtml(s.sig.name || '')} (${formatWorkflowTimestamp(s.sig.signed_at)})` : (isCurrent ? '<span style="color:#b45309; font-weight:700;">Pending Action</span>' : escapeHtml(s.subtitle))}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('<div style="color:#cbd5e1; font-weight:bold; align-self:center;">&rarr;</div>')}
+        </div>
+      `;
+    }
+  }
+
+  // --- SUBMIT CLASS RECORD MODAL & CANVAS ---
+  let crSubmitCanvasObj = null;
+  let crSubmitIsDrawing = false;
+  let crSubmitUploadedData = "";
+
+  function initCrSubmitCanvas() {
+    const canvas = document.getElementById("crSubmitCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    crSubmitCanvasObj = canvas;
+
+    const startDraw = (e) => {
+      crSubmitIsDrawing = true;
+      ctx.beginPath();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      ctx.moveTo(clientX - rect.left, clientY - rect.top);
+      document.getElementById("crSubmitPlaceholder")?.style.setProperty("display", "none");
+    };
+
+    const draw = (e) => {
+      if (!crSubmitIsDrawing) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      ctx.lineTo(clientX - rect.left, clientY - rect.top);
+      ctx.strokeStyle = "#1e3a8a";
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    };
+
+    const stopDraw = () => { crSubmitIsDrawing = false; };
+
+    canvas.onmousedown = startDraw;
+    canvas.onmousemove = draw;
+    window.addEventListener("mouseup", stopDraw);
+    canvas.ontouchstart = startDraw;
+    canvas.ontouchmove = draw;
+    window.addEventListener("touchend", stopDraw);
+  }
+
+  function clearCrSubmitCanvas() {
+    if (!crSubmitCanvasObj) return;
+    const ctx = crSubmitCanvasObj.getContext("2d");
+    ctx.clearRect(0, 0, crSubmitCanvasObj.width, crSubmitCanvasObj.height);
+    crSubmitUploadedData = "";
+    document.getElementById("crSubmitPlaceholder")?.style.setProperty("display", "block");
+  }
+
+  function handleCrSubmitImageUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      crSubmitUploadedData = e.target.result;
+      const img = new Image();
+      img.onload = function() {
+        const ctx = crSubmitCanvasObj.getContext("2d");
+        ctx.clearRect(0, 0, crSubmitCanvasObj.width, crSubmitCanvasObj.height);
+        ctx.drawImage(img, 10, 10, crSubmitCanvasObj.width - 20, crSubmitCanvasObj.height - 20);
+        document.getElementById("crSubmitPlaceholder")?.style.setProperty("display", "none");
+      };
+      img.src = crSubmitUploadedData;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function openSubmitClassRecordModal() {
+    const modal = document.getElementById("modalSubmitClassRecord");
+    if (!modal) return;
+    modal.style.display = "flex";
+    initCrSubmitCanvas();
+    clearCrSubmitCanvas();
+    // Preload user's saved signature if available
+    const userSig = (window.CURRENT_USER && window.CURRENT_USER.signature_data) || "";
+    if (userSig) {
+      crSubmitUploadedData = userSig;
+      const img = new Image();
+      img.onload = function() {
+        const ctx = crSubmitCanvasObj.getContext("2d");
+        ctx.clearRect(0, 0, crSubmitCanvasObj.width, crSubmitCanvasObj.height);
+        ctx.drawImage(img, 10, 10, crSubmitCanvasObj.width - 20, crSubmitCanvasObj.height - 20);
+        document.getElementById("crSubmitPlaceholder")?.style.setProperty("display", "none");
+      };
+      img.src = userSig;
+    }
+  }
+
+  function closeSubmitClassRecordModal() {
+    const modal = document.getElementById("modalSubmitClassRecord");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function submitClassRecordFinal() {
+    if (!currentCourseId) return;
+    const sigData = crSubmitUploadedData || (crSubmitCanvasObj ? crSubmitCanvasObj.toDataURL("image/png") : "");
+    const notes = document.getElementById("crSubmitNotesInput")?.value.trim() || "";
+
+    const btn = document.getElementById("btnConfirmSubmitCr");
+    if (btn) { btn.disabled = true; btn.textContent = "Submitting & Locking..."; }
+
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}/class-record/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notes, signature_data: sigData })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to finalize class record.");
+        if (btn) { btn.disabled = false; btn.textContent = "🔒 Finalize & Lock Grades"; }
+        return;
+      }
+      closeSubmitClassRecordModal();
+      alert("Class record successfully finalized and submitted for institutional sign-off! Grades are now locked.");
+      currentClassRecordWorkflow = data.class_record_workflow;
+      renderClassRecordWorkflowBar();
+      checkClassRecordLock();
+      renderLiveGradebookAndReports();
+      loadApprovalRequests(true);
+    } catch(err) {
+      alert("Error submitting class record: " + err.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "🔒 Finalize & Lock Grades"; }
+    }
+  }
+
+  // --- SIGN / ENDORSE CLASS RECORD MODAL & CANVAS ---
+  let crSignCanvasObj = null;
+  let crSignIsDrawing = false;
+  let crSignUploadedData = "";
+
+  function initCrSignCanvas() {
+    const canvas = document.getElementById("crSignCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    crSignCanvasObj = canvas;
+
+    const startDraw = (e) => {
+      crSignIsDrawing = true;
+      ctx.beginPath();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      ctx.moveTo(clientX - rect.left, clientY - rect.top);
+      document.getElementById("crSignPlaceholder")?.style.setProperty("display", "none");
+    };
+
+    const draw = (e) => {
+      if (!crSignIsDrawing) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      ctx.lineTo(clientX - rect.left, clientY - rect.top);
+      ctx.strokeStyle = "#1e3a8a";
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    };
+
+    const stopDraw = () => { crSignIsDrawing = false; };
+
+    canvas.onmousedown = startDraw;
+    canvas.onmousemove = draw;
+    window.addEventListener("mouseup", stopDraw);
+    canvas.ontouchstart = startDraw;
+    canvas.ontouchmove = draw;
+    window.addEventListener("touchend", stopDraw);
+  }
+
+  function clearCrSignCanvas() {
+    if (!crSignCanvasObj) return;
+    const ctx = crSignCanvasObj.getContext("2d");
+    ctx.clearRect(0, 0, crSignCanvasObj.width, crSignCanvasObj.height);
+    crSignUploadedData = "";
+    document.getElementById("crSignPlaceholder")?.style.setProperty("display", "block");
+  }
+
+  function handleCrSignImageUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      crSignUploadedData = e.target.result;
+      const img = new Image();
+      img.onload = function() {
+        const ctx = crSignCanvasObj.getContext("2d");
+        ctx.clearRect(0, 0, crSignCanvasObj.width, crSignCanvasObj.height);
+        ctx.drawImage(img, 10, 10, crSignCanvasObj.width - 20, crSignCanvasObj.height - 20);
+        document.getElementById("crSignPlaceholder")?.style.setProperty("display", "none");
+      };
+      img.src = crSignUploadedData;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function toggleCrRemarksReq(isRequired) {
+    const badge = document.getElementById("crSignRemarksReqBadge");
+    if (badge) badge.style.display = isRequired ? "inline" : "none";
+  }
+
+  function openSignClassRecordModal(courseId) {
+    activeCrSignCourseId = courseId || currentCourseId;
+    const modal = document.getElementById("modalSignClassRecord");
+    if (!modal) return;
+    modal.style.display = "flex";
+    initCrSignCanvas();
+    clearCrSignCanvas();
+
+    // Reset fields
+    const remInput = document.getElementById("crSignRemarksInput");
+    if (remInput) remInput.value = "";
+    const approveRadio = document.querySelector("input[name='crSignDecision'][value='approve']");
+    if (approveRadio) approveRadio.checked = true;
+    toggleCrRemarksReq(false);
+
+    // Preload user's signature
+    const userSig = (window.CURRENT_USER && window.CURRENT_USER.signature_data) || "";
+    if (userSig) {
+      crSignUploadedData = userSig;
+      const img = new Image();
+      img.onload = function() {
+        const ctx = crSignCanvasObj.getContext("2d");
+        ctx.clearRect(0, 0, crSignCanvasObj.width, crSignCanvasObj.height);
+        ctx.drawImage(img, 10, 10, crSignCanvasObj.width - 20, crSignCanvasObj.height - 20);
+        document.getElementById("crSignPlaceholder")?.style.setProperty("display", "none");
+      };
+      img.src = userSig;
+    }
+  }
+
+  function closeSignClassRecordModal() {
+    const modal = document.getElementById("modalSignClassRecord");
+    if (modal) modal.style.display = "none";
+    activeCrSignCourseId = null;
+  }
+
+  async function submitClassRecordSignAction() {
+    if (!activeCrSignCourseId) return;
+    const decision = document.querySelector("input[name='crSignDecision']:checked")?.value || "approve";
+    const remarks = document.getElementById("crSignRemarksInput")?.value.trim() || "";
+    const sigData = crSignUploadedData || (crSignCanvasObj ? crSignCanvasObj.toDataURL("image/png") : "");
+
+    if (decision === "return" && !remarks) {
+      alert("Please provide return remarks explaining why the class record is being returned for grade revision.");
+      return;
+    }
+
+    const btn = document.getElementById("btnConfirmSignCr");
+    if (btn) { btn.disabled = true; btn.textContent = "Signing..."; }
+
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(activeCrSignCourseId)}/class-record/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decision: decision,
+          remarks: remarks,
+          signature_data: sigData
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to sign class record.");
+        if (btn) { btn.disabled = false; btn.textContent = "✍️ Confirm & Sign"; }
+        return;
+      }
+      closeSignClassRecordModal();
+      alert(data.message || "Class record signed successfully!");
+
+      if (activeCrSignCourseId === currentCourseId) {
+        currentClassRecordWorkflow = data.class_record_workflow;
+        renderClassRecordWorkflowBar();
+        checkClassRecordLock();
+        renderLiveGradebookAndReports();
+      }
+      loadApprovalRequests(true);
+    } catch(err) {
+      alert("Error signing class record: " + err.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "✍️ Confirm & Sign"; }
+    }
+  }
+
+  // --- REQUEST GRADE REVISION MODAL ---
+  function openRequestCRRevisionModal(courseId) {
+    activeCrRevisionCourseId = courseId || currentCourseId;
+    const modal = document.getElementById("modalRequestCRRevision");
+    if (!modal) return;
+    const inp = document.getElementById("crRevisionReasonInput");
+    if (inp) inp.value = "";
+    modal.style.display = "flex";
+  }
+
+  function closeRequestCRRevisionModal() {
+    const modal = document.getElementById("modalRequestCRRevision");
+    if (modal) modal.style.display = "none";
+    activeCrRevisionCourseId = null;
+  }
+
+  async function submitRequestCRRevisionFinal() {
+    if (!activeCrRevisionCourseId) return;
+    const reason = document.getElementById("crRevisionReasonInput")?.value.trim() || "";
+    if (!reason) {
+      alert("Please enter a valid reason for requesting grade revision.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(activeCrRevisionCourseId)}/class-record/request-revision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to unlock class record.");
+        return;
+      }
+      closeRequestCRRevisionModal();
+      alert("Class record unlocked for grade revision. Student scores are now editable.");
+      if (activeCrRevisionCourseId === currentCourseId) {
+        currentClassRecordWorkflow = data.class_record_workflow;
+        renderClassRecordWorkflowBar();
+        checkClassRecordLock();
+        renderLiveGradebookAndReports();
+      }
+      loadApprovalRequests(true);
+    } catch(err) {
+      alert("Error requesting grade revision: " + err.message);
+    }
+  }
+
+  // --- STAFF OVERSIGHT PORTAL MULTI-VIEW ENGINE ---
+  function switchPortalView(viewName) {
+    approvalsState.view = viewName;
+
+    // Toggle button styles
+    const btnSyl = document.getElementById("btnPortalViewSyllabi");
+    const btnCr = document.getElementById("btnPortalViewClassRecords");
+    const btnAn = document.getElementById("btnPortalViewAnalytics");
+
+    if (btnSyl) {
+      btnSyl.style.background = viewName === "syllabi" ? "#ffffff" : "transparent";
+      btnSyl.style.color = viewName === "syllabi" ? "#1e3a8a" : "#475569";
+      btnSyl.style.boxShadow = viewName === "syllabi" ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
+    }
+    if (btnCr) {
+      btnCr.style.background = viewName === "class_records" ? "#ffffff" : "transparent";
+      btnCr.style.color = viewName === "class_records" ? "#1e3a8a" : "#475569";
+      btnCr.style.boxShadow = viewName === "class_records" ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
+    }
+    if (btnAn) {
+      btnAn.style.background = viewName === "analytics" ? "#ffffff" : "transparent";
+      btnAn.style.color = viewName === "analytics" ? "#1e3a8a" : "#475569";
+      btnAn.style.boxShadow = viewName === "analytics" ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
+    }
+
+    // Toggle container visibility
+    const vSyl = document.getElementById("portalViewSyllabi");
+    const vCr = document.getElementById("portalViewClassRecords");
+    const vAn = document.getElementById("portalViewAnalytics");
+
+    if (vSyl) vSyl.style.display = viewName === "syllabi" ? "block" : "none";
+    if (vCr) vCr.style.display = viewName === "class_records" ? "block" : "none";
+    if (vAn) vAn.style.display = viewName === "analytics" ? "block" : "none";
+
+    if (viewName === "class_records") renderPortalClassRecordsList();
+    if (viewName === "analytics") renderPortalAnalyticsDashboard();
+  }
+
+  function switchCrFilter(filt) {
+    approvalsState.crFilter = filt;
+    document.getElementById("btnFilterCrAction")?.classList.toggle("active", filt === "action");
+    document.getElementById("btnFilterCrSubmissions")?.classList.toggle("active", filt === "submissions");
+    document.getElementById("btnFilterCrAll")?.classList.toggle("active", filt === "all");
+    renderPortalClassRecordsList();
+  }
+
+  function renderPortalClassRecordsList() {
+    const container = document.getElementById("portalClassRecordsListContainer");
+    if (!container) return;
+
+    let items = [];
+    if (approvalsState.crFilter === "action") items = approvalsState.pendingCrActionForMe || [];
+    else if (approvalsState.crFilter === "submissions") items = approvalsState.mySubmittedClassRecords || [];
+    else items = approvalsState.institutionalClassRecords || [];
+
+    // Sub-filters
+    const statusFilt = document.getElementById("crStatusFilter")?.value || "all";
+    const progFilt = document.getElementById("crProgFilter")?.value || "all";
+    const query = (document.getElementById("crSearchInput")?.value || "").toLowerCase().trim();
+
+    if (statusFilt === "draft") {
+      items = items.filter(c => (c.class_record_workflow && c.class_record_workflow.status) === "draft");
+    } else if (statusFilt === "in_signoff") {
+      items = items.filter(c => {
+        const s = (c.class_record_workflow && c.class_record_workflow.status) || "";
+        return ["for_program_head", "for_associate_dean", "for_qa_countersign", "for_dean_approval"].includes(s);
+      });
+    } else if (statusFilt === "finalized") {
+      items = items.filter(c => (c.class_record_workflow && c.class_record_workflow.status) === "finalized");
+    } else if (statusFilt === "returned") {
+      items = items.filter(c => (c.class_record_workflow && c.class_record_workflow.status) === "returned");
+    }
+
+    if (progFilt !== "all") {
+      items = items.filter(c => ((c.program_code || "").toUpperCase()) === progFilt);
+    }
+
+    if (query) {
+      items = items.filter(c => {
+        const text = `${c.course_code || ''} ${c.course_title || ''} ${c.faculty_name || ''} ${c.owner || ''} ${c.section || ''}`.toLowerCase();
+        return text.includes(query);
+      });
+    }
+
+    const summaryText = document.getElementById("crSummaryText");
+    if (summaryText) summaryText.textContent = `Showing ${items.length} class record(s).`;
+
+    // Update KPI counters
+    const allCr = approvalsState.institutionalClassRecords || [];
+    const statTot = document.getElementById("statTotalCr");
+    if (statTot) statTot.textContent = allCr.length;
+    const ongCr = allCr.filter(c => ["for_program_head", "for_associate_dean", "for_qa_countersign", "for_dean_approval"].includes((c.class_record_workflow && c.class_record_workflow.status) || ""));
+    const statOng = document.getElementById("statOngoingCr");
+    if (statOng) statOng.textContent = ongCr.length;
+    const finCr = allCr.filter(c => (c.class_record_workflow && c.class_record_workflow.status) === "finalized");
+    const statFin = document.getElementById("statFinalizedCr");
+    if (statFin) statFin.textContent = finCr.length;
+    const retCr = allCr.filter(c => (c.class_record_workflow && c.class_record_workflow.status) === "returned");
+    const statRet = document.getElementById("statReturnedCr");
+    if (statRet) statRet.textContent = retCr.length;
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div class="card" style="text-align:center; padding:36px 20px; color:#64748b;">
+          <div style="font-size:2.4rem; margin-bottom:8px;">${approvalsState.crFilter === 'action' ? '🎉' : '📊'}</div>
+          <h3 style="margin:0 0 4px; color:#1e293b;">
+            ${approvalsState.crFilter === 'action' ? 'All caught up! No class records awaiting your signature.' : (approvalsState.crFilter === 'submissions' ? 'No submitted class records found.' : 'No institutional class records recorded.')}
+          </h3>
+          <p style="font-size:0.83rem; margin:0;">
+            ${approvalsState.crFilter === 'action' ? 'When instructors finalize class records for your endorsement or approval, they will appear here.' : 'Open a course and finalize its student grades in Tab 3 to enter sign-off.'}
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = items.map(c => {
+      const crWf = c.class_record_workflow || {};
+      const status = crWf.status || "draft";
+      const isFinalized = status === "finalized";
+      const isReturned = status === "returned";
+      const isPending = !isFinalized && !isReturned && status !== "draft";
+
+      let badgeBg = "#e0f2fe";
+      let badgeColor = "#0369a1";
+      if (isFinalized) { badgeBg = "#dcfce7"; badgeColor = "#15803d"; }
+      else if (isReturned) { badgeBg = "#fee2e2"; badgeColor = "#991b1b"; }
+      else if (isPending) { badgeBg = "#fef3c7"; badgeColor = "#92400e"; }
+
+      const isOwnerPH = Boolean(crWf.is_owner_program_head);
+      const step1Label = isOwnerPH ? "Associate Dean Endorsement" : "Program Head Endorsement";
+
+      return `
+        <div class="card" style="border:1.5px solid ${c.user_can_sign_cr ? '#16a34a' : '#e2e8f0'}; border-radius:10px; padding:18px; position:relative; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
+          <!-- Top Row -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <h3 style="margin:0; font-size:1.15rem; color:#0f172a;">${escapeHtml(c.course_code)}: ${escapeHtml(c.course_title)}</h3>
+                <span class="badge" style="background:${badgeBg}; color:${badgeColor}; font-weight:800; font-size:0.75rem; padding:3px 9px; border-radius:8px;">
+                  ${escapeHtml(crWf.status_label || status)}
+                </span>
+                ${crWf.is_locked ? `<span class="badge" style="background:#fef2f2; color:#991b1b; border:1px solid #fecaca; font-weight:800; font-size:0.7rem; padding:3px 8px; border-radius:6px;">🔒 GRADES LOCKED</span>` : ''}
+                ${c.user_can_sign_cr ? `<span class="badge" style="background:#16a34a; color:#ffffff; font-weight:800; font-size:0.7rem; padding:3px 8px; border-radius:6px; animation:pulse 2s infinite;">✍️ SIGNATURE REQUIRED</span>` : ''}
+              </div>
+              <div style="font-size:0.8rem; color:#475569; margin-top:3px;">
+                <strong>Section:</strong> ${escapeHtml(c.section)} &bull; <strong>Term:</strong> ${escapeHtml(c.semester_ay)} &bull; <strong>Units:</strong> ${escapeHtml(c.credit_units)}
+              </div>
+            </div>
+            <div style="text-align:right; font-size:0.74rem; color:#64748b;">
+              <div><strong>Faculty:</strong> ${escapeHtml(c.faculty_name || c.owner)} ${isOwnerPH ? '<span class="badge badge-sm" style="background:#dbeafe; color:#1e40af; font-size:0.65rem;">Program Head</span>' : ''}</div>
+              ${crWf.submitted_at ? `<div><strong>Finalized &amp; Submitted:</strong> ${formatWorkflowTimestamp(crWf.submitted_at)}</div>` : ''}
+            </div>
+          </div>
+
+          <!-- Stage Track -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:0.8rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <span style="font-weight:700; color:#334155;">Current Signatory Stage:</span>
+                <span style="font-weight:800; color:#1e40af; margin-left:4px;">
+                  ${crWf.current_step_label ? escapeHtml(crWf.current_step_label) : (isFinalized ? 'Official Final Grades Sealed & Locked 🔒' : 'Draft / Scores Editable')}
+                </span>
+              </div>
+              <div style="font-size:0.75rem; color:#64748b;">
+                <strong>Sequence:</strong> Faculty &rarr; ${escapeHtml(step1Label)} &rarr; QA Countersign &rarr; Dean Approval
+              </div>
+            </div>
+            ${crWf.submission_notes ? `
+              <div style="margin-top:6px; font-size:0.75rem; color:#334155; font-style:italic;">
+                <strong>Faculty Certification:</strong> "${escapeHtml(crWf.submission_notes)}"
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Signatures sealed -->
+          ${(crWf.signatures && crWf.signatures.length > 0) ? `
+            <div style="margin-bottom:14px;">
+              <div style="font-size:0.76rem; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:4px;">
+                Sealed Electronic Signatures &amp; Endorsement Timestamps (${crWf.signatures.length}/4 Stages):
+              </div>
+              ${renderSignaturesBlockHtml(crWf.signatures, crWf.finalized_at)}
+            </div>
+          ` : ''}
+
+          <!-- Action Buttons Bar -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9;">
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              ${(window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools) ? `
+                <span style="font-size:0.75rem; color:#64748b; font-style:italic;">Staff Oversight Monitoring Mode</span>
+              ` : `
+                <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'tab-gradebook')" style="font-weight:700;">
+                  👁️ Open / View Class Record
+                </button>
+              `}
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              ${c.user_can_sign_cr ? `
+                <button class="btn btn-sm btn-success" onclick="openSignClassRecordModal('${c.id}')" style="font-weight:700;">
+                  ✍️ Review &amp; Sign / Endorse
+                </button>
+              ` : ''}
+              ${(crWf.can_request_revision || (isFinalized && window.CURRENT_USER && (window.CURRENT_USER.role === 'admin' || c.is_owner))) ? `
+                <button class="btn btn-sm btn-outline-danger" onclick="openRequestCRRevisionModal('${c.id}')" style="font-weight:700;">
+                  🔓 Request Grade Revision
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderPortalAnalyticsDashboard() {
+    const an = approvalsState.analytics;
+    if (!an) return;
+
+    // Percentages and ratios
+    const elSylPct = document.getElementById("anSyllabusPct");
+    if (elSylPct) elSylPct.textContent = `${an.syllabus_compliance_pct || 0}%`;
+    const elSylRat = document.getElementById("anSyllabusRatio");
+    if (elSylRat) elSylRat.textContent = `(${an.syllabus_approved || 0} / ${an.syllabus_total || 0} Approved)`;
+    const elSylBar = document.getElementById("anSyllabusBar");
+    if (elSylBar) elSylBar.style.width = `${Math.min(100, an.syllabus_compliance_pct || 0)}%`;
+
+    const elCrPct = document.getElementById("anCrPct");
+    if (elCrPct) elCrPct.textContent = `${an.class_record_compliance_pct || 0}%`;
+    const elCrRat = document.getElementById("anCrRatio");
+    if (elCrRat) elCrRat.textContent = `(${an.class_record_finalized || 0} / ${an.class_record_total || 0} Finalized)`;
+    const elCrBar = document.getElementById("anCrBar");
+    if (elCrBar) elCrBar.style.width = `${Math.min(100, an.class_record_compliance_pct || 0)}%`;
+
+    const b = an.bottlenecks || {};
+    const totBottlenecks = Object.values(b).reduce((a, v) => a + (parseInt(v) || 0), 0);
+    const elBotTot = document.getElementById("anBottlenecksTotal");
+    if (elBotTot) elBotTot.textContent = totBottlenecks;
+
+    // Program matrix tbody
+    const tbody = document.getElementById("anProgramMatrixTbody");
+    if (tbody) {
+      const progs = an.programs || [];
+      if (!progs.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:18px; color:#94a3b8;">No course records available for program breakdown.</td></tr>`;
+      } else {
+        tbody.innerHTML = progs.map(p => {
+          const comp = p.compliance_pct || 0;
+          let badgeColor = "#16a34a";
+          let badgeBg = "#dcfce7";
+          if (comp < 50) { badgeColor = "#dc2626"; badgeBg = "#fee2e2"; }
+          else if (comp < 80) { badgeColor = "#ca8a04"; badgeBg = "#fef9c3"; }
+
+          return `
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px; font-weight:700; color:#0f172a;">${escapeHtml(p.code)}</td>
+              <td style="padding:10px 12px; text-align:center;">${p.courses_count || 0}</td>
+              <td style="padding:10px 12px; text-align:center; color:#16a34a; font-weight:700;">${p.syllabi_approved || 0}</td>
+              <td style="padding:10px 12px; text-align:center; color:#ca8a04;">${p.syllabi_pending || 0}</td>
+              <td style="padding:10px 12px; text-align:center; color:#15803d; font-weight:700;">${p.cr_finalized || 0}</td>
+              <td style="padding:10px 12px; text-align:center; color:#eab308;">${p.cr_pending || 0}</td>
+              <td style="padding:10px 12px; text-align:center;">
+                <span class="badge" style="background:${badgeBg}; color:${badgeColor}; font-weight:800; padding:4px 10px; border-radius:6px;">
+                  ${comp.toFixed(1)}%
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+    }
+
+    // Bottlenecks grid
+    const bGrid = document.getElementById("anBottlenecksGrid");
+    if (bGrid) {
+      const bItems = [
+        { label: "Review Committee Members", count: b.committee_members || 0, desc: "Awaiting members evaluation" },
+        { label: "Review Committee Chair", count: b.committee_chair || 0, desc: "Awaiting chair recommendation & endorsement" },
+        { label: "Program Head Endorsement", count: b.program_head || 0, desc: "Awaiting syllabus / class record endorsement" },
+        { label: "Associate Dean Endorsement", count: b.associate_dean || 0, desc: "Awaiting endorsement for Program Head courses" },
+        { label: "College QA Countersign", count: b.qa_head || 0, desc: "Awaiting QA compliance verification" },
+        { label: "College Dean Final Approval", count: b.dean || 0, desc: "Awaiting dean approval & permanent lock" }
+      ];
+
+      bGrid.innerHTML = bItems.map(item => {
+        let bColor = "#16a34a";
+        let bBg = "#f0fdf4";
+        if (item.count > 0 && item.count < 3) { bColor = "#ca8a04"; bBg = "#fefce8"; }
+        else if (item.count >= 3) { bColor = "#dc2626"; bBg = "#fef2f2"; }
+
+        return `
+          <div style="background:${bBg}; border:1px solid ${bColor}33; border-radius:8px; padding:12px 14px;">
+            <div style="font-size:0.75rem; font-weight:700; color:#334155;">${escapeHtml(item.label)}</div>
+            <div style="font-size:1.6rem; font-weight:800; color:${bColor}; margin-top:2px;">${item.count}</div>
+            <div style="font-size:0.68rem; color:#64748b;">${escapeHtml(item.desc)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+
+  function printOversightSummary() {
+    switchPortalView('analytics');
+    setTimeout(() => {
+      window.print();
+    }, 250);
   }
 
 </script>

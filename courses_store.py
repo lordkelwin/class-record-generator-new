@@ -1,4 +1,5 @@
 import syllabus_workflow
+import class_record_workflow
 """
 Course and Subject Store for USeP OBE Syllabus Creator & Class Record Generator.
 
@@ -139,6 +140,7 @@ def ensure_user_has_default_course(username: str, faculty_name: str = "") -> Dic
         "semester_ay": bp.metadata.semester_ay,
         "blueprint": bp.to_dict(),
         "workflow": syllabus_workflow.default_workflow(),
+        "class_record_workflow": class_record_workflow.default_class_record_workflow(username),
     }
     filepath = os.path.join(user_dir, f"{course_id}.json")
     with open(filepath, "w", encoding="utf-8") as f:
@@ -257,10 +259,19 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
     section = (payload.get("section") or meta.get("section") or existing.get("section") or "1A").strip()
     semester_ay = (payload.get("semester_ay") or meta.get("semester_ay") or existing.get("semester_ay") or "1st Semester, A.Y. 2026-2027").strip()
 
-    # Enforce workflow locks on blueprint
+    # Enforce syllabus workflow locks on blueprint
     wf = payload.get("workflow") or existing.get("workflow") or syllabus_workflow.default_workflow()
     temp_doc = {"blueprint": existing.get("blueprint"), "workflow": wf, "owner": username}
     bp_dict = syllabus_workflow.enforce_locks(temp_doc, bp_dict)
+
+    # Enforce class record grade locks (freeze student scores when under sign-off or finalized)
+    cr_wf = payload.get("class_record_workflow") or existing.get("class_record_workflow") or class_record_workflow.default_class_record_workflow(username)
+    if existing and class_record_workflow.is_class_record_locked({"class_record_workflow": cr_wf}):
+        old_bp = existing.get("blueprint") or {}
+        if "students" in old_bp:
+            bp_dict["students"] = old_bp["students"]
+        if "categories" in old_bp:
+            bp_dict["categories"] = old_bp["categories"]
 
     # Synchronize metadata inside blueprint as well
     if "metadata" in bp_dict:
@@ -280,6 +291,7 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
         "semester_ay": semester_ay,
         "blueprint": bp_dict,
         "workflow": wf,
+        "class_record_workflow": cr_wf,
     }
 
     for attempt in range(5):
@@ -472,6 +484,7 @@ def list_all_workflow_courses() -> List[Dict[str, Any]]:
                         "created_at": doc.get("created_at"),
                         "updated_at": doc.get("updated_at"),
                         "workflow": syllabus_workflow.public_view(doc),
+                        "class_record_workflow": class_record_workflow.public_cr_view(doc),
                         "doc_raw": doc,
                     })
             except Exception:

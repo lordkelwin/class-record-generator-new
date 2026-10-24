@@ -1,4 +1,6 @@
 import syllabus_workflow
+import class_record_workflow
+import oversight_report_generator
 
 from syllabus_evaluation_form import (
 
@@ -20,7 +22,7 @@ import uuid
 
 import pandas as pd
 
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, Response
 
 
 
@@ -735,16 +737,14 @@ def api_get_course(course_id):
     wf_view["can_sign"] = syllabus_workflow.user_can_act(user, doc)
     wf_view["can_request_revision"] = (doc.get("owner") == (user.get("username") if user else "") or (user and user.get("role") == "admin")) and (wf_view["status"] == "approved")
 
+    cr_view = class_record_workflow.public_cr_view(doc, user)
+
     return jsonify({
-
         "course": doc,
-
         "blueprint": bp_dict,
-
         "workflow": wf_view,
-
+        "class_record_workflow": cr_view,
         "transmutation": build_transmutation_table(passing_pct),
-
     })
 
 
@@ -1132,43 +1132,42 @@ def api_get_workflow_requests():
 
 
     pending_action_for_me = []
+    pending_cr_action_for_me = []
     my_submitted_requests = []
+    my_submitted_class_records = []
     institutional_requests = []
+    institutional_class_records = []
 
     w_roles = user.get("workflow_roles") or []
     is_admin = (user.get("role") == "admin")
     is_staff = (user.get("role") == "staff" or "staff" in w_roles)
     can_view_institutional = is_admin or is_staff or any(r in w_roles for r in ["program_head", "qa_head", "dean", "associate_dean"])
 
-
-
-
-
-
-
     for c in all_courses:
-
         doc_raw = c.pop("doc_raw", None)
         wf = c.get("workflow") or {}
+        cr_wf = c.get("class_record_workflow") or {}
         is_owner = (c.get("owner") == user["username"])
-        is_admin = (user.get("role") == "admin")
         can_act = False
         if doc_raw and (is_admin or not is_owner):
             can_act = syllabus_workflow.user_can_act(user, doc_raw)
         c["user_can_act"] = can_act
+
+        can_sign_cr = False
+        if doc_raw and (is_admin or not is_owner):
+            can_sign_cr = class_record_workflow.user_can_sign_class_record(user, doc_raw)
+        c["user_can_sign_cr"] = can_sign_cr
         c["is_owner"] = is_owner
-
-
-
-
-
-
 
         if can_act and wf.get("status") in {"for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"}:
             pending_action_for_me.append(c)
 
         if is_owner:
             my_submitted_requests.append(c)
+            my_submitted_class_records.append(c)
+
+        if can_sign_cr and cr_wf.get("status") in {"for_program_head", "for_associate_dean", "for_qa_countersign", "for_dean_approval"}:
+            pending_cr_action_for_me.append(c)
 
         if can_view_institutional:
             # If program head without college-wide rights, only show their program's courses
@@ -1177,46 +1176,37 @@ def api_get_workflow_requests():
                 c_prog = (c.get("program_code") or "").upper()
                 if not p_codes or "*" in p_codes or c_prog in p_codes:
                     institutional_requests.append(c)
+                    institutional_class_records.append(c)
             else:
                 institutional_requests.append(c)
+                institutional_class_records.append(c)
 
-
-
-
-
-
+    analytics = class_record_workflow.compute_institutional_analytics(all_courses)
 
     return jsonify({
-
-        "pending_count": len(pending_action_for_me),
+        "pending_count": len(pending_action_for_me) + len(pending_cr_action_for_me),
+        "pending_syl_count": len(pending_action_for_me),
+        "pending_cr_count": len(pending_cr_action_for_me),
         "can_view_institutional": can_view_institutional,
         "is_staff": is_staff,
         "can_access_faculty_tools": user.get("can_access_faculty_tools", True),
-
         "pending_action_for_me": pending_action_for_me,
-
+        "pending_cr_action_for_me": pending_cr_action_for_me,
         "my_submitted_requests": my_submitted_requests,
-
+        "my_submitted_class_records": my_submitted_class_records,
         "institutional_requests": institutional_requests,
-
+        "institutional_class_records": institutional_class_records,
+        "analytics": analytics,
         "user_info": {
-
             "username": user["username"],
             "is_staff": is_staff,
             "can_access_faculty_tools": user.get("can_access_faculty_tools", True),
-
             "full_name": user.get("full_name"),
-
             "role": user.get("role"),
-
             "workflow_roles": user.get("workflow_roles") or [],
-
             "position_title": user.get("position_title"),
-
             "has_signature": user.get("has_signature"),
-
         }
-
     })
 
 
@@ -1650,6 +1640,132 @@ def api_request_syllabus_revision(course_id):
         })
     except syllabus_workflow.WorkflowError as e:
         return jsonify({"error": str(e)}), 400
+
+
+# =========================================================================
+# CLASS RECORD SEQUENTIAL SIGN-OFF & GRADE LOCK-IN APIS
+# =========================================================================
+
+@app.route("/api/courses/<course_id>/class-record/workflow", methods=["GET"])
+def api_get_class_record_workflow(course_id):
+    user = current_user()
+    uname = user["username"] if user else "default"
+    doc = courses_store.get_course(uname, course_id) or courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Subject '{course_id}' not found."}), 404
+    cr_view = class_record_workflow.public_cr_view(doc, user)
+    return jsonify({
+        "course_id": course_id,
+        "class_record_workflow": cr_view,
+    })
+
+
+@app.route("/api/courses/<course_id>/class-record/submit", methods=["POST"])
+@faculty_tools_required
+def api_submit_class_record(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Subject '{course_id}' not found."}), 404
+    data = request.get_json(silent=True) or {}
+    notes = (data.get("notes") or data.get("submission_notes") or "").strip()
+    sig_data = data.get("signature_data") or user.get("signature_data") or ""
+    try:
+        cr_wf = class_record_workflow.submit_class_record(doc, user, notes=notes, signature_data=sig_data)
+        courses_store.save_course_doc(doc)
+        cr_view = class_record_workflow.public_cr_view(doc, user)
+        return jsonify({
+            "success": True,
+            "message": f"Class record finalized and submitted for institutional sign-off. ({cr_view['status_label']})",
+            "class_record_workflow": cr_view,
+        })
+    except class_record_workflow.ClassRecordWorkflowError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/class-record/sign", methods=["POST"])
+def api_sign_class_record(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Subject '{course_id}' not found."}), 404
+    data = request.get_json(silent=True) or {}
+    decision = (data.get("decision") or "approve").strip().lower()
+    remarks = (data.get("remarks") or "").strip()
+    sig_data = data.get("signature_data") or user.get("signature_data") or ""
+    try:
+        cr_wf = class_record_workflow.sign_class_record(doc, user, decision=decision, remarks=remarks, signature_data=sig_data)
+        courses_store.save_course_doc(doc)
+        cr_view = class_record_workflow.public_cr_view(doc, user)
+        action_msg = "returned for grade revision" if decision == "return" else "signed and endorsed successfully"
+        return jsonify({
+            "success": True,
+            "message": f"Class record {action_msg}. (Current stage: {cr_view['status_label']})",
+            "class_record_workflow": cr_view,
+        })
+    except class_record_workflow.ClassRecordWorkflowError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/class-record/request-revision", methods=["POST"])
+@faculty_tools_required
+def api_request_class_record_revision(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Subject '{course_id}' not found."}), 404
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or data.get("revision_reason") or "").strip()
+    try:
+        cr_wf = class_record_workflow.request_class_record_revision(doc, user, reason=reason)
+        courses_store.save_course_doc(doc)
+        cr_view = class_record_workflow.public_cr_view(doc, user)
+        return jsonify({
+            "success": True,
+            "message": "Class record unlocked for grade revision. You can now adjust student scores and re-submit.",
+            "class_record_workflow": cr_view,
+        })
+    except class_record_workflow.ClassRecordWorkflowError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+# =========================================================================
+# STAFF OVERSIGHT ANALYTICS & AUTO-GENERATED AUDIT REPORTS
+# =========================================================================
+
+@app.route("/api/workflow/analytics", methods=["GET"])
+def api_get_workflow_analytics():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    all_courses = courses_store.list_all_workflow_courses()
+    analytics = class_record_workflow.compute_institutional_analytics(all_courses)
+    return jsonify(analytics)
+
+
+@app.route("/api/workflow/oversight-report", methods=["GET"])
+def api_download_oversight_report():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    all_courses = courses_store.list_all_workflow_courses()
+    analytics = class_record_workflow.compute_institutional_analytics(all_courses)
+    generated_by = user.get("full_name") or user.get("username") or "Academic Oversight Staff"
+    pdf_bytes = oversight_report_generator.generate_oversight_report_pdf(analytics, all_courses, generated_by=generated_by)
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": "inline; filename=\"USeP_Institutional_Oversight_Report.pdf\"",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+        }
+    )
 
 
 @app.route("/api/admin/faculty-list", methods=["GET"])
