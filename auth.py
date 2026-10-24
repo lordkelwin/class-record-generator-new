@@ -359,6 +359,7 @@ def current_user():
         "is_staff": is_staff,
         "is_pure_staff": is_pure_staff,
         "can_access_faculty_tools": can_access_faculty_tools,
+        "is_admin_session": bool(session.get("is_admin_session") or is_admin),
     }
 
 
@@ -489,6 +490,7 @@ def login():
                 session.clear()
                 session.permanent = True
                 session["username"] = username
+                session["is_admin_session"] = bool(user.get("role") == "admin")
                 get_csrf_token()
                 with _lock:
                     users = _load_users()
@@ -738,12 +740,18 @@ def api_user_save_signature():
 
 @auth_bp.route("/api/switch-demo-account", methods=["POST"])
 def api_switch_demo_account():
+    user = current_user()
+    is_admin = bool(user and user.get("role") == "admin")
+    is_admin_session = bool(session.get("is_admin_session"))
+    if not (is_admin or is_admin_session):
+        return jsonify({"error": "Admin access required to use the role test switcher."}), 403
+
     data = request.get_json(silent=True) or {}
     target_username = (data.get("username") or "").strip().lower()
     users = _load_users()
     if target_username not in users:
         return jsonify({"error": f"Account '{target_username}' not found."}), 404
-    session.clear()
     session["username"] = target_username
+    session["is_admin_session"] = True
     get_csrf_token()
     return jsonify({"success": True, "user": current_user()})

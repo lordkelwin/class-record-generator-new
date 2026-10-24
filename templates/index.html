@@ -1154,9 +1154,10 @@
       </div>
     </div>
 
-        <!-- Testing Account / Role Quick Switcher -->
-        <div style="margin-top:10px; padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:0.73rem; color:#475569; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
-          <div><strong style="color:#0f172a;">⚡ Role Test Switcher:</strong> Switch active user to test every workflow step:</div>
+        {% if current_user and (current_user.role == 'admin' or current_user.is_admin_session) %}
+        <!-- Testing Account / Role Quick Switcher (Admin Only) -->
+        <div id="roleTestSwitcherBar" style="margin-top:10px; padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:0.73rem; color:#475569; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+          <div><strong style="color:#0f172a;">⚡ Role Test Switcher (Admin Only):</strong> Switch active user to test every workflow step:</div>
           <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('admin')">Admin (Full)</button>
             <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="switchTestAccount('faculty_tano')">Faculty (Tano)</button>
@@ -1171,6 +1172,7 @@
             </select>
           </div>
         </div>
+        {% endif %}
       </div>
     </div>
     <!-- SYLLABUS SECTION QUICK NAVIGATOR (STICKY JUMP BAR) -->
@@ -3397,7 +3399,7 @@
         .join("");
     }
 
-    // 3. Populate Quick Role Test Switcher "More Faculty" dropdown
+    // 3. Populate "More Faculty" dropdown if present
     const switcher = document.getElementById("moreFacultySwitcher");
     if (switcher && catalogData.faculty_roster) {
       const roster = catalogData.faculty_roster;
@@ -7213,7 +7215,7 @@
     }
   }
 
-  // Test account switcher for rapid workflow verification
+  // Test account switcher for rapid workflow verification (Admin only)
   async function switchTestAccount(username) {
     try {
       const res = await fetch("/api/switch-demo-account", {
@@ -7224,9 +7226,8 @@
       const data = await res.json();
       if (res.ok) {
         currentUser = data.user;
-        await fetchWorkflow(currentCourseId);
-        renderWorkflowStepper();
-        alert(`⚡ Active User Switched to: ${currentUser.full_name} (${currentUser.position_title})`);
+        window.CURRENT_USER = data.user;
+        window.location.reload();
       } else {
         alert("Failed to switch account: " + (data.error || ""));
       }
