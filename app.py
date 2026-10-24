@@ -792,26 +792,20 @@ def api_create_course():
 
         sem_ay = (data.get("semester_ay") or meta.get("semester_ay") or "1st Semester, A.Y. 2026-2027").strip()
 
+        progs = data.get("programs") or meta.get("programs") or []
+        secs = data.get("sections") or meta.get("sections") or []
         new_doc = courses_store.save_course(
-
             username,
-
             course_id=f"c_{uuid.uuid4().hex[:10]}",
-
             payload={
-
                 "course_code": c_code,
-
                 "course_title": c_title,
-
                 "section": sec,
-
+                "sections": secs,
+                "programs": progs,
                 "semester_ay": sem_ay,
-
                 "blueprint": bp_dict,
-
             }
-
         )
 
         return jsonify({
@@ -848,24 +842,19 @@ def api_create_course():
 
 
 
+    progs = data.get("programs") or []
+    secs = data.get("sections") or []
     doc = courses_store.create_course(
-
         username=username,
-
         course_code=c_code,
-
         course_title=c_title,
-
         section=sec,
-
         semester_ay=sem_ay,
-
         from_catalog=from_cat,
-
         catalog_course_data=cat_course,
-
         faculty_name=faculty_name,
-
+        programs=progs,
+        sections=secs,
     )
 
     return jsonify({

@@ -80,6 +80,10 @@ def _format_units_short(credit_units: str) -> str:
 def _format_program_short(program_name: str, department: str, program_code: str) -> str:
     """Formats 'Bachelor of Science in Electrical Engineering' -> 'Electrical Engineering'."""
     pname = str(program_name or "").strip()
+    if "," in pname:
+        parts = [re.sub(r"^Bachelor\s+of\s+Science\s+in\s+", "", p.strip(), flags=re.I).strip() for p in pname.split(",") if p.strip()]
+        if parts:
+            return ", ".join(parts)
     cleaned = re.sub(r"^Bachelor\s+of\s+Science\s+in\s+", "", pname, flags=re.I).strip()
     cleaned = re.sub(r"\s*\([^)]*\)\s*$", "", cleaned).strip()
     if cleaned:

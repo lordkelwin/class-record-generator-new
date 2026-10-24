@@ -525,7 +525,9 @@ class CourseMetadata:
     address: str = "Iñigo St., Bo. Obrero, Davao City 8000"
     program_name: str = "Bachelor of Science in Electrical Engineering"
     program_code: str = "EE"
-    academic_unit: str = "Engineering"
+    programs: List[str] = field(default_factory=list)
+    program_names: List[str] = field(default_factory=list)
+    academic_unit: str = "Engineering" 
     course_code: str = "EE 211"
     course_title: str = "Electrical Circuits 1"
     credit_units: str = "3.0 Units – Lecture"
@@ -534,7 +536,8 @@ class CourseMetadata:
     room: str = "304"
     semester_ay: str = "1st Semester, A.Y. 2026-2027"
     section: str = "EE 2A"
-    faculty_name: str = "ELWIN JAY J. TANO"
+    sections: List[str] = field(default_factory=list)
+    faculty_name: str = "ELWIN JAY J. TANO" 
     program_head: str = "CHARITO O. CLARO"
     dean_name: str = "JOIE D. CATAYTAY"
     transmutation_base: int = 50  # Base-50 formula: (Score/Items)*50 + 50
@@ -581,6 +584,65 @@ class CourseMetadata:
     learning_plan_topics: List[str] = field(default_factory=list)
     references: str = ""
     classroom_policies: str = ""
+    def __post_init__(self):
+        # 1. Normalize programs list & program_code
+        if self.programs:
+            cleaned_progs = []
+            for p in self.programs:
+                parts = [x.strip() for x in str(p).replace(";", ",").replace("/", ",").split(",") if x.strip()]
+                for x in parts:
+                    if x not in cleaned_progs:
+                        cleaned_progs.append(x)
+            self.programs = cleaned_progs or ["EE"]
+            if len(self.programs) > 1 or (self.program_code == "EE" and self.programs != ["EE"]):
+                self.program_code = ", ".join(self.programs)
+        elif self.program_code:
+            parts = [x.strip() for x in str(self.program_code).replace(";", ",").replace("/", ",").split(",") if x.strip()]
+            self.programs = parts or ["EE"]
+        else:
+            self.programs = ["EE"]
+            self.program_code = "EE"
+
+        # 2. Lookup official program names if program_names is empty or out of sync
+        if not self.program_names or len(self.program_names) != len(self.programs):
+            try:
+                from program_structures import PROGRAM_STRUCTURES_BY_CODE
+                names = []
+                for p in self.programs:
+                    struct = PROGRAM_STRUCTURES_BY_CODE.get(p)
+                    if struct and "program_name" in struct:
+                        names.append(struct["program_name"])
+                    else:
+                        names.append(self.program_name if len(self.programs) == 1 and self.program_name else f"Bachelor of Science in {p}")
+                self.program_names = names
+            except Exception:
+                if not self.program_names:
+                    self.program_names = [self.program_name] if self.program_name else ["Bachelor of Science in Electrical Engineering"]
+
+        # 3. Synchronize program_name
+        if len(self.programs) > 1:
+            self.program_name = ", ".join(self.program_names)
+        elif not self.program_name and self.program_names:
+            self.program_name = self.program_names[0]
+
+        # 4. Normalize sections list & section
+        if self.sections:
+            cleaned_secs = []
+            for s in self.sections:
+                parts = [x.strip() for x in str(s).replace(";", ",").split(",") if x.strip()]
+                for x in parts:
+                    if x not in cleaned_secs:
+                        cleaned_secs.append(x)
+            self.sections = cleaned_secs or ["EE 2A"]
+            if len(self.sections) > 1 or (self.section == "EE 2A" and self.sections != ["EE 2A"]):
+                self.section = ", ".join(self.sections)
+        elif self.section:
+            parts = [x.strip() for x in str(self.section).replace(";", ",").split(",") if x.strip()]
+            self.sections = parts or ["EE 2A"]
+        else:
+            self.sections = ["EE 2A"]
+            self.section = "EE 2A"
+
 
 
 def get_default_cqi_indicators() -> List[CQIIndicator]:

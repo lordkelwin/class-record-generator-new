@@ -87,12 +87,21 @@ def _summary_from_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     categories = bp_dict.get("categories", [])
     clos = bp_dict.get("course_outcomes", [])
 
+    programs = meta.get("programs") or ([p.strip() for p in (meta.get("program_code") or "EE").split(",") if p.strip()] or ["EE"])
+    sections = meta.get("sections") or ([s.strip() for s in (meta.get("section") or doc.get("section") or "1A").split(",") if s.strip()] or ["1A"])
+    program_names = meta.get("program_names") or ([meta.get("program_name")] if meta.get("program_name") else ["Bachelor of Science in Electrical Engineering"])
+
     return {
         "id": doc.get("id"),
         "owner": doc.get("owner"),
         "course_code": (meta.get("course_code") or doc.get("course_code") or "New Course").strip(),
         "course_title": (meta.get("course_title") or doc.get("course_title") or "Untitled Subject").strip(),
         "section": (meta.get("section") or doc.get("section") or "1A").strip(),
+        "sections": sections,
+        "program_code": (meta.get("program_code") or doc.get("program_code") or "EE").strip(),
+        "programs": programs,
+        "program_name": meta.get("program_name") or "",
+        "program_names": program_names,
         "semester_ay": sem_ay,
         "school_year": sy,
         "semester": sem,
@@ -273,11 +282,25 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
         if "categories" in old_bp:
             bp_dict["categories"] = old_bp["categories"]
 
+    programs = payload.get("programs") or meta.get("programs") or []
+    sections = payload.get("sections") or meta.get("sections") or []
+    if not sections and section:
+        sections = [s.strip() for s in section.split(",") if s.strip()]
+    elif sections:
+        section = ", ".join(sections)
+
+    if not programs and (payload.get("program_code") or meta.get("program_code")):
+        programs = [p.strip() for p in (payload.get("program_code") or meta.get("program_code")).split(",") if p.strip()]
+
     # Synchronize metadata inside blueprint as well
     if "metadata" in bp_dict:
         bp_dict["metadata"]["course_code"] = course_code
         bp_dict["metadata"]["course_title"] = course_title
         bp_dict["metadata"]["section"] = section
+        bp_dict["metadata"]["sections"] = sections
+        bp_dict["metadata"]["programs"] = programs
+        if programs:
+            bp_dict["metadata"]["program_code"] = ", ".join(programs)
         bp_dict["metadata"]["semester_ay"] = semester_ay
 
     doc = {
@@ -315,17 +338,23 @@ def create_course(
     from_catalog: bool = False,
     catalog_course_data: Optional[Dict[str, Any]] = None,
     faculty_name: str = "",
+    programs: Optional[List[str]] = None,
+    sections: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
-    Creates a new subject entry under the user's account.
+    Creates a new subject entry under the user's account with multi-program & multi-section support.
     """
     course_id = f"c_{uuid.uuid4().hex[:10]}"
+
+    init_sections = sections or ([s.strip() for s in section.split(",") if s.strip()] if section else ["EE 2A"])
+    init_section = ", ".join(init_sections)
+    init_programs = programs or []
 
     if from_catalog and catalog_course_data:
         bp = get_blank_blueprint(
             course_code=catalog_course_data.get("code") or course_code,
             course_title=catalog_course_data.get("title") or course_title,
-            section=section,
+            section=init_section,
             semester_ay=semester_ay,
             faculty_name=faculty_name,
             credit_units=catalog_course_data.get("credit_units") or "3.0 Units – Lecture",
@@ -334,6 +363,8 @@ def create_course(
             course_description=catalog_course_data.get("description") or "",
             prerequisites=catalog_course_data.get("prereqs") or "",
             corequisites=catalog_course_data.get("coreqs") or "",
+            programs=init_programs if init_programs else None,
+            sections=init_sections,
         )
         topics = catalog_course_data.get("topics") or []
         if topics:
@@ -343,16 +374,20 @@ def create_course(
         bp = get_blank_blueprint(
             course_code=course_code,
             course_title=course_title,
-            section=section,
+            section=init_section,
             semester_ay=semester_ay,
             faculty_name=faculty_name,
+            programs=init_programs if init_programs else None,
+            sections=init_sections,
         )
         bp_dict = bp.to_dict()
 
     payload = {
         "course_code": course_code,
         "course_title": course_title,
-        "section": section,
+        "section": init_section,
+        "sections": init_sections,
+        "programs": bp.metadata.programs,
         "semester_ay": semester_ay,
         "blueprint": bp_dict,
     }

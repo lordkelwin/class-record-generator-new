@@ -631,15 +631,23 @@ def get_blank_blueprint(
     corequisites: str = "",
     program_head: str = "CHARITO O. CLARO",
     dean_name: str = "JOIE D. CATAYTAY",
+    programs: Optional[List[str]] = None,
+    sections: Optional[List[str]] = None,
+    program_code: str = "EE",
+    program_name: str = "",
 ) -> SyllabusBlueprint:
     """Returns a completely clean starter blueprint for creating a syllabus from scratch."""
+    init_programs = programs or ([p.strip() for p in program_code.split(",") if p.strip()] if program_code else ["EE"])
+    init_sections = sections or ([s.strip() for s in section.split(",") if s.strip()] if section else ["EE 2A"])
     metadata = CourseMetadata(
         university="University of Southeastern Philippines",
         college="COLLEGE OF ENGINEERING",
         department="Department of Electrical Engineering",
         address="Iñigo St., Bo. Obrero, Davao City 8000",
-        program_name="Bachelor of Science in Electrical Engineering",
-        program_code="EE",
+        program_name=program_name or "Bachelor of Science in Electrical Engineering",
+        program_code=program_code or "EE",
+        programs=init_programs,
+        sections=init_sections,
         academic_unit="Engineering",
         course_code=course_code or "New Course",
         course_title=course_title or "Untitled Subject",
@@ -648,7 +656,7 @@ def get_blank_blueprint(
         schedule="TBA",
         room="TBA",
         semester_ay=semester_ay or "1st Semester, A.Y. 2026-2027",
-        section=section or "1A",
+        section=section or "EE 2A",
         faculty_name=faculty_name,
         program_head=program_head,
         dean_name=dean_name,

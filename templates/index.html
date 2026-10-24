@@ -1232,13 +1232,45 @@
             <option value="Lecture/Laboratory">Lecture/Laboratory</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Program Code (Auto-Filled)</label>
-          <input type="text" id="meta_program_code" oninput="syncMetaFromInputs()" />
+        <!-- Accommodated Degree Programs (Multi-Program Support for Common Courses) -->
+        <div class="form-group" style="grid-column: span 2; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="margin:0; font-weight:700; font-size:0.8rem; color:#1e293b;">
+              🎓 Accommodated Degree Program(s)
+              <span style="font-size:0.72rem; color:#64748b; font-weight:normal; margin-left:4px;">(Select programs attending this course)</span>
+            </label>
+            <div style="display:flex; gap:4px;">
+              <button type="button" class="btn btn-sm btn-light" style="padding:2px 7px; font-size:0.68rem;" onclick="selectAllPrograms()">All Eng'g</button>
+              <button type="button" class="btn btn-sm btn-light" style="padding:2px 7px; font-size:0.68rem;" onclick="selectCommonFirstYearPrograms()">Common 1st Yr</button>
+              <button type="button" class="btn btn-sm btn-light" style="padding:2px 7px; font-size:0.68rem;" onclick="resetToPrimaryProgram()">Reset</button>
+            </div>
+          </div>
+          <div id="programPillsContainer" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
+            <!-- Rendered dynamically -->
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span style="font-size:0.72rem; color:#64748b; white-space:nowrap; font-weight:600;">Program Codes:</span>
+            <input type="text" id="meta_program_code" placeholder="e.g. EE, CE, ME" oninput="onProgramCodeManualInput()" style="font-size:0.78rem; padding:4px 8px; flex:1;" title="Comma-separated program codes" />
+          </div>
         </div>
-        <div class="form-group">
-          <label>Section</label>
-          <input type="text" id="meta_section" oninput="syncMetaFromInputs()" />
+
+        <!-- Accommodated Class Sections (Multi-Section Support) -->
+        <div class="form-group" style="grid-column: span 2; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="margin:0; font-weight:700; font-size:0.8rem; color:#1e293b;">
+              🏫 Accommodated Class Section(s)
+              <span style="font-size:0.72rem; color:#64748b; font-weight:normal; margin-left:4px;">(Add all class sections attending)</span>
+            </label>
+            <button type="button" class="btn btn-sm btn-light" style="padding:2px 7px; font-size:0.68rem;" onclick="autoSuggestSectionsFromPrograms()" title="Auto-generate sections based on accommodated programs">⚡ Auto from Programs</button>
+          </div>
+          <div id="sectionChipsContainer" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; min-height:26px; align-items:center;">
+            <!-- Rendered dynamically -->
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="text" id="newSectionInput" placeholder="Add section (e.g. CE 1A) &amp; Enter" style="font-size:0.78rem; padding:4px 8px; flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addSectionChip();}" />
+            <button type="button" class="btn btn-sm btn-primary" onclick="addSectionChip()" style="padding:4px 9px; font-size:0.75rem; white-space:nowrap;">+ Add</button>
+            <input type="text" id="meta_section" placeholder="e.g. EE 2A, CE 2A" oninput="onSectionManualInput()" style="font-size:0.78rem; padding:4px 8px; flex:1;" title="Comma-separated sections" />
+          </div>
         </div>
         <div class="form-group">
           <label>Class Schedule</label>
@@ -2215,8 +2247,8 @@
             <input type="text" id="modalCatSemAy" value="1st Semester, A.Y. 2026-2027" list="semAyPresets" />
           </div>
           <div class="form-group">
-            <label>Section</label>
-            <input type="text" id="modalCatSection" value="EE 2A" placeholder="e.g. EE 2A, EE 3B, CE 1A" />
+            <label>Section(s)</label>
+            <input type="text" id="modalCatSection" value="EE 2A" placeholder="e.g. EE 2A, CE 2A (or comma-separated)" />
           </div>
         </div>
         <div class="form-group" style="margin-bottom:12px;">
@@ -2226,6 +2258,19 @@
         <div class="form-group" style="margin-bottom:12px;">
           <label>Department / Program</label>
           <select id="modalCatDepartment" onchange="onModalDepartmentChange()"></select>
+        </div>
+        <div class="form-group" style="margin-bottom:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="margin:0; font-size:0.78rem; font-weight:700; color:#1e293b;">
+              🎓 Accommodated Program(s)
+              <span style="font-size:0.72rem; color:#64748b; font-weight:normal;">(Toggle programs attending this common course)</span>
+            </label>
+            <div style="display:flex; gap:4px;">
+              <button type="button" class="btn btn-sm btn-light" style="padding:1px 6px; font-size:0.68rem;" onclick="selectAllModalPrograms('catalog')">All Eng'g</button>
+              <button type="button" class="btn btn-sm btn-light" style="padding:1px 6px; font-size:0.68rem;" onclick="resetModalPrograms('catalog')">Reset</button>
+            </div>
+          </div>
+          <div id="modalCatProgramsPills" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
         </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label>Course from Catalog</label>
@@ -2242,13 +2287,26 @@
             <input type="text" id="modalCustCode" placeholder="e.g. EE 312, MATH 211" />
           </div>
           <div class="form-group">
-            <label>Section</label>
-            <input type="text" id="modalCustSection" placeholder="e.g. EE 3A, EE 1B" />
+            <label>Section(s)</label>
+            <input type="text" id="modalCustSection" placeholder="e.g. EE 3A, CE 3A (or comma-separated)" />
           </div>
         </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label>Course Title</label>
           <input type="text" id="modalCustTitle" placeholder="e.g. Feedback and Control Systems" />
+        </div>
+        <div class="form-group" style="margin-bottom:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="margin:0; font-size:0.78rem; font-weight:700; color:#1e293b;">
+              🎓 Accommodated Program(s)
+              <span style="font-size:0.72rem; color:#64748b; font-weight:normal;">(Toggle programs attending this common course)</span>
+            </label>
+            <div style="display:flex; gap:4px;">
+              <button type="button" class="btn btn-sm btn-light" style="padding:1px 6px; font-size:0.68rem;" onclick="selectAllModalPrograms('custom')">All Eng'g</button>
+              <button type="button" class="btn btn-sm btn-light" style="padding:1px 6px; font-size:0.68rem;" onclick="resetModalPrograms('custom')">Reset</button>
+            </div>
+          </div>
+          <div id="modalCustProgramsPills" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
         </div>
         <div class="grid-4" style="grid-template-columns: 1fr 1fr; margin-bottom:12px;">
           <div class="form-group">
@@ -2991,6 +3049,9 @@
       course_code: blueprint.metadata.course_code,
       course_title: blueprint.metadata.course_title,
       section: blueprint.metadata.section,
+      sections: blueprint.metadata.sections,
+      program_code: blueprint.metadata.program_code,
+      programs: blueprint.metadata.programs,
       semester_ay: blueprint.metadata.semester_ay,
       blueprint: blueprint,
     };
@@ -3049,6 +3110,8 @@
   // Modals: New Subject
   function openNewSubjectModal() {
     populateModalCatalog();
+    renderModalProgramPills("catalog");
+    renderModalProgramPills("custom");
     document.getElementById("newSubjectModal").style.display = "flex";
   }
 
@@ -3062,6 +3125,7 @@
     document.getElementById("btnModalTabCustom").classList.toggle("active", tab === "custom");
     document.getElementById("modalPanelCatalog").style.display = tab === "catalog" ? "block" : "none";
     document.getElementById("modalPanelCustom").style.display = tab === "custom" ? "block" : "none";
+    renderModalProgramPills(tab);
   }
 
   function populateModalCatalog() {
@@ -3096,6 +3160,7 @@
       <option value="${i}">${escapeHtml(c.code)} &ndash; ${escapeHtml(c.title)}</option>
     `).join("");
     onModalCourseChange();
+    resetModalPrograms("catalog");
   }
 
   function onModalCourseChange() {
@@ -3127,12 +3192,17 @@
       const semAy = document.getElementById("modalCatSemAy").value.trim() || "1st Semester, A.Y. 2026-2027";
       const sec = document.getElementById("modalCatSection").value.trim() || "1A";
 
+      const catProgs = modalSelectedPrograms.catalog && modalSelectedPrograms.catalog.length ? modalSelectedPrograms.catalog : ["EE"];
+      const catSecs = sec.split(",").map(s => s.trim()).filter(Boolean);
       payload = {
         from_catalog: true,
         catalog_course_data: course,
         course_code: course ? course.code : "EE 211",
         course_title: course ? course.title : "New Subject",
         section: sec,
+        sections: catSecs.length ? catSecs : [sec],
+        programs: catProgs,
+        program_code: catProgs.join(", "),
         semester_ay: semAy,
       };
     } else {
@@ -3140,11 +3210,16 @@
       const title = document.getElementById("modalCustTitle").value.trim() || "Untitled Subject";
       const sec = document.getElementById("modalCustSection").value.trim() || "1A";
       const semAy = document.getElementById("modalCustSemAy").value.trim() || "1st Semester, A.Y. 2026-2027";
+      const custProgs = modalSelectedPrograms.custom && modalSelectedPrograms.custom.length ? modalSelectedPrograms.custom : ["EE"];
+      const custSecs = sec.split(",").map(s => s.trim()).filter(Boolean);
       payload = {
         from_catalog: false,
         course_code: code,
         course_title: title,
         section: sec,
+        sections: custSecs.length ? custSecs : [sec],
+        programs: custProgs,
+        program_code: custProgs.join(", "),
         semester_ay: semAy,
       };
     }
@@ -3621,6 +3696,19 @@
   function renderAll() {
     if (!blueprint) return;
     const m = blueprint.metadata;
+
+    // Ensure programs and sections arrays exist and are synchronized
+    if (!m.programs || !Array.isArray(m.programs) || !m.programs.length) {
+      m.programs = (m.program_code || "EE").split(",").map(p => p.trim()).filter(Boolean);
+      if (!m.programs.length) m.programs = ["EE"];
+    }
+    if (!m.sections || !Array.isArray(m.sections) || !m.sections.length) {
+      m.sections = (m.section || "EE 2A").split(",").map(s => s.trim()).filter(Boolean);
+      if (!m.sections.length) m.sections = ["EE 2A"];
+    }
+    m.program_code = m.programs.join(", ");
+    m.section = m.sections.join(", ");
+
     document.getElementById("meta_university").value = m.university || "";
     populateCollegeDepartmentCourseDropdowns();
     document.getElementById("meta_course_title").value = m.course_title || "";
@@ -3630,6 +3718,9 @@
     document.getElementById("meta_room").value = m.room || "";
     document.getElementById("meta_section").value = m.section || "";
     document.getElementById("meta_program_code").value = m.program_code || "EE";
+
+    renderProgramPills();
+    renderSectionChips();
     document.getElementById("meta_semester_ay").value = m.semester_ay || "";
     document.getElementById("meta_faculty_name").value = m.faculty_name || "";
     document.getElementById("meta_program_head").value = m.program_head || "";
@@ -3668,6 +3759,322 @@
     updateWeightSummaryBadge();
     updateActiveSubjectBar();
   }
+
+  // ==============================================================================
+  // MULTI-PROGRAM & MULTI-SECTION CONTROLLERS (Syllabus Maker & Common Courses)
+  // ==============================================================================
+  const ALL_ENGINEERING_PROGRAMS = [
+    { code: "EE", name: "BS Electrical Engineering", full: "Bachelor of Science in Electrical Engineering" },
+    { code: "CE", name: "BS Civil Engineering", full: "Bachelor of Science in Civil Engineering" },
+    { code: "ME", name: "BS Mechanical Engineering", full: "Bachelor of Science in Mechanical Engineering" },
+    { code: "ECE", name: "BS Electronics Engineering", full: "Bachelor of Science in Electronics Engineering" },
+    { code: "SE", name: "BS Sanitary Engineering", full: "Bachelor of Science in Sanitary Engineering" },
+    { code: "ABE", name: "BS Agricultural & Biosystems Eng.", full: "Bachelor of Science in Agricultural and Biosystems Engineering" },
+    { code: "GE", name: "BS Geodetic Engineering", full: "Bachelor of Science in Geodetic Engineering" },
+    { code: "MinE", name: "BS Mining Engineering", full: "Bachelor of Science in Mining Engineering" },
+    { code: "BSGeo", name: "BS Geology", full: "Bachelor of Science in Geology" },
+  ];
+
+  let modalSelectedPrograms = {
+    catalog: ["EE"],
+    custom: ["EE"]
+  };
+
+  function renderProgramPills() {
+    const container = document.getElementById("programPillsContainer");
+    if (!container || !blueprint) return;
+    const currentProgs = blueprint.metadata.programs || ["EE"];
+
+    container.innerHTML = ALL_ENGINEERING_PROGRAMS.map(p => {
+      const isSelected = currentProgs.includes(p.code);
+      const bg = isSelected ? "#1e40af" : "#ffffff";
+      const color = isSelected ? "#ffffff" : "#334155";
+      const border = isSelected ? "1px solid #1e40af" : "1px solid #cbd5e1";
+      const prefix = isSelected ? "&#10004; " : "+ ";
+      return `
+        <button type="button" class="prog-pill-btn" onclick="toggleProgramPill('${escapeHtml(p.code)}')"
+          title="${escapeHtml(p.full)}"
+          style="background:${bg}; color:${color}; border:${border}; border-radius:9999px; padding:3px 9px; font-size:0.73rem; cursor:pointer; font-weight:${isSelected ? '600' : 'normal'}; display:inline-flex; align-items:center; gap:3px; transition:all 0.15s ease;">
+          <span>${prefix}</span><strong>${escapeHtml(p.code)}</strong> <span style="font-size:0.67rem; opacity:0.85;">${escapeHtml(p.name.replace('BS ', ''))}</span>
+        </button>
+      `;
+    }).join("");
+  }
+
+  function toggleProgramPill(code) {
+    if (!blueprint) return;
+    let progs = blueprint.metadata.programs || [];
+    if (progs.includes(code)) {
+      if (progs.length === 1) {
+        alert("At least one degree program must remain selected.");
+        return;
+      }
+      progs = progs.filter(p => p !== code);
+    } else {
+      progs.push(code);
+    }
+    blueprint.metadata.programs = progs;
+    blueprint.metadata.program_code = progs.join(", ");
+    const inp = document.getElementById("meta_program_code");
+    if (inp) inp.value = blueprint.metadata.program_code;
+    renderProgramPills();
+    syncMetaFromInputs();
+    queueAutoSave();
+  }
+
+  function selectAllPrograms() {
+    if (!blueprint) return;
+    blueprint.metadata.programs = ALL_ENGINEERING_PROGRAMS.map(p => p.code);
+    blueprint.metadata.program_code = blueprint.metadata.programs.join(", ");
+    const inp = document.getElementById("meta_program_code");
+    if (inp) inp.value = blueprint.metadata.program_code;
+    renderProgramPills();
+    syncMetaFromInputs();
+    queueAutoSave();
+  }
+
+  function selectCommonFirstYearPrograms() {
+    if (!blueprint) return;
+    blueprint.metadata.programs = ["EE", "CE", "ME", "ECE"];
+    blueprint.metadata.program_code = blueprint.metadata.programs.join(", ");
+    const inp = document.getElementById("meta_program_code");
+    if (inp) inp.value = blueprint.metadata.program_code;
+    renderProgramPills();
+    syncMetaFromInputs();
+    queueAutoSave();
+  }
+
+  function resetToPrimaryProgram() {
+    if (!blueprint) return;
+    const dept = (blueprint.metadata.department || "").toLowerCase();
+    let prim = "EE";
+    if (dept.includes("civil")) prim = "CE";
+    else if (dept.includes("mechanic")) prim = "ME";
+    else if (dept.includes("electronic")) prim = "ECE";
+    else if (dept.includes("sanitar")) prim = "SE";
+    else if (dept.includes("agricultur") || dept.includes("biosystem")) prim = "ABE";
+    else if (dept.includes("geodetic")) prim = "GE";
+    else if (dept.includes("mining")) prim = "MinE";
+    else if (dept.includes("geology")) prim = "BSGeo";
+
+    blueprint.metadata.programs = [prim];
+    blueprint.metadata.program_code = prim;
+    const inp = document.getElementById("meta_program_code");
+    if (inp) inp.value = prim;
+    renderProgramPills();
+    syncMetaFromInputs();
+    queueAutoSave();
+  }
+
+  function onProgramCodeManualInput() {
+    if (!blueprint) return;
+    const val = document.getElementById("meta_program_code").value;
+    const parts = val.split(",").map(p => p.trim()).filter(Boolean);
+    if (parts.length) {
+      blueprint.metadata.programs = parts;
+      blueprint.metadata.program_code = val;
+      renderProgramPills();
+      syncMetaFromInputs();
+      queueAutoSave();
+    }
+  }
+
+  // --- Section Chips Manager ---
+  function renderSectionChips() {
+    const container = document.getElementById("sectionChipsContainer");
+    if (!container || !blueprint) return;
+    const secs = blueprint.metadata.sections || ["EE 2A"];
+
+    if (!secs.length) {
+      container.innerHTML = `<span style="color:#94a3b8; font-size:0.74rem; font-style:italic;">No sections added yet</span>`;
+      return;
+    }
+
+    container.innerHTML = secs.map((sec, idx) => `
+      <span class="sec-chip" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+        <span>${escapeHtml(sec)}</span>
+        <button type="button" onclick="removeSectionChip(${idx})" title="Remove section ${escapeHtml(sec)}"
+          style="background:none; border:none; color:#3b82f6; cursor:pointer; font-weight:bold; font-size:0.8rem; padding:0; line-height:1;">&times;</button>
+      </span>
+    `).join("");
+  }
+
+  function addSectionChip(val = null) {
+    if (!blueprint) return;
+    const inp = document.getElementById("newSectionInput");
+    const text = (val !== null ? val : (inp ? inp.value : "")).trim();
+    if (!text) return;
+
+    let secs = blueprint.metadata.sections || [];
+    const newItems = text.split(",").map(s => s.trim()).filter(Boolean);
+    newItems.forEach(item => {
+      if (!secs.includes(item)) {
+        secs.push(item);
+      }
+    });
+
+    blueprint.metadata.sections = secs;
+    blueprint.metadata.section = secs.join(", ");
+    if (inp) inp.value = "";
+    const metaSec = document.getElementById("meta_section");
+    if (metaSec) metaSec.value = blueprint.metadata.section;
+
+    renderSectionChips();
+    syncMetaFromInputs();
+    updateActiveSubjectBar();
+    queueAutoSave();
+  }
+
+  function removeSectionChip(idx) {
+    if (!blueprint) return;
+    let secs = blueprint.metadata.sections || [];
+    if (secs.length <= 1) {
+      alert("At least one class section is required.");
+      return;
+    }
+    secs.splice(idx, 1);
+    blueprint.metadata.sections = secs;
+    blueprint.metadata.section = secs.join(", ");
+    const metaSec = document.getElementById("meta_section");
+    if (metaSec) metaSec.value = blueprint.metadata.section;
+
+    renderSectionChips();
+    syncMetaFromInputs();
+    updateActiveSubjectBar();
+    queueAutoSave();
+  }
+
+  function autoSuggestSectionsFromPrograms() {
+    if (!blueprint) return;
+    const progs = blueprint.metadata.programs || ["EE"];
+    let secs = blueprint.metadata.sections || [];
+
+    let suffix = "1A";
+    if (secs.length && secs[0]) {
+      const match = secs[0].match(/([0-9]+[A-Z]?)$/i);
+      if (match) suffix = match[1].toUpperCase();
+    } else {
+      const yl = (blueprint.metadata.year_level || "").toLowerCase();
+      if (yl.includes("second") || yl.includes("2")) suffix = "2A";
+      else if (yl.includes("third") || yl.includes("3")) suffix = "3A";
+      else if (yl.includes("fourth") || yl.includes("4")) suffix = "4A";
+    }
+
+    let addedCount = 0;
+    progs.forEach(p => {
+      const suggested = `${p} ${suffix}`;
+      if (!secs.includes(suggested)) {
+        secs.push(suggested);
+        addedCount++;
+      }
+    });
+
+    blueprint.metadata.sections = secs;
+    blueprint.metadata.section = secs.join(", ");
+    const metaSec = document.getElementById("meta_section");
+    if (metaSec) metaSec.value = blueprint.metadata.section;
+
+    renderSectionChips();
+    syncMetaFromInputs();
+    updateActiveSubjectBar();
+    queueAutoSave();
+
+    if (addedCount > 0) {
+      alert(`✔ Added ${addedCount} section(s) for accommodated programs: ${secs.join(', ')}`);
+    } else {
+      alert(`Sections already configured for all selected programs: ${secs.join(', ')}`);
+    }
+  }
+
+  function onSectionManualInput() {
+    if (!blueprint) return;
+    const val = document.getElementById("meta_section").value;
+    const parts = val.split(",").map(s => s.trim()).filter(Boolean);
+    if (parts.length) {
+      blueprint.metadata.sections = parts;
+      blueprint.metadata.section = val;
+      renderSectionChips();
+      syncMetaFromInputs();
+      updateActiveSubjectBar();
+      queueAutoSave();
+    }
+  }
+
+  // --- Modal Program Pills Helpers ---
+  function renderModalProgramPills(tab = "catalog") {
+    const containerId = tab === "catalog" ? "modalCatProgramsPills" : "modalCustProgramsPills";
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const currentList = modalSelectedPrograms[tab] || ["EE"];
+
+    container.innerHTML = ALL_ENGINEERING_PROGRAMS.map(p => {
+      const isSelected = currentList.includes(p.code);
+      const bg = isSelected ? "#1e40af" : "#ffffff";
+      const color = isSelected ? "#ffffff" : "#475569";
+      const border = isSelected ? "1px solid #1e40af" : "1px solid #cbd5e1";
+      const prefix = isSelected ? "&#10004; " : "+ ";
+      return `
+        <button type="button" class="prog-pill-btn" onclick="toggleModalProgramPill('${tab}', '${escapeHtml(p.code)}')"
+          title="${escapeHtml(p.full)}"
+          style="background:${bg}; color:${color}; border:${border}; border-radius:9999px; padding:2px 8px; font-size:0.71rem; cursor:pointer; font-weight:${isSelected ? '600' : 'normal'}; display:inline-flex; align-items:center; gap:3px;">
+          <span>${prefix}</span><strong>${escapeHtml(p.code)}</strong>
+        </button>
+      `;
+    }).join("");
+  }
+
+  function toggleModalProgramPill(tab, code) {
+    let list = modalSelectedPrograms[tab] || ["EE"];
+    if (list.includes(code)) {
+      if (list.length === 1) return;
+      list = list.filter(p => p !== code);
+    } else {
+      list.push(code);
+    }
+    modalSelectedPrograms[tab] = list;
+    renderModalProgramPills(tab);
+
+    const secInp = document.getElementById(tab === "catalog" ? "modalCatSection" : "modalCustSection");
+    if (secInp && list.length > 1) {
+      const curVal = secInp.value.trim();
+      const match = curVal.match(/([0-9]+[A-Z]?)$/i);
+      const suffix = match ? match[1] : "1A";
+      secInp.value = list.map(p => `${p} ${suffix}`).join(", ");
+    }
+  }
+
+  function selectAllModalPrograms(tab) {
+    modalSelectedPrograms[tab] = ALL_ENGINEERING_PROGRAMS.map(p => p.code);
+    renderModalProgramPills(tab);
+    const secInp = document.getElementById(tab === "catalog" ? "modalCatSection" : "modalCustSection");
+    if (secInp) {
+      const curVal = secInp.value.trim();
+      const match = curVal.match(/([0-9]+[A-Z]?)$/i);
+      const suffix = match ? match[1] : "1A";
+      secInp.value = modalSelectedPrograms[tab].map(p => `${p} ${suffix}`).join(", ");
+    }
+  }
+
+  function resetModalPrograms(tab) {
+    let prim = "EE";
+    if (tab === "catalog") {
+      const deptSel = document.getElementById("modalCatDepartment");
+      const deptTxt = deptSel ? deptSel.options[deptSel.selectedIndex]?.text?.toLowerCase() || "" : "";
+      if (deptTxt.includes("civil")) prim = "CE";
+      else if (deptTxt.includes("mechanic")) prim = "ME";
+      else if (deptTxt.includes("electronic")) prim = "ECE";
+      else if (deptTxt.includes("sanitar")) prim = "SE";
+      else if (deptTxt.includes("agricultur") || deptTxt.includes("biosystem")) prim = "ABE";
+      else if (deptTxt.includes("geodetic")) prim = "GE";
+      else if (deptTxt.includes("mining")) prim = "MinE";
+      else if (deptTxt.includes("geology")) prim = "BSGeo";
+    }
+    modalSelectedPrograms[tab] = [prim];
+    renderModalProgramPills(tab);
+    const secInp = document.getElementById(tab === "catalog" ? "modalCatSection" : "modalCustSection");
+    if (secInp) secInp.value = `${prim} 1A`;
+  }
+
 
   function renderSyllabusTables() {
     renderPrereqCoreqTable();
@@ -4313,8 +4720,14 @@
     m.lec_lab = document.getElementById("meta_lec_lab").value;
     m.schedule = document.getElementById("meta_schedule").value;
     m.room = document.getElementById("meta_room").value;
-    m.section = document.getElementById("meta_section").value;
-    m.program_code = document.getElementById("meta_program_code").value;
+    m.section = (m.sections && m.sections.length) ? m.sections.join(", ") : (document.getElementById("meta_section") ? document.getElementById("meta_section").value : "EE 2A");
+    m.program_code = (m.programs && m.programs.length) ? m.programs.join(", ") : (document.getElementById("meta_program_code") ? document.getElementById("meta_program_code").value : "EE");
+    // Synchronize program_names
+    m.program_names = (m.programs || []).map(p => {
+      const match = ALL_ENGINEERING_PROGRAMS.find(x => x.code === p);
+      return match ? match.full : `Bachelor of Science in ${p}`;
+    });
+    m.program_name = m.program_names.join(", ");
     m.semester_ay = document.getElementById("meta_semester_ay").value;
     m.faculty_name = document.getElementById("meta_faculty_name").value;
     m.program_head = document.getElementById("meta_program_head").value;
