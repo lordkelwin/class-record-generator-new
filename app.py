@@ -1060,7 +1060,7 @@ def api_get_workflow_signatories():
             program_heads.append(item)
         if "qa_head" in w_roles or is_admin:
             qa_heads.append(item)
-        if "dean" in w_roles or is_admin:
+        if "dean" in w_roles or "associate_dean" in w_roles or is_admin:
             deans.append(item)
 
     def _dedupe_items(items):
@@ -1115,7 +1115,7 @@ def api_get_workflow_requests():
 
     w_roles = user.get("workflow_roles") or []
     is_admin = (user.get("role") == "admin")
-    can_view_institutional = is_admin or any(r in w_roles for r in ["program_head", "qa_head", "dean"])
+    can_view_institutional = is_admin or any(r in w_roles for r in ["program_head", "qa_head", "dean", "associate_dean"])
 
 
 
@@ -1149,7 +1149,7 @@ def api_get_workflow_requests():
 
         if can_view_institutional:
             # If program head without college-wide rights, only show their program's courses
-            if "program_head" in w_roles and not (is_admin or "dean" in w_roles or "qa_head" in w_roles):
+            if "program_head" in w_roles and not (is_admin or "dean" in w_roles or "associate_dean" in w_roles or "qa_head" in w_roles):
                 p_codes = user.get("program_codes") or []
                 c_prog = (c.get("program_code") or "").upper()
                 if not p_codes or "*" in p_codes or c_prog in p_codes:
@@ -1655,22 +1655,14 @@ def api_admin_update_user_role(username):
     import auth
     data = request.get_json(silent=True) or {}
 
-    designation = (data.get("designation") or "faculty").strip().lower()
-    prog_code = (data.get("program_code") or "").strip().upper()
+    roles = data.get("roles")
+    if not roles and data.get("designation"):
+        roles = [data.get("designation")]
+    prog_codes = data.get("program_codes")
+    if not prog_codes and data.get("program_code"):
+        prog_codes = [data.get("program_code")]
     custom_title = (data.get("position_title") or "").strip()
-    is_admin_flag = bool(data.get("is_admin"))
-
-    PROGRAM_FULL_NAMES = {
-        "EE": "Electrical Engineering",
-        "ECE": "Electronics Engineering",
-        "ME": "Mechanical Engineering",
-        "CE": "Civil Engineering",
-        "GE": "Geodetic Engineering",
-        "MinE": "Mining Engineering",
-        "BSGeo": "Geology",
-        "SE": "Sanitary Engineering",
-        "ABE": "Agricultural and Biosystems Engineering",
-    }
+    is_admin_flag = bool(data.get("is_admin")) or ("admin" in (roles or []))
 
     with _lock:
         all_users = _load_users()
@@ -1679,7 +1671,7 @@ def api_admin_update_user_role(username):
             return jsonify({"error": f"Faculty account '{username}' not found."}), 404
         target = all_users[uname]
 
-        auth.apply_role_to_user_dict(target, designation, prog_code, custom_title, is_admin_flag)
+        auth.apply_roles_to_user_dict(target, roles, prog_codes, custom_title, is_admin_flag)
 
         _save_users(all_users)
 

@@ -8484,69 +8484,95 @@
     }
   }
 
+  const ADMIN_PROGRAM_MAP = {
+    "EE": "Electrical Engineering",
+    "ECE": "Electronics Engineering",
+    "ME": "Mechanical Engineering",
+    "CE": "Civil Engineering",
+    "GE": "Geodetic Engineering",
+    "MinE": "Mining Engineering",
+    "BSGeo": "Geology",
+    "SE": "Sanitary Engineering",
+    "ABE": "Agricultural and Biosystems Engineering"
+  };
+
+  function buildCombinedAdminTitle(roles, progs) {
+    const parts = [];
+    if (roles.includes("program_head")) {
+      const names = progs.map(p => ADMIN_PROGRAM_MAP[p] || p);
+      const pStr = names.length ? names.join(", ") : "Electrical Engineering";
+      parts.push(`Program Head - ${pStr}`);
+    }
+    if (roles.includes("dean")) {
+      parts.push("Dean, College of Engineering");
+    } else if (roles.includes("associate_dean")) {
+      parts.push("Associate Dean, College of Engineering");
+    }
+    if (roles.includes("qa_head")) {
+      parts.push("College Quality Assurance Head");
+    }
+    if (roles.includes("admin") && !parts.length) {
+      parts.push("System Administrator");
+    }
+    if (!parts.length) {
+      parts.push("Faculty Member");
+    }
+    return parts.join(" & ");
+  }
+
   function onAdminSelectFaculty(uname) {
     if (!uname) return;
     const faculty = adminFacultyList.find(f => f.username === uname);
     if (!faculty) return;
 
-    const desigSelect = document.getElementById("adminRoleDesignationSelect");
-    const progSelect = document.getElementById("adminRoleProgramSelect");
-    const titleInput = document.getElementById("adminRoleTitleInput");
-    const adminCheck = document.getElementById("adminRoleIsAdminCheckbox");
-    const progGroup = document.getElementById("adminRoleProgramGroup");
-
-    let desig = "faculty";
     const wfRoles = faculty.workflow_roles || [];
-    if (wfRoles.includes("dean")) desig = "dean";
-    else if (wfRoles.includes("qa_head")) desig = "qa_head";
-    else if (wfRoles.includes("program_head")) desig = "program_head";
-    else if (faculty.role === "admin") desig = "admin";
+    const progs = faculty.program_codes || ["EE"];
 
-    if (desigSelect) desigSelect.value = desig;
-    if (progGroup) progGroup.style.display = desig === "program_head" ? "block" : "none";
-    if (progSelect && faculty.program_codes && faculty.program_codes.length) {
-      progSelect.value = faculty.program_codes[0];
-    }
-    if (titleInput) titleInput.value = faculty.position_title || "";
-    if (adminCheck) adminCheck.checked = (faculty.role === "admin");
-  }
+    const isPh = wfRoles.includes("program_head");
+    document.getElementById("adminRoleCheckFaculty").checked = wfRoles.includes("review_committee") || (!wfRoles.includes("dean") && !wfRoles.includes("qa_head") && !wfRoles.includes("program_head"));
+    document.getElementById("adminRoleCheckPh").checked = isPh;
+    document.getElementById("adminRoleCheckQa").checked = wfRoles.includes("qa_head");
+    document.getElementById("adminRoleCheckAssocDean").checked = wfRoles.includes("associate_dean");
+    document.getElementById("adminRoleCheckDean").checked = wfRoles.includes("dean");
+    document.getElementById("adminRoleCheckAdmin").checked = (faculty.role === "admin") || wfRoles.includes("admin");
 
-  function onAdminDesignationChange(val) {
-    const progGroup = document.getElementById("adminRoleProgramGroup");
+    document.getElementById("adminRoleProgramGroup").style.display = isPh ? "block" : "none";
+    document.querySelectorAll('.admin-prog-check').forEach(chk => {
+      chk.checked = progs.includes(chk.value) || (isPh && progs.length === 0 && chk.value === "EE");
+    });
+
     const titleInput = document.getElementById("adminRoleTitleInput");
-    const adminCheck = document.getElementById("adminRoleIsAdminCheckbox");
-    if (progGroup) progGroup.style.display = val === "program_head" ? "block" : "none";
-
-    if (val === "program_head") {
-      const prog = document.getElementById("adminRoleProgramSelect")?.value || "EE";
-      onAdminProgramChange(prog);
-    } else if (val === "qa_head") {
-      if (titleInput) titleInput.value = "College Quality Assurance Head";
-    } else if (val === "dean") {
-      if (titleInput) titleInput.value = "Dean, College of Engineering";
-    } else if (val === "admin") {
-      if (titleInput) titleInput.value = "System Administrator";
-      if (adminCheck) adminCheck.checked = true;
-    } else {
-      if (titleInput) titleInput.value = "Faculty Member";
-    }
-  }
-
-  function onAdminProgramChange(prog) {
-    const titleInput = document.getElementById("adminRoleTitleInput");
-    const names = {
-      "EE": "Electrical Engineering",
-      "ECE": "Electronics Engineering",
-      "ME": "Mechanical Engineering",
-      "CE": "Civil Engineering",
-      "GE": "Geodetic Engineering",
-      "MinE": "Mining Engineering",
-      "BSGeo": "Geology",
-      "SE": "Sanitary Engineering",
-      "ABE": "Agricultural and Biosystems Engineering"
-    };
     if (titleInput) {
-      titleInput.value = `Program Head - ${names[prog] || prog}`;
+      titleInput.value = faculty.position_title || buildCombinedAdminTitle(wfRoles, progs);
+    }
+  }
+
+  function toggleAdminPhProgs(checked) {
+    document.getElementById("adminRoleProgramGroup").style.display = checked ? "block" : "none";
+    if (checked) {
+      const anyChecked = Array.from(document.querySelectorAll('.admin-prog-check')).some(c => c.checked);
+      if (!anyChecked) {
+        const ee = document.querySelector('.admin-prog-check[value="EE"]');
+        if (ee) ee.checked = true;
+      }
+    }
+    updateAdminMultiRoleTitle();
+  }
+
+  function updateAdminMultiRoleTitle() {
+    const roles = [];
+    if (document.getElementById("adminRoleCheckPh").checked) roles.push("program_head");
+    if (document.getElementById("adminRoleCheckQa").checked) roles.push("qa_head");
+    if (document.getElementById("adminRoleCheckDean").checked) roles.push("dean");
+    else if (document.getElementById("adminRoleCheckAssocDean").checked) roles.push("associate_dean");
+    if (document.getElementById("adminRoleCheckAdmin").checked) roles.push("admin");
+    if (document.getElementById("adminRoleCheckFaculty").checked) roles.push("review_committee");
+
+    const progs = [];
+    document.querySelectorAll('.admin-prog-check:checked').forEach(c => progs.push(c.value));
+    const titleInput = document.getElementById("adminRoleTitleInput");
+    if (titleInput) {
+      titleInput.value = buildCombinedAdminTitle(roles, progs);
     }
   }
 
@@ -8558,10 +8584,23 @@
       return;
     }
 
-    const desig = document.getElementById("adminRoleDesignationSelect")?.value || "faculty";
-    const prog = document.getElementById("adminRoleProgramSelect")?.value || "EE";
+    const roles = [];
+    if (document.getElementById("adminRoleCheckFaculty").checked) roles.push("review_committee");
+    if (document.getElementById("adminRoleCheckPh").checked) roles.push("program_head");
+    if (document.getElementById("adminRoleCheckQa").checked) roles.push("qa_head");
+    if (document.getElementById("adminRoleCheckAssocDean").checked) roles.push("associate_dean");
+    if (document.getElementById("adminRoleCheckDean").checked) roles.push("dean");
+    if (document.getElementById("adminRoleCheckAdmin").checked) roles.push("admin");
+
+    if (!roles.length) {
+      alert("Please select at least one role.");
+      return;
+    }
+
+    const progs = [];
+    document.querySelectorAll('.admin-prog-check:checked').forEach(c => progs.push(c.value));
     const title = document.getElementById("adminRoleTitleInput")?.value.trim() || "";
-    const isAdmin = document.getElementById("adminRoleIsAdminCheckbox")?.checked || false;
+    const isAdmin = document.getElementById("adminRoleCheckAdmin")?.checked || false;
 
     const btn = document.getElementById("btnSaveAdminRole");
     if (btn) {
@@ -8574,8 +8613,8 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          designation: desig,
-          program_code: prog,
+          roles: roles,
+          program_codes: progs,
           position_title: title,
           is_admin: isAdmin
         })
@@ -8585,7 +8624,7 @@
         alert(data.error || "Failed to update role.");
         return;
       }
-      alert("✅ " + (data.message || "Role updated successfully!"));
+      alert("✅ " + (data.message || "Role(s) updated successfully!"));
       closeAdminRoleModal();
       await loadSignatories();
       await loadApprovalRequests(true);
@@ -8605,70 +8644,82 @@
 
 </script>
 
-<!-- Modal: Admin Role & Designation Assignment -->
+<!-- Modal: Admin Role & Designation Assignment (Supports Multiple Roles Simultaneously) -->
 <div class="modal-overlay" id="adminRoleModal" style="display:none;" onclick="if(event.target===this) closeAdminRoleModal();">
-  <div class="modal-box" style="max-width:560px; width:92%;">
+  <div class="modal-box" style="max-width:580px; width:92%;">
     <div class="modal-header">
       <h3 style="margin:0; font-size:1.15rem; color:#1e3a8a;">⚙️ Assign Faculty Roles &amp; Designations</h3>
       <button class="modal-close-btn" onclick="closeAdminRoleModal()">&times;</button>
     </div>
     <div class="modal-body" style="padding:18px 22px;">
-      <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:0.8rem; color:#0369a1; line-height:1.5;">
-        <strong>Admin Role Management:</strong> Update institutional designations (Program Head, College QA Head, College Dean, Faculty) on any faculty member's existing account. No separate accounts needed.
+      <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.8rem; color:#0369a1; line-height:1.5;">
+        <strong>Multi-Role Assignment:</strong> A faculty member can hold multiple roles simultaneously (e.g., <strong>Program Head</strong> and <strong>Associate Dean</strong>). Select all roles that apply.
       </div>
 
       <div class="form-group" style="margin-bottom:14px;">
-        <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Select Faculty Account <span style="color:#dc2626;">*</span></label>
+        <label style="font-weight:700; color:#1e293b; font-size:0.82rem; margin-bottom:4px; display:block;">Select Faculty Account <span style="color:#dc2626;">*</span></label>
         <select id="adminRoleFacultySelect" onchange="onAdminSelectFaculty(this.value)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; font-weight:600;">
           <option value="">Loading faculty roster...</option>
         </select>
       </div>
 
       <div class="form-group" style="margin-bottom:14px;">
-        <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Institutional Role / Designation <span style="color:#dc2626;">*</span></label>
-        <select id="adminRoleDesignationSelect" onchange="onAdminDesignationChange(this.value)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; font-weight:700; color:#1e3a8a; background:#f8fafc;">
-          <option value="faculty">👨‍🏫 Regular Faculty Member (Review Committee / Course Owner)</option>
-          <option value="program_head">👔 Program Head (Sequential Stage 3 Endorsement)</option>
-          <option value="qa_head">🛡️ College QA Head (Sequential Stage 4 Countersign)</option>
-          <option value="dean">🏛️ College Dean (Sequential Stage 5 Final Approval)</option>
-          <option value="admin">⚙️ System Administrator (All Access)</option>
-        </select>
+        <label style="font-weight:700; color:#1e293b; font-size:0.82rem; margin-bottom:6px; display:block;">Active Institutional Roles (Select all that apply) <span style="color:#dc2626;">*</span></label>
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px 14px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" id="adminRoleCheckFaculty" value="review_committee" checked onchange="updateAdminMultiRoleTitle()" />
+            <span>👨‍🏫 Faculty Member</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" id="adminRoleCheckPh" value="program_head" onchange="toggleAdminPhProgs(this.checked)" />
+            <span>👔 Program Head</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" id="adminRoleCheckQa" value="qa_head" onchange="updateAdminMultiRoleTitle()" />
+            <span>🛡️ College QA Head</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" id="adminRoleCheckAssocDean" value="associate_dean" onchange="updateAdminMultiRoleTitle()" />
+            <span>🏛️ Associate Dean</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" id="adminRoleCheckDean" value="dean" onchange="updateAdminMultiRoleTitle()" />
+            <span>🏛️ College Dean</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" id="adminRoleCheckAdmin" value="admin" onchange="updateAdminMultiRoleTitle()" />
+            <span>⚙️ Administrator</span>
+          </label>
+        </div>
       </div>
 
-      <div class="form-group" id="adminRoleProgramGroup" style="margin-bottom:14px; display:none;">
-        <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Engineering Program Assigned</label>
-        <select id="adminRoleProgramSelect" onchange="onAdminProgramChange(this.value)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;">
-          <option value="EE">Electrical Engineering (EE)</option>
-          <option value="ECE">Electronics Engineering (ECE)</option>
-          <option value="ME">Mechanical Engineering (ME)</option>
-          <option value="CE">Civil Engineering (CE)</option>
-          <option value="GE">Geodetic Engineering (GE)</option>
-          <option value="MinE">Mining Engineering (MinE)</option>
-          <option value="BSGeo">Geology (BSGeo)</option>
-          <option value="SE">Sanitary Engineering (SE)</option>
-          <option value="ABE">Agricultural and Biosystems Engineering (ABE)</option>
-        </select>
+      <div class="form-group" id="adminRoleProgramGroup" style="margin-bottom:14px; display:none; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:10px 12px;">
+        <label style="font-weight:700; color:#1e3a8a; font-size:0.8rem; margin-bottom:4px; display:block;">Program(s) Headed:</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px 14px;">
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="EE" onchange="updateAdminMultiRoleTitle()" checked /> EE</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="ECE" onchange="updateAdminMultiRoleTitle()" /> ECE</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="ME" onchange="updateAdminMultiRoleTitle()" /> ME</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="CE" onchange="updateAdminMultiRoleTitle()" /> CE</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="GE" onchange="updateAdminMultiRoleTitle()" /> GE</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="MinE" onchange="updateAdminMultiRoleTitle()" /> MinE</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="BSGeo" onchange="updateAdminMultiRoleTitle()" /> BSGeo</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="SE" onchange="updateAdminMultiRoleTitle()" /> SE</label>
+          <label style="font-size:0.8rem; font-weight:600; cursor:pointer;"><input type="checkbox" class="admin-prog-check" value="ABE" onchange="updateAdminMultiRoleTitle()" /> ABE</label>
+        </div>
       </div>
 
       <div class="form-group" style="margin-bottom:14px;">
         <label style="font-weight:700; color:#1e293b; font-size:0.82rem;">Official Printed Position / Title</label>
-        <input type="text" id="adminRoleTitleInput" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;" placeholder="e.g. Program Head - Electrical Engineering" />
-        <div style="font-size:0.72rem; color:#64748b; margin-top:3px;">This title appears automatically on official syllabus headers, endorsement blocks, and PDF evaluation forms.</div>
-      </div>
-
-      <div style="margin-bottom:18px;">
-        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; color:#1e293b; cursor:pointer;">
-          <input type="checkbox" id="adminRoleIsAdminCheckbox" />
-          <span>Grant System Administrator privileges</span>
-        </label>
+        <input type="text" id="adminRoleTitleInput" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;" placeholder="e.g. Program Head - Electrical Engineering & Associate Dean" />
+        <div style="font-size:0.72rem; color:#64748b; margin-top:3px;">This combined title appears on official syllabus headers, endorsement blocks, and PDF evaluation forms.</div>
       </div>
 
       <div id="adminRoleModalStatus" style="font-size:0.8rem; margin-bottom:10px; display:none;"></div>
 
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button type="button" class="btn btn-light" onclick="closeAdminRoleModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" id="btnSaveAdminRole" onclick="saveAdminFacultyRole()" style="font-weight:700; padding:7px 16px;">
-          💾 Save &amp; Apply Role
+        <button type="button" class="btn btn-primary" id="btnSaveAdminRole" onclick="saveAdminFacultyRole()" style="font-weight:700; padding:7px 18px;">
+          💾 Save &amp; Apply Role(s)
         </button>
       </div>
     </div>

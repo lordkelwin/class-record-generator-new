@@ -234,7 +234,12 @@ def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[
         assigned_comm = auth.LEGACY_USERNAME_ALIASES.get(wf.get("assigned_committee"), wf.get("assigned_committee"))
         return user_canonical == assigned_comm and user_canonical not in signed_chair
 
-    if step["role"] not in (user.get("workflow_roles") or []):
+    user_roles = set(user.get("workflow_roles") or [])
+    step_role = step["role"]
+    if step_role == "dean":
+        if not ("dean" in user_roles or "associate_dean" in user_roles):
+            return False
+    elif step_role not in user_roles:
         return False
     return in_scope(user, doc, step)
 

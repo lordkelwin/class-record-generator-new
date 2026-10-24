@@ -59,41 +59,86 @@ PROGRAM_FULL_NAMES = {
     "ABE": "Agricultural and Biosystems Engineering",
 }
 
+def apply_roles_to_user_dict(
+    target: dict,
+    workflow_roles=None,
+    program_codes=None,
+    custom_title: str = "",
+    is_admin: bool = False
+):
+    roles = []
+    for r in (workflow_roles or []):
+        r_clean = str(r).strip().lower()
+        if r_clean and r_clean not in roles:
+            roles.append(r_clean)
+
+    if not roles or roles == ["faculty"]:
+        roles = ["review_committee"]
+    elif "review_committee" not in roles:
+        roles.append("review_committee")
+
+    cleaned_progs = []
+    for p in (program_codes or []):
+        p_clean = str(p).strip().upper()
+        if p_clean and p_clean not in cleaned_progs:
+            cleaned_progs.append(p_clean)
+    if not cleaned_progs:
+        cleaned_progs = ["EE"]
+
+    target["workflow_roles"] = roles
+    target["program_codes"] = cleaned_progs
+
+    if not custom_title:
+        title_parts = []
+        if "program_head" in roles:
+            p_names = [PROGRAM_FULL_NAMES.get(p, p) for p in cleaned_progs if p != "*"]
+            p_str = ", ".join(p_names) if p_names else "Electrical Engineering"
+            title_parts.append(f"Program Head - {p_str}")
+        if "dean" in roles:
+            title_parts.append("Dean, College of Engineering")
+        elif "associate_dean" in roles:
+            title_parts.append("Associate Dean, College of Engineering")
+        if "qa_head" in roles:
+            title_parts.append("College Quality Assurance Head")
+        if "admin" in roles and not title_parts:
+            title_parts.append("System Administrator")
+        if not title_parts:
+            title_parts.append("Faculty Member")
+
+        custom_title = " & ".join(title_parts)
+
+    target["position_title"] = custom_title
+
+    if is_admin or "admin" in roles:
+        target["role"] = "admin"
+    elif target.get("role") == "admin" and target.get("username") != DEFAULT_ADMIN_USERNAME:
+        target["role"] = "faculty"
+
+
 def apply_role_to_user_dict(target: dict, designation: str, prog_code: str = "EE", custom_title: str = "", is_admin: bool = False):
     desig = (designation or "faculty").strip().lower()
     prog = (prog_code or "EE").strip().upper()
     if desig == "program_head":
-        target["workflow_roles"] = ["program_head", "review_committee"]
-        target["program_codes"] = [prog]
-        p_name = PROGRAM_FULL_NAMES.get(prog, prog)
-        target["position_title"] = custom_title or f"Program Head - {p_name}"
-        target["role"] = "admin" if is_admin else "faculty"
+        roles = ["program_head", "review_committee"]
+        progs = [prog]
     elif desig == "qa_head":
-        target["workflow_roles"] = ["qa_head", "review_committee"]
-        target["program_codes"] = ["*"]
-        target["position_title"] = custom_title or "College Quality Assurance Head"
-        target["role"] = "admin" if is_admin else "faculty"
+        roles = ["qa_head", "review_committee"]
+        progs = ["*"]
+    elif desig == "associate_dean":
+        roles = ["associate_dean", "review_committee"]
+        progs = ["*"]
     elif desig == "dean":
-        target["workflow_roles"] = ["dean", "review_committee"]
-        target["program_codes"] = ["*"]
-        target["position_title"] = custom_title or "Dean, College of Engineering"
-        target["role"] = "admin" if is_admin else "faculty"
+        roles = ["dean", "review_committee"]
+        progs = ["*"]
     elif desig == "admin":
-        target["role"] = "admin"
-        target["workflow_roles"] = ["admin", "review_committee", "program_head", "qa_head", "dean"]
-        target["program_codes"] = ["*"]
-        target["position_title"] = custom_title or "System Administrator"
-    else:  # faculty
-        target["workflow_roles"] = ["review_committee"]
-        target["program_codes"] = [prog]
-        target["position_title"] = custom_title or "Faculty Member"
-        target["role"] = "admin" if is_admin else "faculty"
+        roles = ["admin", "review_committee", "program_head", "qa_head", "dean"]
+        progs = ["*"]
+        is_admin = True
+    else:
+        roles = ["review_committee"]
+        progs = [prog]
 
-    if is_admin:
-        target["role"] = "admin"
-    elif desig != "admin" and target.get("role") == "admin":
-        if target.get("username") != DEFAULT_ADMIN_USERNAME:
-            target["role"] = "faculty"
+    apply_roles_to_user_dict(target, roles, progs, custom_title, is_admin)
 
 
 # --------------------------------------------------------------------------
@@ -473,43 +518,30 @@ def manage_users():
         prog_codes = u.get("program_codes") or []
         primary_prog = prog_codes[0] if prog_codes and prog_codes[0] != "*" else "EE"
 
+        badges = []
         if "dean" in w_roles:
-            desig = "dean"
-            badge_label = "College Dean"
-            badge_class = "b-dean"
-            badge_icon = "🏛️"
-        elif "qa_head" in w_roles:
-            desig = "qa_head"
-            badge_label = "College QA Head"
-            badge_class = "b-qa"
-            badge_icon = "🛡️"
-        elif "program_head" in w_roles:
-            desig = "program_head"
-            p_name = PROGRAM_FULL_NAMES.get(primary_prog, primary_prog)
-            badge_label = f"Program Head ({primary_prog})"
-            badge_class = "b-ph"
-            badge_icon = "👔"
-        elif u.get("role") == "admin":
-            desig = "admin"
-            badge_label = "Administrator"
-            badge_class = "b-admin"
-            badge_icon = "⚙️"
-        else:
-            desig = "faculty"
-            badge_label = "Faculty Member"
-            badge_class = "b-fac"
-            badge_icon = "👨‍🏫"
+            badges.append({"label": "College Dean", "class": "b-dean", "icon": "🏛️"})
+        if "associate_dean" in w_roles:
+            badges.append({"label": "Associate Dean", "class": "b-dean", "icon": "🏛️"})
+        if "qa_head" in w_roles:
+            badges.append({"label": "College QA Head", "class": "b-qa", "icon": "🛡️"})
+        if "program_head" in w_roles:
+            p_list = [p for p in prog_codes if p != "*"]
+            p_str = ", ".join(p_list) if p_list else primary_prog
+            badges.append({"label": f"Program Head ({p_str})", "class": "b-ph", "icon": "👔"})
+        if u.get("role") == "admin":
+            badges.append({"label": "Administrator", "class": "b-admin", "icon": "⚙️"})
+        if not badges or (len(badges) == 0):
+            badges.append({"label": "Faculty Member", "class": "b-fac", "icon": "👨‍🏫"})
 
         rows.append({
             "username": uname,
             "full_name": u.get("full_name", ""),
             "role": u.get("role", "faculty"),
-            "designation": desig,
-            "designation_label": badge_label,
-            "badge_class": badge_class,
-            "badge_icon": badge_icon,
-            "position_title": u.get("position_title") or badge_label,
-            "program_code": primary_prog,
+            "workflow_roles": w_roles,
+            "program_codes": prog_codes,
+            "badges": badges,
+            "position_title": u.get("position_title") or "Faculty Member",
             "must_change_password": bool(u.get("must_change_password")),
             "created_at": u.get("created_at") or "",
             "last_login": u.get("last_login") or "Never",
@@ -523,10 +555,20 @@ def create_user():
     _check_csrf()
     username = _normalize_username(request.form.get("username"))
     full_name = (request.form.get("full_name") or "").strip()
-    designation = (request.form.get("designation") or request.form.get("role") or "faculty").strip().lower()
-    prog_code = (request.form.get("program_code") or "EE").strip().upper()
+    
+    # Extract roles (supports both multi-checkbox and single designation)
+    roles = request.form.getlist("roles")
+    if not roles and request.form.get("designation"):
+        roles = [request.form.get("designation")]
+    if not roles:
+        roles = ["review_committee"]
+
+    prog_codes = request.form.getlist("program_codes")
+    if not prog_codes and request.form.get("program_code"):
+        prog_codes = [request.form.get("program_code")]
+        
     custom_title = (request.form.get("position_title") or "").strip()
-    is_admin = (request.form.get("role") == "admin") or (designation == "admin") or bool(request.form.get("is_admin"))
+    is_admin = bool(request.form.get("is_admin")) or ("admin" in roles) or (request.form.get("role") == "admin")
     password = request.form.get("password") or ""
 
     if not _valid_username(username):
@@ -550,10 +592,10 @@ def create_user():
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "last_login": None,
         }
-        apply_role_to_user_dict(new_user, designation, prog_code, custom_title, is_admin)
+        apply_roles_to_user_dict(new_user, roles, prog_codes, custom_title, is_admin)
         users[username] = new_user
         _save_users(users)
-    flash(f"Account '{username}' created with role '{new_user.get('position_title')}'.", "success")
+    flash(f"Account '{username}' created with role(s) '{new_user.get('position_title')}'.", "success")
     return redirect(url_for("auth.manage_users"))
 
 
@@ -562,10 +604,18 @@ def create_user():
 def update_user_role(username):
     _check_csrf()
     username = _normalize_username(username)
-    designation = (request.form.get("designation") or "faculty").strip().lower()
-    prog_code = (request.form.get("program_code") or "EE").strip().upper()
+    
+    # Extract roles (supports both multi-checkbox and single designation)
+    roles = request.form.getlist("roles")
+    if not roles and request.form.get("designation"):
+        roles = [request.form.get("designation")]
+        
+    prog_codes = request.form.getlist("program_codes")
+    if not prog_codes and request.form.get("program_code"):
+        prog_codes = [request.form.get("program_code")]
+        
     custom_title = (request.form.get("position_title") or "").strip()
-    is_admin = bool(request.form.get("is_admin")) or (designation == "admin")
+    is_admin = bool(request.form.get("is_admin")) or ("admin" in (roles or []))
 
     with _lock:
         users = _load_users()
@@ -573,10 +623,10 @@ def update_user_role(username):
         if uname not in users:
             abort(404)
         target = users[uname]
-        apply_role_to_user_dict(target, designation, prog_code, custom_title, is_admin)
+        apply_roles_to_user_dict(target, roles, prog_codes, custom_title, is_admin)
         _save_users(users)
 
-    flash(f"Updated role for '{username}' to '{target.get('position_title')}'.", "success")
+    flash(f"Updated role(s) for '{username}' to '{target.get('position_title')}'.", "success")
     return redirect(url_for("auth.manage_users"))
 
 

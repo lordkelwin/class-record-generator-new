@@ -1,6 +1,6 @@
 {% extends "auth_base.html" %}
 {% block title %}Manage Faculty Accounts &amp; Institutional Roles | USeP OBE Studio{% endblock %}
-{% block card_width %}1120px{% endblock %}
+{% block card_width %}1160px{% endblock %}
 {% block extra_style %}
   .top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; border-bottom:1.5px solid #e2e8f0; padding-bottom:12px; }
   .top h1 { margin:0; font-size:1.24rem; color:#7f1d1d; display:flex; align-items:center; gap:8px; }
@@ -8,15 +8,21 @@
   th, td { border:1px solid #e2e8f0; padding:8px 9px; text-align:left; vertical-align:middle; }
   th { background:#f1f5f9; font-size:0.75rem; text-transform:uppercase; color:#334155; font-weight:700; }
   tbody tr:hover { background:#f8fafc; }
-  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:999px; font-size:0.71rem; font-weight:700; white-space:nowrap; margin:1px 2px; }
   .b-admin { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
   .b-fac { background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; }
   .b-ph { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
   .b-qa { background:#ccfbf1; color:#0f766e; border:1px solid #99f6e4; }
   .b-dean { background:#fae8ff; color:#86198f; border:1px solid #f5d0fe; }
   .b-warn { background:#fee2e2; color:#991b1b; }
-  .create { display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px; align-items:end; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:20px; }
-  .create label { margin-top:0; font-size:0.72rem; font-weight:700; color:#475569; text-transform:uppercase; }
+  
+  .create-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:20px; }
+  .create-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; align-items:end; }
+  .create-grid label { margin-top:0; font-size:0.72rem; font-weight:700; color:#475569; text-transform:uppercase; display:block; margin-bottom:4px; }
+  
+  .roles-check-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:8px; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px; margin-top:6px; }
+  .role-label { display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600; color:#1e293b; cursor:pointer; margin:0; }
+  
   .inline { display:flex; gap:6px; align-items:center; }
   .inline input { padding:6px 8px; font-size:0.8rem; width:135px; }
   h2 { font-size:0.96rem; margin:0 0 10px; color:#1e293b; font-weight:700; }
@@ -30,7 +36,7 @@
     backdrop-filter: blur(2px);
   }
   .modal-box {
-    background: #ffffff; border-radius: 12px; max-width: 540px; width: 92%;
+    background: #ffffff; border-radius: 12px; max-width: 580px; width: 92%;
     box-shadow: 0 20px 40px rgba(0,0,0,0.25); border: 1px solid #cbd5e1; overflow: hidden;
   }
   .modal-header {
@@ -48,7 +54,7 @@
     <div>
       <h1><span>⚙️</span> Manage Faculty Accounts &amp; Institutional Roles</h1>
       <div class="hint" style="margin-top:3px; color:#64748b; font-size:0.82rem;">
-        Add or reassign institutional roles (<strong>Program Head</strong>, <strong>College QA Head</strong>, <strong>College Dean</strong>, <strong>Faculty</strong>, <strong>Admin</strong>) to any faculty account. No separate accounts needed when roles rotate.
+        Assign single or <strong>multiple institutional roles</strong> (e.g. <strong>Program Head + Associate Dean</strong>, <strong>QA Head</strong>, <strong>College Dean</strong>, <strong>Faculty</strong>) to any faculty account. No separate accounts needed.
       </div>
     </div>
     <div style="display:flex; gap:8px;">
@@ -57,46 +63,79 @@
   </div>
 
   <h2>➕ Create a New Faculty Account</h2>
-  <form class="create" method="post" action="{{ url_for('auth.create_user') }}">
-    <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />
-    <div>
-      <label>Username <span style="color:#dc2626;">*</span></label>
-      <input type="text" name="username" required pattern="[A-Za-z0-9._\-]{3,40}" placeholder="e.g. ejtano" />
-    </div>
-    <div>
-      <label>Full Name <span style="color:#dc2626;">*</span></label>
-      <input type="text" name="full_name" placeholder="e.g. Engr. Elwin Jay J. Tano" required />
-    </div>
-    <div>
-      <label>Institutional Role <span style="color:#dc2626;">*</span></label>
-      <select name="designation" id="createDesignation" onchange="onCreateDesignationChange(this.value)" style="font-weight:600;">
-        <option value="faculty">👨‍🏫 Regular Faculty Member</option>
-        <option value="program_head">👔 Program Head</option>
-        <option value="qa_head">🛡️ College QA Head</option>
-        <option value="dean">🏛️ College Dean</option>
-        <option value="admin">⚙️ System Administrator</option>
-      </select>
-    </div>
-    <div id="createProgramGroup" style="display:none;">
-      <label>Program Assigned</label>
-      <select name="program_code" id="createProgramCode" onchange="onCreateProgramChange(this.value)">
-        {% for code, name in programs.items() %}
-          <option value="{{ code }}">{{ code }} - {{ name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label>Official Position / Title</label>
-      <input type="text" name="position_title" id="createPositionTitle" placeholder="Faculty Member" value="Faculty Member" />
-    </div>
-    <div>
-      <label>Temporary Password <span style="color:#dc2626;">*</span></label>
-      <input type="text" name="password" required minlength="{{ min_len }}" placeholder="min. {{ min_len }} chars" />
-    </div>
-    <div>
-      <button type="submit" class="btn btn-primary" style="width:100%; height:40px; font-weight:700;">+ Create Account</button>
-    </div>
-  </form>
+  <div class="create-box">
+    <form method="post" action="{{ url_for('auth.create_user') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />
+      <div class="create-grid">
+        <div>
+          <label>Username <span style="color:#dc2626;">*</span></label>
+          <input type="text" name="username" required pattern="[A-Za-z0-9._\-]{3,40}" placeholder="e.g. ejtano" />
+        </div>
+        <div>
+          <label>Full Name <span style="color:#dc2626;">*</span></label>
+          <input type="text" name="full_name" placeholder="e.g. Engr. Elwin Jay J. Tano" required />
+        </div>
+        <div>
+          <label>Temporary Password <span style="color:#dc2626;">*</span></label>
+          <input type="text" name="password" required minlength="{{ min_len }}" placeholder="min. {{ min_len }} chars" />
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label style="font-size:0.72rem; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:4px; display:block;">
+          Assigned Roles (Select all that apply)
+        </label>
+        <div class="roles-check-grid">
+          <label class="role-label">
+            <input type="checkbox" name="roles" value="review_committee" checked />
+            <span>👨‍🏫 Faculty Member</span>
+          </label>
+          <label class="role-label">
+            <input type="checkbox" name="roles" value="program_head" id="createCheckPh" onchange="toggleCreatePhProgs(this.checked)" />
+            <span>👔 Program Head</span>
+          </label>
+          <label class="role-label">
+            <input type="checkbox" name="roles" value="qa_head" id="createCheckQa" onchange="updateCreateTitle()" />
+            <span>🛡️ College QA Head</span>
+          </label>
+          <label class="role-label">
+            <input type="checkbox" name="roles" value="associate_dean" id="createCheckAssocDean" onchange="updateCreateTitle()" />
+            <span>🏛️ Associate Dean</span>
+          </label>
+          <label class="role-label">
+            <input type="checkbox" name="roles" value="dean" id="createCheckDean" onchange="updateCreateTitle()" />
+            <span>🏛️ College Dean</span>
+          </label>
+          <label class="role-label">
+            <input type="checkbox" name="roles" value="admin" id="createCheckAdmin" onchange="updateCreateTitle()" />
+            <span>⚙️ Administrator</span>
+          </label>
+        </div>
+
+        <div id="createPhProgsBox" style="display:none; margin-top:8px; padding:8px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px;">
+          <div style="font-size:0.75rem; font-weight:700; color:#1e3a8a; margin-bottom:4px;">Program(s) Headed:</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px 14px;">
+            {% for code, name in programs.items() %}
+              <label style="font-size:0.8rem; font-weight:600; cursor:pointer;">
+                <input type="checkbox" name="program_codes" value="{{ code }}" class="create-prog-check" onchange="updateCreateTitle()" {% if code == 'EE' %}checked{% endif %} />
+                {{ code }} ({{ name }})
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:end; margin-top:14px;">
+        <div>
+          <label style="font-size:0.72rem; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:4px; display:block;">Official Position / Title (Auto-suggested or Custom)</label>
+          <input type="text" name="position_title" id="createPositionTitle" placeholder="Faculty Member" value="Faculty Member" />
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary" style="height:40px; font-weight:700; padding:0 22px;">+ Create Account</button>
+        </div>
+      </div>
+    </form>
+  </div>
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:10px;">
     <h2 style="margin:0;">Existing Accounts ({{ users|length }})</h2>
@@ -107,36 +146,37 @@
   <table id="usersTable">
     <thead>
       <tr>
-        <th style="width:140px;">Username</th>
-        <th style="min-width:180px;">Full Name</th>
-        <th style="min-width:170px;">Role / Designation</th>
+        <th style="width:130px;">Username</th>
+        <th style="min-width:170px;">Full Name</th>
+        <th style="min-width:200px;">Active Role(s)</th>
         <th style="min-width:210px;">Official Printed Title</th>
-        <th style="width:120px; text-align:center;">Change Role</th>
-        <th style="width:110px;">Status</th>
-        <th style="width:120px;">Last Sign-In</th>
-        <th style="width:200px;">Reset Password</th>
-        <th style="width:70px; text-align:center;">Delete</th>
+        <th style="width:120px; text-align:center;">Change Roles</th>
+        <th style="width:105px;">Status</th>
+        <th style="width:115px;">Last Sign-In</th>
+        <th style="width:190px;">Reset Password</th>
+        <th style="width:65px; text-align:center;">Delete</th>
       </tr>
     </thead>
     <tbody>
       {% for u in users %}
-      <tr class="user-row" data-haystack="{{ u.username|lower }} {{ u.full_name|lower }} {{ u.designation|lower }} {{ u.position_title|lower }}">
+      <tr class="user-row" data-haystack="{{ u.username|lower }} {{ u.full_name|lower }} {{ u.position_title|lower }} {% for b in u.badges %}{{ b.label|lower }} {% endfor %}">
         <td>
           <strong>{{ u.username }}</strong>
           {% if u.username == current_user.username %}<span class="hint" style="color:#1e40af; font-weight:700;">(you)</span>{% endif %}
         </td>
         <td style="font-weight:600;">{{ u.full_name }}</td>
         <td>
-          <span class="badge {{ u.badge_class }}">{{ u.badge_icon }} {{ u.designation_label }}</span>
-          {% if u.role == 'admin' and u.designation != 'admin' %}
-            <span class="badge b-admin" title="Has System Administrator privileges" style="margin-left:4px;">ADMIN</span>
-          {% endif %}
+          <div style="display:flex; flex-wrap:wrap; gap:3px;">
+            {% for b in u.badges %}
+              <span class="badge {{ b.class }}">{{ b.icon }} {{ b.label }}</span>
+            {% endfor %}
+          </div>
         </td>
-        <td style="color:#334155; font-size:0.8rem;">{{ u.position_title }}</td>
+        <td style="color:#334155; font-size:0.8rem; font-weight:500;">{{ u.position_title }}</td>
         <td style="text-align:center;">
           <button type="button" class="btn btn-light btn-sm" style="font-weight:700; color:#1e40af; border-color:#93c5fd; background:#eff6ff;"
-            onclick="openRoleModal('{{ u.username }}', '{{ u.full_name|e }}', '{{ u.designation }}', '{{ u.program_code }}', '{{ u.position_title|e }}', {{ 'true' if u.role == 'admin' else 'false' }})">
-            ✏️ Assign Role
+            onclick="openMultiRoleModal('{{ u.username }}', '{{ u.full_name|e }}', {{ u.workflow_roles|tojson }}, {{ u.program_codes|tojson }}, '{{ u.position_title|e }}', {{ 'true' if u.role == 'admin' else 'false' }})">
+            ✏️ Assign Roles
           </button>
         </td>
         <td>
@@ -168,58 +208,74 @@
   </table>
   </div>
 
-  <!-- Role Assignment Modal -->
+  <!-- Multi-Role Assignment Modal -->
   <div class="modal-overlay" id="roleModal" onclick="if(event.target===this) closeRoleModal();">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>⚙️ Assign Faculty Role &amp; Designation</h3>
+        <h3>⚙️ Assign Faculty Roles &amp; Designations</h3>
         <button class="modal-close-btn" onclick="closeRoleModal()">&times;</button>
       </div>
       <form id="roleModalForm" method="post" action="">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />
         <div class="modal-body">
           <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; color:#0369a1;">
-            Modifying institutional role for: <strong id="modalUserName" style="color:#0c4a6e;"></strong> (<code id="modalUserUname"></code>)
+            Assigning roles for: <strong id="modalUserName" style="color:#0c4a6e;"></strong> (<code id="modalUserUname"></code>)
+            <div style="font-size:0.75rem; color:#0284c7; margin-top:3px;">A faculty member can hold multiple roles simultaneously (e.g. Program Head &amp; Associate Dean).</div>
           </div>
 
           <div class="form-group">
-            <label>Institutional Role / Designation <span style="color:#dc2626;">*</span></label>
-            <select name="designation" id="modalDesignationSelect" onchange="onModalDesignationChange(this.value)" style="font-weight:700; color:#1e3a8a;">
-              <option value="faculty">👨‍🏫 Regular Faculty Member (Review Committee / Course Owner)</option>
-              <option value="program_head">👔 Program Head (Sequential Stage 3 Endorsement)</option>
-              <option value="qa_head">🛡️ College QA Head (Sequential Stage 4 Countersign)</option>
-              <option value="dean">🏛️ College Dean (Sequential Stage 5 Final Approval)</option>
-              <option value="admin">⚙️ System Administrator (All Access)</option>
-            </select>
+            <label>Institutional Role(s) (Select all that apply) <span style="color:#dc2626;">*</span></label>
+            <div class="roles-check-grid" style="grid-template-columns:1fr 1fr; background:#f8fafc;">
+              <label class="role-label">
+                <input type="checkbox" name="roles" value="review_committee" id="modalRoleFaculty" checked onchange="updateModalTitle()" />
+                <span>👨‍🏫 Faculty Member</span>
+              </label>
+              <label class="role-label">
+                <input type="checkbox" name="roles" value="program_head" id="modalRolePh" onchange="toggleModalPhProgs(this.checked)" />
+                <span>👔 Program Head</span>
+              </label>
+              <label class="role-label">
+                <input type="checkbox" name="roles" value="qa_head" id="modalRoleQa" onchange="updateModalTitle()" />
+                <span>🛡️ College QA Head</span>
+              </label>
+              <label class="role-label">
+                <input type="checkbox" name="roles" value="associate_dean" id="modalRoleAssocDean" onchange="updateModalTitle()" />
+                <span>🏛️ Associate Dean</span>
+              </label>
+              <label class="role-label">
+                <input type="checkbox" name="roles" value="dean" id="modalRoleDean" onchange="updateModalTitle()" />
+                <span>🏛️ College Dean</span>
+              </label>
+              <label class="role-label">
+                <input type="checkbox" name="roles" value="admin" id="modalRoleAdmin" onchange="updateModalTitle()" />
+                <span>⚙️ Administrator</span>
+              </label>
+            </div>
           </div>
 
-          <div class="form-group" id="modalProgramGroup" style="display:none;">
-            <label>Engineering Program Assigned</label>
-            <select name="program_code" id="modalProgramSelect" onchange="onModalProgramChange(this.value)">
+          <div class="form-group" id="modalPhProgsBox" style="display:none; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:10px 12px;">
+            <label style="color:#1e3a8a; margin-bottom:4px;">Program(s) Headed:</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px 14px;">
               {% for code, name in programs.items() %}
-                <option value="{{ code }}">{{ code }} - {{ name }}</option>
+                <label style="font-size:0.8rem; font-weight:600; cursor:pointer;">
+                  <input type="checkbox" name="program_codes" value="{{ code }}" class="modal-prog-check" onchange="updateModalTitle()" />
+                  {{ code }} ({{ name }})
+                </label>
               {% endfor %}
-            </select>
+            </div>
           </div>
 
           <div class="form-group">
             <label>Official Printed Position / Title</label>
-            <input type="text" name="position_title" id="modalTitleInput" placeholder="e.g. Program Head - Electrical Engineering" />
+            <input type="text" name="position_title" id="modalTitleInput" placeholder="e.g. Program Head - Electrical Engineering & Associate Dean" />
             <div class="hint" style="font-size:0.72rem; color:#64748b; margin-top:3px;">
-              This title appears on official syllabus signatory headers, endorsement blocks, and PDF evaluation forms.
+              This combined title appears on official syllabus signatory blocks, endorsements, and PDF evaluation forms.
             </div>
-          </div>
-
-          <div class="form-group" style="margin-top:10px;">
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; color:#1e293b; cursor:pointer; text-transform:none;">
-              <input type="checkbox" name="is_admin" id="modalIsAdminCheckbox" value="1" />
-              <span>Grant System Administrator privileges</span>
-            </label>
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
             <button type="button" class="btn btn-light" onclick="closeRoleModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary" style="font-weight:700; padding:8px 18px;">💾 Save &amp; Apply Role</button>
+            <button type="submit" class="btn btn-primary" style="font-weight:700; padding:8px 18px;">💾 Save &amp; Apply Role(s)</button>
           </div>
         </div>
       </form>
@@ -233,47 +289,67 @@
       {% endfor %}
     };
 
-    function onCreateDesignationChange(val) {
-      const progGrp = document.getElementById("createProgramGroup");
-      const titleInp = document.getElementById("createPositionTitle");
-      if (progGrp) progGrp.style.display = val === "program_head" ? "block" : "none";
-
-      if (val === "program_head") {
-        const prog = document.getElementById("createProgramCode")?.value || "EE";
-        titleInp.value = `Program Head - ${PROGRAM_MAP[prog] || prog}`;
-      } else if (val === "qa_head") {
-        titleInp.value = "College Quality Assurance Head";
-      } else if (val === "dean") {
-        titleInp.value = "Dean, College of Engineering";
-      } else if (val === "admin") {
-        titleInp.value = "System Administrator";
-      } else {
-        titleInp.value = "Faculty Member";
+    function buildCombinedTitle(roles, progs) {
+      const parts = [];
+      if (roles.includes("program_head")) {
+        const names = progs.map(p => PROGRAM_MAP[p] || p);
+        const pStr = names.length ? names.join(", ") : "Electrical Engineering";
+        parts.push(`Program Head - ${pStr}`);
       }
+      if (roles.includes("dean")) {
+        parts.push("Dean, College of Engineering");
+      } else if (roles.includes("associate_dean")) {
+        parts.push("Associate Dean, College of Engineering");
+      }
+      if (roles.includes("qa_head")) {
+        parts.push("College Quality Assurance Head");
+      }
+      if (roles.includes("admin") && !parts.length) {
+        parts.push("System Administrator");
+      }
+      if (!parts.length) {
+        parts.push("Faculty Member");
+      }
+      return parts.join(" & ");
     }
 
-    function onCreateProgramChange(prog) {
-      const titleInp = document.getElementById("createPositionTitle");
-      titleInp.value = `Program Head - ${PROGRAM_MAP[prog] || prog}`;
+    // Create Account Form Helpers
+    function toggleCreatePhProgs(checked) {
+      document.getElementById("createPhProgsBox").style.display = checked ? "block" : "none";
+      updateCreateTitle();
     }
 
-    function openRoleModal(uname, fullName, designation, progCode, title, isAdmin) {
+    function updateCreateTitle() {
+      const roles = [];
+      document.querySelectorAll('input[name="roles"]:checked').forEach(c => roles.push(c.value));
+      const progs = [];
+      document.querySelectorAll('.create-prog-check:checked').forEach(c => progs.push(c.value));
+      document.getElementById("createPositionTitle").value = buildCombinedTitle(roles, progs);
+    }
+
+    // Modal Helpers
+    function openMultiRoleModal(uname, fullName, workflowRoles, programCodes, title, isAdmin) {
       document.getElementById("modalUserName").textContent = fullName || uname;
       document.getElementById("modalUserUname").textContent = uname;
       document.getElementById("roleModalForm").action = `/admin/users/${encodeURIComponent(uname)}/role`;
 
-      const desigSel = document.getElementById("modalDesignationSelect");
-      const progSel = document.getElementById("modalProgramSelect");
-      const titleInp = document.getElementById("modalTitleInput");
-      const adminChk = document.getElementById("modalIsAdminCheckbox");
-      const progGrp = document.getElementById("modalProgramGroup");
+      const wf = Array.isArray(workflowRoles) ? workflowRoles : [];
+      const progs = Array.isArray(programCodes) ? programCodes : ["EE"];
 
-      desigSel.value = designation || "faculty";
-      if (progSel && progCode) progSel.value = progCode;
-      titleInp.value = title || "";
-      adminChk.checked = Boolean(isAdmin);
-      progGrp.style.display = designation === "program_head" ? "block" : "none";
+      document.getElementById("modalRoleFaculty").checked = wf.includes("review_committee") || (!wf.includes("dean") && !wf.includes("qa_head") && !wf.includes("program_head"));
+      const isPh = wf.includes("program_head");
+      document.getElementById("modalRolePh").checked = isPh;
+      document.getElementById("modalRoleQa").checked = wf.includes("qa_head");
+      document.getElementById("modalRoleAssocDean").checked = wf.includes("associate_dean");
+      document.getElementById("modalRoleDean").checked = wf.includes("dean");
+      document.getElementById("modalRoleAdmin").checked = Boolean(isAdmin) || wf.includes("admin");
 
+      document.getElementById("modalPhProgsBox").style.display = isPh ? "block" : "none";
+      document.querySelectorAll('.modal-prog-check').forEach(chk => {
+        chk.checked = progs.includes(chk.value) || (isPh && progs.length === 0 && chk.value === "EE");
+      });
+
+      document.getElementById("modalTitleInput").value = title || buildCombinedTitle(wf, progs);
       document.getElementById("roleModal").style.display = "flex";
     }
 
@@ -281,30 +357,30 @@
       document.getElementById("roleModal").style.display = "none";
     }
 
-    function onModalDesignationChange(val) {
-      const progGrp = document.getElementById("modalProgramGroup");
-      const titleInp = document.getElementById("modalTitleInput");
-      const adminChk = document.getElementById("modalIsAdminCheckbox");
-      progGrp.style.display = val === "program_head" ? "block" : "none";
-
-      if (val === "program_head") {
-        const prog = document.getElementById("modalProgramSelect")?.value || "EE";
-        titleInp.value = `Program Head - ${PROGRAM_MAP[prog] || prog}`;
-      } else if (val === "qa_head") {
-        titleInp.value = "College Quality Assurance Head";
-      } else if (val === "dean") {
-        titleInp.value = "Dean, College of Engineering";
-      } else if (val === "admin") {
-        titleInp.value = "System Administrator";
-        adminChk.checked = true;
-      } else {
-        titleInp.value = "Faculty Member";
+    function toggleModalPhProgs(checked) {
+      document.getElementById("modalPhProgsBox").style.display = checked ? "block" : "none";
+      if (checked) {
+        const anyChecked = Array.from(document.querySelectorAll('.modal-prog-check')).some(c => c.checked);
+        if (!anyChecked) {
+          const ee = document.querySelector('.modal-prog-check[value="EE"]');
+          if (ee) ee.checked = true;
+        }
       }
+      updateModalTitle();
     }
 
-    function onModalProgramChange(prog) {
-      const titleInp = document.getElementById("modalTitleInput");
-      titleInp.value = `Program Head - ${PROGRAM_MAP[prog] || prog}`;
+    function updateModalTitle() {
+      const roles = [];
+      if (document.getElementById("modalRolePh").checked) roles.push("program_head");
+      if (document.getElementById("modalRoleQa").checked) roles.push("qa_head");
+      if (document.getElementById("modalRoleDean").checked) roles.push("dean");
+      else if (document.getElementById("modalRoleAssocDean").checked) roles.push("associate_dean");
+      if (document.getElementById("modalRoleAdmin").checked) roles.push("admin");
+      if (document.getElementById("modalRoleFaculty").checked) roles.push("review_committee");
+
+      const progs = [];
+      document.querySelectorAll('.modal-prog-check:checked').forEach(c => progs.push(c.value));
+      document.getElementById("modalTitleInput").value = buildCombinedTitle(roles, progs);
     }
 
     function filterUserTable(q) {
