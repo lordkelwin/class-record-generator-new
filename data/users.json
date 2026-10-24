@@ -17,7 +17,7 @@
     "password_hash": "scrypt:32768:8:1$McPGeHsM4jgtWLyu$2c5758f4eaa930e986d6a5d8d409f7486514ecfb58070c839c31ab11f9a2c6471f75ebe6dd02d4cc7477cac62bd5dc1d21e22908ab31fff666208075f1f76059",
     "must_change_password": false,
     "created_at": "2026-10-23T00:56:06",
-    "last_login": "2026-10-24T21:46:07",
+    "last_login": "2026-10-24T22:10:26",
     "email": "system.administrator@usep.edu.ph"
   },
   "faculty_tano": {
@@ -1289,10 +1289,11 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$MaNMBKK3Hsi1dZ76$c96a1530aae0c5c8e8705b70aa8bbf113148d2cec66ec3f0e69b07e804c648cb211331cf38b36d0061502fa2f659773b30efcfc49ce3007f83ab4f31d87d21b6",
+    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
     "must_change_password": false,
-    "created_at": "2026-10-24T21:46:42",
-    "last_login": null
+    "created_at": "2026-10-24T22:10:40",
+    "last_login": null,
+    "email": "delan.arenga@usep.edu.ph"
   },
   "committee_ravida": {
     "full_name": "Engr. Kim P. Ravida",
@@ -1305,10 +1306,11 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$MaNMBKK3Hsi1dZ76$c96a1530aae0c5c8e8705b70aa8bbf113148d2cec66ec3f0e69b07e804c648cb211331cf38b36d0061502fa2f659773b30efcfc49ce3007f83ab4f31d87d21b6",
+    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
     "must_change_password": false,
-    "created_at": "2026-10-24T21:46:42",
-    "last_login": null
+    "created_at": "2026-10-24T22:10:40",
+    "last_login": null,
+    "email": "kim.ravida@usep.edu.ph"
   },
   "committee_basan": {
     "full_name": "Engr. Nikka Samantha A. Basan",
@@ -1321,10 +1323,11 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$MaNMBKK3Hsi1dZ76$c96a1530aae0c5c8e8705b70aa8bbf113148d2cec66ec3f0e69b07e804c648cb211331cf38b36d0061502fa2f659773b30efcfc49ce3007f83ab4f31d87d21b6",
+    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
     "must_change_password": false,
-    "created_at": "2026-10-24T21:46:42",
-    "last_login": null
+    "created_at": "2026-10-24T22:10:40",
+    "last_login": null,
+    "email": "nikka.basan@usep.edu.ph"
   },
   "programhead_claro": {
     "full_name": "Engr. Charito O. Claro",
@@ -1338,9 +1341,10 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$MaNMBKK3Hsi1dZ76$c96a1530aae0c5c8e8705b70aa8bbf113148d2cec66ec3f0e69b07e804c648cb211331cf38b36d0061502fa2f659773b30efcfc49ce3007f83ab4f31d87d21b6",
+    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
     "must_change_password": false,
-    "created_at": "2026-10-24T21:46:42",
-    "last_login": null
+    "created_at": "2026-10-24T22:10:40",
+    "last_login": null,
+    "email": "charito.claro@usep.edu.ph"
   }
 }

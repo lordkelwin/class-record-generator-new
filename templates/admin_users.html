@@ -191,8 +191,11 @@
           <div style="color:#1d4ed8; font-size:0.8rem; font-family:monospace; word-break:break-all; font-weight:600;">
             {{ u.email or 'No email set' }}
           </div>
-          <button type="button" class="btn btn-light btn-sm" style="font-size:0.72rem; padding:2px 7px; margin-top:4px; font-weight:600; color:#2563eb; border:1px solid #bfdbfe; background:#eff6ff;"
-            onclick="openEmailModal('{{ u.username }}', '{{ u.full_name|e }}', '{{ u.email|e }}')">
+          <button type="button" class="btn btn-light btn-sm btn-edit-email" style="font-size:0.72rem; padding:2px 7px; margin-top:4px; font-weight:600; color:#2563eb; border:1px solid #bfdbfe; background:#eff6ff;"
+            data-username="{{ u.username|e }}"
+            data-fullname="{{ u.full_name|e }}"
+            data-email="{{ (u.email or '')|e }}"
+            onclick="handleEditEmailClick(this)">
             ✉️ Edit Email
           </button>
         </td>
@@ -205,8 +208,15 @@
         </td>
         <td style="color:#334155; font-size:0.8rem; font-weight:500;">{{ u.position_title }}</td>
         <td style="text-align:center;">
-          <button type="button" class="btn btn-light btn-sm" style="font-weight:700; color:#1e40af; border-color:#93c5fd; background:#eff6ff;"
-            onclick="openMultiRoleModal('{{ u.username }}', '{{ u.full_name|e }}', {{ u.workflow_roles|tojson }}, {{ u.program_codes|tojson }}, '{{ u.position_title|e }}', {{ 'true' if u.role == 'admin' else 'false' }}, '{{ u.email|e }}')">
+          <button type="button" class="btn btn-light btn-sm btn-assign-roles" style="font-weight:700; color:#1e40af; border-color:#93c5fd; background:#eff6ff;"
+            data-username="{{ u.username|e }}"
+            data-fullname="{{ u.full_name|e }}"
+            data-workflow-roles="{{ u.workflow_roles|tojson|forceescape }}"
+            data-program-codes="{{ u.program_codes|tojson|forceescape }}"
+            data-title="{{ (u.position_title or '')|e }}"
+            data-is-admin="{{ 'true' if u.role == 'admin' else 'false' }}"
+            data-email="{{ (u.email or '')|e }}"
+            onclick="handleAssignRolesClick(this)">
             ✏️ Assign Roles
           </button>
         </td>
@@ -354,17 +364,59 @@
   </div>
 
   <script>
+    // Safe Click Handlers extracting data from data-* attributes cleanly without quote escaping bugs
+    function handleAssignRolesClick(btn) {
+      if (!btn) return;
+      const uname = btn.getAttribute("data-username") || "";
+      const fullName = btn.getAttribute("data-fullname") || uname;
+      let wf = [];
+      try {
+        const rawWf = btn.getAttribute("data-workflow-roles");
+        wf = rawWf ? JSON.parse(rawWf) : [];
+      } catch (err) {
+        console.warn("Could not parse workflow-roles:", err);
+        wf = [];
+      }
+      let progs = [];
+      try {
+        const rawProgs = btn.getAttribute("data-program-codes");
+        progs = rawProgs ? JSON.parse(rawProgs) : ["EE"];
+      } catch (err) {
+        console.warn("Could not parse program-codes:", err);
+        progs = ["EE"];
+      }
+      const title = btn.getAttribute("data-title") || "";
+      const isAdmin = btn.getAttribute("data-is-admin") === "true";
+      const email = btn.getAttribute("data-email") || "";
+
+      openMultiRoleModal(uname, fullName, wf, progs, title, isAdmin, email);
+    }
+
+    function handleEditEmailClick(btn) {
+      if (!btn) return;
+      const uname = btn.getAttribute("data-username") || "";
+      const fullName = btn.getAttribute("data-fullname") || uname;
+      const email = btn.getAttribute("data-email") || "";
+      openEmailModal(uname, fullName, email);
+    }
+
     // Email Modal Helpers
     function openEmailModal(uname, fullName, email) {
-      document.getElementById("emailModalUserName").textContent = fullName || uname;
-      document.getElementById("emailModalUserUname").textContent = uname;
-      document.getElementById("quickEmailInput").value = email || "";
-      document.getElementById("emailModalForm").action = `/admin/users/${encodeURIComponent(uname)}/email`;
-      document.getElementById("emailModal").style.display = "flex";
+      const uNameEl = document.getElementById("emailModalUserName");
+      if (uNameEl) uNameEl.textContent = fullName || uname;
+      const uCodeEl = document.getElementById("emailModalUserUname");
+      if (uCodeEl) uCodeEl.textContent = uname;
+      const inEmail = document.getElementById("quickEmailInput");
+      if (inEmail) inEmail.value = email || "";
+      const formEl = document.getElementById("emailModalForm");
+      if (formEl) formEl.action = `/admin/users/${encodeURIComponent(uname)}/email`;
+      const modal = document.getElementById("emailModal");
+      if (modal) modal.style.display = "flex";
     }
 
     function closeEmailModal() {
-      document.getElementById("emailModal").style.display = "none";
+      const modal = document.getElementById("emailModal");
+      if (modal) modal.style.display = "none";
     }
 
     const PROGRAM_MAP = {
@@ -416,35 +468,49 @@
 
     // Modal Helpers
     function openMultiRoleModal(uname, fullName, workflowRoles, programCodes, title, isAdmin, email) {
-      document.getElementById("modalUserName").textContent = fullName || uname;
-      document.getElementById("modalUserUname").textContent = uname;
-      document.getElementById("roleModalForm").action = `/admin/users/${encodeURIComponent(uname)}/role`;
+      const uNameEl = document.getElementById("modalUserName");
+      if (uNameEl) uNameEl.textContent = fullName || uname;
+      const uCodeEl = document.getElementById("modalUserUname");
+      if (uCodeEl) uCodeEl.textContent = uname;
+      const formEl = document.getElementById("roleModalForm");
+      if (formEl) formEl.action = `/admin/users/${encodeURIComponent(uname)}/role`;
 
       const wf = Array.isArray(workflowRoles) ? workflowRoles : [];
       const progs = Array.isArray(programCodes) ? programCodes : ["EE"];
 
-      document.getElementById("modalRoleFaculty").checked = wf.includes("review_committee") || (!wf.includes("dean") && !wf.includes("qa_head") && !wf.includes("program_head"));
+      const fFaculty = document.getElementById("modalRoleFaculty");
+      if (fFaculty) fFaculty.checked = wf.includes("review_committee") || (!wf.includes("dean") && !wf.includes("qa_head") && !wf.includes("program_head"));
       const isPh = wf.includes("program_head");
-      document.getElementById("modalRolePh").checked = isPh;
-      document.getElementById("modalRoleQa").checked = wf.includes("qa_head");
-      document.getElementById("modalRoleAssocDean").checked = wf.includes("associate_dean");
-      document.getElementById("modalRoleDean").checked = wf.includes("dean");
-      document.getElementById("modalRoleStaff").checked = wf.includes("staff");
-      document.getElementById("modalRoleAdmin").checked = Boolean(isAdmin) || wf.includes("admin");
+      const fPh = document.getElementById("modalRolePh");
+      if (fPh) fPh.checked = isPh;
+      const fQa = document.getElementById("modalRoleQa");
+      if (fQa) fQa.checked = wf.includes("qa_head");
+      const fAssoc = document.getElementById("modalRoleAssocDean");
+      if (fAssoc) fAssoc.checked = wf.includes("associate_dean");
+      const fDean = document.getElementById("modalRoleDean");
+      if (fDean) fDean.checked = wf.includes("dean");
+      const fStaff = document.getElementById("modalRoleStaff");
+      if (fStaff) fStaff.checked = wf.includes("staff");
+      const fAdmin = document.getElementById("modalRoleAdmin");
+      if (fAdmin) fAdmin.checked = Boolean(isAdmin) || wf.includes("admin");
 
-      document.getElementById("modalPhProgsBox").style.display = isPh ? "block" : "none";
+      const phBox = document.getElementById("modalPhProgsBox");
+      if (phBox) phBox.style.display = isPh ? "block" : "none";
       document.querySelectorAll('.modal-prog-check').forEach(chk => {
         chk.checked = progs.includes(chk.value) || (isPh && progs.length === 0 && chk.value === "EE");
       });
 
-      document.getElementById("modalTitleInput").value = title || buildCombinedTitle(wf, progs);
+      const tInput = document.getElementById("modalTitleInput");
+      if (tInput) tInput.value = title || buildCombinedTitle(wf, progs);
       const elEmail = document.getElementById("modalEmailInput");
       if (elEmail) elEmail.value = email || "";
-      document.getElementById("roleModal").style.display = "flex";
+      const modal = document.getElementById("roleModal");
+      if (modal) modal.style.display = "flex";
     }
 
     function closeRoleModal() {
-      document.getElementById("roleModal").style.display = "none";
+      const modal = document.getElementById("roleModal");
+      if (modal) modal.style.display = "none";
     }
 
     function toggleModalPhProgs(checked) {

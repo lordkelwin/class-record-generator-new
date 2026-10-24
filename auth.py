@@ -402,7 +402,10 @@ def get_csrf_token() -> str:
 
 def _check_csrf() -> None:
     sent = request.form.get("_csrf") or request.headers.get("X-CSRF-Token")
-    if not sent or not secrets.compare_digest(sent, session.get("_csrf", "")):
+    if not sent and request.is_json:
+        sent = (request.get_json(silent=True) or {}).get("_csrf")
+    expected = session.get("_csrf", "")
+    if not sent or not secrets.compare_digest(sent, expected):
         abort(400, description="Invalid or missing security token. Please reload the page and try again.")
 
 
@@ -696,9 +699,15 @@ def update_user_role(username):
     with _lock:
         users = _load_users()
         uname = LEGACY_USERNAME_ALIASES.get(username, username)
-        if uname not in users:
-            abort(404)
-        target = users[uname]
+        target_key = None
+        for k in users:
+            if k.lower() == uname.lower():
+                target_key = k
+                break
+        if not target_key:
+            flash(f"User '{username}' was not found.", "error")
+            return redirect(url_for("auth.manage_users"))
+        target = users[target_key]
         email_val = (request.form.get("email") or "").strip().lower()
         if email_val:
             target["email"] = email_val
@@ -715,17 +724,31 @@ def update_user_email(username):
     _check_csrf()
     username = _normalize_username(username)
     email = (request.form.get("email") or "").strip().lower()
+    if not email and request.is_json:
+        email = (request.get_json(silent=True) or {}).get("email", "").strip().lower()
     if not email:
+        if request.is_json or request.headers.get("Accept") == "application/json":
+            return jsonify({"success": False, "error": "Email address cannot be empty."}), 400
         flash("Email address cannot be empty.", "error")
         return redirect(url_for("auth.manage_users"))
     with _lock:
         users = _load_users()
         uname = LEGACY_USERNAME_ALIASES.get(username, username)
-        if uname not in users:
-            abort(404)
-        users[uname]["email"] = email
+        target_key = None
+        for k in users:
+            if k.lower() == uname.lower():
+                target_key = k
+                break
+        if not target_key:
+            if request.is_json or request.headers.get("Accept") == "application/json":
+                return jsonify({"success": False, "error": f"User '{username}' was not found."}), 404
+            flash(f"User '{username}' was not found.", "error")
+            return redirect(url_for("auth.manage_users"))
+        users[target_key]["email"] = email
         _save_users(users)
 
+    if request.is_json or request.headers.get("Accept") == "application/json":
+        return jsonify({"success": True, "message": f"Updated notification email for '{username}' to '{email}'.", "email": email})
     flash(f"Updated notification email for '{username}' to '{email}'.", "success")
     return redirect(url_for("auth.manage_users"))
 
