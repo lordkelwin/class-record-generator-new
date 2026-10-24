@@ -57,6 +57,7 @@ import courses_store
 app = Flask(__name__)
 
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # 25 MB upload limit
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Login screen, faculty accounts (admin-managed) and a global login guard for every page/API
 
