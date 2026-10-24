@@ -32,6 +32,8 @@ LEGACY_USERNAME_ALIASES = {
     "committee_arenga": "faculty_arenga",
     "committee_ravida": "faculty_ravida",
     "programhead_claro": "faculty_claro",
+    "assoc_dean": "faculty_arenga",
+    "staff_simplicio_lab": "faculty_simplicio",
 }
 
 DEFAULT_ADMIN_USERNAME = "admin" 
@@ -249,7 +251,7 @@ def ensure_default_admin() -> None:
             }
 
         # Clean legacy duplicate accounts from users
-        for leg in ["committee_basan", "committee_arenga", "committee_ravida", "programhead_claro"]:
+        for leg in ["committee_basan", "committee_arenga", "committee_ravida", "programhead_claro", "assoc_dean", "staff_simplicio_lab", "faculty_tester"]:
             if leg in users:
                 del users[leg]
 
@@ -257,7 +259,7 @@ def ensure_default_admin() -> None:
         seed_accounts = [
             ("faculty_tano", "Engr. Elwin Jay J. Tano", "faculty", ["review_committee"], "Faculty Member", "EE"),
             ("faculty_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
-            ("faculty_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["review_committee"], "Faculty Member", "ECE"),
+            ("faculty_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["associate_dean", "review_committee"], "Associate Dean, College of Engineering", "ECE"),
             ("faculty_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
             ("faculty_claro", "Engr. Charito O. Claro", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
             ("qahead_ce", "Engr. College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
@@ -281,6 +283,7 @@ def ensure_default_admin() -> None:
             else:
                 users[uname]["full_name"] = fname
                 users[uname]["position_title"] = pos
+                users[uname]["workflow_roles"] = w_roles
 
         # Seed official faculty roster from catalog_data
         try:
@@ -290,33 +293,30 @@ def ensure_default_admin() -> None:
             for dept_code, groups in OFFICIAL_FACULTY_ROSTER.items():
                 is_staff = (dept_code == "STAFF")
                 for fac in (groups.get("full_time", []) + groups.get("part_time", [])):
-                    target_unames = [fac.get("username")]
-                    if fac.get("alias"):
-                        target_unames.append(fac.get("alias"))
-                    for u in target_unames:
-                        if not u:
-                            continue
-                        roles = fac.get("roles", [])
-                        if not roles and fac.get("type") == "Full-Time" and not is_staff:
-                            roles = ["review_committee"]
-                        if u not in users:
-                            users[u] = {
-                                "full_name": fac.get("name", u),
-                                "role": "staff" if is_staff else "faculty",
-                                "workflow_roles": roles,
-                                "position_title": fac.get("title", "Faculty Member"),
-                                "program_codes": ["*"] if is_staff else [dept_code],
-                                "college": "COLLEGE OF ENGINEERING",
-                                "password_hash": default_hash,
-                                "must_change_password": False,
-                                "created_at": now_ts,
-                                "last_login": None,
-                            }
-                        else:
-                            users[u]["full_name"] = fac.get("name", users[u]["full_name"])
-                            users[u]["position_title"] = fac.get("title", users[u]["position_title"])
-                            if roles:
-                                users[u]["workflow_roles"] = roles
+                    u = fac.get("username")
+                    if not u:
+                        continue
+                    roles = fac.get("roles", [])
+                    if not roles and fac.get("type") == "Full-Time" and not is_staff:
+                        roles = ["review_committee"]
+                    if u not in users:
+                        users[u] = {
+                            "full_name": fac.get("name", u),
+                            "role": "staff" if is_staff else "faculty",
+                            "workflow_roles": roles,
+                            "position_title": fac.get("title", "Faculty Member"),
+                            "program_codes": ["*"] if is_staff else [dept_code],
+                            "college": "COLLEGE OF ENGINEERING",
+                            "password_hash": default_hash,
+                            "must_change_password": False,
+                            "created_at": now_ts,
+                            "last_login": None,
+                        }
+                    else:
+                        users[u]["full_name"] = fac.get("name", users[u]["full_name"])
+                        users[u]["position_title"] = fac.get("title", users[u]["position_title"])
+                        if roles:
+                            users[u]["workflow_roles"] = roles
 
             # Attach transparent e-signatures from static/signatures if present
             sig_dir = os.path.join(BASE_DIR, "static", "signatures")
@@ -331,6 +331,11 @@ def ensure_default_admin() -> None:
                     users["faculty_arcega"]["signature_data"] = "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
         except Exception:
             pass
+
+        # Final sweep: clean duplicate and test accounts before saving
+        for leg in ["committee_basan", "committee_arenga", "committee_ravida", "programhead_claro", "assoc_dean", "staff_simplicio_lab", "faculty_tester"]:
+            if leg in users:
+                del users[leg]
 
         _save_users(users)
 

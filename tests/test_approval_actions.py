@@ -12,11 +12,11 @@ print("--- 1. Setup Active Course for Testing ---")
 with client.session_transaction() as sess:
     sess["username"] = "faculty_tano"
 
-res = client.get("/api/courses")
-c_id = res.get_json()["courses"][0]["id"]
+# Create dedicated temporary course for testing approval actions
+test_course = courses_store.create_course("faculty_tano", course_code="EE 399", course_title="Temporary Test Approval Subject", section="EE 3A")
+c_id = test_course["id"]
 print("Testing course ID:", c_id)
 
-# Reset workflow to clean draft
 doc = courses_store.find_course(c_id)
 doc["workflow"] = syllabus_workflow.default_workflow()
 if not doc.get("blueprint"): doc["blueprint"] = {}
@@ -163,4 +163,6 @@ wf = res.get_json()["workflow"]
 assert wf["status"] == "for_qa_countersign"
 print("Verified Program Head Sign & Endorse forwarded to QA Countersign!")
 
+courses_store.delete_course("faculty_tano", c_id)
+print("Cleaned up temporary test course:", c_id)
 print("\n>>> ALL APPROVAL REQUEST ACTIONS (CHECKLIST, SIGN & APPROVE, RETURN FOR REVISION) PASSED! <<<")

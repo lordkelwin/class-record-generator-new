@@ -12,10 +12,10 @@ print("--- 1. Testing Custom Committee Role Assignment ---")
 with client.session_transaction() as sess:
     sess["username"] = "faculty_tano"
 
-res = client.get("/api/courses")
-c_id = res.get_json()["courses"][0]["id"]
+# Create dedicated temporary course for testing custom committee role assignment
+test_course = courses_store.create_course("faculty_tano", course_code="EE 398", course_title="Temporary Test Committee Subject", section="EE 3A")
+c_id = test_course["id"]
 
-# Reset course workflow to draft
 doc = courses_store.find_course(c_id)
 doc["workflow"] = syllabus_workflow.default_workflow()
 if not doc.get("blueprint"): doc["blueprint"] = {}
@@ -73,4 +73,6 @@ assert res.status_code == 200
 assert res.data.startswith(b"%PDF")
 print(f"Successfully generated FM-USeP-MID-02 Evaluation PDF ({len(res.data)} bytes) with custom committee roles!")
 
+courses_store.delete_course("faculty_tano", c_id)
+print("Cleaned up temporary test course:", c_id)
 print("\n>>> ALL COMMITTEE ROLE ASSIGNMENT TESTS PASSED! <<<")

@@ -17,7 +17,7 @@
     "password_hash": "scrypt:32768:8:1$McPGeHsM4jgtWLyu$2c5758f4eaa930e986d6a5d8d409f7486514ecfb58070c839c31ab11f9a2c6471f75ebe6dd02d4cc7477cac62bd5dc1d21e22908ab31fff666208075f1f76059",
     "must_change_password": false,
     "created_at": "2026-10-23T00:56:06",
-    "last_login": "2026-10-24T22:12:41",
+    "last_login": "2026-10-24T22:52:47",
     "email": "system.administrator@usep.edu.ph"
   },
   "faculty_tano": {
@@ -34,7 +34,7 @@
     "password_hash": "scrypt:32768:8:1$eJQDeHv7VP2x0C7Z$d258c4fda80e3a89588e3b2062ab7cd9b2c978fd407bddf2b6c1627337d7c67eb2d1f0a6692588b953502bc3e802ce0738c18b7f13981684e1cd3a6c20575cd0",
     "must_change_password": false,
     "created_at": "2026-10-23T15:27:35",
-    "last_login": "2026-10-24T20:17:02",
+    "last_login": "2026-10-24T22:34:38",
     "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     "email": "elwin.tano@usep.edu.ph"
   },
@@ -226,7 +226,9 @@
   "faculty_simplicio": {
     "full_name": "Engr. Hans Marc C. Simplicio",
     "role": "faculty",
-    "workflow_roles": [],
+    "workflow_roles": [
+      "staff"
+    ],
     "position_title": "Part-Time Faculty Member",
     "program_codes": [
       "ECE"
@@ -1092,21 +1094,6 @@
     "last_login": null,
     "email": "reynaldo.jr@usep.edu.ph"
   },
-  "staff_simplicio_lab": {
-    "full_name": "Hans Marc C. Simplicio",
-    "role": "staff",
-    "workflow_roles": [],
-    "position_title": "Laboratory Technician",
-    "program_codes": [
-      "*"
-    ],
-    "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$MseqgJuthGB8q2Xn$5c21e41885e6fae272c60dcb43724040caadf557f6b8dde3966cf519b47d5405aa6e39a9deffe379a62d68f4a7e0485651543d2422a9242493871b4f8011be0d",
-    "must_change_password": false,
-    "created_at": "2026-10-24T05:13:01",
-    "last_login": null,
-    "email": "hans.simplicio@usep.edu.ph"
-  },
   "staff_soller": {
     "full_name": "Maxwell A. Soller Jr.",
     "role": "staff",
@@ -1163,9 +1150,10 @@
     "full_name": "Engr. Delan Zoe H. Arenga",
     "role": "faculty",
     "workflow_roles": [
+      "associate_dean",
       "review_committee"
     ],
-    "position_title": "Faculty Member",
+    "position_title": "Associate Dean, College of Engineering",
     "program_codes": [
       "ECE"
     ],
@@ -1248,103 +1236,5 @@
     "last_login": null,
     "can_access_faculty_tools": false,
     "email": "academic.staff@usep.edu.ph"
-  },
-  "assoc_dean": {
-    "full_name": "Engr. Delan Zoe H. Arenga",
-    "role": "faculty",
-    "workflow_roles": [
-      "associate_dean",
-      "review_committee"
-    ],
-    "position_title": "Associate Dean, College of Engineering",
-    "program_codes": [
-      "*"
-    ],
-    "password_hash": "scrypt:32768:8:1$MpmD3GXTD8ywtHBN$cef8d09725b0f9af6a36502c89c541cfa61b13ac42243d2eaa123e265d50bd87238d79b556a13bb0505dddc8978b8e70f1e0387724b5ee536a17e8de42b09748",
-    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    "email": "delan.arenga@usep.edu.ph"
-  },
-  "faculty_tester": {
-    "full_name": "Engr. Tester Faculty",
-    "role": "faculty",
-    "workflow_roles": [
-      "review_committee"
-    ],
-    "position_title": "Faculty Member",
-    "program_codes": [
-      "EE"
-    ],
-    "password_hash": "scrypt:32768:8:1$iJiGfNQ1jf892FVL$cb6ea70f9a7e40dda13537cd458193d6b32d6cb06efe3408b9271170729cfa889bb25bfa1418eea077863272000390a73d4d1aacdfe8adc5d4ca85187895021a",
-    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    "email": "tester.faculty@usep.edu.ph"
-  },
-  "committee_arenga": {
-    "full_name": "Engr. Delan Zoe H. Arenga",
-    "role": "faculty",
-    "workflow_roles": [
-      "review_committee"
-    ],
-    "position_title": "Faculty Member",
-    "program_codes": [
-      "ECE"
-    ],
-    "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
-    "must_change_password": false,
-    "created_at": "2026-10-24T22:11:30",
-    "last_login": null,
-    "email": "delan.arenga@usep.edu.ph"
-  },
-  "committee_ravida": {
-    "full_name": "Engr. Kim P. Ravida",
-    "role": "faculty",
-    "workflow_roles": [
-      "review_committee"
-    ],
-    "position_title": "Faculty Member",
-    "program_codes": [
-      "ECE"
-    ],
-    "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
-    "must_change_password": false,
-    "created_at": "2026-10-24T22:11:30",
-    "last_login": null,
-    "email": "kim.ravida@usep.edu.ph"
-  },
-  "committee_basan": {
-    "full_name": "Engr. Nikka Samantha A. Basan",
-    "role": "faculty",
-    "workflow_roles": [
-      "review_committee"
-    ],
-    "position_title": "Faculty Member",
-    "program_codes": [
-      "EE"
-    ],
-    "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
-    "must_change_password": false,
-    "created_at": "2026-10-24T22:11:30",
-    "last_login": null,
-    "email": "nikka.basan@usep.edu.ph"
-  },
-  "programhead_claro": {
-    "full_name": "Engr. Charito O. Claro",
-    "role": "faculty",
-    "workflow_roles": [
-      "program_head",
-      "review_committee"
-    ],
-    "position_title": "Program Head - Electrical Engineering",
-    "program_codes": [
-      "EE"
-    ],
-    "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
-    "must_change_password": false,
-    "created_at": "2026-10-24T22:11:30",
-    "last_login": null,
-    "email": "charito.claro@usep.edu.ph"
   }
 }

@@ -31,6 +31,17 @@ class TestLockUnapprovedClassRecord(unittest.TestCase):
         users["faculty_tester"]["signature_data"] = fake_sig
         auth._save_users(users)
 
+    @classmethod
+    def tearDownClass(cls):
+        users = auth._load_users()
+        if "faculty_tester" in users:
+            del users["faculty_tester"]
+            auth._save_users(users)
+        tester_dir = os.path.join(courses_store.COURSES_BASE_DIR, "faculty_tester")
+        if os.path.exists(tester_dir):
+            import shutil
+            shutil.rmtree(tester_dir, ignore_errors=True)
+
     def login(self, username="faculty_tester"):
         with self.client.session_transaction() as sess:
             sess["username"] = username

@@ -23,8 +23,8 @@ with open(os.path.join(SIG_DIR, "sheena_arcega.png"), "rb") as f:
 OFFICIAL_FACULTY_ROSTER = {
     "EE": {
         "full_time": [
-            {"name": "Engr. Nikka Samantha A. Basan", "title": "Faculty Member", "username": "faculty_basan", "alias": "committee_basan", "roles": ["review_committee"]},
-            {"name": "Engr. Charito O. Claro", "title": "Program Head - Electrical Engineering", "username": "faculty_claro", "alias": "programhead_claro", "roles": ["program_head", "review_committee"]},
+            {"name": "Engr. Nikka Samantha A. Basan", "title": "Faculty Member", "username": "faculty_basan", "roles": ["review_committee"]},
+            {"name": "Engr. Charito O. Claro", "title": "Program Head - Electrical Engineering", "username": "faculty_claro", "roles": ["program_head", "review_committee"]},
             {"name": "Engr. Ramil Alvin B. Ramos", "title": "Faculty Member", "username": "faculty_ramos", "roles": ["review_committee"]},
             {"name": "Engr. Elwin Jay J. Tano", "title": "Faculty Member", "username": "faculty_tano", "roles": ["review_committee"]},
             {"name": "Engr. Donley Glenn Mabunga", "title": "Faculty Member", "username": "faculty_mabunga", "roles": ["review_committee"]},
@@ -35,11 +35,11 @@ OFFICIAL_FACULTY_ROSTER = {
     },
     "ECE": {
         "full_time": [
-            {"name": "Engr. Delan Zoe H. Arenga", "title": "Faculty Member", "username": "faculty_arenga", "alias": "committee_arenga", "roles": ["review_committee"]},
+            {"name": "Engr. Delan Zoe H. Arenga", "title": "Associate Dean, College of Engineering", "username": "faculty_arenga", "roles": ["associate_dean", "review_committee"]},
             {"name": "Engr. Roberto I. Canda", "title": "Faculty Member", "username": "faculty_canda", "roles": ["review_committee"]},
             {"name": "Engr. Filmann T. Simpao", "title": "Faculty Member", "username": "faculty_simpao", "roles": ["review_committee"]},
             {"name": "Engr. Rosanna C. Ucat", "title": "Program Head - Electronics Engineering", "username": "faculty_ucat", "roles": ["program_head", "review_committee"]},
-            {"name": "Engr. Kim P. Ravida", "title": "Faculty Member", "username": "faculty_ravida", "alias": "committee_ravida", "roles": ["review_committee"]},
+            {"name": "Engr. Kim P. Ravida", "title": "Faculty Member", "username": "faculty_ravida", "roles": ["review_committee"]},
             {"name": "Engr. Ernani Villasencio", "title": "Faculty Member", "username": "faculty_villasencio_e", "roles": ["review_committee"]},
         ],
         "part_time": [
@@ -145,7 +145,6 @@ OFFICIAL_FACULTY_ROSTER = {
             {"name": "Joyce Magdales", "title": "Technical Staff", "username": "staff_magdales", "roles": []},
             {"name": "Girlie Prevendido", "title": "Admin Aide IV", "username": "staff_prevendido", "roles": []},
             {"name": "Reynaldo Eltagonde Jr.", "title": "Laboratory Technician", "username": "staff_eltagonde", "roles": []},
-            {"name": "Hans Marc C. Simplicio", "title": "Laboratory Technician", "username": "staff_simplicio_lab", "roles": []},
             {"name": "Maxwell A. Soller Jr.", "title": "Technical Staff", "username": "staff_soller", "roles": []},
         ],
         "part_time": []
