@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from models import CourseMetadata, SyllabusBlueprint
-from sample_syllabus import get_default_blueprint
+from sample_syllabus import get_default_blueprint, get_blank_blueprint, build_learning_plan_from_topics
 from catalog_data import get_full_catalog
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -161,8 +161,8 @@ def list_courses(username: str, faculty_name: str = "") -> Dict[str, Any]:
     user_dir = _get_user_courses_dir(username)
     files = [f for f in os.listdir(user_dir) if f.endswith(".json")]
     if not files:
-        ensure_user_has_default_course(username, faculty_name)
-        files = [f for f in os.listdir(user_dir) if f.endswith(".json")]
+        return {"courses": [], "groups": [], "total": 0}
+
 
     courses_list: List[Dict[str, Any]] = []
     for fn in files:
@@ -310,30 +310,31 @@ def create_course(
     course_id = f"c_{uuid.uuid4().hex[:10]}"
 
     if from_catalog and catalog_course_data:
-        # Create blueprint customized from catalog course details
-        bp = get_default_blueprint(include_sample_scores=False)
-        bp.metadata.course_code = catalog_course_data.get("code") or course_code
-        bp.metadata.course_title = catalog_course_data.get("title") or course_title
-        bp.metadata.credit_units = catalog_course_data.get("credit_units") or "3.0 Units - Lecture"
-        bp.metadata.lec_lab = catalog_course_data.get("lec_lab") or "Lecture"
-        bp.metadata.contact_hours = catalog_course_data.get("hours") or "3 Hours/Week"
-        bp.metadata.prerequisites = catalog_course_data.get("prereqs") or ""
-        bp.metadata.corequisites = catalog_course_data.get("coreqs") or ""
-        bp.metadata.course_description = catalog_course_data.get("description") or ""
-        bp.metadata.section = section
-        bp.metadata.semester_ay = semester_ay
-        if faculty_name:
-            bp.metadata.faculty_name = faculty_name
+        bp = get_blank_blueprint(
+            course_code=catalog_course_data.get("code") or course_code,
+            course_title=catalog_course_data.get("title") or course_title,
+            section=section,
+            semester_ay=semester_ay,
+            faculty_name=faculty_name,
+            credit_units=catalog_course_data.get("credit_units") or "3.0 Units – Lecture",
+            lec_lab=catalog_course_data.get("lec_lab") or "Lecture",
+            contact_hours=catalog_course_data.get("hours") or "3 Hours/Week",
+            course_description=catalog_course_data.get("description") or "",
+            prerequisites=catalog_course_data.get("prereqs") or "",
+            corequisites=catalog_course_data.get("coreqs") or "",
+        )
+        topics = catalog_course_data.get("topics") or []
+        if topics:
+            bp.metadata.learning_plan_table = build_learning_plan_from_topics(topics)
         bp_dict = bp.to_dict()
     else:
-        # Default starter blueprint
-        bp = get_default_blueprint(include_sample_scores=True)
-        bp.metadata.course_code = course_code
-        bp.metadata.course_title = course_title
-        bp.metadata.section = section
-        bp.metadata.semester_ay = semester_ay
-        if faculty_name:
-            bp.metadata.faculty_name = faculty_name
+        bp = get_blank_blueprint(
+            course_code=course_code,
+            course_title=course_title,
+            section=section,
+            semester_ay=semester_ay,
+            faculty_name=faculty_name,
+        )
         bp_dict = bp.to_dict()
 
     payload = {

@@ -911,6 +911,23 @@
         </div>
       </div>
 
+<!-- No Subject / Welcome Hero Banner (Visible when user has 0 subjects) -->
+      <div id="noSubjectHero" style="display:none; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 2px dashed #60a5fa; border-radius: 12px; padding: 36px 24px; text-align: center; margin-bottom: 22px;">
+        <div style="font-size: 2.6rem; margin-bottom: 10px;">📚</div>
+        <h2 style="font-size: 1.35rem; color: #1e3a8a; margin: 0 0 8px 0; font-weight: 800;">No Subjects Found in Your Account</h2>
+        <p style="color: #475569; max-width: 580px; margin: 0 auto 18px auto; font-size: 0.92rem; line-height: 1.55;">
+          You currently have no course syllabi created. You can create a brand new syllabus from scratch, select an approved curriculum course from the catalog, or import an existing syllabus PDF.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button class="btn btn-success" style="font-size: 0.95rem; padding: 10px 22px; font-weight: 700; box-shadow: 0 2px 8px rgba(22, 101, 52, 0.25);" onclick="openNewSubjectModal()">
+            ➕ Create / Add New Subject
+          </button>
+          <button class="btn btn-primary" style="font-size: 0.92rem; padding: 10px 18px;" onclick="document.getElementById('syllabusPdfInput').click()">
+            📄 Import Syllabus (.pdf)
+          </button>
+        </div>
+      </div>
+
   <!-- Upload & Hybrid Parser Controls -->
   <div class="upload-banner">
     <div>
@@ -2360,9 +2377,18 @@
 
       if (shouldLoadCourse) {
         if (!allCoursesList.length) {
-          await analyzeSamplePdf();
+          currentCourseId = null;
+          blueprint = null;
+          currentWorkflow = null;
+          localStorage.removeItem("usep_active_course_id");
+          updateActiveSubjectBar();
+          showNoSubjectPlaceholder();
+          checkClassRecordLock();
+          checkSyllabusLock();
+          renderWorkflowStepper();
           return;
         }
+        hideNoSubjectPlaceholder();
         let targetId = autoSelectId;
         if (!targetId) {
           const savedId = localStorage.getItem("usep_active_course_id");
@@ -2376,7 +2402,6 @@
       }
     } catch (e) {
       console.error("Failed to load courses list:", e);
-      if (!blueprint) await analyzeSamplePdf();
     }
   }
 
@@ -2498,12 +2523,33 @@
   }
 
   function updateActiveSubjectBar() {
-    if (!blueprint) return;
+    if (!blueprint) {
+      const c1 = document.getElementById("asbCode"); if (c1) c1.textContent = "—";
+      const c2 = document.getElementById("asbSec"); if (c2) c2.textContent = "—";
+      const c3 = document.getElementById("asbTitle"); if (c3) c3.textContent = "No Subject Selected";
+      const c4 = document.getElementById("asbSemAy"); if (c4) c4.textContent = "Click '+ Create / Add Subject' to get started";
+      return;
+    }
     const m = blueprint.metadata || {};
     const c1 = document.getElementById("asbCode"); if (c1) c1.textContent = m.course_code || "Course";
     const c2 = document.getElementById("asbSec"); if (c2) c2.textContent = m.section || "Sec";
     const c3 = document.getElementById("asbTitle"); if (c3) c3.textContent = m.course_title || "Untitled";
     const c4 = document.getElementById("asbSemAy"); if (c4) c4.textContent = m.semester_ay || "1st Semester, A.Y. 2026-2027";
+  }
+
+  function showNoSubjectPlaceholder() {
+    const hero = document.getElementById("noSubjectHero");
+    if (hero) hero.style.display = "block";
+    const saveStat = document.getElementById("asbSaveStatus");
+    if (saveStat) {
+      saveStat.className = "asb-status";
+      saveStat.innerHTML = '<span class="asb-dot"></span> Ready';
+    }
+  }
+
+  function hideNoSubjectPlaceholder() {
+    const hero = document.getElementById("noSubjectHero");
+    if (hero) hero.style.display = "none";
   }
 
   async function saveActiveCourseToServer(showToast = false) {
@@ -4198,10 +4244,19 @@
   }
 
   function renderCourseOutcomes() {
+    if (!blueprint) return;
     const tbody = document.getElementById("coTableBody");
     const pgoList = getActivePgoCatalog();
     const igaList = getActiveIgaList();
     renderProgramStructureReferencePanel();
+
+    if (!blueprint.course_outcomes || !blueprint.course_outcomes.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:#64748b; font-size:0.88rem;">
+        No Course Learning Outcomes (CLOs) defined yet.<br/>
+        Click <strong>+ Add CLO</strong> above to create your first CLO for this course.
+      </td></tr>`;
+      return;
+    }
 
     tbody.innerHTML = blueprint.course_outcomes.map((co, i) => {
       const normPgo = _normalizePgoCode(co.program_outcomes, pgoList);
@@ -4406,8 +4461,17 @@
   }
 
   function renderCategories() {
-    const coOptions = blueprint.course_outcomes.map(c => c.co_id);
+    if (!blueprint) return;
+    const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     const container = document.getElementById("categoriesContainer");
+    if (!container) return;
+    if (!blueprint.categories || !blueprint.categories.length) {
+      container.innerHTML = `<div style="text-align:center; padding:32px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; color:#64748b;">
+        <strong>No assessment categories created yet.</strong><br/>
+        Use the buttons above (e.g. <em>+ Midterm FA</em>, <em>+ Midterm SA</em>, <em>+ Finals FA</em>, <em>+ Finals SA</em>) to define your assessment tasks.
+      </div>`;
+      return;
+    }
     container.innerHTML = blueprint.categories.map((cat, cIdx) => {
       const isFa = (cat.assessment_type || "SA").toUpperCase() === "FA";
       const itemsRows = (cat.items || []).map((it, iIdx) => {
@@ -4757,7 +4821,8 @@
     blueprint.course_outcomes.forEach(co => cloFinalPassCounts[co.co_id] = 0);
 
     const studentResults = [];
-    const rowsHtml = (blueprint.students || []).map((st, sIdx) => {
+    const studentsList = blueprint.students || [];
+    const rowsHtml = studentsList.length ? studentsList.map((st, sIdx) => {
       // Compute MG and FG using Base-50 formula across all separated per-CLO columns
       const termGrades = { Midterm: 50.0, Finals: 50.0 };
       ["Midterm", "Finals"].forEach(tName => {
@@ -4845,7 +4910,9 @@
           <td><button class="btn btn-danger btn-sm" onclick="removeStudentRow(${sIdx})">&times;</button></td>
         </tr>
       `;
-    }).join("");
+    }).join("") : `<tr><td colspan="100" style="text-align:center; padding:28px; color:#64748b; font-size:0.9rem;">
+        No students in class roster yet. Click <strong>+ Add Student</strong> or <strong>Import Students CSV</strong> below to populate the class record.
+      </td></tr>`;
 
     tbl.innerHTML = thead + `<tbody>${rowsHtml}</tbody>`;
     renderTab4Reports(saCodes, saWeights, saNames, saCloPairs, saCloPassCounts, cloFinalPassCounts, allCloCols);
@@ -5630,7 +5697,12 @@
 
   // Render Workflow Stepper & Actions (Sequential 6 Stages)
   function renderWorkflowStepper() {
-    if (!currentWorkflow) return;
+    const card = document.getElementById("syllabusWorkflowCard");
+    if (!currentWorkflow) {
+      if (card) card.style.display = "none";
+      return;
+    }
+    if (card) card.style.display = "block";
     const wf = currentWorkflow;
 
     // Badges

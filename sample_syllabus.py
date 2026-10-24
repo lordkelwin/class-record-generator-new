@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Dict, Any, Optional
 from fpdf import FPDF
 from models import (
     SyllabusBlueprint,
@@ -11,6 +11,7 @@ from models import (
     StudentRecord,
     CQIPlan,
     get_default_cqi_indicators,
+    get_default_policies_table,
 )
 
 
@@ -543,6 +544,154 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
             "Configured Base-50 Grading System (Passing = 75 -> 3.00): FA1 (Formative 0%), SA1 Quizzes (40%), SA2 Term Examination (60%).",
             "Included CLO Grade section, Course Learning Outcome Assessment Report, CO Assessment Tool, and CQI Plan.",
         ],
+    )
+
+
+def parse_prereqs_coreqs_to_table(prereqs: str = "", coreqs: str = "") -> List[Dict[str, str]]:
+    table: List[Dict[str, str]] = []
+    if prereqs and prereqs.strip() and prereqs.strip().lower() != "none":
+        for item in prereqs.split(";"):
+            item = item.strip()
+            if not item:
+                continue
+            parts = [p.strip() for p in item.split("-", 1)]
+            code = parts[0]
+            title = parts[1] if len(parts) > 1 else ""
+            table.append({"req_type": "Pre-requisite", "course_code": code, "course_title": title})
+    if coreqs and coreqs.strip() and coreqs.strip().lower() != "none":
+        for item in coreqs.split(";"):
+            item = item.strip()
+            if not item:
+                continue
+            parts = [p.strip() for p in item.split("-", 1)]
+            code = parts[0]
+            title = parts[1] if len(parts) > 1 else ""
+            table.append({"req_type": "Co-requisite", "course_code": code, "course_title": title})
+    return table
+
+
+def build_learning_plan_from_topics(topics: List[str]) -> List[Dict[str, str]]:
+    if not topics:
+        return []
+    plan: List[Dict[str, str]] = [
+        {
+            "ilo": "• Recognize the university VMGO & Institutional Graduate Attributes.\n• Appreciates the significance of PEOs and PGOs of the program.\n• Recognize the rules and regulations of the course and the grading system.",
+            "clo": "",
+            "time_frame": "1 hour",
+            "topics": "• Course Orientation\n• VMGO & IGA of the University\n• PEOs & PGOs of the program\n• Rules and regulations of the course & grading system\n• Presentation of the course outline",
+            "tla": "• On-site or online meeting",
+            "required_reading": "• USeP Student Handbook (2016 edition)",
+            "assessment_activities": "• N/A",
+        }
+    ]
+    mid = max(1, len(topics) // 2)
+    for idx, t in enumerate(topics):
+        if idx == mid:
+            plan.append({
+                "ilo": "• Demonstrate midterm competence on covered course outcomes.",
+                "clo": "CLO1",
+                "time_frame": "3 hours",
+                "topics": "MIDTERM EXAMINATION",
+                "tla": "• Conduct of Midterm Examination – Independent Assessment",
+                "required_reading": "",
+                "assessment_activities": "• SA2 – Term Examination",
+            })
+        plan.append({
+            "ilo": f"• Demonstrate competence in {t.lower()}.",
+            "clo": "CLO1" if idx < mid else "CLO2",
+            "time_frame": "3-4 hours",
+            "topics": f"• {t.upper()}",
+            "tla": "• Student-based Learning\n• Problem-solving exercises\n• Collaborative and Team Learning\n• Lecture & Discussion",
+            "required_reading": "• Course Handouts & Textbook References",
+            "assessment_activities": "• FA1 – Formative Activity\n• SA1 – Summative Quiz",
+        })
+    plan.append({
+        "ilo": "• Demonstrate mastery of course outcomes through comprehensive final assessment.",
+        "clo": "CLO1\nCLO2",
+        "time_frame": "3 hours",
+        "topics": "FINAL EXAMINATION",
+        "tla": "• Conduct of Final Examination – Independent Assessment",
+        "required_reading": "",
+        "assessment_activities": "• SA2 – Term Examination",
+    })
+    return plan
+
+
+def get_blank_blueprint(
+    course_code: str = "",
+    course_title: str = "",
+    section: str = "",
+    semester_ay: str = "",
+    faculty_name: str = "",
+    credit_units: str = "3.0 Units – Lecture",
+    lec_lab: str = "Lecture",
+    contact_hours: str = "3 Hours/Week (54 Hours/Semester)",
+    course_description: str = "",
+    prerequisites: str = "",
+    corequisites: str = "",
+    program_head: str = "CHARITO O. CLARO",
+    dean_name: str = "JOIE D. CATAYTAY",
+) -> SyllabusBlueprint:
+    """Returns a completely clean starter blueprint for creating a syllabus from scratch."""
+    metadata = CourseMetadata(
+        university="University of Southeastern Philippines",
+        college="COLLEGE OF ENGINEERING",
+        department="Department of Electrical Engineering",
+        address="Iñigo St., Bo. Obrero, Davao City 8000",
+        program_name="Bachelor of Science in Electrical Engineering",
+        program_code="EE",
+        academic_unit="Engineering",
+        course_code=course_code or "New Course",
+        course_title=course_title or "Untitled Subject",
+        credit_units=credit_units,
+        lec_lab=lec_lab,
+        schedule="TBA",
+        room="TBA",
+        semester_ay=semester_ay or "1st Semester, A.Y. 2026-2027",
+        section=section or "1A",
+        faculty_name=faculty_name,
+        program_head=program_head,
+        dean_name=dean_name,
+        transmutation_base=50,
+        passing_percentage=75.0,
+        grading_mode="two_term",
+        course_description=course_description,
+        prerequisites=prerequisites,
+        corequisites=corequisites,
+        contact_hours=contact_hours,
+        prereq_coreq_table=parse_prereqs_coreqs_to_table(prerequisites, corequisites),
+        sdg_table=[],
+        syllabus_assessment_activities=[],
+        learning_plan_table=[],
+        references_table=[],
+        policies_table=get_default_policies_table(),
+    )
+
+    terms = [
+        TermConfig(term_name="Midterm", weight_pct=50.0),
+        TermConfig(term_name="Finals", weight_pct=50.0),
+    ]
+
+    starter_clo = CourseOutcome(
+        co_id="CLO1",
+        description="",
+        program_outcomes="PGO a",
+        graduate_outcome_desc="a) Apply knowledge of mathematics and sciences to solve engineering problems",
+        performance_indicator="a.1. Apply concepts in mathematics to solve engineering problems.",
+        iga_aligned="IGA2",
+        target_score_pct=75.0,
+        target_class_pass_pct=50.0,
+    )
+
+    return SyllabusBlueprint(
+        metadata=metadata,
+        terms=terms,
+        course_outcomes=[starter_clo],
+        categories=[],
+        students=[],
+        cqi_plan=CQIPlan(indicators=get_default_cqi_indicators()),
+        rubrics=get_default_rubrics(),
+        parser_notes=["New course syllabus created from scratch."],
     )
 
 
