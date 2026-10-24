@@ -27,6 +27,27 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 SECRET_KEY_FILE = os.path.join(DATA_DIR, "secret_key")
 
+DELETED_USERS_FILE = os.path.join(DATA_DIR, "deleted_users.json")
+
+def _load_deleted_users() -> set:
+    if not os.path.exists(DELETED_USERS_FILE):
+        return set()
+    try:
+        with open(DELETED_USERS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return set(data) if isinstance(data, list) else set()
+    except Exception:
+        return set()
+
+def _save_deleted_users(deleted: set) -> None:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    try:
+        with open(DELETED_USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(sorted(list(deleted)), f, indent=2)
+    except Exception as e:
+        print(f"Error saving deleted users: {e}")
+
+
 LEGACY_USERNAME_ALIASES = {
     "committee_basan": "faculty_basan",
     "committee_arenga": "faculty_arenga",
@@ -292,9 +313,10 @@ def ensure_default_admin() -> None:
             default_hash = generate_password_hash("password123")
             for dept_code, groups in OFFICIAL_FACULTY_ROSTER.items():
                 is_staff = (dept_code == "STAFF")
+                deleted_set = _load_deleted_users()
                 for fac in (groups.get("full_time", []) + groups.get("part_time", [])):
                     u = fac.get("username")
-                    if not u:
+                    if not u or u in deleted_set:
                         continue
                     roles = fac.get("roles", [])
                     if not roles and fac.get("type") == "Full-Time" and not is_staff:
@@ -786,18 +808,54 @@ def delete_user(username):
     username = _normalize_username(username)
     me = current_user()
     if username == me["username"]:
-        flash("You cannot delete the account you are signed in with.", "error")
+        if request.is_json or request.headers.get("Accept") == "application/json":
+            return jsonify({"success": False, "error": "You cannot delete the account you are currently signed in with."}), 400
+        flash("You cannot delete the account you are currently signed in with.", "error")
         return redirect(url_for("auth.manage_users"))
+
+    reason = (request.form.get("reason") or (request.get_json(silent=True) or {}).get("reason") or "Administrative removal").strip()
+    purge_courses = request.form.get("purge_courses") in ("true", "1", "on") or bool((request.get_json(silent=True) or {}).get("purge_courses"))
+
     with _lock:
         users = _load_users()
-        if username not in users:
-            abort(404)
-        if users[username].get("role") == "admin" and sum(1 for u in users.values() if u.get("role") == "admin") <= 1:
-            flash("Cannot delete the last admin account.", "error")
+        uname = LEGACY_USERNAME_ALIASES.get(username, username)
+        target_key = None
+        for k in users:
+            if k.lower() == uname.lower():
+                target_key = k
+                break
+        if not target_key:
+            if request.is_json or request.headers.get("Accept") == "application/json":
+                return jsonify({"success": False, "error": f"Account '{username}' was not found."}), 404
+            flash(f"Account '{username}' was not found.", "error")
             return redirect(url_for("auth.manage_users"))
-        users.pop(username)
+
+        if users[target_key].get("role") == "admin" and sum(1 for u in users.values() if u.get("role") == "admin") <= 1:
+            if request.is_json or request.headers.get("Accept") == "application/json":
+                return jsonify({"success": False, "error": "Cannot delete the last remaining administrator account."}), 400
+            flash("Cannot delete the last remaining administrator account.", "error")
+            return redirect(url_for("auth.manage_users"))
+
+        del_user_obj = users.pop(target_key)
         _save_users(users)
-    flash(f"Account '{username}' deleted.", "success")
+
+        # Mark as deleted to prevent auto-recreation on reboot
+        del_set = _load_deleted_users()
+        del_set.add(target_key)
+        _save_deleted_users(del_set)
+
+        # Purge courses if requested
+        if purge_courses:
+            import shutil
+            c_dir = os.path.join(DATA_DIR, "courses", target_key)
+            if os.path.exists(c_dir):
+                shutil.rmtree(c_dir, ignore_errors=True)
+
+    full_name = del_user_obj.get("full_name") or target_key
+    msg = f"Account '{target_key}' ({full_name}) has been permanently deleted ({reason})."
+    if request.is_json or request.headers.get("Accept") == "application/json":
+        return jsonify({"success": True, "message": msg, "username": target_key})
+    flash(msg, "success")
     return redirect(url_for("auth.manage_users"))
 
 @auth_bp.route("/api/user/me", methods=["GET"])
