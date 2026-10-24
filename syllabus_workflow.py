@@ -207,6 +207,8 @@ def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[
         return True
     if doc.get("owner") == user.get("username"):
         return False  # nobody reviews/approves their own syllabus
+    if user.get("role") == "staff" or (user.get("is_staff") and not user.get("can_access_faculty_tools", True)):
+        return False  # staff has oversight only and cannot sign review stages
 
     import auth
     user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])

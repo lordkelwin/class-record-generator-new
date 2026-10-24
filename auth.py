@@ -72,9 +72,14 @@ def apply_roles_to_user_dict(
         if r_clean and r_clean not in roles:
             roles.append(r_clean)
 
-    if not roles or roles == ["faculty"]:
+    is_staff = ("staff" in roles)
+    has_faculty_roles = any(r in roles for r in ["review_committee", "faculty", "program_head", "qa_head", "dean", "associate_dean"])
+
+    if is_staff and not has_faculty_roles and not is_admin and "admin" not in roles:
+        roles = ["staff"]
+    elif not roles or roles == ["faculty"]:
         roles = ["review_committee"]
-    elif "review_committee" not in roles:
+    elif "review_committee" not in roles and not is_staff:
         roles.append("review_committee")
 
     cleaned_progs = []
@@ -83,7 +88,7 @@ def apply_roles_to_user_dict(
         if p_clean and p_clean not in cleaned_progs:
             cleaned_progs.append(p_clean)
     if not cleaned_progs:
-        cleaned_progs = ["EE"]
+        cleaned_progs = ["*"] if is_staff else ["EE"]
 
     target["workflow_roles"] = roles
     target["program_codes"] = cleaned_progs
@@ -100,6 +105,8 @@ def apply_roles_to_user_dict(
             title_parts.append("Associate Dean, College of Engineering")
         if "qa_head" in roles:
             title_parts.append("College Quality Assurance Head")
+        if "staff" in roles:
+            title_parts.append("Academic Programs Staff (Oversight)")
         if "admin" in roles and not title_parts:
             title_parts.append("System Administrator")
         if not title_parts:
@@ -109,9 +116,12 @@ def apply_roles_to_user_dict(
 
     target["position_title"] = custom_title
 
+    is_pure_staff = (is_staff and not has_faculty_roles and not is_admin and "admin" not in roles)
     if is_admin or "admin" in roles:
         target["role"] = "admin"
-    elif target.get("role") == "admin" and target.get("username") != DEFAULT_ADMIN_USERNAME:
+    elif is_pure_staff:
+        target["role"] = "staff"
+    else:
         target["role"] = "faculty"
 
 
@@ -129,6 +139,9 @@ def apply_role_to_user_dict(target: dict, designation: str, prog_code: str = "EE
         progs = ["*"]
     elif desig == "dean":
         roles = ["dean", "review_committee"]
+        progs = ["*"]
+    elif desig == "staff":
+        roles = ["staff"]
         progs = ["*"]
     elif desig == "admin":
         roles = ["admin", "review_committee", "program_head", "qa_head", "dean"]
@@ -173,7 +186,20 @@ def _save_users(users: dict) -> None:
     tmp = USERS_FILE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(users, f, indent=2)
-    os.replace(tmp, USERS_FILE)
+    for _ in range(5):
+        try:
+            os.replace(tmp, USERS_FILE)
+            return
+        except PermissionError:
+            import time
+            time.sleep(0.05)
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(users, f, indent=2)
+    if os.path.exists(tmp):
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
 
 
 def ensure_default_admin() -> None:
@@ -208,6 +234,7 @@ def ensure_default_admin() -> None:
             ("faculty_claro", "Engr. Charito O. Claro", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
             ("qahead_ce", "Engr. College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
             ("dean_cataytay", "Engr. Joie D. Cataytay, Ph.D.", "faculty", ["dean", "review_committee"], "Dean, College of Engineering", "*"),
+            ("staff_office", "Academic Affairs Staff", "staff", ["staff"], "Academic Programs Staff (Oversight)", "*"),
         ]
         for uname, fname, role, w_roles, pos, prog in seed_accounts:
             if uname not in users:
@@ -311,17 +338,27 @@ def current_user():
         return None
     is_admin = user.get("role") == "admin"
     workflow_roles = ["review_committee", "program_head", "qa_head", "dean"] if is_admin else (user.get("workflow_roles") or [])
+    role = user.get("role", "faculty")
+    is_staff = (role == "staff" or "staff" in workflow_roles)
+    has_faculty_roles = any(r in workflow_roles for r in ["review_committee", "faculty", "program_head", "qa_head", "dean", "associate_dean"])
+    is_pure_staff = is_staff and not is_admin and not has_faculty_roles
+    can_access_faculty_tools = not is_pure_staff
+
+    default_title = "System Administrator" if is_admin else ("Academic Programs Staff (Oversight)" if is_pure_staff else "Faculty Member")
     return {
         "username": username,
         "full_name": user.get("full_name") or username,
-        "role": user.get("role", "faculty"),
+        "role": role,
         "workflow_roles": workflow_roles,
-        "position_title": user.get("position_title") or ("System Administrator" if is_admin else "Faculty in Charge"),
+        "position_title": user.get("position_title") or default_title,
         "college": user.get("college", "COLLEGE OF ENGINEERING"),
         "program_codes": user.get("program_codes", ["*"]),
         "has_signature": bool(user.get("signature_data")),
         "signature_data": user.get("signature_data", ""),
         "must_change_password": bool(user.get("must_change_password")),
+        "is_staff": is_staff,
+        "is_pure_staff": is_pure_staff,
+        "can_access_faculty_tools": can_access_faculty_tools,
     }
 
 
@@ -529,6 +566,8 @@ def manage_users():
             p_list = [p for p in prog_codes if p != "*"]
             p_str = ", ".join(p_list) if p_list else primary_prog
             badges.append({"label": f"Program Head ({p_str})", "class": "b-ph", "icon": "👔"})
+        if "staff" in w_roles or u.get("role") == "staff":
+            badges.append({"label": "Staff (Oversight)", "class": "b-staff", "icon": "📋"})
         if u.get("role") == "admin":
             badges.append({"label": "Administrator", "class": "b-admin", "icon": "⚙️"})
         if not badges or (len(badges) == 0):

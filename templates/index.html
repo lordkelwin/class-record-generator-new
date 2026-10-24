@@ -826,27 +826,43 @@
       border-bottom-color: #1e3a8a;
     }
 
-  </style>
+    {% if current_user and not current_user.can_access_faculty_tools %}
+  .main-workspace {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .app-shell {
+    grid-template-columns: 1fr !important;
+  }
+  {% endif %}
+</style>
 </head>
 <body>
 
 <header>
   <div class="brand">
-    <h1>USeP OBE Syllabus Creator &amp; Class Record Generator</h1>
-    <p>Create &amp; Export FM-USeP-MID-01 Syllabus (.pdf) or Import Existing Syllabus (.pdf) &rarr; Cascading College/Dept/Course &amp; PO/PI Dropdowns &rarr; Consolidated Class Record, CLO Report &amp; CQI Plan (.xlsx)</p>
+    {% if current_user and not current_user.can_access_faculty_tools %}
+      <h1>USeP OBE Syllabus Review &amp; Institutional Oversight Portal</h1>
+      <p>Academic Affairs Oversight &amp; Tracking &bull; Monitor ongoing syllabus approval requests, evaluate review checklists (FM-USeP-MID-02), and ensure institutional accommodation across programs.</p>
+    {% else %}
+      <h1>USeP OBE Syllabus Creator &amp; Class Record Generator</h1>
+      <p>Create &amp; Export FM-USeP-MID-01 Syllabus (.pdf) or Import Existing Syllabus (.pdf) &rarr; Cascading College/Dept/Course &amp; PO/PI Dropdowns &rarr; Consolidated Class Record, CLO Report &amp; CQI Plan (.xlsx)</p>
+    {% endif %}
   </div>
   <div class="header-actions">
-    <button class="btn btn-outline" id="btnToggleSidebarHeader" onclick="toggleSidebar()" title="Toggle Subjects Sidebar" style="font-weight:700;">
-      &#9776; My Subjects (<span id="headerSubCount">0</span>)
-    </button>
-    <button class="btn btn-primary" style="background:#eab308; color:#0f172a; border-color:#ca8a04;" onclick="exportSyllabusPdf()">Export Created Syllabus (.pdf)</button>
-    <button class="btn btn-primary" style="background:#0284c7; color:#ffffff; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
-    <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Consolidated Class Record (.xlsx)</button>
+    {% if not current_user or current_user.can_access_faculty_tools %}
+      <button class="btn btn-outline" id="btnToggleSidebarHeader" onclick="toggleSidebar()" title="Toggle Subjects Sidebar" style="font-weight:700;">
+        &#9776; My Subjects (<span id="headerSubCount">0</span>)
+      </button>
+      <button class="btn btn-primary" style="background:#eab308; color:#0f172a; border-color:#ca8a04;" onclick="exportSyllabusPdf()">Export Created Syllabus (.pdf)</button>
+      <button class="btn btn-primary" style="background:#0284c7; color:#ffffff; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
+      <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Consolidated Class Record (.xlsx)</button>
+    {% endif %}
     {% if current_user %}
     <div class="user-box">
       <div>
         <div class="u-name">{{ current_user.full_name }}</div>
-        <div class="u-role">{{ current_user.role }} &middot; {{ current_user.username }}</div>
+        <div class="u-role">{{ current_user.role|upper }}{% if not current_user.can_access_faculty_tools %} (Oversight){% endif %} &middot; {{ current_user.username }}</div>
       </div>
       {% if current_user.role == 'admin' %}
         <a href="javascript:void(0)" onclick="openAdminRoleModal()" style="font-weight:700; color:#b45309; text-decoration:none;">⚙️ Assign Roles</a>
@@ -860,6 +876,7 @@
 </header>
 
 <div class="app-shell">
+  {% if not current_user or current_user.can_access_faculty_tools %}
   <!-- LEFT SIDEBAR: Multi-Subject Manager Grouped by School Year & Semester -->
   <aside class="subject-sidebar" id="subjectSidebar">
     <div class="sb-header">
@@ -883,11 +900,13 @@
       <!-- Populated dynamically: grouped by School Year and Semester -->
     </div>
   </aside>
+  {% endif %}
 
   <!-- MAIN WORKSPACE -->
   <div class="main-workspace">
     <div class="container">
 
+      {% if not current_user or current_user.can_access_faculty_tools %}
       <!-- Active Subject Status Bar -->
       <div class="active-subject-bar" id="activeSubjectBar">
         <div class="asb-left">
@@ -957,22 +976,29 @@
     </div>
     <div id="weightValidationSummary"></div>
   </div>
+  {% endif %}
 
-  <!-- 5 Navigation Tabs -->
+  <!-- Navigation Tabs -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('tab-dashboard', this)">&#128202; Dashboard</button>
-    <button class="tab-btn" onclick="switchTab('tab-syllabus', this)">1. Syllabus Creator, Course &amp; CLO–PO–PI Setup</button>
-    <button class="tab-btn" onclick="switchTab('tab-assessments', this)">2. Setup: Formative (FA) &amp; Summative (SA)</button>
-    <button class="tab-btn" onclick="switchTab('tab-gradebook', this)">3. Consolidated Class Record &amp; CLO Grades</button>
-    <button class="tab-btn" onclick="switchTab('tab-cloreport', this)">4. CLO Assessment Report &amp; CO Tool</button>
-    <button class="tab-btn" onclick="switchTab('tab-cqi', this)">5. CQI Plan &amp; Syllabus Inspector</button>
-    <button class="tab-btn" onclick="switchTab('tab-approvals', this)" id="tabBtnApprovals" style="font-weight:700;">
-      📥 Requests for Approval <span id="approvalsBadge" class="badge" style="display:none; background:#dc2626; color:#fff; border-radius:10px; padding:2px 7px; font-size:0.72rem; margin-left:4px; font-weight:800;">0</span>
-    </button>
+    {% if current_user and not current_user.can_access_faculty_tools %}
+      <button class="tab-btn active" onclick="switchTab('tab-approvals', this)" id="tabBtnApprovals" style="font-weight:700;">
+        📥 Requests for Approval &amp; Institutional Oversight <span id="approvalsBadge" class="badge" style="display:none; background:#dc2626; color:#fff; border-radius:10px; padding:2px 7px; font-size:0.72rem; margin-left:4px; font-weight:800;">0</span>
+      </button>
+    {% else %}
+      <button class="tab-btn active" onclick="switchTab('tab-dashboard', this)">&#128202; Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('tab-syllabus', this)">1. Syllabus Creator, Course &amp; CLO–PO–PI Setup</button>
+      <button class="tab-btn" onclick="switchTab('tab-assessments', this)">2. Setup: Formative (FA) &amp; Summative (SA)</button>
+      <button class="tab-btn" onclick="switchTab('tab-gradebook', this)">3. Consolidated Class Record &amp; CLO Grades</button>
+      <button class="tab-btn" onclick="switchTab('tab-cloreport', this)">4. CLO Assessment Report &amp; CO Tool</button>
+      <button class="tab-btn" onclick="switchTab('tab-cqi', this)">5. CQI Plan &amp; Syllabus Inspector</button>
+      <button class="tab-btn" onclick="switchTab('tab-approvals', this)" id="tabBtnApprovals" style="font-weight:700;">
+        📥 Requests for Approval <span id="approvalsBadge" class="badge" style="display:none; background:#dc2626; color:#fff; border-radius:10px; padding:2px 7px; font-size:0.72rem; margin-left:4px; font-weight:800;">0</span>
+      </button>
+    {% endif %}
   </div>
 
   <!-- DASHBOARD: Student Scores, CLO Attainment vs Standard, PGO -> PI -> CLO Alignment -->
-  <div id="tab-dashboard" class="tab-panel active">
+  <div id="tab-dashboard" class="tab-panel{% if not current_user or current_user.can_access_faculty_tools %} active{% endif %}">
     <div class="card" style="padding:14px 20px;">
       <div class="card-header" style="margin-bottom:0; padding-bottom:0; border-bottom:none;">
         <div>
@@ -1856,7 +1882,7 @@
   </div>
 
   <!-- TAB: REQUESTS FOR APPROVAL (WORKFLOW PORTAL) -->
-  <div id="tab-approvals" class="tab-panel">
+  <div id="tab-approvals" class="tab-panel{% if current_user and not current_user.can_access_faculty_tools %} active{% endif %}">
     <!-- Header Card -->
     <div class="card" style="background:linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); color:#ffffff; padding:18px 22px; border-radius:12px; margin-bottom:16px; box-shadow:0 4px 12px rgba(30,58,138,0.18);">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
@@ -1876,8 +1902,32 @@
       </div>
     </div>
 
-    <!-- Filter Pills Toolbar -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+    <!-- Oversight KPI Summary Cards -->
+    <div id="approvalsKpiRow" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #3b82f6; background:#f8fafc;">
+        <div style="font-size:0.72rem; font-weight:700; color:#64748b; text-transform:uppercase;">Total Tracked Requests</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#1e293b; margin-top:2px;" id="statTotalRequests">0</div>
+        <div style="font-size:0.7rem; color:#94a3b8;">Institutional Submissions</div>
+      </div>
+      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #eab308; background:#fefce8;">
+        <div style="font-size:0.72rem; font-weight:700; color:#854d0e; text-transform:uppercase;">On-Going / Under Review</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#a16207; margin-top:2px;" id="statOngoingRequests">0</div>
+        <div style="font-size:0.7rem; color:#ca8a04;">Awaiting accommodation/steps</div>
+      </div>
+      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #22c55e; background:#f0fdf4;">
+        <div style="font-size:0.72rem; font-weight:700; color:#166534; text-transform:uppercase;">Approved &amp; Locked Syllabi</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#15803d; margin-top:2px;" id="statApprovedRequests">0</div>
+        <div style="font-size:0.7rem; color:#16a34a;">Compliant with all 4 review stages</div>
+      </div>
+      <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #ef4444; background:#fef2f2;">
+        <div style="font-size:0.72rem; font-weight:700; color:#991b1b; text-transform:uppercase;">Returned for Revision</div>
+        <div style="font-size:1.6rem; font-weight:800; color:#b91c1c; margin-top:2px;" id="statReturnedRequests">0</div>
+        <div style="font-size:0.7rem; color:#dc2626;">Awaiting faculty updates</div>
+      </div>
+    </div>
+
+    <!-- Filter Pills & Search Toolbar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f1f5f9; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0;">
       <div class="seg" id="approvalsFilterSeg">
         <button id="btnFilterPendingAction" class="active" onclick="switchApprovalsFilter('action')">
           ⚡ Action Required (<span id="countActionRequired">0</span>)
@@ -1889,7 +1939,30 @@
           🏛️ All Institutional (<span id="countAllRequests">0</span>)
         </button>
       </div>
-      <div style="font-size:0.78rem; color:#64748b;">
+
+      <!-- Oversight Sub-filters: Program & Status & Search -->
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <select id="approvalsStatusFilter" onchange="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+          <option value="all">All Statuses</option>
+          <option value="ongoing">🟡 On-going / Under Review</option>
+          <option value="approved">🟢 Approved &amp; Locked</option>
+          <option value="returned">🔴 Returned for Revision</option>
+        </select>
+        <select id="approvalsProgFilter" onchange="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; font-weight:600; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+          <option value="all">All Programs</option>
+          <option value="EE">EE - Electrical Eng.</option>
+          <option value="ECE">ECE - Electronics Eng.</option>
+          <option value="ME">ME - Mechanical Eng.</option>
+          <option value="CE">CE - Civil Eng.</option>
+          <option value="GE">GE - Geodetic Eng.</option>
+          <option value="MINE">MinE - Mining Eng.</option>
+          <option value="BSGEO">BSGeo - Geology</option>
+          <option value="SE">SE - Sanitary Eng.</option>
+          <option value="ABE">ABE - Biosystems Eng.</option>
+        </select>
+        <input type="text" id="approvalsSearchInput" placeholder="🔍 Search course, title, faculty..." oninput="renderApprovalsList()" style="padding:6px 10px; font-size:0.8rem; border:1px solid #cbd5e1; border-radius:6px; width:220px; background:#fff;" />
+      </div>
+      <div style="font-size:0.78rem; color:#64748b; width:100%; text-align:right;">
         <span id="approvalsSummaryText">Showing requests</span>
       </div>
     </div>
@@ -2303,6 +2376,7 @@
 
 
 <script>
+  window.CURRENT_USER = {{ current_user|tojson if current_user else 'null' }};
   let blueprint = null;
   let transmutation = [];
   let catalogData = { colleges: [], pgo_pi_catalog: [] };
@@ -2345,6 +2419,11 @@
     }
 
     await fetchCurrentUser();
+    if (currentUser && !currentUser.can_access_faculty_tools) {
+      switchTab("tab-approvals");
+      loadApprovalRequests(true);
+      return;
+    }
     await loadCoursesList();
     loadApprovalRequests();
   }
@@ -2795,6 +2874,9 @@
   }
 
   function switchTab(tabId, btnEl) {
+    if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && tabId !== "tab-approvals") {
+      tabId = "tab-approvals";
+    }
     document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
     document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
     const targetPanel = document.getElementById(tabId);
@@ -6341,9 +6423,15 @@
 
       // Enforce Institutional Requests Visibility
       const canViewInst = Boolean(data.can_view_institutional);
+      const isStaffUser = Boolean(data.is_staff) || (approvalsState.userInfo && !approvalsState.userInfo.can_access_faculty_tools);
       const btnAll = document.getElementById("btnFilterAllRequests");
       if (btnAll) {
         btnAll.style.display = canViewInst ? "inline-block" : "none";
+      }
+      if (isStaffUser) {
+        document.getElementById("btnFilterPendingAction")?.style.setProperty("display", "none");
+        document.getElementById("btnFilterMySubmissions")?.style.setProperty("display", "none");
+        approvalsState.filter = "all";
       }
 
       // Show/hide Assign Roles button for Admin
@@ -6383,7 +6471,9 @@
       }
 
       // Auto-set initial filter
-      if (!forceRefresh) {
+      if (isStaffUser) {
+        approvalsState.filter = "all";
+      } else if (!forceRefresh) {
         if (approvalsState.pendingActionForMe.length > 0) {
           approvalsState.filter = "action";
         } else if (approvalsState.mySubmissions.length > 0) {
@@ -6393,10 +6483,10 @@
         } else {
           approvalsState.filter = "submissions";
         }
-        document.getElementById("btnFilterPendingAction")?.classList.toggle("active", approvalsState.filter === "action");
-        document.getElementById("btnFilterMySubmissions")?.classList.toggle("active", approvalsState.filter === "submissions");
-        document.getElementById("btnFilterAllRequests")?.classList.toggle("active", approvalsState.filter === "all");
       }
+      document.getElementById("btnFilterPendingAction")?.classList.toggle("active", approvalsState.filter === "action");
+      document.getElementById("btnFilterMySubmissions")?.classList.toggle("active", approvalsState.filter === "submissions");
+      document.getElementById("btnFilterAllRequests")?.classList.toggle("active", approvalsState.filter === "all");
 
       renderApprovalsList();
     } catch(err) {
@@ -6421,12 +6511,51 @@
     else if (approvalsState.filter === "submissions") items = approvalsState.mySubmissions;
     else items = approvalsState.institutionalRequests;
 
+    // Sub-filters: Status & Program & Search Query
+    const statusFilt = document.getElementById("approvalsStatusFilter")?.value || "all";
+    const progFilt = document.getElementById("approvalsProgFilter")?.value || "all";
+    const query = (document.getElementById("approvalsSearchInput")?.value || "").toLowerCase().trim();
+
+    if (statusFilt === "ongoing") {
+      items = items.filter(c => {
+        const s = (c.workflow && c.workflow.status) || "";
+        return ["for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"].includes(s);
+      });
+    } else if (statusFilt === "approved") {
+      items = items.filter(c => (c.workflow && c.workflow.status) === "approved");
+    } else if (statusFilt === "returned") {
+      items = items.filter(c => (c.workflow && c.workflow.status) === "returned");
+    }
+
+    if (progFilt !== "all") {
+      items = items.filter(c => ((c.program_code || "").toUpperCase()) === progFilt);
+    }
+
+    if (query) {
+      items = items.filter(c => {
+        const text = `${c.course_code || ''} ${c.course_title || ''} ${c.faculty_name || ''} ${c.owner || ''} ${c.section || ''}`.toLowerCase();
+        return text.includes(query);
+      });
+    }
+
     const summaryText = document.getElementById("approvalsSummaryText");
     if (summaryText) {
-      if (approvalsState.filter === "action") summaryText.textContent = `Showing ${items.length} syllabus approval request(s) awaiting your action.`;
-      else if (approvalsState.filter === "submissions") summaryText.textContent = `Showing ${items.length} course(s) submitted by you.`;
-      else summaryText.textContent = `Showing ${items.length} total institutional requests.`;
+      summaryText.textContent = `Showing ${items.length} request(s).`;
     }
+
+    // Update KPI stat counters from all institutional requests
+    const allInst = approvalsState.institutionalRequests || [];
+    const statTot = document.getElementById("statTotalRequests");
+    if (statTot) statTot.textContent = allInst.length;
+    const ongoingItems = allInst.filter(c => ["for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"].includes((c.workflow && c.workflow.status) || ""));
+    const statOng = document.getElementById("statOngoingRequests");
+    if (statOng) statOng.textContent = ongoingItems.length;
+    const appItems = allInst.filter(c => (c.workflow && c.workflow.status) === "approved");
+    const statApp = document.getElementById("statApprovedRequests");
+    if (statApp) statApp.textContent = appItems.length;
+    const retItems = allInst.filter(c => (c.workflow && c.workflow.status) === "returned");
+    const statRet = document.getElementById("statReturnedRequests");
+    if (statRet) statRet.textContent = retItems.length;
 
     if (items.length === 0) {
       container.innerHTML = `
@@ -6513,12 +6642,18 @@
           <!-- Action Buttons Bar -->
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9;">
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-              <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'tab-syllabus')" style="font-weight:700;">
-                👁️ Open &amp; Inspect Syllabus
-              </button>
-              <button class="btn btn-sm btn-secondary" onclick="exportCourseSyllabusPdfDirect('${c.id}')">
-                📄 Syllabus PDF
-              </button>
+              ${(window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools) ? `
+                <button class="btn btn-sm btn-primary" onclick="exportCourseSyllabusPdfDirect('${c.id}')" style="font-weight:700;">
+                  📄 View / Download Syllabus PDF
+                </button>
+              ` : `
+                <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'tab-syllabus')" style="font-weight:700;">
+                  👁️ Open &amp; Inspect Syllabus
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="exportCourseSyllabusPdfDirect('${c.id}')">
+                  📄 Syllabus PDF
+                </button>
+              `}
               ${isApproved || (wf.signatures && wf.signatures.some(s => s.step === 'committee')) ? `
                 <button class="btn btn-sm btn-secondary" onclick="exportCourseEvaluationPdfDirect('${c.id}')">
                   📋 Evaluation Tool PDF
@@ -6526,37 +6661,44 @@
               ` : ''}
             </div>
 
-            <!-- Reviewer Action Buttons -->
+            <!-- Reviewer Action Buttons / Oversight Notice -->
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-              ${c.user_can_act ? `
-                <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:700;">
-                  📝 ${(status === 'for_committee_review' || status === 'for_committee_chair') ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
+              ${(window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools) ? `
+                <button class="btn btn-sm btn-outline-secondary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:600;">
+                  📋 View Review Checklist (FM-USeP-MID-02)
                 </button>
-                <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
-                  ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : 'Sign & Endorse')))}
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
-                  ↩️ Return for Revision
-                </button>
+                ${isApproved ? `<span class="badge" style="background:#dcfce7; color:#166534; font-weight:700;">🔒 Approved &amp; Officially Sealed</span>` : (isReturned ? `<span class="badge" style="background:#fee2e2; color:#991b1b; font-weight:700;">↩️ Returned to Faculty</span>` : `<span class="badge" style="background:#fef3c7; color:#854d0e; font-weight:700;">⏳ Awaiting: ${escapeHtml(wf.current_step_label || 'Review')}</span>`)}
               ` : `
-                ${(status !== 'draft') ? `
-                  <button class="btn btn-sm btn-outline-secondary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:600;">
-                    📋 View Review Checklist (FM-USeP-MID-02)
+                ${c.user_can_act ? `
+                  <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:700;">
+                    📝 ${(status === 'for_committee_review' || status === 'for_committee_chair') ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
+                  </button>
+                  <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
+                    ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : 'Sign & Endorse')))}
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
+                    ↩️ Return for Revision
+                  </button>
+                ` : `
+                  ${(status !== 'draft') ? `
+                    <button class="btn btn-sm btn-outline-secondary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:600;">
+                      📋 View Review Checklist (FM-USeP-MID-02)
+                    </button>
+                  ` : ''}
+                `}
+
+                ${(c.is_owner && isApproved) ? `
+                  <button class="btn btn-sm btn-outline-danger" onclick="promptRequestSyllabusRevision('${c.id}')" style="font-weight:700;">
+                    📝 Request Revision
+                  </button>
+                ` : ''}
+
+                ${(c.is_owner && status === 'for_committee_review' && (!wf.signatures || wf.signatures.length === 0)) ? `
+                  <button class="btn btn-sm btn-outline-danger" onclick="withdrawSyllabusRequestDirect('${c.id}')">
+                    Withdraw Submission
                   </button>
                 ` : ''}
               `}
-
-              ${(c.is_owner && isApproved) ? `
-                <button class="btn btn-sm btn-outline-danger" onclick="promptRequestSyllabusRevision('${c.id}')" style="font-weight:700;">
-                  📝 Request Revision
-                </button>
-              ` : ''}
-
-              ${(c.is_owner && status === 'for_committee_review' && (!wf.signatures || wf.signatures.length === 0)) ? `
-                <button class="btn btn-sm btn-outline-danger" onclick="withdrawSyllabusRequestDirect('${c.id}')">
-                  Withdraw Submission
-                </button>
-              ` : ''}
             </div>
           </div>
         </div>
@@ -8509,6 +8651,9 @@
     if (roles.includes("qa_head")) {
       parts.push("College Quality Assurance Head");
     }
+    if (roles.includes("staff")) {
+      parts.push("Academic Programs Staff (Oversight)");
+    }
     if (roles.includes("admin") && !parts.length) {
       parts.push("System Administrator");
     }
@@ -8532,6 +8677,7 @@
     document.getElementById("adminRoleCheckQa").checked = wfRoles.includes("qa_head");
     document.getElementById("adminRoleCheckAssocDean").checked = wfRoles.includes("associate_dean");
     document.getElementById("adminRoleCheckDean").checked = wfRoles.includes("dean");
+    document.getElementById("adminRoleCheckStaff").checked = wfRoles.includes("staff") || (faculty.role === "staff");
     document.getElementById("adminRoleCheckAdmin").checked = (faculty.role === "admin") || wfRoles.includes("admin");
 
     document.getElementById("adminRoleProgramGroup").style.display = isPh ? "block" : "none";
@@ -8563,6 +8709,7 @@
     if (document.getElementById("adminRoleCheckQa").checked) roles.push("qa_head");
     if (document.getElementById("adminRoleCheckDean").checked) roles.push("dean");
     else if (document.getElementById("adminRoleCheckAssocDean").checked) roles.push("associate_dean");
+    if (document.getElementById("adminRoleCheckStaff").checked) roles.push("staff");
     if (document.getElementById("adminRoleCheckAdmin").checked) roles.push("admin");
     if (document.getElementById("adminRoleCheckFaculty").checked) roles.push("review_committee");
 
@@ -8588,6 +8735,7 @@
     if (document.getElementById("adminRoleCheckQa").checked) roles.push("qa_head");
     if (document.getElementById("adminRoleCheckAssocDean").checked) roles.push("associate_dean");
     if (document.getElementById("adminRoleCheckDean").checked) roles.push("dean");
+    if (document.getElementById("adminRoleCheckStaff").checked) roles.push("staff");
     if (document.getElementById("adminRoleCheckAdmin").checked) roles.push("admin");
 
     if (!roles.length) {
@@ -8683,6 +8831,10 @@
           <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
             <input type="checkbox" id="adminRoleCheckDean" value="dean" onchange="updateAdminMultiRoleTitle()" />
             <span>🏛️ College Dean</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+            <input type="checkbox" id="adminRoleCheckStaff" value="staff" onchange="updateAdminMultiRoleTitle()" />
+            <span>📋 Academic Staff (Oversight)</span>
           </label>
           <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
             <input type="checkbox" id="adminRoleCheckAdmin" value="admin" onchange="updateAdminMultiRoleTitle()" />

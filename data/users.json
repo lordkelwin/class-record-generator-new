@@ -33,7 +33,7 @@
     "password_hash": "scrypt:32768:8:1$hxaWtl9Fun4v5vIR$a0766e7bc713350e51b40f93192f30ec767678f935216e497d71c0893cfea51df0bedbca9a7320d15e9608da613905bc0f04b9ad484574cffeedaf2dc6555df2",
     "must_change_password": false,
     "created_at": "2026-10-23T15:27:35",
-    "last_login": "2026-10-24T09:32:38"
+    "last_login": "2026-10-24T11:37:28"
   },
   "qahead_ce": {
     "full_name": "Engr. College QA Head",
@@ -967,7 +967,7 @@
     "password_hash": "scrypt:32768:8:1$MseqgJuthGB8q2Xn$5c21e41885e6fae272c60dcb43724040caadf557f6b8dde3966cf519b47d5405aa6e39a9deffe379a62d68f4a7e0485651543d2422a9242493871b4f8011be0d",
     "must_change_password": false,
     "created_at": "2026-10-24T05:13:01",
-    "last_login": null
+    "last_login": "2026-10-24T11:37:15"
   },
   "staff_benilan": {
     "full_name": "Lemmor T. Benilan",
@@ -1156,6 +1156,22 @@
     "created_at": "2026-10-24T06:42:46",
     "last_login": null
   },
+  "staff_office": {
+    "full_name": "Academic Affairs Staff",
+    "role": "staff",
+    "workflow_roles": [
+      "staff"
+    ],
+    "position_title": "Academic Programs Staff (Oversight)",
+    "program_codes": [
+      "*"
+    ],
+    "college": "COLLEGE OF ENGINEERING",
+    "password_hash": "scrypt:32768:8:1$lTtr619g4u2oBjkR$03c2ce8787f5267ecba300b1f74826cc0e58b4b3d3c871116ce93d36ee0a0e86af2fa8086378c86024804c408c43607e29f47c9055b551a08f054f698e62d9b5",
+    "must_change_password": false,
+    "created_at": "2026-10-24T11:36:22",
+    "last_login": null
+  },
   "committee_arenga": {
     "full_name": "Engr. Delan Zoe H. Arenga",
     "role": "faculty",
@@ -1167,9 +1183,9 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$xVbx4m1H3T7EtZ80$6123e31a2cbe57d0c5df740c6ff90547d7f94ee2cc88e139d2b626de2ab26d7cf7951c9af1cfb37778d920f53a04c47c64e1d88731b4e02fcfda3200172d0fff",
+    "password_hash": "scrypt:32768:8:1$TDnFKyh5neE2j7hH$206449ca24519115f124d63b8b2501ef27ff748c1e5715f71cd29aaa6aa9f955c8da7e7a811593e1afb1403607435a60e30626258739e19e2059b2032af965f2",
     "must_change_password": false,
-    "created_at": "2026-10-24T10:00:12",
+    "created_at": "2026-10-24T11:36:22",
     "last_login": null
   },
   "committee_ravida": {
@@ -1183,9 +1199,9 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$xVbx4m1H3T7EtZ80$6123e31a2cbe57d0c5df740c6ff90547d7f94ee2cc88e139d2b626de2ab26d7cf7951c9af1cfb37778d920f53a04c47c64e1d88731b4e02fcfda3200172d0fff",
+    "password_hash": "scrypt:32768:8:1$TDnFKyh5neE2j7hH$206449ca24519115f124d63b8b2501ef27ff748c1e5715f71cd29aaa6aa9f955c8da7e7a811593e1afb1403607435a60e30626258739e19e2059b2032af965f2",
     "must_change_password": false,
-    "created_at": "2026-10-24T10:00:12",
+    "created_at": "2026-10-24T11:36:22",
     "last_login": null
   },
   "committee_basan": {
@@ -1199,9 +1215,9 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$xVbx4m1H3T7EtZ80$6123e31a2cbe57d0c5df740c6ff90547d7f94ee2cc88e139d2b626de2ab26d7cf7951c9af1cfb37778d920f53a04c47c64e1d88731b4e02fcfda3200172d0fff",
+    "password_hash": "scrypt:32768:8:1$TDnFKyh5neE2j7hH$206449ca24519115f124d63b8b2501ef27ff748c1e5715f71cd29aaa6aa9f955c8da7e7a811593e1afb1403607435a60e30626258739e19e2059b2032af965f2",
     "must_change_password": false,
-    "created_at": "2026-10-24T10:00:12",
+    "created_at": "2026-10-24T11:36:22",
     "last_login": null
   },
   "programhead_claro": {
@@ -1216,9 +1232,9 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$xVbx4m1H3T7EtZ80$6123e31a2cbe57d0c5df740c6ff90547d7f94ee2cc88e139d2b626de2ab26d7cf7951c9af1cfb37778d920f53a04c47c64e1d88731b4e02fcfda3200172d0fff",
+    "password_hash": "scrypt:32768:8:1$TDnFKyh5neE2j7hH$206449ca24519115f124d63b8b2501ef27ff748c1e5715f71cd29aaa6aa9f955c8da7e7a811593e1afb1403607435a60e30626258739e19e2059b2032af965f2",
     "must_change_password": false,
-    "created_at": "2026-10-24T10:00:12",
+    "created_at": "2026-10-24T11:36:22",
     "last_login": null
   }
 }

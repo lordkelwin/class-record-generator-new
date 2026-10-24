@@ -59,6 +59,18 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # 25 MB upload limit
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
+from functools import wraps
+
+def faculty_tools_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        u = current_user()
+        if u and not u.get("can_access_faculty_tools", True):
+            return jsonify({"error": "Staff accounts have oversight access only and cannot create or edit course syllabi."}), 403
+        return fn(*args, **kwargs)
+    return wrapper
+
+
 # Login screen, faculty accounts (admin-managed) and a global login guard for every page/API
 
 install_auth(app)
@@ -189,6 +201,7 @@ def api_download_sample_pdf():
 
 @app.route("/api/analyze-pdf", methods=["POST"])
 
+@faculty_tools_required
 def api_analyze_pdf():
 
     use_sample = request.form.get("use_sample", "false").lower() == "true"
@@ -319,6 +332,7 @@ def api_analyze_pdf():
 
 @app.route("/api/import-roster", methods=["POST"])
 
+@faculty_tools_required
 def api_import_roster():
 
     if "file" not in request.files or not request.files["file"].filename:
@@ -445,6 +459,7 @@ def api_transmutation():
 
 @app.route("/api/export-syllabus-pdf", methods=["POST"])
 
+@faculty_tools_required
 def api_export_syllabus_pdf():
 
     data = request.get_json(silent=True)
@@ -519,6 +534,7 @@ def api_export_syllabus_pdf():
 
 @app.route("/api/export-clo-report-pdf", methods=["POST"])
 
+@faculty_tools_required
 def api_export_clo_report_pdf():
 
     data = request.get_json(silent=True)
@@ -591,6 +607,7 @@ def api_export_clo_report_pdf():
 
 @app.route("/api/export-excel", methods=["POST"])
 
+@faculty_tools_required
 def api_export_excel():
 
     data = request.get_json(silent=True)
@@ -742,6 +759,7 @@ def api_get_course(course_id):
 
 @app.route("/api/courses", methods=["POST"])
 
+@faculty_tools_required
 def api_create_course():
 
     user = current_user()
@@ -870,6 +888,7 @@ def api_create_course():
 
 @app.route("/api/courses/<course_id>", methods=["PUT"])
 
+@faculty_tools_required
 def api_update_course(course_id):
 
     user = current_user()
@@ -900,6 +919,7 @@ def api_update_course(course_id):
 
 @app.route("/api/courses/<course_id>/duplicate", methods=["POST"])
 
+@faculty_tools_required
 def api_duplicate_course(course_id):
 
     user = current_user()
@@ -938,6 +958,7 @@ def api_duplicate_course(course_id):
 
 @app.route("/api/courses/<course_id>", methods=["DELETE"])
 
+@faculty_tools_required
 def api_delete_course(course_id):
 
     user = current_user()
@@ -1116,7 +1137,8 @@ def api_get_workflow_requests():
 
     w_roles = user.get("workflow_roles") or []
     is_admin = (user.get("role") == "admin")
-    can_view_institutional = is_admin or any(r in w_roles for r in ["program_head", "qa_head", "dean", "associate_dean"])
+    is_staff = (user.get("role") == "staff" or "staff" in w_roles)
+    can_view_institutional = is_admin or is_staff or any(r in w_roles for r in ["program_head", "qa_head", "dean", "associate_dean"])
 
 
 
@@ -1150,7 +1172,7 @@ def api_get_workflow_requests():
 
         if can_view_institutional:
             # If program head without college-wide rights, only show their program's courses
-            if "program_head" in w_roles and not (is_admin or "dean" in w_roles or "associate_dean" in w_roles or "qa_head" in w_roles):
+            if "program_head" in w_roles and not (is_admin or is_staff or "dean" in w_roles or "associate_dean" in w_roles or "qa_head" in w_roles):
                 p_codes = user.get("program_codes") or []
                 c_prog = (c.get("program_code") or "").upper()
                 if not p_codes or "*" in p_codes or c_prog in p_codes:
@@ -1168,6 +1190,8 @@ def api_get_workflow_requests():
 
         "pending_count": len(pending_action_for_me),
         "can_view_institutional": can_view_institutional,
+        "is_staff": is_staff,
+        "can_access_faculty_tools": user.get("can_access_faculty_tools", True),
 
         "pending_action_for_me": pending_action_for_me,
 
@@ -1178,6 +1202,8 @@ def api_get_workflow_requests():
         "user_info": {
 
             "username": user["username"],
+            "is_staff": is_staff,
+            "can_access_faculty_tools": user.get("can_access_faculty_tools", True),
 
             "full_name": user.get("full_name"),
 
@@ -1205,6 +1231,7 @@ def api_get_workflow_requests():
 
 @app.route("/api/courses/<course_id>/workflow/submit", methods=["POST"])
 
+@faculty_tools_required
 def api_submit_syllabus(course_id):
 
     user = current_user()
@@ -1271,6 +1298,7 @@ def api_submit_syllabus(course_id):
 
 @app.route("/api/courses/<course_id>/workflow/withdraw", methods=["POST"])
 
+@faculty_tools_required
 def api_withdraw_syllabus(course_id):
 
     user = current_user()
@@ -1600,6 +1628,7 @@ def api_export_course_syllabus_pdf(course_id):
 
 
 @app.route("/api/courses/<course_id>/workflow/request-revision", methods=["POST"])
+@faculty_tools_required
 def api_request_syllabus_revision(course_id):
     user = current_user()
     if not user:

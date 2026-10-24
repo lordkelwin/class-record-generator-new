@@ -14,6 +14,7 @@
   .b-ph { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
   .b-qa { background:#ccfbf1; color:#0f766e; border:1px solid #99f6e4; }
   .b-dean { background:#fae8ff; color:#86198f; border:1px solid #f5d0fe; }
+  .b-staff { background:#ede9fe; color:#5b21b6; border:1px solid #ddd6fe; }
   .b-warn { background:#fee2e2; color:#991b1b; }
   
   .create-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:20px; }
@@ -105,6 +106,10 @@
           <label class="role-label">
             <input type="checkbox" name="roles" value="dean" id="createCheckDean" onchange="updateCreateTitle()" />
             <span>🏛️ College Dean</span>
+          </label>
+          <label class="role-label">
+            <input type="checkbox" name="roles" value="staff" id="createCheckStaff" onchange="updateCreateTitle()" />
+            <span>📋 Academic Staff (Oversight)</span>
           </label>
           <label class="role-label">
             <input type="checkbox" name="roles" value="admin" id="createCheckAdmin" onchange="updateCreateTitle()" />
@@ -247,6 +252,10 @@
                 <span>🏛️ College Dean</span>
               </label>
               <label class="role-label">
+                <input type="checkbox" name="roles" value="staff" id="modalRoleStaff" onchange="updateModalTitle()" />
+                <span>📋 Academic Staff (Oversight)</span>
+              </label>
+              <label class="role-label">
                 <input type="checkbox" name="roles" value="admin" id="modalRoleAdmin" onchange="updateModalTitle()" />
                 <span>⚙️ Administrator</span>
               </label>
@@ -304,6 +313,9 @@
       if (roles.includes("qa_head")) {
         parts.push("College Quality Assurance Head");
       }
+      if (roles.includes("staff")) {
+        parts.push("Academic Programs Staff (Oversight)");
+      }
       if (roles.includes("admin") && !parts.length) {
         parts.push("System Administrator");
       }
@@ -342,6 +354,7 @@
       document.getElementById("modalRoleQa").checked = wf.includes("qa_head");
       document.getElementById("modalRoleAssocDean").checked = wf.includes("associate_dean");
       document.getElementById("modalRoleDean").checked = wf.includes("dean");
+      document.getElementById("modalRoleStaff").checked = wf.includes("staff");
       document.getElementById("modalRoleAdmin").checked = Boolean(isAdmin) || wf.includes("admin");
 
       document.getElementById("modalPhProgsBox").style.display = isPh ? "block" : "none";
