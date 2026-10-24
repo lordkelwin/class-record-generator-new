@@ -744,10 +744,14 @@ class SyllabusBlueprint:
                 TermConfig(term_name="Finals", weight_pct=50.0),
             ]
 
-        course_outcomes = [
-            CourseOutcome(**{k: v for k, v in co.items() if k in CourseOutcome.__dataclass_fields__})
-            for co in data.get("course_outcomes", [])
-        ]
+        course_outcomes = []
+        for co in data.get("course_outcomes", []):
+            co_dict = dict(co)
+            if "co_id" not in co_dict and "code" in co_dict:
+                co_dict["co_id"] = co_dict["code"]
+            filtered = {k: v for k, v in co_dict.items() if k in CourseOutcome.__dataclass_fields__}
+            if "co_id" in filtered:
+                course_outcomes.append(CourseOutcome(**filtered))
 
         categories = []
         for cat in data.get("categories", []):

@@ -1464,9 +1464,11 @@ def api_sign_workflow_step(course_id):
 
 
 
+    overall_rec = (data.get("overall_recommendation") or "").strip()
+
     try:
 
-        wf = syllabus_workflow.sign(doc, user, decision=decision, remarks=remarks)
+        wf = syllabus_workflow.sign(doc, user, decision=decision, remarks=remarks, overall_recommendation=overall_rec)
 
         courses_store.save_course_doc(doc)
 

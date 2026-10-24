@@ -2,7 +2,7 @@
   "id": "c_ced389677e",
   "owner": "admin",
   "created_at": "2026-10-23T01:11:45",
-  "updated_at": "2026-10-23T01:11:45",
+  "updated_at": "2026-10-24T08:46:17",
   "course_code": "EE 211",
   "course_title": "Electrical Circuits 1",
   "section": "EE 2A",
@@ -12,13 +12,13 @@
       "university": "University of Southeastern Philippines",
       "college": "COLLEGE OF ENGINEERING",
       "department": "Department of Electrical Engineering",
-      "address": "I\u00f1igo St., Bo. Obrero, Davao City 8000",
+      "address": "Iñigo St., Bo. Obrero, Davao City 8000",
       "program_name": "Bachelor of Science in Electrical Engineering",
       "program_code": "EE",
       "academic_unit": "Engineering",
       "course_code": "EE 211",
       "course_title": "Electrical Circuits 1",
-      "credit_units": "3.0 Units \u2013 Lecture",
+      "credit_units": "3.0 Units – Lecture",
       "lec_lab": "Lecture",
       "schedule": "MWF 08:00 AM - 09:00 AM",
       "room": "304",
@@ -31,18 +31,18 @@
       "passing_percentage": 75.0,
       "grading_mode": "two_term",
       "iga_framework": "new_5_igas",
-      "version_number": "2026\u20131.0",
+      "version_number": "2026–1.0",
       "version_note": "New",
       "describe_revision": "",
       "year_level": "Second Year",
       "office": "College of Engineering",
       "course_description": "The course covers nodal and mesh analysis; application of network theorems in circuit analysis; analysis of circuits with controlled sources and ideal op-amps; fundamentals of capacitors and inductors; analysis of dc-driven RL, RC, and RLC circuits; sinusoidal steady-state analysis of general RLC circuits.",
-      "workload_description": "With 18 weeks at 3 contact hours per week (54 contact hours total) the expected student workload is as follows:\n\u2022 Group Activities for Formative Assessment\n\u2022 Total of 4 quizzes (2 for both Midterm and Final Term)\n\u2022 Midterm and Final Examinations\nIn instances where face-to-face sessions are impractical, online sessions, asynchronous class, or their equivalent will be provided.",
+      "workload_description": "With 18 weeks at 3 contact hours per week (54 contact hours total) the expected student workload is as follows:\n• Group Activities for Formative Assessment\n• Total of 4 quizzes (2 for both Midterm and Final Term)\n• Midterm and Final Examinations\nIn instances where face-to-face sessions are impractical, online sessions, asynchronous class, or their equivalent will be provided.",
       "passing_grade_conditions": "Students shall take all assessments and examinations and must have an attendance of not less than 80% in the class. In case of lacking output or examination, a grade of INC (Incomplete) shall be given in accordance with the existing rules and regulations reflected in the student handbook. In case of incurring absences of more than 20% of the total expected number of attendances, a grade of UW (Unauthorized Withdrawal) will be reflected in the grade sheet.",
-      "prerequisites": "NAT SCI 2 \u2013 PHYSICS FOR ENGINEERS; MATH 121 \u2013 ENGINEERING CALCULUS 2",
-      "corequisites": "EE 211L \u2013 ELECTRICAL CIRCUITS 1 LAB",
+      "prerequisites": "NAT SCI 2 – PHYSICS FOR ENGINEERS; MATH 121 – ENGINEERING CALCULUS 2",
+      "corequisites": "EE 211L – ELECTRICAL CIRCUITS 1 LAB",
       "contact_hours": "3 Hours/Week (54 Hours/Semester)",
-      "consultation_hours": "Monday-Friday, 8:00 AM \u2013 05:00 PM (excluding lunch break)",
+      "consultation_hours": "Monday-Friday, 8:00 AM – 05:00 PM (excluding lunch break)",
       "faculty_email": "ejjtano0120241110@usep.edu.ph",
       "faculty_contact": "09262995868",
       "sdg_alignments": "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure",
@@ -109,94 +109,94 @@
       ],
       "learning_plan_table": [
         {
-          "ilo": "\u2022 Recognize the university VMGO & Institutional Graduate Attributes.\n\u2022 Appreciates the significance of PEOs and PGOs of the programs.\n\u2022 Recognize the rules and regulations of the course and the grading system.",
+          "ilo": "• Recognize the university VMGO & Institutional Graduate Attributes.\n• Appreciates the significance of PEOs and PGOs of the programs.\n• Recognize the rules and regulations of the course and the grading system.",
           "clo": "",
           "time_frame": "1 hour",
-          "topics": "\u2022 Course Orientation\n\u2022 VMGO & IGA of the University\n\u2022 PEOs & PGOs of the program.\n\u2022 Rules and regulations of the course & grading system\n\u2022 Presentation of the course outline",
-          "tla": "\u2022 On-site or online meeting",
-          "required_reading": "\u2022 USeP Student Handbook (2016 edition)",
-          "assessment_activities": "\u2022 N/A"
+          "topics": "• Course Orientation\n• VMGO & IGA of the University\n• PEOs & PGOs of the program.\n• Rules and regulations of the course & grading system\n• Presentation of the course outline",
+          "tla": "• On-site or online meeting",
+          "required_reading": "• USeP Student Handbook (2016 edition)",
+          "assessment_activities": "• N/A"
         },
         {
-          "ilo": "\u2022 Formulate basic circuit equations using voltage and current laws to solve unknown variables in fundamental networks. (CDIO Skills: 1.2.1, 2.1.1)",
+          "ilo": "• Formulate basic circuit equations using voltage and current laws to solve unknown variables in fundamental networks. (CDIO Skills: 1.2.1, 2.1.1)",
           "clo": "CLO1",
           "time_frame": "4 hours",
-          "topics": "\u2022 DC/AC SOURCES AND ELECTRICAL CIRCUIT COMPONENTS, VOLTAGE AND CURRENT LAWS",
-          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem sets\n\u2022 Lecture",
-          "required_reading": "\u2022 Ref01-08",
-          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+          "topics": "• DC/AC SOURCES AND ELECTRICAL CIRCUIT COMPONENTS, VOLTAGE AND CURRENT LAWS",
+          "tla": "• Student-based Learning\n• Flipped Classroom\n• Collaborative and Team Learning\n• Active Learning\n• Technology Integration\n• Problem sets\n• Lecture",
+          "required_reading": "• Ref01-08",
+          "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz"
         },
         {
-          "ilo": "\u2022 Set up and solve linear equations using general nodal and mesh analysis methods for complex circuit networks. (CDIO Skills: 1.2.1, 2.1.2)",
+          "ilo": "• Set up and solve linear equations using general nodal and mesh analysis methods for complex circuit networks. (CDIO Skills: 1.2.1, 2.1.2)",
           "clo": "CLO1",
           "time_frame": "7 hours",
-          "topics": "\u2022 NODAL AND MESH ANALYSIS\n  o General mesh analysis\n  o General nodal analysis",
-          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem sets\n\u2022 Lecture",
-          "required_reading": "\u2022 Ref01-08",
-          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+          "topics": "• NODAL AND MESH ANALYSIS\n  o General mesh analysis\n  o General nodal analysis",
+          "tla": "• Student-based Learning\n• Flipped Classroom\n• Collaborative and Team Learning\n• Active Learning\n• Technology Integration\n• Problem sets\n• Lecture",
+          "required_reading": "• Ref01-08",
+          "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz"
         },
         {
-          "ilo": "\u2022 Simplify multi-source electrical networks into equivalent circuits using standard theorems. (CDIO Skills: 1.2.1, 2.1.3, 2.1.4)",
+          "ilo": "• Simplify multi-source electrical networks into equivalent circuits using standard theorems. (CDIO Skills: 1.2.1, 2.1.3, 2.1.4)",
           "clo": "CLO2",
           "time_frame": "12 hours",
-          "topics": "\u2022 CIRCUIT ANALYSIS TECHNIQUES\n  o Linearity and superposition\n  o Source transformation\n  o Thevenin and Norton equivalent circuits\n  o Maximum power transfer\n  o Delta-Wye conversion\n  o Circuits with controlled sources and the ideal op amp",
-          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem sets\n\u2022 Lecture",
-          "required_reading": "\u2022 Ref01-08",
-          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+          "topics": "• CIRCUIT ANALYSIS TECHNIQUES\n  o Linearity and superposition\n  o Source transformation\n  o Thevenin and Norton equivalent circuits\n  o Maximum power transfer\n  o Delta-Wye conversion\n  o Circuits with controlled sources and the ideal op amp",
+          "tla": "• Student-based Learning\n• Flipped Classroom\n• Collaborative and Team Learning\n• Active Learning\n• Technology Integration\n• Problem sets\n• Lecture",
+          "required_reading": "• Ref01-08",
+          "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz"
         },
         {
-          "ilo": "\u2022 Demonstrate mastery of foundational circuit analysis and network theorems.",
+          "ilo": "• Demonstrate mastery of foundational circuit analysis and network theorems.",
           "clo": "CLO1\nCLO2",
           "time_frame": "3 hours",
           "topics": "MIDTERM EXAMINATION",
-          "tla": "\u2022 Conduct of Midterm Examination \u2013 Independent Assessment",
+          "tla": "• Conduct of Midterm Examination – Independent Assessment",
           "required_reading": "",
-          "assessment_activities": "\u2022 SA2 \u2013 Term Examination"
+          "assessment_activities": "• SA2 – Term Examination"
         },
         {
-          "ilo": "\u2022 Explain the characteristics of energy-storing elements and calculate their voltage-current relationship. (CDIO Skills: 1.2.1, 2.1.1)",
+          "ilo": "• Explain the characteristics of energy-storing elements and calculate their voltage-current relationship. (CDIO Skills: 1.2.1, 2.1.1)",
           "clo": "CLO1",
           "time_frame": "4 hours",
-          "topics": "\u2022 CHARACTERISTICS OF ENERGY-STORING ELEMENTS\n  o Capacitors and capacitance\n  o Inductors and inductance",
-          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem Sets\n\u2022 Lecture",
-          "required_reading": "\u2022 Ref01-08",
-          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+          "topics": "• CHARACTERISTICS OF ENERGY-STORING ELEMENTS\n  o Capacitors and capacitance\n  o Inductors and inductance",
+          "tla": "• Student-based Learning\n• Flipped Classroom\n• Collaborative and Team Learning\n• Active Learning\n• Technology Integration\n• Problem Sets\n• Lecture",
+          "required_reading": "• Ref01-08",
+          "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz"
         },
         {
-          "ilo": "\u2022 Determine the transient and steady-state responses of source-free and driven first-order circuits. (CDIO Skills: 1.2.1, 2.1.2, 2.1.3)",
+          "ilo": "• Determine the transient and steady-state responses of source-free and driven first-order circuits. (CDIO Skills: 1.2.1, 2.1.2, 2.1.3)",
           "clo": "CLO1\nCLO2",
           "time_frame": "8 hours",
-          "topics": "\u2022 ANALYSIS OF RL AND RC CIRCUITS\n  o Source-free RL and RC circuits\n  o Driven RL and RC circuits",
-          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Problem Sets\n\u2022 Lecture",
-          "required_reading": "\u2022 Ref01-08",
-          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+          "topics": "• ANALYSIS OF RL AND RC CIRCUITS\n  o Source-free RL and RC circuits\n  o Driven RL and RC circuits",
+          "tla": "• Student-based Learning\n• Flipped Classroom\n• Collaborative and Team Learning\n• Active Learning\n• Technology Integration\n• Problem Sets\n• Lecture",
+          "required_reading": "• Ref01-08",
+          "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz"
         },
         {
-          "ilo": "\u2022 Calculate the complete response of series and parallel second-order circuits. (CDIO Skills: 1.2.1, 2.1.2, 2.1.5)",
+          "ilo": "• Calculate the complete response of series and parallel second-order circuits. (CDIO Skills: 1.2.1, 2.1.2, 2.1.5)",
           "clo": "CLO1\nCLO2",
           "time_frame": "6 hours",
-          "topics": "\u2022 ANALYSIS OF RLC CIRCUITS\n  o Source-free series and parallel RLC circuits\n  o Complete response of RLC circuits",
-          "tla": "\u2022 Student-based Learning\n\u2022 Flipped Classroom\n\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Learning Journals\n\u2022 Lecture",
-          "required_reading": "\u2022 Ref01-08",
-          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+          "topics": "• ANALYSIS OF RLC CIRCUITS\n  o Source-free series and parallel RLC circuits\n  o Complete response of RLC circuits",
+          "tla": "• Student-based Learning\n• Flipped Classroom\n• Collaborative and Team Learning\n• Active Learning\n• Technology Integration\n• Learning Journals\n• Lecture",
+          "required_reading": "• Ref01-08",
+          "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz"
         },
         {
-          "ilo": "\u2022 Apply phasor concepts and impedance parameters to perform nodal and mesh analysis in the frequency domain. (CDIO Skills: 1.2.1, 2.1.2, 2.1.4)",
+          "ilo": "• Apply phasor concepts and impedance parameters to perform nodal and mesh analysis in the frequency domain. (CDIO Skills: 1.2.1, 2.1.2, 2.1.4)",
           "clo": "CLO1\nCLO2",
           "time_frame": "6 hours",
-          "topics": "\u2022 SINUSOIDAL STEADY-STATE ANALYSIS IN THE FREQUENCY DOMAIN\n  o The phasor concept and phasor diagram\n  o Concept of impedance and admittance\n  o Nodal and mesh analysis",
-          "tla": "\u2022 Collaborative and Team Learning\n\u2022 Active Learning\n\u2022 Technology Integration\n\u2022 Learning Journals\n\u2022 Lecture",
-          "required_reading": "\u2022 Ref01-08",
-          "assessment_activities": "\u2022 FA1 \u2013 Group Activity\n\u2022 SA1 \u2013 Quiz"
+          "topics": "• SINUSOIDAL STEADY-STATE ANALYSIS IN THE FREQUENCY DOMAIN\n  o The phasor concept and phasor diagram\n  o Concept of impedance and admittance\n  o Nodal and mesh analysis",
+          "tla": "• Collaborative and Team Learning\n• Active Learning\n• Technology Integration\n• Learning Journals\n• Lecture",
+          "required_reading": "• Ref01-08",
+          "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz"
         },
         {
-          "ilo": "\u2022 Demonstrate mastery of time-varying circuits, transient analysis, and frequency-domain steady-state analysis.",
+          "ilo": "• Demonstrate mastery of time-varying circuits, transient analysis, and frequency-domain steady-state analysis.",
           "clo": "CLO1\nCLO2",
           "time_frame": "3 hours",
           "topics": "FINAL EXAMINATION",
-          "tla": "\u2022 Conduct of Final Examination \u2013 Independent Assessment",
+          "tla": "• Conduct of Final Examination – Independent Assessment",
           "required_reading": "",
-          "assessment_activities": "\u2022 SA2 \u2013 Term Examination"
+          "assessment_activities": "• SA2 – Term Examination"
         }
       ],
       "references_table": [
@@ -257,7 +257,7 @@
         {
           "number": "5",
           "title": "Submission of Coursework",
-          "description": "Extensions and late submissions of requirements will only be considered if done in writing to the lecturer at least two days before the due date. Generally, no extension will be given for the assignments.\n\u2022 Should work be submitted after the due date without written approval for an extension, a penalty of 5% deduction from the grade will be incurred for every 2 days it is late.\n\u2022 Should the work be assessed as being close to a PASS grade, but the standard has not yet been fully met, the lecturer may offer the opportunity to resubmit."
+          "description": "Extensions and late submissions of requirements will only be considered if done in writing to the lecturer at least two days before the due date. Generally, no extension will be given for the assignments.\n• Should work be submitted after the due date without written approval for an extension, a penalty of 5% deduction from the grade will be incurred for every 2 days it is late.\n• Should the work be assessed as being close to a PASS grade, but the standard has not yet been fully met, the lecturer may offer the opportunity to resubmit."
         },
         {
           "number": "6",
@@ -267,12 +267,12 @@
         {
           "number": "7",
           "title": "Academic Honesty",
-          "description": "All USePians are bound to follow the rules and regulations stipulated in the student handbook of the University and the College. Academic dishonesty includes cheating in any form, plagiarism, and similar offenses.\n\u2022 Cheating on any assignment or examination incurs a minimum penalty of zero for that work and referral to OSAS.\n\u2022 Submitting AI-generated content as original work without disclosure is considered academic dishonesty (max 15% similarity threshold)."
+          "description": "All USePians are bound to follow the rules and regulations stipulated in the student handbook of the University and the College. Academic dishonesty includes cheating in any form, plagiarism, and similar offenses.\n• Cheating on any assignment or examination incurs a minimum penalty of zero for that work and referral to OSAS.\n• Submitting AI-generated content as original work without disclosure is considered academic dishonesty (max 15% similarity threshold)."
         },
         {
           "number": "8",
           "title": "Conduct of Quizzes and Examinations",
-          "description": "\u2022 Keep calculator jackets, smartphones, and irrelevant items inside bags.\n\u2022 Do not round off intermediate values to avoid accumulated rounding errors; final answers must be in three decimal places.\n\u2022 Write legibly using black or blue ballpoint pen and show all pertinent solutions clearly.\n\u2022 Math plate is used during quizzes and bluebook for term examinations.\n\u2022 No special quizzes or examinations will be given except for valid, documented reasons."
+          "description": "• Keep calculator jackets, smartphones, and irrelevant items inside bags.\n• Do not round off intermediate values to avoid accumulated rounding errors; final answers must be in three decimal places.\n• Write legibly using black or blue ballpoint pen and show all pertinent solutions clearly.\n• Math plate is used during quizzes and bluebook for term examinations.\n• No special quizzes or examinations will be given except for valid, documented reasons."
         },
         {
           "number": "9",
@@ -675,7 +675,7 @@
       },
       {
         "student_id": "2024-01487",
-        "last_name": "A\u00f1asco",
+        "last_name": "Añasco",
         "first_name": "Jan Elie Alcoseba",
         "middle_initial": "",
         "program_year": "EE 2A",
@@ -911,7 +911,7 @@
       {
         "student_id": "2025-00271",
         "last_name": "Castrodes",
-        "first_name": "Timothy John Cai\u00f1a",
+        "first_name": "Timothy John Caiña",
         "middle_initial": "",
         "program_year": "EE 2A",
         "scores": {
@@ -1246,7 +1246,7 @@
           "number": 1,
           "title": "1. Subject Matter Expertise and Currency",
           "subtitle": "Depth of knowledge, current trends, curriculum updates.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Course topics and circuit simulation examples were aligned with current engineering standards."
         },
         {
@@ -1254,7 +1254,7 @@
           "number": 2,
           "title": "2. Pedagogical Skills and Teaching Methodology",
           "subtitle": "Use of diverse strategies (Problem-based learning, active learning etc.), clarity of objectives, critical thinking stimulation.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Flipped classroom, collaborative team learning, and structured problem sets were actively utilized."
         },
         {
@@ -1262,7 +1262,7 @@
           "number": 3,
           "title": "3. Instructional Design and Course Structure",
           "subtitle": "Alignment of objectives, appropriate materials, logical flow, library access.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Course Learning Outcomes (CLO1 & CLO2) were constructively aligned with FA1, SA1, and SA2."
         },
         {
@@ -1270,7 +1270,7 @@
           "number": 4,
           "title": "4. Feedback and Assessment Practices",
           "subtitle": "Timely & constructive feedback, variety of assessments, clear rubrics, application opportunities.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Analytic rubrics (Problem Formulation 40%, Correctness 40%, Clarity 20%) were provided and returned promptly."
         },
         {
@@ -1278,7 +1278,7 @@
           "number": 5,
           "title": "5. Classroom Management and Environment",
           "subtitle": "Engaging & disciplined environment, positive instructor-student relations, openness, rule enforcement.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Conducive learning environment maintained in accordance with University policies."
         },
         {
@@ -1286,7 +1286,7 @@
           "number": 6,
           "title": "6. Adaptability and Responsiveness",
           "subtitle": "Adaptability to learning styles, responsiveness to needs, adjustments based on feedback, tech integration.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Consultation hours and virtual environment (UVE) resources were made accessible to all learners."
         },
         {
@@ -1294,7 +1294,7 @@
           "number": 1,
           "title": "1. Prior Academic Preparation",
           "subtitle": "Performance in prerequisites, aptitude in Math/Science, relevant prior knowledge.",
-          "mark": "\u2717",
+          "mark": "✗",
           "remarks": "Several students needed refresher drills on solving systems of linear and differential equations (Math 121)."
         },
         {
@@ -1302,7 +1302,7 @@
           "number": 2,
           "title": "2. Motivation and Self-Efficacy",
           "subtitle": "Student interest, effort, belief in success, perceived value, self-regulation.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Students demonstrated high interest during collaborative circuit analysis and simulation activities."
         },
         {
@@ -1310,7 +1310,7 @@
           "number": 3,
           "title": "3. Engagement and Participation",
           "subtitle": "Active participation (discussions, activities), time on coursework, engagement with materials, attendance, online forums.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "High attendance and active participation in formative group activities (FA1)."
         },
         {
@@ -1318,7 +1318,7 @@
           "number": 4,
           "title": "4. Study Skills and Habits",
           "subtitle": "Note-taking, test-taking, time management, responsibility (reading, preparation).",
-          "mark": "\u2717",
+          "mark": "✗",
           "remarks": "Independent problem-solving practice outside class hours needs reinforcement before summative exams."
         },
         {
@@ -1326,7 +1326,7 @@
           "number": 5,
           "title": "5. Learning Styles and Preferences",
           "subtitle": "Preference for visual/auditory/kinesthetic, adaptability to approaches.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Visual circuit schematics and interactive simulations supported diverse learner preferences."
         },
         {
@@ -1334,7 +1334,7 @@
           "number": 1,
           "title": "1. Curriculum Relevance and Alignment",
           "subtitle": "Relevance to industry, alignment with PEOs/SOs, interdisciplinary integration.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Directly aligned with PGO a (a.1) and PGO e (e.2) as well as SDG 7 and SDG 9."
         },
         {
@@ -1342,7 +1342,7 @@
           "number": 2,
           "title": "2. Availability and Quality of Learning Resources",
           "subtitle": "Access to materials (textbooks, online), lab facilities/equipment, software/simulation tools.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Primary references (Alexander & Sadiku, Hayt) and circuit simulation tools were readily available."
         },
         {
@@ -1350,7 +1350,7 @@
           "number": 3,
           "title": "3. Class Size and Structure",
           "subtitle": "Impact of class size on interaction, frequency/duration of lectures/tutorials.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "3 contact hours per week (54 hours total) allowed structured lecture and group problem-solving."
         },
         {
@@ -1358,7 +1358,7 @@
           "number": 4,
           "title": "4. Technology Integration",
           "subtitle": "Effective use of EdTech (LMS, simulations, virtual labs), internet reliability, hardware/platform quality.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Circuit simulation software was integrated into FA1 to verify Thevenin/Norton and RLC responses."
         },
         {
@@ -1366,7 +1366,7 @@
           "number": 5,
           "title": "5. Course Load and Difficulty",
           "subtitle": "Appropriateness of workload, perceived difficulty relative to student preparation.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "4 summative quizzes, 2 term exams, and formative group activities provided balanced assessment."
         },
         {
@@ -1374,7 +1374,7 @@
           "number": 1,
           "title": "1. Institutional Support",
           "subtitle": "Faculty development, tech support, student services, library resources.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Adequate library and institutional LMS support provided."
         },
         {
@@ -1382,7 +1382,7 @@
           "number": 2,
           "title": "2. Curriculum Design and Program Quality",
           "subtitle": "Overall curriculum coherence, theory/practice integration, interdisciplinary skills, program responsiveness.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Curriculum sequence effectively links Calculus/Physics prerequisites to Electrical Circuits 1."
         },
         {
@@ -1390,7 +1390,7 @@
           "number": 3,
           "title": "3. Socioeconomic Factors",
           "subtitle": "Impact of socioeconomic status on achievement and resource access.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Open-source / accessible simulation tools and digital handouts ensured equitable access."
         },
         {
@@ -1398,7 +1398,7 @@
           "number": 4,
           "title": "4. External Context/Unforeseen Circumstances",
           "subtitle": "Impact of global crises, rapid industry changes on curriculum.",
-          "mark": "\u2713",
+          "mark": "✓",
           "remarks": "Flexible asynchronous/online contingency provisions were in place per syllabus guidelines."
         }
       ],
@@ -1715,6 +1715,71 @@
           }
         ],
         "notes": "Applied to theoretical, design rationale, and short essay exam items."
+      }
+    ]
+  },
+  "workflow": {
+    "status": "for_committee_review",
+    "cycle": 1,
+    "content_hash": "fb1c068f523163fb01157908e7688e6671cbc10b12da765f1a1e4f99f711f711",
+    "submitted_at": "2026-10-24T08:37:28",
+    "submitted_by": "admin",
+    "submitted_by_name": "System Administrator",
+    "assigned_committee": "faculty_basan",
+    "assigned_committee_name": "Engr. Nikka Samantha A. Basan, Engr. Delan Zoe H. Arenga, Engr. Kim P. Ravida",
+    "submission_notes": "",
+    "approved_at": null,
+    "signatures": [],
+    "checklist": {
+      "responses": {},
+      "comments": {},
+      "overall_recommendation": "",
+      "general_remarks": "",
+      "updated_by": null,
+      "updated_at": null,
+      "committee_members": [
+        {
+          "username": "faculty_basan",
+          "name": "Engr. Nikka Samantha A. Basan",
+          "role": "Review Committee Chair"
+        },
+        {
+          "username": "faculty_arenga",
+          "name": "Engr. Delan Zoe H. Arenga",
+          "role": "Review Committee Member"
+        },
+        {
+          "username": "faculty_ravida",
+          "name": "Engr. Kim P. Ravida",
+          "role": "Review Committee Member"
+        }
+      ]
+    },
+    "history": [
+      {
+        "at": "2026-10-24T08:37:28",
+        "by": "admin",
+        "action": "submitted",
+        "step": "faculty",
+        "remarks": "",
+        "cycle": 1
+      }
+    ],
+    "committee_members": [
+      {
+        "username": "faculty_basan",
+        "name": "Engr. Nikka Samantha A. Basan",
+        "role": "Review Committee Chair"
+      },
+      {
+        "username": "faculty_arenga",
+        "name": "Engr. Delan Zoe H. Arenga",
+        "role": "Review Committee Member"
+      },
+      {
+        "username": "faculty_ravida",
+        "name": "Engr. Kim P. Ravida",
+        "role": "Review Committee Member"
       }
     ]
   }

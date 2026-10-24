@@ -303,15 +303,15 @@ def generate_syllabus_evaluation_pdf(doc: Dict[str, Any], user_info: Optional[Di
         "program_head": _clean_text(meta.get("program_head") or "Engr. Charito O. Claro, PECE"),
     }
     _unused_meta = {
-        "course_code": (meta.get("course_code") or doc.get("course_code") or "EE 211").strip(),
-        "course_title": (meta.get("course_title") or doc.get("course_title") or "").strip(),
-        "faculty_name": (meta.get("faculty_name") or "Faculty").strip(),
-        "program": (meta.get("program_name") or "Bachelor of Science in Electrical Engineering").strip(),
-        "department": (meta.get("department") or "Department of Electrical Engineering").strip(),
-        "semester_ay": (meta.get("semester_ay") or doc.get("semester_ay") or "1st Semester, A.Y. 2026-2027").strip(),
-        "credit_units": (meta.get("credit_units") or "3.0 Units").strip(),
-        "dean_name": (meta.get("dean_name") or "Engr. Joie D. Cataytay, Ph.D.").strip(),
-        "program_head": (meta.get("program_head") or "Engr. Charito O. Claro, PECE").strip(),
+        "course_code": str(meta.get("course_code") or doc.get("course_code") or "EE 211").strip(),
+        "course_title": str(meta.get("course_title") or doc.get("course_title") or "").strip(),
+        "faculty_name": str(meta.get("faculty_name") or "Faculty").strip(),
+        "program": str(meta.get("program_name") or "Bachelor of Science in Electrical Engineering").strip(),
+        "department": str(meta.get("department") or "Department of Electrical Engineering").strip(),
+        "semester_ay": str(meta.get("semester_ay") or doc.get("semester_ay") or "1st Semester, A.Y. 2026-2027").strip(),
+        "credit_units": str(meta.get("credit_units") or "3.0 Units").strip(),
+        "dean_name": str(meta.get("dean_name") or "Engr. Joie D. Cataytay, Ph.D.").strip(),
+        "program_head": str(meta.get("program_head") or "Engr. Charito O. Claro").strip(),
     }
 
     pdf = USePEvalPDF(course_meta)

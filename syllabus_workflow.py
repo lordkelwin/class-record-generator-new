@@ -325,6 +325,8 @@ def save_checklist(doc: Dict[str, Any], user: Dict[str, Any], data: Dict[str, An
     comm_list = wf.get("committee_members") or []
     comm_canonicals = [auth.LEGACY_USERNAME_ALIASES.get(m.get("username"), m.get("username")) for m in comm_list]
     is_comm = (user_canonical in comm_canonicals) or ("review_committee" in (user.get("workflow_roles") or [])) or (user.get("role") == "admin")
+    if doc.get("owner") == user.get("username") and user.get("role") != "admin":
+        raise WorkflowError("Faculty owners cannot evaluate or fill out the checklist for their own course syllabus.")
     if not is_comm:
         raise WorkflowError("Only members of the Syllabus Review Committee can fill out the review checklist.")
     cl = wf["checklist"]
@@ -338,7 +340,8 @@ def save_checklist(doc: Dict[str, Any], user: Dict[str, Any], data: Dict[str, An
 
 
 def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
-         required_item_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+         required_item_ids: Optional[List[str]] = None,
+         overall_recommendation: Optional[str] = None) -> Dict[str, Any]:
     """decision: 'approve' (sign & forward) or 'return' (send back for revision)."""
     wf = get_workflow(doc)
     step = current_step(wf)
@@ -366,12 +369,19 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
         raise WorkflowError("Unknown decision.")
 
     if step.get("requires_checklist"):
-        cl = wf["checklist"]
-        missing = [i for i in (required_item_ids or []) if not cl["responses"].get(i)]
+        cl = wf.get("checklist")
+        if not cl:
+            cl = {"responses": {}, "comments": {}, "overall_recommendation": "", "general_remarks": "", "updated_by": None, "updated_at": None}
+            wf["checklist"] = cl
+
+        missing = [i for i in (required_item_ids or []) if not cl.get("responses", {}).get(i)]
         if missing:
             raise WorkflowError(f"Please answer all checklist items before signing ({len(missing)} unanswered).")
-        if not cl.get("overall_recommendation"):
-            raise WorkflowError("Please select the committee's overall recommendation before signing.")
+
+        if overall_recommendation and overall_recommendation.strip():
+            cl["overall_recommendation"] = overall_recommendation.strip()
+        elif not cl.get("overall_recommendation"):
+            cl["overall_recommendation"] = "Approved" if decision == "approve" else "Revise and Resubmit"
 
     import auth
     user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
