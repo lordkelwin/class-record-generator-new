@@ -97,6 +97,155 @@ SECTION_LEVEL_META_FIELDS = {"section", "schedule", "room", "transmutation_base"
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
+BOTTLENECK_SLA_DAYS = 3.0
+
+
+def get_queue_age(doc: Dict[str, Any], now_dt: Optional[datetime] = None) -> Dict[str, Any]:
+    """Computes days in queue for active review steps and detects 3-day SLA bottlenecks."""
+    wf = get_workflow(doc)
+    status = wf.get("status")
+    if status in EDITABLE_STATUSES or status == "approved":
+        return {
+            "days_in_queue": 0.0,
+            "is_overdue": False,
+            "step_entered_at": None,
+            "threshold_days": BOTTLENECK_SLA_DAYS,
+            "last_reminder_sent_at": wf.get("last_reminder_sent_at"),
+        }
+
+    now = now_dt or datetime.now()
+    entered_str = wf.get("step_entered_at")
+    if not entered_str:
+        sigs = wf.get("signatures") or []
+        if sigs:
+            entered_str = sigs[-1].get("signed_at")
+        elif wf.get("submitted_at"):
+            entered_str = wf.get("submitted_at")
+        elif (wf.get("revision_request") or {}).get("requested_at"):
+            entered_str = wf["revision_request"]["requested_at"]
+        elif wf.get("history"):
+            entered_str = wf["history"][-1].get("at")
+        else:
+            entered_str = doc.get("created_at")
+
+    days = 0.0
+    if entered_str:
+        try:
+            clean_str = str(entered_str).replace("Z", "").split("+")[0]
+            entered_dt = datetime.fromisoformat(clean_str)
+            seconds = (now - entered_dt).total_seconds()
+            days = max(0.0, round(seconds / 86400.0, 1))
+        except Exception:
+            days = 0.0
+
+    is_overdue = (days >= BOTTLENECK_SLA_DAYS)
+    return {
+        "days_in_queue": days,
+        "is_overdue": is_overdue,
+        "step_entered_at": entered_str,
+        "threshold_days": BOTTLENECK_SLA_DAYS,
+        "last_reminder_sent_at": wf.get("last_reminder_sent_at"),
+    }
+
+
+def get_reviewers_for_step(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Returns list of reviewer user dictionaries responsible for acting on the current step."""
+    wf = get_workflow(doc)
+    status = wf.get("status")
+    step = current_step(wf)
+    if not step or status in EDITABLE_STATUSES or status == "approved":
+        return []
+
+    import auth
+    users = auth._load_users()
+    owner = doc.get("owner")
+
+    def _clean_user(uname: str, udict: Dict[str, Any]) -> Dict[str, Any]:
+        fname = udict.get("full_name") or uname
+        em = udict.get("email") or auth.derive_email(uname, fname)
+        return {
+            "username": uname,
+            "full_name": fname,
+            "email": em,
+            "role": udict.get("position_title") or udict.get("role", "faculty"),
+        }
+
+    # Step 1: Committee Members Review
+    if status == "for_committee_review":
+        comm_list = wf.get("committee_members") or []
+        non_chair = [m for m in comm_list if m.get("role") != "Review Committee Chair"]
+        target_list = non_chair if non_chair else comm_list
+        signed_users = {auth.LEGACY_USERNAME_ALIASES.get(s.get("username"), s.get("username"))
+                        for s in wf.get("signatures", []) if s.get("step") == "committee_members"}
+        reviewers = []
+        for m in target_list:
+            u_canon = auth.LEGACY_USERNAME_ALIASES.get(m.get("username"), m.get("username"))
+            if u_canon not in signed_users and u_canon != owner:
+                u_obj = users.get(u_canon) or {"username": u_canon, "full_name": m.get("name", u_canon)}
+                reviewers.append(_clean_user(u_canon, u_obj))
+        return reviewers
+
+    # Step 2: Committee Chair Endorsement
+    if status == "for_committee_chair":
+        comm_list = wf.get("committee_members") or []
+        chair = next((m for m in comm_list if m.get("role") == "Review Committee Chair"), None)
+        chair_uname = (chair.get("username") if chair else None) or wf.get("assigned_committee") or "faculty_basan"
+        u_canon = auth.LEGACY_USERNAME_ALIASES.get(chair_uname, chair_uname)
+        u_obj = users.get(u_canon) or {"username": u_canon, "full_name": chair.get("name", u_canon) if chair else u_canon}
+        return [_clean_user(u_canon, u_obj)]
+
+    # Step 3 or revision: Program Head
+    if status in ("for_program_head", "revision_for_program_head"):
+        bp = doc.get("blueprint") or {}
+        meta = bp.get("metadata") or {}
+        prog = (meta.get("program_code") or doc.get("program") or "EE").strip().upper()
+        reviewers = []
+        for uname, u in users.items():
+            if uname == owner:
+                continue
+            w_roles = u.get("workflow_roles") or []
+            if "program_head" in w_roles:
+                u_progs = [p.strip().upper() for p in (u.get("program_codes") or [])]
+                if "*" in u_progs or prog in u_progs:
+                    reviewers.append(_clean_user(uname, u))
+        return reviewers
+
+    # Revision: Associate Dean
+    if status == "revision_for_associate_dean":
+        reviewers = []
+        for uname, u in users.items():
+            if uname == owner:
+                continue
+            w_roles = u.get("workflow_roles") or []
+            if "associate_dean" in w_roles:
+                reviewers.append(_clean_user(uname, u))
+        return reviewers
+
+    # Step 4: QA Head
+    if status == "for_qa_countersign":
+        reviewers = []
+        for uname, u in users.items():
+            if uname == owner:
+                continue
+            w_roles = u.get("workflow_roles") or []
+            if "qa_head" in w_roles:
+                reviewers.append(_clean_user(uname, u))
+        return reviewers
+
+    # Step 5 or revision: Dean
+    if status in ("for_dean_approval", "revision_for_dean"):
+        reviewers = []
+        for uname, u in users.items():
+            if uname == owner:
+                continue
+            w_roles = u.get("workflow_roles") or []
+            if "dean" in w_roles:
+                reviewers.append(_clean_user(uname, u))
+        return reviewers
+
+    return []
+
+
 
 def is_owner_program_head(owner_username: str) -> bool:
     """Check if the owner of the course holds the Program Head role."""
@@ -362,6 +511,7 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     wf["status"] = WORKFLOW_STEPS[0]["status"]
     wf["content_hash"] = compute_hash(bp)
     wf["submitted_at"] = _now()
+    wf["step_entered_at"] = wf["submitted_at"]
     wf["submitted_by"] = user["username"]
     wf["submitted_by_name"] = user.get("full_name") or user["username"]
     wf["committee_members"] = committee_members
@@ -485,6 +635,7 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
 
         if all_non_chair_signed or not non_chair:
             wf["status"] = "for_committee_chair"
+            wf["step_entered_at"] = _now()
         else:
             wf["status"] = "for_committee_review"
         return wf
@@ -507,6 +658,7 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
         })
         _log(wf, user["username"], "signed", remarks=remarks, step="committee_chair")
         wf["status"] = "for_program_head"
+        wf["step_entered_at"] = _now()
         return wf
 
     # Steps 3-5: Program Head, QA Head, Dean
@@ -529,9 +681,11 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
     idx = WORKFLOW_STEPS.index(step)
     if idx + 1 < len(WORKFLOW_STEPS):
         wf["status"] = WORKFLOW_STEPS[idx + 1]["status"]
+        wf["step_entered_at"] = _now()
     else:
         wf["status"] = "approved"
         wf["approved_at"] = _now()
+        wf["step_entered_at"] = None
         _log(wf, user["username"], "approved", step=step["key"])
     return wf
 
@@ -554,7 +708,13 @@ def public_view(doc: Dict[str, Any]) -> Dict[str, Any]:
     """Workflow info safe to send to the browser."""
     wf = get_workflow(doc)
     step = current_step(wf)
+    q_age = get_queue_age(doc)
     return {
+        "days_in_queue": q_age["days_in_queue"],
+        "is_bottleneck": q_age["is_overdue"],
+        "step_entered_at": q_age["step_entered_at"],
+        "threshold_days": q_age["threshold_days"],
+        "last_reminder_sent_at": q_age.get("last_reminder_sent_at"),
         "status": wf["status"],
         "status_label": status_label(wf["status"]),
         "locked": wf["status"] not in EDITABLE_STATUSES,
@@ -667,6 +827,7 @@ def handle_revision_action(doc: Dict[str, Any], user: Dict[str, Any], action: st
         rev_req["current_reviewer"] = "dean"
         wf["revision_request"] = rev_req
         wf["status"] = "revision_for_dean"
+        wf["step_entered_at"] = now_ts
         _log(wf, user["username"], "revision_endorsed", remarks=(remarks or "").strip(), step=endorsement_step)
         return wf
 

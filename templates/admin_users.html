@@ -63,6 +63,18 @@
     </div>
   </div>
 
+    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 18px; margin-bottom:18px; display:flex; align-items:flex-start; gap:12px;">
+    <span style="font-size:1.8rem; line-height:1;">📬</span>
+    <div>
+      <h4 style="margin:0 0 4px; color:#1e3a8a; font-size:0.95rem;">Official Syllabus Review Notification &amp; 3-Day SLA Guidelines</h4>
+      <div style="font-size:0.82rem; color:#1e40af; line-height:1.45;">
+        Every account requires a verified institutional notification email. Review committee members, program heads, QA heads, and deans receive automated email alerts whenever a syllabus is submitted or forwarded for endorsement.
+        <br/>
+        <strong>Institutional SLA Guideline:</strong> Reviewers are requested to complete evaluations within <strong>three (3) working days</strong>. Requests pending longer than 3 days are flagged as signature bottlenecks with automated re-notifications.
+      </div>
+    </div>
+  </div>
+
   <h2>➕ Create a New Faculty Account</h2>
   <div class="create-box">
     <form method="post" action="{{ url_for('auth.create_user') }}">
@@ -75,6 +87,10 @@
         <div>
           <label>Full Name <span style="color:#dc2626;">*</span></label>
           <input type="text" name="full_name" placeholder="e.g. Engr. Elwin Jay J. Tano" required />
+        </div>
+        <div>
+          <label>Notification Email <span style="color:#dc2626;">*</span></label>
+          <input type="email" name="email" placeholder="e.g. ej.tano@usep.edu.ph" required />
         </div>
         <div>
           <label>Temporary Password <span style="color:#dc2626;">*</span></label>
@@ -151,9 +167,10 @@
   <table id="usersTable">
     <thead>
       <tr>
-        <th style="width:130px;">Username</th>
-        <th style="min-width:170px;">Full Name</th>
-        <th style="min-width:200px;">Active Role(s)</th>
+        <th style="width:120px;">Username</th>
+        <th style="min-width:160px;">Full Name</th>
+        <th style="min-width:180px;">Notification Email</th>
+        <th style="min-width:180px;">Active Role(s)</th>
         <th style="min-width:210px;">Official Printed Title</th>
         <th style="width:120px; text-align:center;">Change Roles</th>
         <th style="width:105px;">Status</th>
@@ -170,6 +187,7 @@
           {% if u.username == current_user.username %}<span class="hint" style="color:#1e40af; font-weight:700;">(you)</span>{% endif %}
         </td>
         <td style="font-weight:600;">{{ u.full_name }}</td>
+        <td style="color:#1d4ed8; font-size:0.8rem; font-family:monospace; word-break:break-all;">{{ u.email }}</td>
         <td>
           <div style="display:flex; flex-wrap:wrap; gap:3px;">
             {% for b in u.badges %}
@@ -180,7 +198,7 @@
         <td style="color:#334155; font-size:0.8rem; font-weight:500;">{{ u.position_title }}</td>
         <td style="text-align:center;">
           <button type="button" class="btn btn-light btn-sm" style="font-weight:700; color:#1e40af; border-color:#93c5fd; background:#eff6ff;"
-            onclick="openMultiRoleModal('{{ u.username }}', '{{ u.full_name|e }}', {{ u.workflow_roles|tojson }}, {{ u.program_codes|tojson }}, '{{ u.position_title|e }}', {{ 'true' if u.role == 'admin' else 'false' }})">
+            onclick="openMultiRoleModal('{{ u.username }}', '{{ u.full_name|e }}', {{ u.workflow_roles|tojson }}, {{ u.program_codes|tojson }}, '{{ u.position_title|e }}', {{ 'true' if u.role == 'admin' else 'false' }}, '{{ u.email|e }}')">
             ✏️ Assign Roles
           </button>
         </td>
@@ -340,7 +358,7 @@
     }
 
     // Modal Helpers
-    function openMultiRoleModal(uname, fullName, workflowRoles, programCodes, title, isAdmin) {
+    function openMultiRoleModal(uname, fullName, workflowRoles, programCodes, title, isAdmin, email) {
       document.getElementById("modalUserName").textContent = fullName || uname;
       document.getElementById("modalUserUname").textContent = uname;
       document.getElementById("roleModalForm").action = `/admin/users/${encodeURIComponent(uname)}/role`;
@@ -363,6 +381,7 @@
       });
 
       document.getElementById("modalTitleInput").value = title || buildCombinedTitle(wf, progs);
+      document.getElementById("modalEmailInput").value = email || "";
       document.getElementById("roleModal").style.display = "flex";
     }
 

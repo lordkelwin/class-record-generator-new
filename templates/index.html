@@ -2177,6 +2177,25 @@
         </div>
       </div>
 
+      <!-- Signature Queue Guidelines & Bottleneck SLA Banner -->
+      <div id="approvalsSlaBanner" style="background:#fffbeb; border:1px solid #fde68a; border-left:5px solid #f59e0b; border-radius:8px; padding:12px 18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:2rem; line-height:1;">⏱️</span>
+          <div>
+            <div style="font-weight:800; font-size:0.95rem; color:#92400e;">Institutional Review Turnaround &amp; Bottleneck Guidelines (3-Day SLA Policy)</div>
+            <div style="font-size:0.8rem; color:#78350f; line-height:1.45; margin-top:2px;">
+              Assigned reviewers (Review Committee, Program Head, QA Head, and Dean) are requested to review and sign or return syllabus submissions within <strong>three (3) working days</strong>.
+              Requests pending longer than 3 days are flagged as queue bottlenecks with automated reminder notifications.
+            </div>
+          </div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-warning btn-sm" onclick="dispatchAllBottleneckReminders()" style="font-weight:700; padding:7px 15px; font-size:0.8rem; box-shadow:0 1px 3px rgba(245,158,11,0.3);">
+            🔔 Dispatch Overdue Reminders (&gt;3 Days)
+          </button>
+        </div>
+      </div>
+
       <!-- Filter Pills & Search Toolbar -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f1f5f9; padding:10px 14px; border-radius:10px; border:1px solid #e2e8f0;">
         <div class="seg" id="approvalsFilterSeg">
@@ -8198,6 +8217,46 @@
     }
   }
 
+  // Dispatch reminder email for a specific course
+  async function sendCourseReminderDirect(courseId) {
+    if (!confirm("Send a follow-up reminder email to the assigned reviewer(s) for this syllabus?")) return;
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(courseId)}/workflow/send-reminder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to dispatch reminder.");
+        return;
+      }
+      alert("✅ " + data.message);
+      await loadApprovalRequests(true);
+    } catch(e) {
+      alert("Network error sending reminder: " + e.message);
+    }
+  }
+
+  // Dispatch reminders for all requests exceeding 3 days in queue
+  async function dispatchAllBottleneckReminders() {
+    if (!confirm("Dispatch automated follow-up reminder emails to all reviewers holding requests pending for more than 3 days?")) return;
+    try {
+      const res = await fetch("/api/workflow/dispatch-reminders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to dispatch reminders.");
+        return;
+      }
+      alert("✅ " + data.message);
+      await loadApprovalRequests(true);
+    } catch(e) {
+      alert("Network error dispatching reminders: " + e.message);
+    }
+  }
+
   // Endorse, approve, or reject syllabus revision request
   async function reviewRevisionRequestDirect(courseId, action) {
     const isApprove = (action === 'approve' || action === 'endorse');
@@ -8771,6 +8830,15 @@
                 <span class="badge" style="background:${statusBgColor}; color:${statusBadgeColor}; font-weight:800; font-size:0.75rem; padding:3px 9px; border-radius:8px;">
                   ${escapeHtml(wf.status_label || status)}
                 </span>
+                ${c.is_bottleneck ? `
+                  <span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #f87171; font-weight:800; font-size:0.72rem; padding:3px 8px; border-radius:6px;">
+                    ⚠️ OVERDUE BOTTLENECK (${c.days_in_queue}d in queue &gt; 3d SLA)
+                  </span>
+                ` : (c.days_in_queue > 0 && !isApproved && !isReturned ? `
+                  <span class="badge" style="background:#f8fafc; color:#64748b; border:1px solid #cbd5e1; font-size:0.72rem; padding:3px 7px; border-radius:6px;">
+                    ⏱️ ${c.days_in_queue}d in queue
+                  </span>
+                ` : '')}
                 ${c.user_can_act ? `<span class="badge" style="background:#dc2626; color:#ffffff; font-weight:800; font-size:0.7rem; padding:3px 8px; border-radius:6px; animation:pulse 2s infinite;">⚡ ACTION REQUIRED</span>` : ''}
               </div>
               <div style="font-size:0.8rem; color:#475569; margin-top:3px;">
@@ -8826,6 +8894,11 @@
                 <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'tab-syllabus')" style="font-weight:700;">
                   👁️ Open &amp; Inspect Syllabus
                 </button>
+                ${(isPending && !isApproved && !isReturned) ? `
+                  <button class="btn btn-sm btn-outline-warning" onclick="sendCourseReminderDirect('${c.id}')" title="Send email reminder to current reviewer" style="font-weight:700;">
+                    🔔 Send Reminder
+                  </button>
+                ` : ''}
                 <button class="btn btn-sm btn-secondary" onclick="exportCourseSyllabusPdfDirect('${c.id}')">
                   📄 Syllabus PDF
                 </button>
@@ -11844,13 +11917,14 @@
     // Bottlenecks grid
     const bGrid = document.getElementById("anBottlenecksGrid");
     if (bGrid) {
+      const ob = an.overdue_bottlenecks || {};
       const bItems = [
-        { label: "Review Committee Members", count: b.committee_members || 0, desc: "Awaiting members evaluation" },
-        { label: "Review Committee Chair", count: b.committee_chair || 0, desc: "Awaiting chair recommendation & endorsement" },
-        { label: "Program Head Endorsement", count: b.program_head || 0, desc: "Awaiting syllabus / class record endorsement" },
-        { label: "Associate Dean Endorsement", count: b.associate_dean || 0, desc: "Awaiting endorsement for Program Head courses" },
-        { label: "College QA Countersign", count: b.qa_head || 0, desc: "Awaiting QA compliance verification" },
-        { label: "College Dean Final Approval", count: b.dean || 0, desc: "Awaiting dean approval & permanent lock" }
+        { key: "committee_members", label: "Review Committee Members", count: b.committee_members || 0, overdue: ob.committee_members || 0, desc: "Awaiting members evaluation" },
+        { key: "committee_chair", label: "Review Committee Chair", count: b.committee_chair || 0, overdue: ob.committee_chair || 0, desc: "Awaiting chair recommendation & endorsement" },
+        { key: "program_head", label: "Program Head Endorsement", count: b.program_head || 0, overdue: ob.program_head || 0, desc: "Awaiting syllabus / class record endorsement" },
+        { key: "associate_dean", label: "Associate Dean Endorsement", count: b.associate_dean || 0, overdue: ob.associate_dean || 0, desc: "Awaiting endorsement for Program Head courses" },
+        { key: "qa_head", label: "College QA Countersign", count: b.qa_head || 0, overdue: ob.qa_head || 0, desc: "Awaiting QA compliance verification" },
+        { key: "dean", label: "College Dean Final Approval", count: b.dean || 0, overdue: ob.dean || 0, desc: "Awaiting dean approval & permanent lock" }
       ];
 
       bGrid.innerHTML = bItems.map(item => {
@@ -11862,8 +11936,11 @@
         return `
           <div style="background:${bBg}; border:1px solid ${bColor}33; border-radius:8px; padding:12px 14px;">
             <div style="font-size:0.75rem; font-weight:700; color:#334155;">${escapeHtml(item.label)}</div>
-            <div style="font-size:1.6rem; font-weight:800; color:${bColor}; margin-top:2px;">${item.count}</div>
-            <div style="font-size:0.68rem; color:#64748b;">${escapeHtml(item.desc)}</div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:2px;">
+              <div style="font-size:1.6rem; font-weight:800; color:${bColor};">${item.count}</div>
+              ${item.overdue > 0 ? `<div style="font-size:0.75rem; font-weight:800; color:#dc2626;">⚠️ ${item.overdue} overdue (&gt;3d)</div>` : ''}
+            </div>
+            <div style="font-size:0.68rem; color:#64748b; margin-top:2px;">${escapeHtml(item.desc)}</div>
           </div>
         `;
       }).join("");

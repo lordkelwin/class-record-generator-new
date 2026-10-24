@@ -9,6 +9,7 @@ Authentication for the USeP OBE Syllabus Creator & Class Record Generator.
 """
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -170,13 +171,40 @@ def get_or_create_secret_key() -> bytes:
     return key
 
 
+def derive_email(username: str, full_name: str = "") -> str:
+    """Derives a standard USeP institutional email address."""
+    name = re.sub(r"^(Engr\.|Dr\.|Dean|Prof\.|Mr\.|Ms\.|Mrs\.)\s*", "", full_name or "", flags=re.IGNORECASE).strip()
+    name = re.sub(r",.*$", "", name).strip()
+    parts = [p.lower() for p in re.findall(r"[A-Za-z]+", name) if len(p) > 1]
+    if len(parts) >= 2:
+        return f"{parts[0]}.{parts[-1]}@usep.edu.ph"
+    elif len(parts) == 1:
+        return f"{parts[0]}@usep.edu.ph"
+    clean_u = username.lower().replace("faculty_", "").replace("programhead_", "").replace("committee_", "")
+    return f"{clean_u}@usep.edu.ph"
+
+
 def _load_users() -> dict:
     if not os.path.exists(USERS_FILE):
         return {}
     try:
         with open(USERS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-            return data if isinstance(data, dict) else {}
+            if not isinstance(data, dict):
+                return {}
+            # Ensure every user account has an institutional email
+            dirty = False
+            for uname, u in data.items():
+                if isinstance(u, dict) and not u.get("email"):
+                    u["email"] = derive_email(uname, u.get("full_name", ""))
+                    dirty = True
+            if dirty:
+                try:
+                    with open(USERS_FILE, "w", encoding="utf-8") as fw:
+                        json.dump(data, fw, indent=2)
+                except Exception:
+                    pass
+            return data
     except (OSError, json.JSONDecodeError):
         return {}
 
@@ -351,6 +379,7 @@ def current_user():
         "role": role,
         "workflow_roles": workflow_roles,
         "position_title": user.get("position_title") or default_title,
+        "email": user.get("email") or derive_email(username, user.get("full_name") or ""), 
         "college": user.get("college", "COLLEGE OF ENGINEERING"),
         "program_codes": user.get("program_codes", ["*"]),
         "has_signature": bool(user.get("signature_data")),
@@ -578,6 +607,7 @@ def manage_users():
         rows.append({
             "username": uname,
             "full_name": u.get("full_name", ""),
+            "email": u.get("email") or derive_email(uname, u.get("full_name", "")),
             "role": u.get("role", "faculty"),
             "workflow_roles": w_roles,
             "program_codes": prog_codes,
@@ -608,6 +638,10 @@ def create_user():
     if not prog_codes and request.form.get("program_code"):
         prog_codes = [request.form.get("program_code")]
         
+    email = (request.form.get("email") or "").strip().lower()
+    if not email:
+        email = derive_email(username, full_name)
+
     custom_title = (request.form.get("position_title") or "").strip()
     is_admin = bool(request.form.get("is_admin")) or ("admin" in roles) or (request.form.get("role") == "admin")
     password = request.form.get("password") or ""
@@ -627,6 +661,7 @@ def create_user():
             return redirect(url_for("auth.manage_users"))
         new_user = {
             "full_name": full_name or username,
+            "email": email,
             "role": "admin" if is_admin else "faculty",
             "password_hash": generate_password_hash(password),
             "must_change_password": True,
@@ -664,6 +699,9 @@ def update_user_role(username):
         if uname not in users:
             abort(404)
         target = users[uname]
+        email_val = (request.form.get("email") or "").strip().lower()
+        if email_val:
+            target["email"] = email_val
         apply_roles_to_user_dict(target, roles, prog_codes, custom_title, is_admin)
         _save_users(users)
 

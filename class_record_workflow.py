@@ -396,6 +396,15 @@ def compute_institutional_analytics(all_courses: List[Dict[str, Any]]) -> Dict[s
         "qa_head": 0,
         "dean": 0,
     }
+    overdue_bottlenecks = {
+        "committee_members": 0,
+        "committee_chair": 0,
+        "program_head": 0,
+        "associate_dean": 0,
+        "qa_head": 0,
+        "dean": 0,
+    }
+    overdue_items = []
 
     programs_map: Dict[str, Dict[str, Any]] = {}
 
@@ -423,16 +432,44 @@ def compute_institutional_analytics(all_courses: List[Dict[str, Any]]) -> Dict[s
         elif s_st in {"for_committee_review", "for_committee_chair", "for_program_head", "for_qa_countersign", "for_dean_approval"}:
             syl_ongoing += 1
             p_entry["syllabi_pending"] += 1
+            import syllabus_workflow
+            doc_raw = c.get("doc_raw") or c
+            q_age = syllabus_workflow.get_queue_age(doc_raw)
+            days = q_age.get("days_in_queue", 0.0)
+            is_overdue = q_age.get("is_overdue", False)
+
+            step_role = None
             if s_st == "for_committee_review":
                 bottlenecks["committee_members"] += 1
+                step_role = "committee_members"
             elif s_st == "for_committee_chair":
                 bottlenecks["committee_chair"] += 1
-            elif s_st == "for_program_head":
+                step_role = "committee_chair"
+            elif s_st in ("for_program_head", "revision_for_program_head"):
                 bottlenecks["program_head"] += 1
+                step_role = "program_head"
+            elif s_st == "revision_for_associate_dean":
+                bottlenecks["associate_dean"] += 1
+                step_role = "associate_dean"
             elif s_st == "for_qa_countersign":
                 bottlenecks["qa_head"] += 1
-            elif s_st == "for_dean_approval":
+                step_role = "qa_head"
+            elif s_st in ("for_dean_approval", "revision_for_dean"):
                 bottlenecks["dean"] += 1
+                step_role = "dean"
+
+            if is_overdue and step_role:
+                overdue_bottlenecks[step_role] += 1
+                overdue_items.append({
+                    "id": c.get("id"),
+                    "course_code": c.get("course_code"),
+                    "course_title": c.get("course_title"),
+                    "owner": c.get("owner"),
+                    "program": p_code,
+                    "stage": s_st,
+                    "step_role": step_role,
+                    "days_in_queue": days,
+                })
 
         # Class record workflow
         cr_wf = c.get("class_record_workflow") or {}
@@ -474,5 +511,13 @@ def compute_institutional_analytics(all_courses: List[Dict[str, Any]]) -> Dict[s
         "class_record_compliance_pct": cr_pct,
         "programs": programs_list,
         "bottlenecks": bottlenecks,
+        "overdue_bottlenecks": overdue_bottlenecks,
+        "overdue_items": overdue_items,
+        "overdue_count": len(overdue_items),
+        "sla_guidelines": {
+            "threshold_days": 3.0,
+            "title": "Institutional Syllabus Review & Signature Queue SLA Guidelines",
+            "description": "Assigned reviewers (Review Committee, Program Head, QA Head, and Dean) are requested to review and act upon syllabus endorsements within three (3) working days. Requests exceeding 3 days are flagged as queue bottlenecks with automated follow-up reminder notifications."
+        },
     }
 

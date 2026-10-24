@@ -19,6 +19,7 @@ import re
 import tempfile
 
 import uuid
+from datetime import datetime
 
 import pandas as pd
 
@@ -1144,6 +1145,13 @@ def api_get_workflow_requests():
             can_act = syllabus_workflow.user_can_act(user, doc_raw)
         c["user_can_act"] = can_act
 
+        if doc_raw:
+            q_age = syllabus_workflow.get_queue_age(doc_raw)
+            c["days_in_queue"] = q_age.get("days_in_queue", 0.0)
+            c["is_bottleneck"] = q_age.get("is_overdue", False)
+            c["step_entered_at"] = q_age.get("step_entered_at")
+            c["last_reminder_sent_at"] = q_age.get("last_reminder_sent_at")
+
         can_sign_cr = False
         if doc_raw and (is_admin or not is_owner):
             can_sign_cr = class_record_workflow.user_can_sign_class_record(user, doc_raw)
@@ -1179,6 +1187,13 @@ def api_get_workflow_requests():
 
     analytics = class_record_workflow.compute_institutional_analytics(all_courses)
 
+    # Check and dispatch automatic 3-day bottleneck reminders
+    try:
+        import notification_service
+        notification_service.check_and_dispatch_bottleneck_reminders(all_courses)
+    except Exception as e:
+        pass
+
     return jsonify({
         "pending_count": len(pending_action_for_me) + len(pending_cr_action_for_me),
         "pending_syl_count": len(pending_action_for_me),
@@ -1193,8 +1208,14 @@ def api_get_workflow_requests():
         "institutional_requests": institutional_requests,
         "institutional_class_records": institutional_class_records,
         "analytics": analytics,
+        "sla_guidelines": {
+            "threshold_days": 3.0,
+            "title": "Institutional Syllabus Review & Signature Queue SLA Guidelines",
+            "description": "Assigned reviewers (Review Committee, Program Head, QA Head, and Dean) are requested to review and act upon syllabus endorsements within three (3) working days. Requests exceeding 3 days are flagged as queue bottlenecks with automated follow-up reminder notifications."
+        },
         "user_info": {
             "username": user["username"],
+            "email": user.get("email"),
             "is_staff": is_staff,
             "can_access_faculty_tools": user.get("can_access_faculty_tools", True),
             "full_name": user.get("full_name"),
@@ -1255,6 +1276,14 @@ def api_submit_syllabus(course_id):
         )
 
         courses_store.save_course_doc(doc)
+
+        # Dispatch automated email notification to assigned review committee members
+        import notification_service
+        notification_service.notify_syllabus_submitted(
+            doc,
+            submitter_user=user,
+            committee_members=wf.get("committee_members") or []
+        )
 
         comm_name = wf.get("assigned_committee_name") or "the Review Committee"
 
@@ -1487,18 +1516,26 @@ def api_sign_workflow_step(course_id):
 
         courses_store.save_course_doc(doc)
 
+        import notification_service
+        status = wf.get("status")
         step_label = (syllabus_workflow.current_step(wf) or {}).get("label") or "Next Step"
 
         if decision == "return":
             action_msg = "Syllabus returned for revision."
-        elif wf.get("status") == "approved":
+            notification_service.notify_syllabus_decision(doc, "return", user, remarks=remarks)
+        elif status == "approved":
             action_msg = "Syllabus approved and locked! Class record is now unlocked."
-        elif wf.get("status") == "for_committee_chair":
+            notification_service.notify_syllabus_decision(doc, "approve", user, remarks=remarks)
+        elif status == "for_committee_chair":
             action_msg = "All committee members approved. Forwarded to Review Committee Chair for final committee endorsement."
-        elif wf.get("status") == "for_committee_review":
+            reviewers = syllabus_workflow.get_reviewers_for_step(doc)
+            notification_service.notify_syllabus_forwarded(doc, "Review Committee Chair", reviewers, previous_signer=user, remarks=remarks)
+        elif status == "for_committee_review":
             action_msg = "Member signature recorded. Waiting for other committee member(s) to sign."
         else:
-            action_msg = f"Step signed and forwarded to {step_label}." 
+            action_msg = f"Step signed and forwarded to {step_label}."
+            reviewers = syllabus_workflow.get_reviewers_for_step(doc)
+            notification_service.notify_syllabus_forwarded(doc, step_label, reviewers, previous_signer=user, remarks=remarks) 
 
         return jsonify({
 
@@ -1630,6 +1667,11 @@ def api_request_syllabus_revision(course_id):
         wf_view = syllabus_workflow.public_view(doc)
         wf_view["can_submit"] = False
         target_role = "Associate Dean" if (wf_view.get("revision_request") or {}).get("owner_is_program_head") else "Program Head"
+
+        import notification_service
+        reviewers = syllabus_workflow.get_reviewers_for_step(doc)
+        notification_service.notify_revision_requested(doc, user, target_role, reviewers, reason)
+
         return jsonify({
             "success": True,
             "message": f"Syllabus revision request submitted successfully. Forwarded to {target_role} and Dean for approval.",
@@ -1656,12 +1698,18 @@ def api_syllabus_revision_action(course_id):
         courses_store.save_course_doc(doc)
         wf_view = syllabus_workflow.public_view(doc)
         status = wf_view.get("status")
+
+        import notification_service
         if status == "draft":
             msg = f"Syllabus revision request approved by Dean! Syllabus is now unlocked for Cycle {wf_view.get('cycle', 2)} updates."
+            notification_service.notify_revision_decision(doc, "approved", user, remarks=remarks)
         elif status == "revision_for_dean":
             msg = "Syllabus revision request endorsed and forwarded to the Dean for final approval."
+            reviewers = syllabus_workflow.get_reviewers_for_step(doc)
+            notification_service.notify_syllabus_forwarded(doc, "College Dean (Revision Approval)", reviewers, previous_signer=user, remarks=remarks)
         elif status == "approved":
             msg = "Syllabus revision request was rejected. The syllabus remains approved and locked."
+            notification_service.notify_revision_decision(doc, "rejected", user, remarks=remarks)
         else:
             msg = "Revision request updated."
         return jsonify({
@@ -1676,6 +1724,70 @@ def api_syllabus_revision_action(course_id):
 # =========================================================================
 # CLASS RECORD SEQUENTIAL SIGN-OFF & GRADE LOCK-IN APIS
 # =========================================================================
+
+
+@app.route("/api/workflow/dispatch-reminders", methods=["POST"])
+def api_dispatch_workflow_reminders():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    import notification_service
+    result = notification_service.check_and_dispatch_bottleneck_reminders(force=True)
+    return jsonify({
+        "success": True,
+        "message": f"Successfully evaluated signature queues. Dispatched {result['reminded_count']} overdue bottleneck reminder notification(s).",
+        "reminded_count": result["reminded_count"],
+        "reminded_courses": result["reminded_courses"]
+    })
+
+
+@app.route("/api/courses/<course_id>/workflow/send-reminder", methods=["POST"])
+def api_send_course_reminder(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    wf = syllabus_workflow.get_workflow(doc)
+    if wf.get("status") in syllabus_workflow.EDITABLE_STATUSES or wf.get("status") == "approved":
+        return jsonify({"error": "This course is not currently awaiting review sign-off."}), 400
+    import notification_service
+    reviewers = syllabus_workflow.get_reviewers_for_step(doc)
+    if not reviewers:
+        return jsonify({"error": "No pending reviewers found for the current step."}), 400
+    q_age = syllabus_workflow.get_queue_age(doc)
+    days = q_age.get("days_in_queue", 0.0)
+    notification_service.notify_bottleneck_reminder(doc, reviewers, days)
+    now_iso = datetime.now().isoformat(timespec="seconds")
+    wf["last_reminder_sent_at"] = now_iso
+    syllabus_workflow._log(
+        wf,
+        by=user["username"],
+        action="reminder_sent",
+        remarks=f"Review reminder dispatched by {user.get('full_name') or user['username']} ({days} days in queue)",
+        step=wf.get("current_step") or wf.get("status")
+    )
+    courses_store.save_course_doc(doc)
+    return jsonify({
+        "success": True,
+        "message": f"Follow-up reminder sent to {len(reviewers)} reviewer(s) ({', '.join(r['full_name'] for r in reviewers)}).",
+        "reviewers": reviewers,
+        "days_in_queue": days
+    })
+
+
+@app.route("/api/notifications/log", methods=["GET"])
+def api_get_notifications_log():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    import notification_service
+    limit = request.args.get("limit", 50, type=int)
+    return jsonify({
+        "notifications": notification_service.get_recent_notifications(limit)
+    })
+
 
 @app.route("/api/courses/<course_id>/class-record/workflow", methods=["GET"])
 def api_get_class_record_workflow(course_id):

@@ -52,3 +52,6 @@ data/secret_key
 data/courses/
 extracted_curricula/
 
+
+# Notification logs
+data/sent_notifications.json
