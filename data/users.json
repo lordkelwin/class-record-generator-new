@@ -17,7 +17,7 @@
     "password_hash": "scrypt:32768:8:1$McPGeHsM4jgtWLyu$2c5758f4eaa930e986d6a5d8d409f7486514ecfb58070c839c31ab11f9a2c6471f75ebe6dd02d4cc7477cac62bd5dc1d21e22908ab31fff666208075f1f76059",
     "must_change_password": false,
     "created_at": "2026-10-23T00:56:06",
-    "last_login": "2026-10-24T22:10:26",
+    "last_login": "2026-10-24T22:12:41",
     "email": "system.administrator@usep.edu.ph"
   },
   "faculty_tano": {
@@ -1289,9 +1289,9 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
+    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
     "must_change_password": false,
-    "created_at": "2026-10-24T22:10:40",
+    "created_at": "2026-10-24T22:11:30",
     "last_login": null,
     "email": "delan.arenga@usep.edu.ph"
   },
@@ -1306,9 +1306,9 @@
       "ECE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
+    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
     "must_change_password": false,
-    "created_at": "2026-10-24T22:10:40",
+    "created_at": "2026-10-24T22:11:30",
     "last_login": null,
     "email": "kim.ravida@usep.edu.ph"
   },
@@ -1323,9 +1323,9 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
+    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
     "must_change_password": false,
-    "created_at": "2026-10-24T22:10:40",
+    "created_at": "2026-10-24T22:11:30",
     "last_login": null,
     "email": "nikka.basan@usep.edu.ph"
   },
@@ -1341,9 +1341,9 @@
       "EE"
     ],
     "college": "COLLEGE OF ENGINEERING",
-    "password_hash": "scrypt:32768:8:1$kZgKCbG4l9XcWhdJ$982df15384b9676ed0624768a86286d3441b849a265763eed12ac66bc2cfa4eb9813b7cca633810ba85289a328e00f5527e2db924109b8f8fb0a13a322f602cc",
+    "password_hash": "scrypt:32768:8:1$yufTxaSb0MbeLF4M$79cf855193e12130d8f5a5594e413082f68cb56184ceac892ddc0d01d0ad4441b4d75ca3a40299c22b9dd0220093554bc8855be613b8c612127e66a441f93ad3",
     "must_change_password": false,
-    "created_at": "2026-10-24T22:10:40",
+    "created_at": "2026-10-24T22:11:30",
     "last_login": null,
     "email": "charito.claro@usep.edu.ph"
   }
