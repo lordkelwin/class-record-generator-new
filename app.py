@@ -1679,32 +1679,7 @@ def api_admin_update_user_role(username):
             return jsonify({"error": f"Faculty account '{username}' not found."}), 404
         target = all_users[uname]
 
-        if designation == "program_head":
-            prog = prog_code or (target.get("program_codes", ["EE"])[0] if target.get("program_codes") else "EE")
-            target["workflow_roles"] = ["program_head", "review_committee"]
-            target["program_codes"] = [prog]
-            p_name = PROGRAM_FULL_NAMES.get(prog, prog)
-            target["position_title"] = custom_title or f"Program Head - {p_name}"
-        elif designation == "qa_head":
-            target["workflow_roles"] = ["qa_head", "review_committee"]
-            target["program_codes"] = ["*"]
-            target["position_title"] = custom_title or "College Quality Assurance Head"
-        elif designation == "dean":
-            target["workflow_roles"] = ["dean", "review_committee"]
-            target["program_codes"] = ["*"]
-            target["position_title"] = custom_title or "Dean, College of Engineering"
-        elif designation == "admin":
-            target["role"] = "admin"
-            target["workflow_roles"] = ["admin", "review_committee", "program_head", "qa_head", "dean"]
-            target["position_title"] = custom_title or "System Administrator"
-        else: # faculty
-            target["workflow_roles"] = ["review_committee"]
-            target["position_title"] = custom_title or "Faculty Member"
-
-        if is_admin_flag:
-            target["role"] = "admin"
-        elif designation != "admin" and target.get("role") == "admin" and uname != "admin":
-            target["role"] = "faculty"
+        auth.apply_role_to_user_dict(target, designation, prog_code, custom_title, is_admin_flag)
 
         _save_users(all_users)
 

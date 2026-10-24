@@ -47,6 +47,54 @@ _failed_attempts = {}  # key -> (count, first_failure_ts)
 
 auth_bp = Blueprint("auth", __name__)
 
+PROGRAM_FULL_NAMES = {
+    "EE": "Electrical Engineering",
+    "ECE": "Electronics Engineering",
+    "ME": "Mechanical Engineering",
+    "CE": "Civil Engineering",
+    "GE": "Geodetic Engineering",
+    "MinE": "Mining Engineering",
+    "BSGeo": "Geology",
+    "SE": "Sanitary Engineering",
+    "ABE": "Agricultural and Biosystems Engineering",
+}
+
+def apply_role_to_user_dict(target: dict, designation: str, prog_code: str = "EE", custom_title: str = "", is_admin: bool = False):
+    desig = (designation or "faculty").strip().lower()
+    prog = (prog_code or "EE").strip().upper()
+    if desig == "program_head":
+        target["workflow_roles"] = ["program_head", "review_committee"]
+        target["program_codes"] = [prog]
+        p_name = PROGRAM_FULL_NAMES.get(prog, prog)
+        target["position_title"] = custom_title or f"Program Head - {p_name}"
+        target["role"] = "admin" if is_admin else "faculty"
+    elif desig == "qa_head":
+        target["workflow_roles"] = ["qa_head", "review_committee"]
+        target["program_codes"] = ["*"]
+        target["position_title"] = custom_title or "College Quality Assurance Head"
+        target["role"] = "admin" if is_admin else "faculty"
+    elif desig == "dean":
+        target["workflow_roles"] = ["dean", "review_committee"]
+        target["program_codes"] = ["*"]
+        target["position_title"] = custom_title or "Dean, College of Engineering"
+        target["role"] = "admin" if is_admin else "faculty"
+    elif desig == "admin":
+        target["role"] = "admin"
+        target["workflow_roles"] = ["admin", "review_committee", "program_head", "qa_head", "dean"]
+        target["program_codes"] = ["*"]
+        target["position_title"] = custom_title or "System Administrator"
+    else:  # faculty
+        target["workflow_roles"] = ["review_committee"]
+        target["program_codes"] = [prog]
+        target["position_title"] = custom_title or "Faculty Member"
+        target["role"] = "admin" if is_admin else "faculty"
+
+    if is_admin:
+        target["role"] = "admin"
+    elif desig != "admin" and target.get("role") == "admin":
+        if target.get("username") != DEFAULT_ADMIN_USERNAME:
+            target["role"] = "faculty"
+
 
 # --------------------------------------------------------------------------
 # Storage helpers
@@ -419,18 +467,54 @@ def change_password():
 @admin_required
 def manage_users():
     users = _load_users()
-    rows = [
-        {
+    rows = []
+    for uname, u in sorted(users.items()):
+        w_roles = u.get("workflow_roles") or []
+        prog_codes = u.get("program_codes") or []
+        primary_prog = prog_codes[0] if prog_codes and prog_codes[0] != "*" else "EE"
+
+        if "dean" in w_roles:
+            desig = "dean"
+            badge_label = "College Dean"
+            badge_class = "b-dean"
+            badge_icon = "🏛️"
+        elif "qa_head" in w_roles:
+            desig = "qa_head"
+            badge_label = "College QA Head"
+            badge_class = "b-qa"
+            badge_icon = "🛡️"
+        elif "program_head" in w_roles:
+            desig = "program_head"
+            p_name = PROGRAM_FULL_NAMES.get(primary_prog, primary_prog)
+            badge_label = f"Program Head ({primary_prog})"
+            badge_class = "b-ph"
+            badge_icon = "👔"
+        elif u.get("role") == "admin":
+            desig = "admin"
+            badge_label = "Administrator"
+            badge_class = "b-admin"
+            badge_icon = "⚙️"
+        else:
+            desig = "faculty"
+            badge_label = "Faculty Member"
+            badge_class = "b-fac"
+            badge_icon = "👨‍🏫"
+
+        rows.append({
             "username": uname,
             "full_name": u.get("full_name", ""),
             "role": u.get("role", "faculty"),
+            "designation": desig,
+            "designation_label": badge_label,
+            "badge_class": badge_class,
+            "badge_icon": badge_icon,
+            "position_title": u.get("position_title") or badge_label,
+            "program_code": primary_prog,
             "must_change_password": bool(u.get("must_change_password")),
             "created_at": u.get("created_at") or "",
             "last_login": u.get("last_login") or "Never",
-        }
-        for uname, u in sorted(users.items())
-    ]
-    return render_template("admin_users.html", users=rows, min_len=MIN_PASSWORD_LENGTH)
+        })
+    return render_template("admin_users.html", users=rows, min_len=MIN_PASSWORD_LENGTH, programs=PROGRAM_FULL_NAMES)
 
 
 @auth_bp.route("/admin/users/create", methods=["POST"])
@@ -439,7 +523,10 @@ def create_user():
     _check_csrf()
     username = _normalize_username(request.form.get("username"))
     full_name = (request.form.get("full_name") or "").strip()
-    role = "admin" if request.form.get("role") == "admin" else "faculty"
+    designation = (request.form.get("designation") or request.form.get("role") or "faculty").strip().lower()
+    prog_code = (request.form.get("program_code") or "EE").strip().upper()
+    custom_title = (request.form.get("position_title") or "").strip()
+    is_admin = (request.form.get("role") == "admin") or (designation == "admin") or bool(request.form.get("is_admin"))
     password = request.form.get("password") or ""
 
     if not _valid_username(username):
@@ -455,16 +542,41 @@ def create_user():
         if username in users:
             flash(f"An account named '{username}' already exists.", "error")
             return redirect(url_for("auth.manage_users"))
-        users[username] = {
+        new_user = {
             "full_name": full_name or username,
-            "role": role,
+            "role": "admin" if is_admin else "faculty",
             "password_hash": generate_password_hash(password),
             "must_change_password": True,
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "last_login": None,
         }
+        apply_role_to_user_dict(new_user, designation, prog_code, custom_title, is_admin)
+        users[username] = new_user
         _save_users(users)
-    flash(f"Account '{username}' created. They will be asked to change the temporary password on first sign-in.", "success")
+    flash(f"Account '{username}' created with role '{new_user.get('position_title')}'.", "success")
+    return redirect(url_for("auth.manage_users"))
+
+
+@auth_bp.route("/admin/users/<username>/role", methods=["POST"])
+@admin_required
+def update_user_role(username):
+    _check_csrf()
+    username = _normalize_username(username)
+    designation = (request.form.get("designation") or "faculty").strip().lower()
+    prog_code = (request.form.get("program_code") or "EE").strip().upper()
+    custom_title = (request.form.get("position_title") or "").strip()
+    is_admin = bool(request.form.get("is_admin")) or (designation == "admin")
+
+    with _lock:
+        users = _load_users()
+        uname = LEGACY_USERNAME_ALIASES.get(username, username)
+        if uname not in users:
+            abort(404)
+        target = users[uname]
+        apply_role_to_user_dict(target, designation, prog_code, custom_title, is_admin)
+        _save_users(users)
+
+    flash(f"Updated role for '{username}' to '{target.get('position_title')}'.", "success")
     return redirect(url_for("auth.manage_users"))
 
 
