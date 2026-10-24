@@ -1378,7 +1378,7 @@ PROGRAM_STRUCTURES_BY_CODE: Dict[str, Dict[str, Any]] = {
             {"code": "PEO3", "description": "Demonstrate gender sensitive leadership and commitment to work in diverse cultural and interdisciplinary backgrounds."},
             {"code": "PEO4", "description": "Exhibit globally competitive skills."},
         ],
-        "pgo_pi_catalog": _build_standard_eng_pgos("electronics engineering"),
+        "pgo_pi_catalog": _build_standard_eng_pgos(""),
     },
     "ME": {
         "program_code": "ME",
@@ -1415,10 +1415,11 @@ PROGRAM_STRUCTURES_BY_CODE: Dict[str, Dict[str, Any]] = {
         "source_file": "9.-Program-Structure_SY2020-2021_revision1.pdf & 8. Program Structure_ABE.pdf",
         "cmo_reference": "CMO No. 94, s. 2017",
         "peos": [
-            {"code": "PEO1", "description": "Demonstrate expertise in the field of Agricultural and Biosystems Engineering."},
+            {"code": "PEO1", "description": "Practice Agricultural and Biosystems Engineering."},
             {"code": "PEO2", "description": "Actively participate in professional communities to nourish ever-developing careers."},
             {"code": "PEO3", "description": "Demonstrate leadership and commitment to work in diverse cultural and interdisciplinary backgrounds."},
-            {"code": "PEO4", "description": "Exhibit globally competitive skills."},
+            {"code": "PEO4", "description": "Pursue advance studies in ABE and emerging related fields."},
+            {"code": "PEO5", "description": "Occupy responsible positions in ABE education."},
         ],
         "pgo_pi_catalog": BSABE_PGOS,
     },
@@ -1441,7 +1442,7 @@ PROGRAM_STRUCTURES_BY_CODE: Dict[str, Dict[str, Any]] = {
         "program_name": "Bachelor of Science in Mining Engineering",
         "department": "Department of Mining Engineering",
         "source_file": "BSEM-Approved-Program-Structure (1).pdf",
-        "cmo_reference": "CMO No. 101 / BSEM PSG",
+        "cmo_reference": "CMO No. 100, s. 2017",
         "peos": [
             {"code": "PEO1", "description": "Establish expertise in the field of Mining Engineering."},
             {"code": "PEO2", "description": "Actively participate in professional communities to nourish ever-developing careers."},
@@ -1455,7 +1456,7 @@ PROGRAM_STRUCTURES_BY_CODE: Dict[str, Dict[str, Any]] = {
         "program_name": "Bachelor of Science in Geology",
         "department": "Department of Geology",
         "source_file": "Program-Structure-with-CMO_Geology.docx",
-        "cmo_reference": "CMO No. 35, s. 2008 / 2017",
+        "cmo_reference": "CMO No. 44, s. 2017 / CMO No. 35, s. 2008",
         "peos": [
             {"code": "PEO1", "description": "Demonstrate expertise in the field of Geology."},
             {"code": "PEO2", "description": "Actively participate in professional communities to nourish ever-developing careers."},
