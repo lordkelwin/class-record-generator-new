@@ -329,6 +329,94 @@
       cursor: pointer;
       accent-color: #d97706;
     }
+        /* ---------- Part IX Learning Plan Checkboxes & Merged Assessments ---------- */
+    .lp-clo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.12s ease;
+      margin: 0;
+    }
+    .lp-clo-chip:hover {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+    .lp-clo-chip.active {
+      background: #eff6ff;
+      border-color: #2563eb;
+      color: #1d4ed8;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.15);
+    }
+    .lp-clo-chip input[type="checkbox"] {
+      width: 13px;
+      height: 13px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: #2563eb;
+    }
+
+    .lp-act-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 7px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-size: 0.74rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.12s ease;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .lp-act-chip:hover {
+      border-color: #0284c7;
+      background: #f0f9ff;
+    }
+    .lp-act-chip.active {
+      background: #f0fdf4;
+      border-color: #16a34a;
+      color: #15803d;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(22, 163, 74, 0.15);
+    }
+    .lp-act-chip.active.formative {
+      background: #fefce8;
+      border-color: #ca8a04;
+      color: #a16207;
+    }
+    .lp-act-chip.active.na {
+      background: #f1f5f9;
+      border-color: #64748b;
+      color: #334155;
+    }
+    .lp-act-chip input[type="checkbox"] {
+      width: 13px;
+      height: 13px;
+      margin: 0;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #16a34a;
+    }
+    .lp-act-chip.formative input[type="checkbox"] {
+      accent-color: #ca8a04;
+    }
+    .lp-act-chip.na input[type="checkbox"] {
+      accent-color: #64748b;
+    }
+
     .clo-pts-hint {
       font-size: 0.71rem;
       color: #64748b;
@@ -1646,14 +1734,14 @@
         <table>
           <thead>
             <tr>
-              <th style="width:21%;">Intended Learning Outcomes (ILO)</th>
-              <th style="width:95px;">Course Learning Outcome (CLO)</th>
-              <th style="width:85px;">Time Frame</th>
-              <th style="width:23%;">Topics</th>
-              <th style="width:17%;">Teaching-Learning Activities (TLA)</th>
-              <th style="width:125px;">Required Reading</th>
-              <th style="width:140px;">Assessment Activities</th>
-              <th style="width:46px;"></th>
+              <th style="width:20%;">Intended Learning Outcomes (ILO)</th>
+              <th style="width:105px;">Course Learning Outcome (CLO)</th>
+              <th style="width:80px;">Time Frame</th>
+              <th style="width:21%;">Topics</th>
+              <th style="width:15%;">Teaching-Learning Activities (TLA)</th>
+              <th style="width:115px;">Required Reading</th>
+              <th style="width:185px;">Assessment Activities</th>
+              <th style="width:65px;">Actions</th>
             </tr>
           </thead>
           <tbody id="learningPlanTableBody"></tbody>
@@ -4694,6 +4782,7 @@
     });
     renderSyllabusAssessmentActivitiesTable();
     maybeAutoSyncSetupFromSyllabus();
+    renderLearningPlanTable();
   }
 
   function removeSyllabusAssessmentActivityRow(idx) {
@@ -4701,25 +4790,350 @@
     blueprint.metadata.syllabus_assessment_activities.splice(idx, 1);
     renderSyllabusAssessmentActivitiesTable();
     maybeAutoSyncSetupFromSyllabus();
+    renderLearningPlanTable();
+  }
+
+  function parseRowClos(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val.map(String).map(s => s.trim().toUpperCase()).filter(Boolean);
+    const s = String(val);
+    const matches = s.match(/CLO\s*\d+/gi);
+    if (matches && matches.length) {
+      return [...new Set(matches.map(m => m.replace(/\s+/g, "").toUpperCase()))];
+    }
+    return [...new Set(s.split(/[\n,;]+/).map(t => t.trim().toUpperCase()).filter(Boolean))];
+  }
+
+  function toggleLearningPlanRowClo(rowIdx, cloId) {
+    const m = blueprint.metadata;
+    if (!m || !m.learning_plan_table || !m.learning_plan_table[rowIdx]) return;
+    const row = m.learning_plan_table[rowIdx];
+    const targetClo = (cloId || "").trim().toUpperCase();
+    const coOrder = (blueprint.course_outcomes || []).map(c => (c.co_id || "").trim().toUpperCase()).filter(Boolean);
+    let selected = parseRowClos(row.clo);
+    if (selected.includes(targetClo)) {
+      selected = selected.filter(c => c !== targetClo);
+    } else {
+      selected.push(targetClo);
+    }
+    selected.sort((a, b) => {
+      let ia = coOrder.indexOf(a);
+      let ib = coOrder.indexOf(b);
+      if (ia === -1) ia = 999;
+      if (ib === -1) ib = 999;
+      return ia - ib;
+    });
+    row.clo = selected.join("\n");
+    renderLearningPlanTable();
+  }
+
+  function promptAddCustomRowClo(rowIdx) {
+    const custom = prompt("Enter custom Course Learning Outcome code (e.g., CLO3, CLO4):");
+    if (custom && custom.trim()) {
+      toggleLearningPlanRowClo(rowIdx, custom.trim());
+    }
+  }
+
+  function parseRowActivities(row, availableActs) {
+    if (!row || !row.assessment_activities) return [];
+    const txt = String(row.assessment_activities).trim();
+    if (!txt) return [];
+    if (/^\s*[•\-\*]?\s*N\/?A\s*$/i.test(txt) || txt.toUpperCase() === "N/A" || txt.toUpperCase() === "• N/A") {
+      return ["N/A"];
+    }
+    const selected = [];
+    (availableActs || []).forEach(act => {
+      const code = (act.code || "").trim().toUpperCase();
+      if (!code) return;
+      const regex = new RegExp(`(^|[^a-zA-Z0-9])${code}([^a-zA-Z0-9]|$)`, "i");
+      if (regex.test(txt)) {
+        selected.push(code);
+      }
+    });
+    return selected;
+  }
+
+  function toggleLearningPlanRowActivity(rowIdx, actCode) {
+    const m = blueprint.metadata;
+    if (!m || !m.learning_plan_table || !m.learning_plan_table[rowIdx]) return;
+    const row = m.learning_plan_table[rowIdx];
+
+    const availableActs = (m.syllabus_assessment_activities && m.syllabus_assessment_activities.length)
+      ? m.syllabus_assessment_activities
+      : [
+          { code: "FA1", activity: "Group Activity", type: "Formative" },
+          { code: "SA1", activity: "Quizzes", type: "Summative" },
+          { code: "SA2", activity: "Term Examination", type: "Summative" },
+        ];
+
+    const targetCode = (actCode || "").trim().toUpperCase();
+    if (targetCode === "N/A") {
+      const cur = parseRowActivities(row, availableActs);
+      if (cur.includes("N/A")) {
+        row.assessment_activities = "";
+      } else {
+        row.assessment_activities = "• N/A";
+      }
+    } else {
+      let cur = parseRowActivities(row, availableActs).filter(c => c !== "N/A");
+      if (cur.includes(targetCode)) {
+        cur = cur.filter(c => c !== targetCode);
+      } else {
+        cur.push(targetCode);
+      }
+      if (cur.length === 0) {
+        row.assessment_activities = "";
+      } else {
+        const lines = [];
+        availableActs.forEach(a => {
+          const c = (a.code || "").trim().toUpperCase();
+          if (cur.includes(c)) {
+            lines.push(`• ${a.code} \u2013 ${a.activity || a.description || 'Assessment'}`);
+          }
+        });
+        cur.forEach(c => {
+          if (!availableActs.some(a => (a.code || "").trim().toUpperCase() === c)) {
+            lines.push(`• ${c}`);
+          }
+        });
+        row.assessment_activities = lines.join("\n");
+      }
+    }
+
+    syncMergedAssessmentsFromLead(rowIdx);
+    renderLearningPlanTable();
+  }
+
+  function findAssessmentLeadRowIndex(rows, idx) {
+    let lead = idx;
+    while (lead > 0 && rows[lead] && rows[lead].merge_assessment_with_prev) {
+      lead--;
+    }
+    return lead;
+  }
+
+  function getAssessmentMergedGroupCount(rows, leadIdx) {
+    let count = 1;
+    let i = leadIdx + 1;
+    while (i < rows.length && rows[i] && rows[i].merge_assessment_with_prev) {
+      count++;
+      i++;
+    }
+    return count;
+  }
+
+  function syncMergedAssessmentsFromLead(leadIdx) {
+    const rows = (blueprint.metadata && blueprint.metadata.learning_plan_table) || [];
+    if (!rows[leadIdx]) return;
+    const leadVal = rows[leadIdx].assessment_activities;
+    let i = leadIdx + 1;
+    while (i < rows.length && rows[i] && rows[i].merge_assessment_with_prev) {
+      rows[i].assessment_activities = leadVal;
+      i++;
+    }
+  }
+
+  function mergeLearningPlanAssessmentWithPrev(idx) {
+    const rows = blueprint.metadata.learning_plan_table;
+    if (!rows || idx <= 0 || idx >= rows.length) return;
+    rows[idx].merge_assessment_with_prev = true;
+    const leadIdx = findAssessmentLeadRowIndex(rows, idx - 1);
+    rows[idx].assessment_activities = rows[leadIdx].assessment_activities;
+    renderLearningPlanTable();
+  }
+
+  function mergeLearningPlanAssessmentWithNext(idx) {
+    const rows = blueprint.metadata.learning_plan_table;
+    if (!rows || idx < 0 || idx + 1 >= rows.length) return;
+    mergeLearningPlanAssessmentWithPrev(idx + 1);
+  }
+
+  function unmergeLearningPlanAssessment(idx) {
+    const rows = blueprint.metadata.learning_plan_table;
+    if (!rows || idx < 0 || idx >= rows.length) return;
+    rows[idx].merge_assessment_with_prev = false;
+    renderLearningPlanTable();
+  }
+
+  function moveLearningPlanRow(idx, direction) {
+    const rows = blueprint.metadata.learning_plan_table;
+    if (!rows) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= rows.length) return;
+    const temp = rows[idx];
+    rows[idx] = rows[targetIdx];
+    rows[targetIdx] = temp;
+    if (rows.length > 0) rows[0].merge_assessment_with_prev = false;
+    renderLearningPlanTable();
+  }
+
+  function toggleCustomAssessmentText(rowIdx) {
+    const rows = blueprint.metadata.learning_plan_table;
+    if (!rows || !rows[rowIdx]) return;
+    rows[rowIdx]._show_custom_assessment = !rows[rowIdx]._show_custom_assessment;
+    renderLearningPlanTable();
   }
 
   function renderLearningPlanTable() {
     const m = blueprint.metadata;
     if (!m.learning_plan_table) m.learning_plan_table = [];
     const tbody = document.getElementById("learningPlanTableBody");
+    if (!tbody) return;
+
+    const coOptions = (blueprint.course_outcomes || []).map(c => (c.co_id || "").trim().toUpperCase()).filter(Boolean);
+    const availableActs = (m.syllabus_assessment_activities && m.syllabus_assessment_activities.length)
+      ? m.syllabus_assessment_activities
+      : [
+          { code: "FA1", activity: "Group Activity", type: "Formative" },
+          { code: "SA1", activity: "Quizzes", type: "Summative" },
+          { code: "SA2", activity: "Term Examination", type: "Summative" },
+        ];
+
     tbody.innerHTML = m.learning_plan_table.map((row, idx) => {
       const isExam = (row.topics || "").toUpperCase().includes("EXAMINATION");
       const bgStyle = isExam ? "background:#dcfce7;" : "";
+
+      // CLO Column checkboxes
+      const rowClos = parseRowClos(row.clo);
+      const allRowClos = [...new Set([...coOptions, ...rowClos])];
+      let cloCellHtml = "";
+      if (allRowClos.length === 0) {
+        cloCellHtml = `<div style="font-size:0.72rem; color:#94a3b8; font-style:italic;">No CLOs in Part II</div>`;
+      } else {
+        cloCellHtml = `
+          <div style="display:flex; flex-direction:column; gap:3px; min-width:85px;">
+            ${allRowClos.map(cId => {
+              const isChecked = rowClos.includes(cId);
+              return `
+                <label class="lp-clo-chip ${isChecked ? 'active' : ''}">
+                  <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleLearningPlanRowClo(${idx}, '${escapeHtml(cId)}')" />
+                  ${escapeHtml(cId)}
+                </label>
+              `;
+            }).join("")}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+              <span style="font-size:0.67rem; color:${rowClos.length ? '#1e40af' : '#94a3b8'}; font-style:italic;">
+                ${rowClos.length ? `${rowClos.length} selected` : 'None (Orientation)'}
+              </span>
+              <span style="font-size:0.67rem; color:#2563eb; cursor:pointer; text-decoration:underline;" onclick="promptAddCustomRowClo(${idx})">+ Custom</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Assessment Activities Column
+      let actCellHtml = "";
+      if (row.merge_assessment_with_prev) {
+        const leadIdx = findAssessmentLeadRowIndex(m.learning_plan_table, idx);
+        const leadRow = m.learning_plan_table[leadIdx];
+        const leadText = leadRow ? (leadRow.assessment_activities || "") : (row.assessment_activities || "");
+        actCellHtml = `
+          <div style="background:#f0f9ff; border:1.5px dashed #0284c7; border-radius:6px; padding:6px 8px; text-align:center;">
+            <div style="font-size:0.75rem; font-weight:700; color:#0369a1; display:flex; align-items:center; justify-content:center; gap:4px;">
+              <span>↳</span> Merged with Topic ${leadIdx + 1}
+            </div>
+            <div style="font-size:0.72rem; color:#334155; margin:4px 0; white-space:pre-line; max-height:48px; overflow:hidden; text-overflow:ellipsis; font-weight:500;">
+              ${escapeHtml(leadText || 'Shared Assessment')}
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-xs" style="font-size:0.7rem; padding:1px 6px; margin-top:2px;"
+                    onclick="unmergeLearningPlanAssessment(${idx})" title="Separate this topic to have its own independent assessment">
+              ✂️ Unmerge / Split
+            </button>
+          </div>
+        `;
+      } else {
+        const groupCount = getAssessmentMergedGroupCount(m.learning_plan_table, idx);
+        const rowActs = parseRowActivities(row, availableActs);
+        const isNa = rowActs.includes("N/A");
+
+        let mergeBadge = "";
+        if (groupCount > 1) {
+          mergeBadge = `
+            <div style="margin-bottom:5px;">
+              <span class="badge" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; font-size:0.71rem; font-weight:600; padding:2px 6px; display:inline-block;">
+                🔗 Merged across ${groupCount} topics (Topics ${idx + 1}–${idx + groupCount})
+              </span>
+            </div>
+          `;
+        }
+
+        const chipsHtml = `
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            ${availableActs.map(act => {
+              const code = (act.code || "").trim().toUpperCase();
+              const isChecked = !isNa && rowActs.includes(code);
+              const isFa = String(act.type || "").toLowerCase().startsWith("form") || code.startsWith("FA");
+              return `
+                <label class="lp-act-chip ${isChecked ? 'active' : ''} ${isFa ? 'formative' : ''}">
+                  <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleLearningPlanRowActivity(${idx}, '${escapeHtml(code)}')" />
+                  <span style="font-weight:700;">${escapeHtml(act.code)}:</span>
+                  <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:115px;" title="${escapeHtml(act.activity)}">${escapeHtml(act.activity)}</span>
+                </label>
+              `;
+            }).join("")}
+            <label class="lp-act-chip ${isNa ? 'active na' : ''}">
+              <input type="checkbox" ${isNa ? 'checked' : ''} onchange="toggleLearningPlanRowActivity(${idx}, 'N/A')" />
+              <span>N/A (Orientation / None)</span>
+            </label>
+          </div>
+        `;
+
+        let mergeBtns = [];
+        if (idx > 0) {
+          mergeBtns.push(`
+            <button type="button" class="btn btn-outline-primary btn-xs" style="font-size:0.68rem; padding:2px 5px; width:100%; display:flex; align-items:center; justify-content:center; gap:3px; margin-top:4px;"
+                    onclick="mergeLearningPlanAssessmentWithPrev(${idx})" title="Merge this topic's assessment with topic above">
+              🔗 Merge with topic above
+            </button>
+          `);
+        }
+        if (idx + 1 < m.learning_plan_table.length && !m.learning_plan_table[idx + 1].merge_assessment_with_prev) {
+          mergeBtns.push(`
+            <button type="button" class="btn btn-outline-secondary btn-xs" style="font-size:0.67rem; padding:1px 5px; width:100%; display:flex; align-items:center; justify-content:center; gap:2px; margin-top:2px;"
+                    onclick="mergeLearningPlanAssessmentWithNext(${idx})" title="Merge next topic into this assessment group">
+              + Merge topic below
+            </button>
+          `);
+        }
+
+        const customToggle = `
+          <div style="margin-top:3px; font-size:0.68rem; text-align:right;">
+            <span style="color:#2563eb; cursor:pointer; text-decoration:underline;" onclick="toggleCustomAssessmentText(${idx})">
+              ${row._show_custom_assessment ? '▲ Hide raw text' : '✏️ Custom text'}
+            </span>
+            ${row._show_custom_assessment ? `
+              <textarea rows="2" style="font-size:0.72rem; margin-top:3px; width:100%;"
+                        onchange="blueprint.metadata.learning_plan_table[${idx}].assessment_activities=this.value; syncMergedAssessmentsFromLead(${idx}); renderLearningPlanTable();">${escapeHtml(row.assessment_activities)}</textarea>
+            ` : ''}
+          </div>
+        `;
+
+        actCellHtml = `
+          ${mergeBadge}
+          ${chipsHtml}
+          ${mergeBtns.join("")}
+          ${customToggle}
+        `;
+      }
+
       return `
         <tr style="${bgStyle}">
           <td><textarea rows="3" onchange="blueprint.metadata.learning_plan_table[${idx}].ilo=this.value">${escapeHtml(row.ilo)}</textarea></td>
-          <td><textarea rows="2" onchange="blueprint.metadata.learning_plan_table[${idx}].clo=this.value">${escapeHtml(row.clo)}</textarea></td>
+          <td style="vertical-align:top;">${cloCellHtml}</td>
           <td><input type="text" value="${escapeHtml(row.time_frame)}" onchange="blueprint.metadata.learning_plan_table[${idx}].time_frame=this.value" /></td>
           <td><textarea rows="3" style="${isExam ? 'font-weight:700;' : ''}" onchange="blueprint.metadata.learning_plan_table[${idx}].topics=this.value; renderLearningPlanTable();">${escapeHtml(row.topics)}</textarea></td>
           <td><textarea rows="3" onchange="blueprint.metadata.learning_plan_table[${idx}].tla=this.value">${escapeHtml(row.tla)}</textarea></td>
           <td><textarea rows="2" onchange="blueprint.metadata.learning_plan_table[${idx}].required_reading=this.value">${escapeHtml(row.required_reading)}</textarea></td>
-          <td><textarea rows="2" onchange="blueprint.metadata.learning_plan_table[${idx}].assessment_activities=this.value">${escapeHtml(row.assessment_activities)}</textarea></td>
-          <td><button class="btn btn-danger btn-sm" onclick="removeLearningPlanRow(${idx})">&times;</button></td>
+          <td style="vertical-align:top; min-width:180px;">${actCellHtml}</td>
+          <td style="vertical-align:middle; text-align:center;">
+            <div style="display:flex; flex-direction:column; gap:3px; align-items:center;">
+              <div style="display:flex; gap:2px;">
+                <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px; font-size:0.68rem;" onclick="moveLearningPlanRow(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Move Topic Up">&#9650;</button>
+                <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px; font-size:0.68rem;" onclick="moveLearningPlanRow(${idx}, 1)" ${idx === m.learning_plan_table.length - 1 ? 'disabled' : ''} title="Move Topic Down">&#9660;</button>
+              </div>
+              <button type="button" class="btn btn-danger btn-xs" style="padding:1px 6px; font-size:0.75rem;" onclick="removeLearningPlanRow(${idx})" title="Delete Topic Row">&times;</button>
+            </div>
+          </td>
         </tr>
       `;
     }).join("");
@@ -4727,14 +5141,24 @@
 
   function addLearningPlanRow() {
     if (!blueprint.metadata.learning_plan_table) blueprint.metadata.learning_plan_table = [];
+    const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
+    const defClo = coOptions[0] || "CLO1";
+    const acts = blueprint.metadata.syllabus_assessment_activities || [];
+    let defAct = "• FA1 – Group Activity\n• SA1 – Quiz";
+    if (acts.length >= 2) {
+      defAct = `• ${acts[0].code} – ${acts[0].activity}\n• ${acts[1].code} – ${acts[1].activity}`;
+    } else if (acts.length === 1) {
+      defAct = `• ${acts[0].code} – ${acts[0].activity}`;
+    }
     blueprint.metadata.learning_plan_table.push({
       ilo: "• Formulate and solve engineering problems for the topic.",
-      clo: "CLO1",
+      clo: defClo,
       time_frame: "6 hours",
       topics: "• NEW MODULE TOPIC",
       tla: "• Student-based Learning\n• Collaborative and Team Learning\n• Problem sets\n• Lecture",
       required_reading: "• Ref01-08",
-      assessment_activities: "• FA1 – Group Activity\n• SA1 – Quiz"
+      assessment_activities: defAct,
+      merge_assessment_with_prev: false
     });
     renderLearningPlanTable();
   }
@@ -4742,14 +5166,20 @@
   function addLearningPlanExamRow(examTitle) {
     if (!blueprint.metadata.learning_plan_table) blueprint.metadata.learning_plan_table = [];
     const isMid = examTitle.includes("MIDTERM");
+    const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
+    const cloVal = coOptions.slice(0, 2).join("\n") || "CLO1\nCLO2";
+    const acts = blueprint.metadata.syllabus_assessment_activities || [];
+    const examAct = acts.find(a => (a.code || "").toUpperCase().includes("SA2") || (a.activity || "").toUpperCase().includes("EXAM"));
+    const actVal = examAct ? `• ${examAct.code} – ${examAct.activity}` : "• SA2 – Term Examination";
     blueprint.metadata.learning_plan_table.push({
       ilo: `• Demonstrate mastery of ${isMid ? 'Midterm' : 'Final Term'} course concepts and problem-solving.`,
-      clo: "CLO1\nCLO2",
+      clo: cloVal,
       time_frame: "3 hours",
       topics: examTitle,
       tla: `• Conduct of ${isMid ? 'Midterm' : 'Final'} Examination – Independent Assessment`,
       required_reading: "",
-      assessment_activities: "• SA2 – Term Examination"
+      assessment_activities: actVal,
+      merge_assessment_with_prev: false
     });
     renderLearningPlanTable();
   }
@@ -4757,6 +5187,9 @@
   function removeLearningPlanRow(idx) {
     if ((blueprint.metadata.learning_plan_table || []).length <= 1) return;
     blueprint.metadata.learning_plan_table.splice(idx, 1);
+    if (blueprint.metadata.learning_plan_table.length > 0) {
+      blueprint.metadata.learning_plan_table[0].merge_assessment_with_prev = false;
+    }
     renderLearningPlanTable();
   }
 
@@ -5313,6 +5746,7 @@
     renderCourseOutcomes();
     renderCategories();
     renderLiveGradebookAndReports();
+    renderLearningPlanTable();
   }
 
   function removeCourseOutcome(idx) {
@@ -5321,6 +5755,7 @@
     renderCourseOutcomes();
     renderCategories();
     renderLiveGradebookAndReports();
+    renderLearningPlanTable();
   }
 
   function toggleItemClo(cIdx, iIdx, cloId) {

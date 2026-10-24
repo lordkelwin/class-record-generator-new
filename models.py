@@ -226,7 +226,7 @@ def get_default_syllabus_assessment_activities() -> List[Dict[str, str]]:
     ]
 
 
-def get_default_learning_plan_table() -> List[Dict[str, str]]:
+def get_default_learning_plan_table() -> List[Dict[str, Any]]:
     return [
         {
             "ilo": (
@@ -246,6 +246,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             "tla": "• On-site or online meeting",
             "required_reading": "• USeP Student Handbook (2016 edition)",
             "assessment_activities": "• N/A",
+            "merge_assessment_with_prev": False,
         },
         {
             "ilo": (
@@ -261,6 +262,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             ),
             "required_reading": "• Ref01-08",
             "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz",
+            "merge_assessment_with_prev": False,
         },
         {
             "ilo": (
@@ -276,6 +278,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             ),
             "required_reading": "• Ref01-08",
             "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz",
+            "merge_assessment_with_prev": True,
         },
         {
             "ilo": (
@@ -299,6 +302,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             ),
             "required_reading": "• Ref01-08",
             "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz",
+            "merge_assessment_with_prev": True,
         },
         {
             "ilo": "• Demonstrate mastery of foundational circuit analysis and network theorems.",
@@ -308,6 +312,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             "tla": "• Conduct of Midterm Examination – Independent Assessment",
             "required_reading": "",
             "assessment_activities": "• SA2 – Term Examination",
+            "merge_assessment_with_prev": False,
         },
         {
             "ilo": (
@@ -323,6 +328,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             ),
             "required_reading": "• Ref01-08",
             "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz",
+            "merge_assessment_with_prev": False,
         },
         {
             "ilo": (
@@ -338,6 +344,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             ),
             "required_reading": "• Ref01-08",
             "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz",
+            "merge_assessment_with_prev": True,
         },
         {
             "ilo": (
@@ -357,6 +364,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             ),
             "required_reading": "• Ref01-08",
             "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz",
+            "merge_assessment_with_prev": True,
         },
         {
             "ilo": (
@@ -377,6 +385,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             ),
             "required_reading": "• Ref01-08",
             "assessment_activities": "• FA1 – Group Activity\n• SA1 – Quiz",
+            "merge_assessment_with_prev": True,
         },
         {
             "ilo": (
@@ -389,6 +398,7 @@ def get_default_learning_plan_table() -> List[Dict[str, str]]:
             "tla": "• Conduct of Final Examination – Independent Assessment",
             "required_reading": "",
             "assessment_activities": "• SA2 – Term Examination",
+            "merge_assessment_with_prev": False,
         },
     ]
 

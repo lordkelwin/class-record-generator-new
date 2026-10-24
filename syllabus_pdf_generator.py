@@ -1240,59 +1240,62 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
 
 
     lp_rows = meta.learning_plan_table or get_default_learning_plan_table()
-
     pdf.set_font("Helvetica", "", 7.5)
 
+    # Compute rowspan spans for Assessment Activities column to support merged assessments across topics
+    spans = [1] * len(lp_rows)
+    i = 0
+    while i < len(lp_rows):
+        k = 1
+        while (i + k) < len(lp_rows) and bool(lp_rows[i + k].get("merge_assessment_with_prev")):
+            k += 1
+        spans[i] = k
+        for j in range(1, k):
+            spans[i + j] = 0
+        i += k
+
     with pdf.table(
-
         col_widths=(62.0, 26.0, 22.0, 76.2, 46.0, 35.0, 38.0),
-
         width=305.2,
-
         line_height=4.0,
-
     ) as t_lp:
-
         hdr = t_lp.row(style=gray_hdr)
-
         hdr.cell("Intended Learning Outcomes (ILO)")
-
         hdr.cell("Course Learning Outcome (CLO)")
-
         hdr.cell("Time Frame")
-
         hdr.cell("Topics")
-
         hdr.cell("Teaching-Learning Activities (TLA)")
-
         hdr.cell("Required Reading")
-
         hdr.cell("Assessment Activities")
 
-
-
-        for row_data in lp_rows:
-
+        for idx, row_data in enumerate(lp_rows):
             topic_txt = row_data.get("topics", "")
-
             is_exam = "EXAMINATION" in topic_txt.upper()
-
             r = t_lp.row(style=mint_exam if is_exam else None)
-
             r.cell(_clean_text(row_data.get("ilo", "")))
 
-            r.cell(_clean_text(row_data.get("clo", "")))
+            clo_val = row_data.get("clo", "")
+            if isinstance(clo_val, list):
+                clo_val = chr(10).join(str(c) for c in clo_val)
+            r.cell(_clean_text(clo_val))
 
             r.cell(_clean_text(row_data.get("time_frame", "")))
-
             r.cell(_clean_text(topic_txt))
-
             r.cell(_clean_text(row_data.get("tla", "")))
-
             r.cell(_clean_text(row_data.get("required_reading", "")))
 
-            r.cell(_clean_text(row_data.get("assessment_activities", "")))
-
+            span = spans[idx]
+            if span > 1:
+                act_val = row_data.get("assessment_activities", "")
+                if isinstance(act_val, list):
+                    act_val = chr(10).join(str(a) for a in act_val)
+                r.cell(_clean_text(act_val), rowspan=span, v_align="MIDDLE")
+            elif span == 1:
+                act_val = row_data.get("assessment_activities", "")
+                if isinstance(act_val, list):
+                    act_val = chr(10).join(str(a) for a in act_val)
+                r.cell(_clean_text(act_val))
+            # if span == 0, omit cell because it is covered by the lead row's rowspan
 
 
     # ==========================================================================
