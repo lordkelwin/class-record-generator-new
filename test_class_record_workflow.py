@@ -97,6 +97,7 @@ class TestClassRecordWorkflow(unittest.TestCase):
             {"student_id": "2024-00102", "first_name": "Maria", "last_name": "Santos", "scores": {"SA1_1__CLO1": 30, "SA1_2__CLO2": 29}},
         ]
         course["blueprint"] = bp
+        course["workflow"] = {"status": "approved", "is_locked": True}
         return courses_store.save_course_doc(course)
 
     def test_01_ordinary_faculty_class_record_workflow(self):

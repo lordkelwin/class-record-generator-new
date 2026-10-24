@@ -178,6 +178,10 @@ def submit_class_record(doc: Dict[str, Any], user: Dict[str, Any], notes: str = 
     if status not in EDITABLE_CR_STATUSES:
         raise ClassRecordWorkflowError("Class record is already submitted or finalized.")
 
+    syl_wf = doc.get("workflow") or {}
+    if syl_wf.get("status") != "approved":
+        raise ClassRecordWorkflowError("Class record cannot be submitted until the syllabus is approved through the official review chain.")
+
     owner = doc.get("owner", "")
     username = user.get("username", "")
     is_admin = (user.get("role") == "admin")

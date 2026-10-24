@@ -188,6 +188,7 @@ def enforce_locks(stored_doc: Dict[str, Any], incoming_bp: Dict[str, Any]) -> Di
         merged["terms"] = copy.deepcopy(locked["terms"])
 
     if not is_approved(stored_doc):
+        merged["categories"] = copy.deepcopy(stored_bp.get("categories") or [])
         merged["students"] = copy.deepcopy(stored_bp.get("students") or [])
         if "cqi_plan" in stored_bp:
             merged["cqi_plan"] = copy.deepcopy(stored_bp["cqi_plan"])
