@@ -89,6 +89,42 @@ class TestCloPlanFormattingAndScoreLimits(unittest.TestCase):
         self.assertIn("Course Assessment Plan", full_text)
         self.assertIn("N/A", full_text)
 
+    def test_clo_report_strictly_excludes_formative_assessments(self):
+        """Verify CLO Report PDF generator strictly includes only Summative Assessments (SA) and excludes FA."""
+        bp = sample_syllabus.get_default_blueprint()
+        bp.metadata.course_assessment_plan = [
+            {
+                "code": "FA1",
+                "component_name": "Formative Homework Assignment (0%)",
+                "weight_pct": 0,
+                "clo_plans": {"CLO1": "Formative Practice Problems", "CLO2": "N/A"}
+            },
+            {
+                "code": "SA1",
+                "component_name": "Summative Quizzes (30%)",
+                "weight_pct": 30,
+                "clo_plans": {"CLO1": "Objective quiz", "CLO2": "N/A"}
+            },
+            {
+                "code": "SA2",
+                "component_name": "Term Examination (70%)",
+                "weight_pct": 70,
+                "clo_plans": {"CLO1": "Problem solving analysis", "CLO2": "Essay items"}
+            }
+        ]
+
+        pdf_bytes = clo_report_pdf_generator.generate_clo_report_pdf_bytes(bp)
+        self.assertIsInstance(pdf_bytes, (bytes, bytearray))
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        full_text = "".join(page.extract_text() for page in reader.pages)
+
+        # Summative assessments must be present
+        self.assertIn("Summative Quizzes (30%)", full_text)
+        self.assertIn("Term Examination (70%)", full_text)
+        # Formative assessment must be excluded
+        self.assertNotIn("Formative Homework Assignment", full_text)
+        self.assertNotIn("Formative Practice Problems", full_text)
+
     def test_clo_report_pdf_generation_fallback(self):
         """Verify CLO Report PDF generator falls back gracefully when course_assessment_plan is empty."""
         bp = sample_syllabus.get_default_blueprint()
@@ -135,13 +171,21 @@ class TestCloPlanFormattingAndScoreLimits(unittest.TestCase):
 
         self.assertIn("ensureCourseAssessmentPlan", html)
         self.assertIn("updateCapComponentName", html)
+        self.assertIn("updateCapComponentWeight", html)
+        self.assertIn("moveCourseAssessmentPlanRow", html)
+        self.assertIn("applyCapBlockPreset", html)
+        self.assertIn("autoAdjustBlockHeight", html)
+        self.assertIn("setAllCapBlockHeights", html)
+        self.assertIn("autoFitAllCapBlocks", html)
         self.assertIn("updateCapCellText", html)
         self.assertIn("toggleCapCellNa", html)
         self.assertIn("addCourseAssessmentPlanRow", html)
         self.assertIn("removeCourseAssessmentPlanRow", html)
         self.assertIn("syncCourseAssessmentPlanFromSyllabus", html)
         self.assertIn("Sync from Syllabus", html)
-        self.assertIn("+ Add Component", html)
+        self.assertIn("+ Add Summative Assessment", html)
+        self.assertIn("resize:vertical", html)
+        self.assertIn("resize:horizontal", html)
 
     def test_web_ui_score_input_limiting(self):
         """Verify templates/index.html includes numerical score limits per CLO and clamping logic."""

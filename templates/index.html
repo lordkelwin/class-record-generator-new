@@ -1986,14 +1986,21 @@
         <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
           <div>
             <h2 style="margin-bottom:2px;">Course Assessment Plan (As Declared in Syllabus)</h2>
-            <div style="font-size:0.75rem; color:#64748b;">Synchronized with Syllabus Part VI (Assessment Tasks). Table is editable per component and CLO.</div>
+            <div style="font-size:0.75rem; color:#64748b;">Only <strong>Summative Assessments (SA)</strong> are included from Syllabus Part VI. Every block is adjustable in height, content, weight, and order.</div>
           </div>
-          <div style="display:flex; gap:6px;">
-            <button type="button" class="btn btn-outline-primary btn-xs" onclick="syncCourseAssessmentPlanFromSyllabus(true)" title="Re-sync components and CLO alignments directly from Syllabus Part VI">
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <div class="syl-format-pill-bar" style="margin-right:4px;">
+              <span style="font-size:0.68rem; font-weight:700; color:#475569; margin-right:2px;">Block Sizing:</span>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(48)" title="Set compact block height (48px)">⇳ Compact</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(75)" title="Set standard block height (75px)">⇳ Standard</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(120)" title="Set expanded block height (120px)">⇳ Expanded</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="autoFitAllCapBlocks()" title="Auto-fit block heights to text content">⇳ Auto-Fit</button>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-xs" onclick="syncCourseAssessmentPlanFromSyllabus(true)" title="Re-sync summative components and CLO alignments directly from Syllabus Part VI">
               🔄 Sync from Syllabus
             </button>
             <button type="button" class="btn btn-primary btn-xs" onclick="addCourseAssessmentPlanRow()">
-              + Add Component
+              + Add Summative Assessment
             </button>
           </div>
         </div>
@@ -6667,17 +6674,31 @@
   function ensureCourseAssessmentPlan(forceSync = false) {
     const m = (blueprint && blueprint.metadata) || {};
     if (!m) return [];
+
+    // If existing plan present, ensure strictly only Summative Assessments (no FA)
     if (!forceSync && m.course_assessment_plan && Array.isArray(m.course_assessment_plan) && m.course_assessment_plan.length > 0) {
-      return m.course_assessment_plan;
+      const onlySummative = m.course_assessment_plan.filter(row => {
+        const code = String(row.code || "").trim().toUpperCase();
+        return !code.startsWith("FA");
+      });
+      if (onlySummative.length > 0) {
+        m.course_assessment_plan = onlySummative;
+        return onlySummative;
+      }
     }
 
+    // Filter syllabus_assessment_activities: STRICTLY ONLY SUMMATIVE ASSESSMENTS (exclude FA / Formative)
     const sylActs = (m.syllabus_assessment_activities || []).filter(a => {
-      const isFa = String(a.type || "").toLowerCase().startsWith("form") || String(a.code || "").toUpperCase().startsWith("FA");
-      return !isFa || (parseFloat(a.weight_pct) || 0) > 0;
+      const code = String(a.code || "").trim().toUpperCase();
+      const type = String(a.type || "").trim().toLowerCase();
+      const isFormative = type.startsWith("form") || code.startsWith("FA");
+      const isSummative = type.startsWith("summ") || code.startsWith("SA");
+      if (isFormative) return false;
+      return isSummative || (!isFormative && (parseFloat(a.weight_pct) || 0) > 0);
     });
 
     const acts = sylActs.length > 0 ? sylActs : [
-      { code: "SA1", activity: "Quizzes", weight_pct: 30, clo_aligned: "CLO1, CLO2" },
+      { code: "SA1", activity: "Summative Quizzes", weight_pct: 30, clo_aligned: "CLO1, CLO2" },
       { code: "SA2", activity: "Term Examination", weight_pct: 50, clo_aligned: "CLO1, CLO2" }
     ];
 
@@ -6710,6 +6731,7 @@
         code: code,
         component_name: label,
         weight_pct: wt,
+        block_height: 70,
         clo_plans: cloPlans
       };
     });
@@ -6724,6 +6746,30 @@
       list[idx].component_name = val.trim();
       queueAutoSave();
     }
+  }
+
+  function updateCapComponentWeight(idx, val) {
+    const list = ensureCourseAssessmentPlan(false);
+    if (list[idx]) {
+      const num = Math.max(0, Math.min(100, parseFloat(val) || 0));
+      list[idx].weight_pct = num;
+      if (list[idx].component_name) {
+        list[idx].component_name = list[idx].component_name.replace(/\(\d+%\)/, `(${num.toFixed(0)}%)`);
+      }
+      queueAutoSave();
+      renderLiveGradebookAndReports();
+    }
+  }
+
+  function moveCourseAssessmentPlanRow(idx, direction) {
+    const list = ensureCourseAssessmentPlan(false);
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= list.length) return;
+    const temp = list[idx];
+    list[idx] = list[targetIdx];
+    list[targetIdx] = temp;
+    queueAutoSave();
+    renderLiveGradebookAndReports();
   }
 
   function updateCapCellText(idx, coId, val) {
@@ -6751,6 +6797,45 @@
     }
   }
 
+  function applyCapBlockPreset(pIdx, coId, presetKey) {
+    const list = ensureCourseAssessmentPlan(false);
+    if (!list[pIdx]) return;
+    if (!list[pIdx].clo_plans) list[pIdx].clo_plans = {};
+
+    const presets = {
+      default: "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)",
+      problem_solving: "Problem Solving Items Score (Evaluated using Problem Solving Analytic Rubric)",
+      performance_lab: "Performance Task / Laboratory Experiment Score (Evaluated using Performance / Laboratory Rubric)",
+      term_exam: "Comprehensive Term Examination Score (Objective, Problem Solving, and Essay Analysis)",
+      na: "N/A"
+    };
+
+    if (presets[presetKey]) {
+      list[pIdx].clo_plans[coId] = presets[presetKey];
+      queueAutoSave();
+      renderLiveGradebookAndReports();
+    }
+  }
+
+  function autoAdjustBlockHeight(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.max(48, el.scrollHeight + 4) + "px";
+  }
+
+  function setAllCapBlockHeights(hPx) {
+    const list = ensureCourseAssessmentPlan(false);
+    list.forEach(r => { r.block_height = hPx; });
+    queueAutoSave();
+    renderLiveGradebookAndReports();
+  }
+
+  function autoFitAllCapBlocks() {
+    document.querySelectorAll("#capPlanBody textarea").forEach(ta => {
+      autoAdjustBlockHeight(ta);
+    });
+  }
+
   function addCourseAssessmentPlanRow() {
     const list = ensureCourseAssessmentPlan(false);
     const outcomes = (blueprint && blueprint.course_outcomes) || [];
@@ -6759,11 +6844,22 @@
     outcomes.forEach(co => {
       cloPlans[co.co_id] = defRubricText;
     });
-    const nextNum = list.length + 1;
+
+    let maxSaNum = 0;
+    list.forEach(r => {
+      const m = String(r.code || "").match(/SA(\d+)/i);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (n > maxSaNum) maxSaNum = n;
+      }
+    });
+    const nextNum = Math.max(list.length + 1, maxSaNum + 1);
+
     list.push({
       code: `SA${nextNum}`,
-      component_name: `Assessment Component ${nextNum} (20%)`,
+      component_name: `Summative Assessment ${nextNum} (20%)`,
       weight_pct: 20,
+      block_height: 70,
       clo_plans: cloPlans
     });
     queueAutoSave();
@@ -6797,47 +6893,81 @@
     const outcomes = blueprint.course_outcomes || [];
     const rubricText = "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)";
 
-    // 1. Course Assessment Plan Table (Synchronized with Syllabus & Fully Editable)
+    // 1. Course Assessment Plan Table (Synchronized with Syllabus & Fully Adjustable)
     const capList = ensureCourseAssessmentPlan(false);
     document.getElementById("capPlanHead").innerHTML = `
       <tr>
-        <th rowspan="2" style="background:#f6cc66; color:#0f172a; vertical-align:middle; width:160px;">Assessment Component</th>
+        <th rowspan="2" style="background:#f6cc66; color:#0f172a; vertical-align:middle; width:210px;">Summative Assessment Component</th>
         <th colspan="${Math.max(1, outcomes.length)}" style="background:#f4c248; color:#0f172a; text-align:center;">Course Assessment Plan (As Declared in Syllabus)</th>
         <th rowspan="2" style="background:#f6cc66; color:#0f172a; vertical-align:middle; width:46px; text-align:center;"></th>
       </tr>
       <tr>
-        ${outcomes.map(co => `<th style="background:#f8d576; color:#0f172a; text-align:center; min-width:140px;">${escapeHtml(co.co_id)}</th>`).join("")}
+        ${outcomes.map(co => `<th style="background:#f8d576; color:#0f172a; text-align:center; min-width:140px; resize:horizontal; overflow:auto;">${escapeHtml(co.co_id)}</th>`).join("")}
       </tr>
     `;
 
     document.getElementById("capPlanBody").innerHTML = capList.map((row, pIdx) => {
       const cloPlans = row.clo_plans || {};
+      const blockH = row.block_height || 70;
       return `
         <tr style="background:#fdf2d0;">
-          <td style="vertical-align:top;">
-            <input type="text" class="form-control" style="font-weight:700; width:100%; font-size:0.79rem; padding:4px 6px; background:#fff;"
-                   value="${escapeHtml(row.component_name || row.code)}"
-                   onchange="updateCapComponentName(${pIdx}, this.value)"
-                   placeholder="e.g. Quiz (30%)" />
+          <td style="vertical-align:top; min-width:190px;">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span class="badge" style="background:#0284c7; color:#fff; font-size:0.7rem; padding:2px 6px;">${escapeHtml(row.code || 'SA')}</span>
+                <input type="text" class="form-control" style="font-weight:700; flex:1; font-size:0.78rem; padding:3px 6px; background:#fff;"
+                       value="${escapeHtml(row.component_name || row.code)}"
+                       onchange="updateCapComponentName(${pIdx}, this.value)"
+                       placeholder="e.g. Quizzes (30%)" title="Assessment Component Name (Adjustable)" />
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; margin-top:2px;">
+                <div style="display:flex; align-items:center; gap:3px;">
+                  <span style="font-size:0.68rem; font-weight:600; color:#64748b;">Weight:</span>
+                  <input type="number" min="0" max="100" step="1" style="width:50px; font-size:0.74rem; text-align:center; padding:2px 4px; border:1px solid #cbd5e1; border-radius:4px; background:#fff;"
+                         value="${row.weight_pct !== undefined ? row.weight_pct : 0}"
+                         onchange="updateCapComponentWeight(${pIdx}, this.value)"
+                         title="Adjust assessment weight percentage" />
+                  <span style="font-size:0.7rem; font-weight:700; color:#64748b;">%</span>
+                </div>
+                <div style="display:flex; gap:2px;">
+                  <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px; font-size:0.7rem;"
+                          onclick="moveCourseAssessmentPlanRow(${pIdx}, -1)" ${pIdx === 0 ? 'disabled' : ''} title="Move block up">▲</button>
+                  <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px; font-size:0.7rem;"
+                          onclick="moveCourseAssessmentPlanRow(${pIdx}, 1)" ${pIdx === capList.length - 1 ? 'disabled' : ''} title="Move block down">▼</button>
+                </div>
+              </div>
+            </div>
           </td>
           ${outcomes.map(co => {
             const val = cloPlans[co.co_id] !== undefined ? cloPlans[co.co_id] : "N/A";
             const isNa = String(val).trim().toUpperCase() === "N/A";
             return `
-              <td style="vertical-align:top; background:${isNa ? '#fefce8' : '#fef9c3'};">
-                <textarea rows="3" style="font-size:0.73rem; width:100%; padding:4px 5px; font-family:inherit; border:1px solid ${isNa ? '#cbd5e1' : '#f59e0b'}; border-radius:4px; line-height:1.3; background:${isNa ? '#f8fafc' : '#ffffff'}; color:${isNa ? '#94a3b8' : '#0f172a'};"
-                          onchange="updateCapCellText(${pIdx}, '${escapeHtml(co.co_id)}', this.value)">${escapeHtml(val)}</textarea>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+              <td style="vertical-align:top; background:${isNa ? '#fefce8' : '#fef9c3'}; min-width:140px;">
+                <textarea style="font-size:0.73rem; width:100%; min-height:${blockH}px; resize:vertical; padding:5px 6px; font-family:inherit; border:1px solid ${isNa ? '#cbd5e1' : '#f59e0b'}; border-radius:4px; line-height:1.35; background:${isNa ? '#f8fafc' : '#ffffff'}; color:${isNa ? '#94a3b8' : '#0f172a'};"
+                          oninput="autoAdjustBlockHeight(this)"
+                          onchange="updateCapCellText(${pIdx}, '${escapeHtml(co.co_id)}', this.value)"
+                          title="Adjustable plan description block">${escapeHtml(val)}</textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px; gap:4px; flex-wrap:wrap;">
                   <span style="font-size:0.67rem; color:${isNa ? '#16a34a' : '#dc2626'}; cursor:pointer; text-decoration:underline; font-weight:600;"
                         onclick="toggleCapCellNa(${pIdx}, '${escapeHtml(co.co_id)}')">
                     ${isNa ? '✓ Set Plan Text' : '✕ Set N/A'}
                   </span>
+                  <select style="font-size:0.65rem; padding:1px 3px; border-radius:3px; border:1px solid #cbd5e1; background:#fff; max-width:115px;"
+                          onchange="applyCapBlockPreset(${pIdx}, '${escapeHtml(co.co_id)}', this.value); this.value='';"
+                          title="Apply quick preset to this block">
+                    <option value="">Presets ▾</option>
+                    <option value="default">Default OBE Rubric</option>
+                    <option value="problem_solving">Problem Solving</option>
+                    <option value="performance_lab">Lab / Performance</option>
+                    <option value="term_exam">Term Exam</option>
+                    <option value="na">N/A</option>
+                  </select>
                 </div>
               </td>
             `;
           }).join("")}
           <td style="vertical-align:middle; text-align:center;">
-            <button type="button" class="btn btn-danger btn-xs" style="padding:1px 6px;" onclick="removeCourseAssessmentPlanRow(${pIdx})" title="Delete component">&times;</button>
+            <button type="button" class="btn btn-danger btn-xs" style="padding:1px 6px;" onclick="removeCourseAssessmentPlanRow(${pIdx})" title="Delete summative assessment block">&times;</button>
           </td>
         </tr>
       `;

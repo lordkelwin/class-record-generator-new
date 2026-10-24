@@ -12,6 +12,11 @@ assert res.status_code == 200, "Could not list courses"
 c_id = res.get_json()["courses"][0]["id"]
 print("Testing course ID:", c_id)
 
+# Reset rubrics to empty for clean testing
+doc = courses_store.find_course(c_id)
+doc["blueprint"]["rubrics"] = []
+courses_store.save_course_doc(doc)
+
 # Test GET course
 res = client.get(f"/api/courses/{c_id}")
 assert res.status_code == 200

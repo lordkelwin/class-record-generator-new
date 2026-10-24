@@ -41,6 +41,28 @@ def _clean_pdf_text(val: str) -> str:
     return s.encode("latin-1", "replace").decode("latin-1")
 
 
+def _wrap_pdf_text_lines(pdf: FPDF, text: str, max_w: float) -> List[str]:
+    """Wraps text into lines fitting within max_w mm at the current font settings."""
+    lines: List[str] = []
+    for raw_para in str(text or "").split("\n"):
+        raw_para = raw_para.strip()
+        if not raw_para:
+            continue
+        words = raw_para.split(" ")
+        cur = ""
+        for w in words:
+            cand = f"{cur} {w}".strip() if cur else w
+            if pdf.get_string_width(cand) <= max_w:
+                cur = cand
+            else:
+                if cur:
+                    lines.append(cur)
+                cur = w
+        if cur:
+            lines.append(cur)
+    return lines or ["N/A"]
+
+
 def _short_sa_component_label(cat_name: str, sa_code: str, weight_pct: float) -> str:
     """
     Formats Summative Assessment component label to match 'AEE 321_EE 3A_CLO Report.pdf':
@@ -312,15 +334,18 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
     pdf.set_y(y_cap_hdr + hdr_h1 + hdr_h2)
 
     # Table 1 Data Rows (Cream background #FDF2D0, white grid lines)
-    # Check if a custom / synchronized Course Assessment Plan is defined in blueprint metadata
+    # Check if a custom / synchronized Course Assessment Plan is defined in blueprint metadata.
+    # Strictly filter so only Summative Assessments (SA) are included, never Formative Assessments (FA).
     cap_data = meta.course_assessment_plan if getattr(meta, "course_assessment_plan", None) else []
     if cap_data:
         plan_rows = [
             {
-                "label": r.get("component_name") or r.get("code") or "Assessment",
+                "label": r.get("component_name") or r.get("code") or "Summative Assessment",
                 "clo_plans": r.get("clo_plans") or {},
+                "custom_h": float(r.get("block_height") or 0.0) if r.get("block_height") else None,
             }
             for r in cap_data
+            if not str(r.get("code") or "").upper().startswith("FA")
         ]
     else:
         plan_rows = [
@@ -330,11 +355,13 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
                     co.co_id: (DEFAULT_ASSESSMENT_PLAN_CELL_TEXT if sa_r["clo_aligned"].get(co.co_id, True) else "N/A")
                     for co in outcomes
                 },
+                "custom_h": None,
             }
             for sa_r in sa_rows
         ]
 
-    body_row_h = 28.0
+    # Every block dynamically adjusts its height based on its content
+    line_h = 3.8
     for r_idx, pr in enumerate(plan_rows):
         y_r = pdf.get_y()
         if r_idx % 2 == 0:
@@ -342,22 +369,45 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
         else:
             pdf.set_fill_color(253, 244, 215)
 
-        # Draw left component cell
-        pdf.rect(left_m, y_r, comp_col_w, body_row_h, style="DF")
-        pdf.set_xy(left_m + 1.5, y_r + (body_row_h - 5.0) / 2.0)
+        # 1. Calculate wrapped lines for left component label
         pdf.set_font("Helvetica", "B", 9.0)
-        pdf.cell(comp_col_w - 3.0, 5.0, _clean_pdf_text(pr["label"]), border=0, align="L")
+        lbl_lines = _wrap_pdf_text_lines(pdf, pr["label"], comp_col_w - 4.0)
+        max_cell_lines = len(lbl_lines)
 
-        # Draw each CLO column cell with multi-line rubric / plan description
+        # 2. Calculate wrapped lines for each CLO cell block
+        pdf.set_font("Helvetica", "", 8.5)
+        wrapped_clo_cells = {}
+        for co in outcomes:
+            cell_txt = pr["clo_plans"].get(co.co_id, DEFAULT_ASSESSMENT_PLAN_CELL_TEXT)
+            if not cell_txt or not str(cell_txt).strip():
+                cell_txt = "N/A"
+            c_lines = _wrap_pdf_text_lines(pdf, cell_txt, clo_col_w - 3.0)
+            wrapped_clo_cells[co.co_id] = c_lines
+            if len(c_lines) > max_cell_lines:
+                max_cell_lines = len(c_lines)
+
+        # Dynamic block height calculation: adapts to the largest cell in this row
+        needed_h = max(18.0, max_cell_lines * line_h + 5.0)
+        if pr.get("custom_h") and pr["custom_h"] > 14.0:
+            body_row_h = max(pr["custom_h"], needed_h)
+        else:
+            body_row_h = needed_h
+
+        # Draw left component cell block
+        pdf.rect(left_m, y_r, comp_col_w, body_row_h, style="DF")
+        pdf.set_font("Helvetica", "B", 9.0)
+        lbl_total_h = len(lbl_lines) * 4.2
+        start_lbl_y = y_r + max(1.5, (body_row_h - lbl_total_h) / 2.0)
+        for l_i, l_txt in enumerate(lbl_lines):
+            pdf.set_xy(left_m + 1.5, start_lbl_y + l_i * 4.2)
+            pdf.cell(comp_col_w - 3.0, 4.2, _clean_pdf_text(l_txt), border=0, align="L")
+
+        # Draw each CLO column cell block with wrapped, centered text
         pdf.set_font("Helvetica", "", 8.5)
         for c_idx, co in enumerate(outcomes):
             cx = left_m + comp_col_w + c_idx * clo_col_w
             pdf.rect(cx, y_r, clo_col_w, body_row_h, style="DF")
-            cell_txt = pr["clo_plans"].get(co.co_id, DEFAULT_ASSESSMENT_PLAN_CELL_TEXT)
-            if not cell_txt or not str(cell_txt).strip():
-                cell_txt = "N/A"
-            lines = cell_txt.split("\n")
-            line_h = 4.1
+            lines = wrapped_clo_cells.get(co.co_id, ["N/A"])
             total_txt_h = len(lines) * line_h
             start_y = y_r + max(1.5, (body_row_h - total_txt_h) / 2.0)
             for l_i, line_str in enumerate(lines):
