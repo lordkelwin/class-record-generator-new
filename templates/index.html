@@ -1481,8 +1481,8 @@
         <table>
           <thead>
             <tr>
-              <th style="width:140px;">Type</th>
-              <th style="width:130px;">Course Code</th>
+              <th style="width:130px;">Type</th>
+              <th style="width:260px;">Course Code (from Program)</th>
               <th>Course Title</th>
               <th style="width:48px;"></th>
             </tr>
@@ -4087,33 +4087,147 @@
     renderPoliciesTable();
   }
 
+  function getProgramCoursesForPartV() {
+    if (!catalogData || !catalogData.colleges) return [];
+    const m = (blueprint && blueprint.metadata) || {};
+    const progs = (m.programs && m.programs.length) ? m.programs : [m.program_code || "EE"];
+    const deptName = (m.department || "").toLowerCase();
+
+    const deptKeywords = {
+      "EE": ["electrical"],
+      "CE": ["civil", "structural"],
+      "ME": ["mechanical"],
+      "ECE": ["electronics"],
+      "SE": ["sanitary"],
+      "ABE": ["agricultural", "biosystem"],
+      "GE": ["geodetic"],
+      "MinE": ["mining"],
+      "BSGeo": ["geology"],
+    };
+
+    let matchedCourses = [];
+    let seenCodes = new Set();
+
+    (catalogData.colleges || []).forEach(col => {
+      (col.departments || []).forEach(dept => {
+        const dLow = (dept.department || "").toLowerCase();
+        const matchesAnyProg = progs.some(p => {
+          const kws = deptKeywords[p] || [p.toLowerCase()];
+          return kws.some(kw => dLow.includes(kw));
+        });
+        const matchesDept = deptName && dLow.includes(deptName.replace("department of", "").trim());
+
+        if (matchesAnyProg || matchesDept) {
+          (dept.courses || []).forEach(c => {
+            if (c && c.code && !seenCodes.has(c.code.toUpperCase())) {
+              seenCodes.add(c.code.toUpperCase());
+              matchedCourses.push(c);
+            }
+          });
+        }
+      });
+    });
+
+    if (matchedCourses.length === 0) {
+      (catalogData.colleges || []).forEach(col => {
+        (col.departments || []).forEach(dept => {
+          (dept.courses || []).forEach(c => {
+            if (c && c.code && !seenCodes.has(c.code.toUpperCase())) {
+              seenCodes.add(c.code.toUpperCase());
+              matchedCourses.push(c);
+            }
+          });
+        });
+      });
+    }
+
+    return matchedCourses;
+  }
+
+  function syncPrereqCoreqMetaStrings() {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.prereq_coreq_table) return;
+    const rows = blueprint.metadata.prereq_coreq_table;
+    const prereqs = rows.filter(r => (r.req_type || "").toLowerCase().includes("pre") && r.course_code)
+      .map(r => `${r.course_code}${r.course_title ? ' - ' + r.course_title : ''}`);
+    const coreqs = rows.filter(r => (r.req_type || "").toLowerCase().includes("co") && r.course_code)
+      .map(r => `${r.course_code}${r.course_title ? ' - ' + r.course_title : ''}`);
+    blueprint.metadata.prerequisites = prereqs.join("; ") || "None";
+    blueprint.metadata.corequisites = coreqs.join("; ") || "None";
+  }
+
+  function onPrereqCoreqCourseChange(idx, selectedValue) {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.prereq_coreq_table) return;
+    const row = blueprint.metadata.prereq_coreq_table[idx];
+    if (!row) return;
+
+    if (selectedValue === "__custom__") {
+      const customCode = prompt("Enter custom course code (e.g. MATH 111, GEC 101):", row.course_code || "");
+      if (customCode !== null) {
+        row.course_code = customCode.trim();
+        const customTitle = prompt("Enter course title (optional):", row.course_title || "");
+        if (customTitle !== null) {
+          row.course_title = customTitle.trim();
+        }
+      }
+      renderPrereqCoreqTable();
+      syncPrereqCoreqMetaStrings();
+      queueAutoSave();
+      return;
+    }
+
+    row.course_code = selectedValue;
+    const progCourses = getProgramCoursesForPartV();
+    const match = progCourses.find(c => c.code.toLowerCase() === selectedValue.toLowerCase());
+    if (match) {
+      row.course_title = match.title || "";
+    }
+    renderPrereqCoreqTable();
+    syncPrereqCoreqMetaStrings();
+    queueAutoSave();
+  }
+
   function renderPrereqCoreqTable() {
     const m = blueprint.metadata;
     if (!m.prereq_coreq_table || !m.prereq_coreq_table.length) {
       m.prereq_coreq_table = _parseReqStringsToTable(m.prerequisites, m.corequisites);
     }
+    const progCourses = getProgramCoursesForPartV();
     const tbody = document.getElementById("prereqCoreqTableBody");
-    tbody.innerHTML = m.prereq_coreq_table.map((row, idx) => `
+    tbody.innerHTML = m.prereq_coreq_table.map((row, idx) => {
+      const curCode = (row.course_code || "").trim();
+      const inCatalog = progCourses.some(c => c.code.toLowerCase() === curCode.toLowerCase());
+
+      return `
       <tr>
-        <td>
-          <select onchange="blueprint.metadata.prereq_coreq_table[${idx}].req_type=this.value" style="font-weight:700;">
+        <td style="width:130px;">
+          <select onchange="blueprint.metadata.prereq_coreq_table[${idx}].req_type=this.value; syncPrereqCoreqMetaStrings(); queueAutoSave();" style="font-weight:700;">
             <option value="Pre-requisite" ${row.req_type === "Pre-requisite" ? "selected" : ""}>Pre-requisite</option>
             <option value="Co-requisite" ${row.req_type === "Co-requisite" ? "selected" : ""}>Co-requisite</option>
           </select>
         </td>
-        <td>
-          <input type="text" value="${escapeHtml(row.course_code)}" placeholder="e.g. MATH 121"
-            onchange="blueprint.metadata.prereq_coreq_table[${idx}].course_code=this.value" />
+        <td style="width:260px;">
+          <select onchange="onPrereqCoreqCourseChange(${idx}, this.value)" style="width:100%; font-weight:600; font-size:0.79rem; padding:4px 6px;">
+            <option value="">-- Select Course from Program (${escapeHtml(m.program_code || 'Program')}) --</option>
+            ${!inCatalog && curCode ? `<option value="${escapeHtml(curCode)}" selected>${escapeHtml(curCode)}${row.course_title ? ' &ndash; ' + escapeHtml(row.course_title) : ''} (Current / Custom)</option>` : ''}
+            ${progCourses.map(c => `
+              <option value="${escapeHtml(c.code)}" ${c.code.toLowerCase() === curCode.toLowerCase() ? 'selected' : ''}>
+                ${escapeHtml(c.code)} &ndash; ${escapeHtml(c.title)}
+              </option>
+            `).join("")}
+            <option value="__custom__">&#9997; Other / Custom Course...</option>
+          </select>
         </td>
         <td>
-          <input type="text" value="${escapeHtml(row.course_title)}" placeholder="e.g. ENGINEERING CALCULUS 2"
-            onchange="blueprint.metadata.prereq_coreq_table[${idx}].course_title=this.value" />
+          <input type="text" value="${escapeHtml(row.course_title)}" placeholder="Course Title (Auto-Filled from Course Code)"
+            onchange="blueprint.metadata.prereq_coreq_table[${idx}].course_title=this.value; syncPrereqCoreqMetaStrings(); queueAutoSave();"
+            style="width:100%; font-size:0.79rem;" />
         </td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="removePrereqCoreqRow(${idx})">&times;</button>
+        <td style="text-align:center; width:48px;">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removePrereqCoreqRow(${idx})" title="Remove requirement">&times;</button>
         </td>
       </tr>
-    `).join("");
+      `;
+    }).join("");
   }
 
   function addPrereqCoreqRow() {
@@ -4124,12 +4238,16 @@
       course_title: ""
     });
     renderPrereqCoreqTable();
+    syncPrereqCoreqMetaStrings();
+    queueAutoSave();
   }
 
   function removePrereqCoreqRow(idx) {
     if ((blueprint.metadata.prereq_coreq_table || []).length <= 1) return;
     blueprint.metadata.prereq_coreq_table.splice(idx, 1);
     renderPrereqCoreqTable();
+    syncPrereqCoreqMetaStrings();
+    queueAutoSave();
   }
 
   function renderSdgTable() {
@@ -7655,13 +7773,8 @@
   // ==========================================================================
   function ensureDefaultRubricsExist() {
     if (!blueprint) return;
-    if (!Array.isArray(blueprint.rubrics) || blueprint.rubrics.length === 0) {
-      blueprint.rubrics = [
-        createRubricFromTemplateObj("oral_recitation", "FA1", "Oral Recitation", "CLO1", "Oral Recitation / Board Work"),
-        createRubricFromTemplateObj("group_activity", "FA2", "Group Activity", "CLO2", "Collaborative Simulation & Problem Solving"),
-        createRubricFromTemplateObj("problem_solving", "SA1", "Problem Solving Rubric", "CLO1, CLO2", "Problem Solving Items"),
-        createRubricFromTemplateObj("short_essay", "SA2", "Short Essay Rubric", "CLO1, CLO2", "Short Essay & Design Rationale Items")
-      ];
+    if (!Array.isArray(blueprint.rubrics)) {
+      blueprint.rubrics = [];
     }
   }
 
@@ -7678,7 +7791,20 @@
     }
 
     if (blueprint.rubrics.length === 0) {
-      ensureDefaultRubricsExist();
+      container.innerHTML = `
+        <div style="background:#f8fafc; border:2px dashed #cbd5e1; border-radius:10px; padding:28px 20px; text-align:center; color:#64748b; margin-top:6px;">
+          <div style="font-size:2rem; margin-bottom:8px;">📐</div>
+          <div style="font-weight:700; color:#1e293b; font-size:0.95rem; margin-bottom:4px;">No Measurement Rubrics Added Yet</div>
+          <div style="font-size:0.8rem; color:#64748b; max-width:540px; margin:0 auto 16px; line-height:1.5;">
+            Assessment rubrics are empty by default so faculty can build their own custom rubrics. Click <strong>+ Add Custom Rubric</strong> to build a rubric from scratch, or choose any starter template button above.
+          </div>
+          <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="addNewRubric()">+ Add Custom Rubric from Scratch</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="autoGenerateRubricsForAllAssessments()">⚡ Generate Rubric per Part VI Activity</button>
+          </div>
+        </div>
+      `;
+      return;
     }
 
     const acts = (blueprint.metadata && blueprint.metadata.syllabus_assessment_activities) || [];

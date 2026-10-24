@@ -233,9 +233,8 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
         with open(fp, "r", encoding="utf-8") as f:
             doc = json.load(f)
             bp = doc.get("blueprint")
-            if isinstance(bp, dict) and not bp.get("rubrics"):
-                import sample_syllabus
-                bp["rubrics"] = sample_syllabus.get_default_rubrics()
+            if isinstance(bp, dict) and "rubrics" not in bp:
+                bp["rubrics"] = []
             return doc
     except Exception:
         return None

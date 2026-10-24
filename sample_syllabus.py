@@ -79,228 +79,9 @@ def get_default_sample_students() -> List[StudentRecord]:
 
 
 def get_default_rubrics() -> List[Dict[str, Any]]:
-    return [
-        {
-            "rubric_id": "rubric_fa1",
-            "title": "FA1: Oral Recitation",
-            "assessment_code": "FA1",
-            "used_for": "Formative Assessment 1 (Oral Recitation / Conceptual Explanation)",
-            "clo_ids": ["CLO1"],
-            "scale_type": "points_5",
-            "levels": [
-                {"level": 5, "label": "Excellent (5)"},
-                {"level": 4, "label": "Very Good (4)"},
-                {"level": 3, "label": "Satisfactory (3)"},
-                {"level": 2, "label": "Needs Improvement (2)"},
-                {"level": 1, "label": "Unsatisfactory (1)"},
-                {"level": 0, "label": "Unacceptable (0)"},
-            ],
-            "criteria": [
-                {
-                    "name": "Conceptual Understanding",
-                    "weight_pct": 40.0,
-                    "descriptors": [
-                        "Excellent understanding; fully accurate and thorough explanation.",
-                        "Good understanding; mostly correct.",
-                        "Partial understanding; minor errors.",
-                        "Basic understanding; some correct points.",
-                        "Very limited understanding; mostly incorrect.",
-                        "No understanding; cannot explain topic.",
-                    ],
-                },
-                {
-                    "name": "Application & Examples",
-                    "weight_pct": 30.0,
-                    "descriptors": [
-                        "Fully correct and relevant application to course principles, hardware, and analytical examples.",
-                        "Mostly correct application.",
-                        "Partial application; minor errors.",
-                        "Some application; partially correct.",
-                        "Very limited or incorrect application.",
-                        "No application.",
-                    ],
-                },
-                {
-                    "name": "Clarity & Communication",
-                    "weight_pct": 30.0,
-                    "descriptors": [
-                        "Very clear, confident, logical, and precise explanation.",
-                        "Mostly clear and organized delivery.",
-                        "Partial clarity; understandable but not structured.",
-                        "Some clarity; partially organized.",
-                        "Very poor; hard to understand.",
-                        "Incoherent; cannot communicate.",
-                    ],
-                },
-            ],
-            "notes": "Scores are based on the standard USeP 6-level rating scale (5 to 0).",
-        },
-        {
-            "rubric_id": "rubric_fa2",
-            "title": "FA2: Group Activity",
-            "assessment_code": "FA2",
-            "used_for": "Formative Assessment 2 (Collaborative Problem Solving & System Simulation)",
-            "clo_ids": ["CLO2"],
-            "scale_type": "points_5",
-            "levels": [
-                {"level": 5, "label": "Excellent (5)"},
-                {"level": 4, "label": "Very Good (4)"},
-                {"level": 3, "label": "Satisfactory (3)"},
-                {"level": 2, "label": "Needs Improvement (2)"},
-                {"level": 1, "label": "Unsatisfactory (1)"},
-                {"level": 0, "label": "Unacceptable (0)"},
-            ],
-            "criteria": [
-                {
-                    "name": "Task Completion & Accuracy",
-                    "weight_pct": 40.0,
-                    "descriptors": [
-                        "Fully completed; functional, accurate, meets objective.",
-                        "Completed correctly; mostly functional.",
-                        "Mostly completed; minor errors.",
-                        "Partially completed; some correct elements.",
-                        "Very minimal completion; mostly incorrect.",
-                        "Not completed.",
-                    ],
-                },
-                {
-                    "name": "Problem-Solving & Troubleshooting",
-                    "weight_pct": 30.0,
-                    "descriptors": [
-                        "Excellent problem identification, solution, and reasoning.",
-                        "Mostly correct identification and solutions.",
-                        "Partial identification and solutions.",
-                        "Identifies some issues; solutions are partially correct.",
-                        "Very limited or incorrect solutions.",
-                        "No problem-solving demonstrated.",
-                    ],
-                },
-                {
-                    "name": "Collaboration & Documentation",
-                    "weight_pct": 30.0,
-                    "descriptors": [
-                        "Excellent teamwork, complete, and clear documentation/report/presentation.",
-                        "Good teamwork; mostly clear documentation.",
-                        "Partial teamwork; documentation acceptable.",
-                        "Some teamwork; documentation barely acceptable.",
-                        "Very limited participation or poor documentation.",
-                        "No teamwork or documentation.",
-                    ],
-                },
-            ],
-            "notes": "Team performance rubric applied to group outputs and presentations.",
-        },
-        {
-            "rubric_id": "rubric_sa1",
-            "title": "SA1/SA2: Problem Solving Rubric",
-            "assessment_code": "SA1",
-            "used_for": "Summative Assessments (Quizzes and Term Examinations - Problem Solving)",
-            "clo_ids": ["CLO1", "CLO2"],
-            "scale_type": "percent_100",
-            "levels": [
-                {"level": 5, "label": "Excellent (100%)"},
-                {"level": 4, "label": "Very Good (80%)"},
-                {"level": 3, "label": "Satisfactory (60%)"},
-                {"level": 2, "label": "Needs Improvement (40%)"},
-                {"level": 1, "label": "Unsatisfactory (20%)"},
-                {"level": 0, "label": "Unacceptable (0%)"},
-            ],
-            "criteria": [
-                {
-                    "name": "Conceptual Analysis",
-                    "weight_pct": 40.0,
-                    "descriptors": [
-                        "Excellent understanding; fully accurate and thorough analysis.",
-                        "Good understanding; mostly correct.",
-                        "Partial understanding; minor errors.",
-                        "Basic understanding; minor errors.",
-                        "Very limited understanding; mostly incorrect.",
-                        "No understanding; cannot analyze problem.",
-                    ],
-                },
-                {
-                    "name": "Problem-Solving & Application",
-                    "weight_pct": 40.0,
-                    "descriptors": [
-                        "Fully correct, efficient, and logically sound solution.",
-                        "Mostly correct solution; minor issues.",
-                        "Adequate solution; partially correct.",
-                        "Partially correct solution; minor errors.",
-                        "Very limited solution; mostly incorrect.",
-                        "No attempt or completely incorrect.",
-                    ],
-                },
-                {
-                    "name": "Accuracy & Logical Reasoning",
-                    "weight_pct": 20.0,
-                    "descriptors": [
-                        "Fully logical, stepwise, and accurate.",
-                        "Mostly logical and accurate.",
-                        "Reasonable logic; some minor errors.",
-                        "Some logical steps; partial correctness.",
-                        "Very limited reasoning; mostly incorrect.",
-                        "Completely illogical or wrong.",
-                    ],
-                },
-            ],
-            "notes": "Applied to non-objective problem solving portions of Quizzes and Term Examinations.",
-        },
-        {
-            "rubric_id": "rubric_sa2",
-            "title": "SA1/SA2: Short Essay Rubric",
-            "assessment_code": "SA2",
-            "used_for": "Summative Assessments (Quizzes and Term Examinations - Short Essay / Design Questions)",
-            "clo_ids": ["CLO1", "CLO2"],
-            "scale_type": "percent_100",
-            "levels": [
-                {"level": 5, "label": "Excellent (100%)"},
-                {"level": 4, "label": "Very Good (80%)"},
-                {"level": 3, "label": "Satisfactory (60%)"},
-                {"level": 2, "label": "Needs Improvement (40%)"},
-                {"level": 1, "label": "Unsatisfactory (20%)"},
-                {"level": 0, "label": "Unacceptable (0%)"},
-            ],
-            "criteria": [
-                {
-                    "name": "Conceptual Understanding",
-                    "weight_pct": 40.0,
-                    "descriptors": [
-                        "Excellent understanding; fully accurate, thorough, and insightful.",
-                        "Good understanding; mostly correct.",
-                        "Partial understanding; minor errors.",
-                        "Basic understanding; some correct points.",
-                        "Very limited understanding; mostly incorrect.",
-                        "Shows no understanding; explanation missing or incorrect.",
-                    ],
-                },
-                {
-                    "name": "Application & Examples",
-                    "weight_pct": 30.0,
-                    "descriptors": [
-                        "Fully correct, relevant, and well-illustrated examples.",
-                        "Mostly correct application.",
-                        "Partial application; minor errors.",
-                        "Some application; partially correct.",
-                        "Very limited or incorrect application.",
-                        "No application.",
-                    ],
-                },
-                {
-                    "name": "Clarity, Organization, & Reasoning",
-                    "weight_pct": 30.0,
-                    "descriptors": [
-                        "Excellent clarity, highly logical, well-structured, and precise.",
-                        "Good clarity; mostly logical and organized.",
-                        "Partial clarity; understandable but not structured.",
-                        "Some clarity; partially organized.",
-                        "Very poor; hard to understand.",
-                        "Completely incoherent.",
-                    ],
-                },
-            ],
-            "notes": "Applied to theoretical, design rationale, and short essay exam items.",
-        },
-    ]
+    """Returns an empty list by default, allowing faculty to define their own custom rubrics."""
+    return []
+
 
 def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBlueprint:
     """Returns the USeP EE 211 (Electrical Circuits 1) syllabus blueprint matching EE 211.pdf & Math 211.xlsm."""
@@ -537,7 +318,7 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
         categories=categories,
         students=students,
         cqi_plan=CQIPlan(indicators=get_default_cqi_indicators()),
-        rubrics=get_default_rubrics(),
+        rubrics=[],
         parser_notes=[
             "Loaded USeP EE 211 (Electrical Circuits 1) OBE Syllabus Blueprint (FM-USeP-MID-01).",
             "Linked CLO1 -> PGO a (PI a.1, IGA2) and CLO2 -> PGO e (PI e.2, IGA5).",
@@ -698,7 +479,7 @@ def get_blank_blueprint(
         categories=[],
         students=[],
         cqi_plan=CQIPlan(indicators=get_default_cqi_indicators()),
-        rubrics=get_default_rubrics(),
+        rubrics=[],
         parser_notes=["New course syllabus created from scratch."],
     )
 

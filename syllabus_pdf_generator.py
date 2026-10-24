@@ -1047,190 +1047,8 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
                 pdf.cell(0, 4.0, _clean_text(f"Note: {rub['notes']}"), new_x="LMARGIN", new_y="NEXT")
 
     else:
-
-        pdf.set_font("Helvetica", "B", 8.5)
-
-        pdf.cell(0, 5.0, "Assessment Activity: FA1: Group Activity Rubric", new_x="LMARGIN", new_y="NEXT")
-
-        pdf.set_font("Helvetica", "", 7.3)
-
-        with pdf.table(col_widths=(41.2, 44.0, 44.0, 44.0, 44.0, 44.0, 44.0), width=305.2, line_height=3.8) as t_rub1:
-
-            hdr = t_rub1.row(style=gray_hdr)
-
-            for h in ("Area to Assess", "Excellent (100%)", "Proficient (80%)", "Developing (60%)", "Beginning (40%)", "Poor (20%)", "Unacceptable (0%)"):
-
-                hdr.cell(h)
-
-            fa_rubric_rows = [
-
-                (
-
-                    "Application of Concepts (40%)",
-
-                    "Thorough, correct application of foundational principles and theorems throughout the task.",
-
-                    "Mostly accurate use of concepts with minor theoretical or mathematical misunderstandings.",
-
-                    "Partial or inconsistent application of core principles; some equations are set up incorrectly.",
-
-                    "Misapplied or completely misunderstood key concepts, laws, and theorems.",
-
-                    "Application is entirely incorrect, yielding completely invalid models or equations.",
-
-                    "No attempt to apply the concepts at all.",
-
-                ),
-
-                (
-
-                    "Team Collaboration (25%)",
-
-                    "All members contributed equally; excellent communication, division of tasks, and cooperation.",
-
-                    "Most members contributed actively; good collaboration and communication evident.",
-
-                    "Uneven participation among members; signs of limited coordination when solving problems.",
-
-                    "Dominance by one or a few members; evident lack of communication or shared problem-solving.",
-
-                    "Dysfunctional group dynamic; visible conflict or complete lack of coordination.",
-
-                    "No coordination or teamwork at all.",
-
-                ),
-
-                (
-
-                    "Output Quality (25%)",
-
-                    "Output is complete, mathematically accurate, and features neat, properly labeled diagrams/schematics.",
-
-                    "Output is mostly complete and neat but contains minor calculation errors or missing units.",
-
-                    "Output is functional but contains noticeable errors, missing units, or untidy schematics.",
-
-                    "Output is incomplete, inaccurate, or lacks required diagrams and proper unit notation.",
-
-                    "Output is severely deficient, illegible, or completely unprofessional.",
-
-                    "No output submitted.",
-
-                ),
-
-                (
-
-                    "Analytical Approach (10%)",
-
-                    "Demonstrates highly logical, efficient, and well-structured mathematical approaches.",
-
-                    "Uses standard, logical, and step-by-step methods to solve the problem.",
-
-                    "The approach is somewhat disorganized, making mathematical logic difficult to follow.",
-
-                    "Relies heavily on guesswork or lacks a clear, step-by-step mathematical strategy.",
-
-                    "The approach is entirely chaotic, showing no understanding of methodology.",
-
-                    "No methodology shown (only final answers without supporting work).",
-
-                ),
-
-            ]
-
-            for row_cells in fa_rubric_rows:
-
-                r = t_rub1.row()
-
-                for idx, ctext in enumerate(row_cells):
-
-                    r.cell(ctext, style=FontFace(emphasis="BOLD") if idx == 0 else None)
-
-
-
-        pdf.ln(3.0)
-
-        pdf.set_font("Helvetica", "B", 8.5)
-
-        pdf.cell(0, 5.0, "Assessment Activity: SA1/SA2: Problem Solving Rubric", new_x="LMARGIN", new_y="NEXT")
-
-        pdf.set_font("Helvetica", "", 7.3)
-
-        with pdf.table(col_widths=(41.2, 44.0, 44.0, 44.0, 44.0, 44.0, 44.0), width=305.2, line_height=3.8) as t_rub2:
-
-            hdr = t_rub2.row(style=gray_hdr)
-
-            for h in ("Area to Assess", "Excellent (100%)", "Proficient (80%)", "Developing (60%)", "Beginning (40%)", "Poor (20%)", "Unacceptable (0%)"):
-
-                hdr.cell(h)
-
-            sa_rubric_rows = [
-
-                (
-
-                    "Problem Formulation & Methodology (40%)",
-
-                    "Correctly identifies the problem type and selects the appropriate laws, theories, and mathematical methods.",
-
-                    "Mostly correct formulation and selection of theorems with only minor logical gaps in equation setup.",
-
-                    "Partial understanding; selects some relevant laws but misses key methodological steps.",
-
-                    "Major conceptual errors in setting up the problem or applies the wrong theorem.",
-
-                    "Barely formulates the problem; relies on irrelevant concepts or random guessing.",
-
-                    "Does not attempt to formulate or set up the problem.",
-
-                ),
-
-                (
-
-                    "Correctness and Accuracy (40%)",
-
-                    "Flawless execution. Final numerical answers are completely accurate with correct units and precision.",
-
-                    "Conceptually solid solution but contains minor computational mistakes or algebraic errors.",
-
-                    "Noticeable computational gaps resulting in an only partially correct final answer.",
-
-                    "Largely incorrect final answer due to major computational errors in solving equations.",
-
-                    "Completely erroneous computation showing failure of basic concepts.",
-
-                    "No numerical solution provided or totally incorrect.",
-
-                ),
-
-                (
-
-                    "Solution Logic & Steps (20%)",
-
-                    "Work is clearly organized, easy to follow, and includes neat, fully labeled circuit schematics.",
-
-                    "Work is readable and structured; diagram is included but has minor missing labels.",
-
-                    "Work is legible but disorganized; circuit diagram is sketchy or partially labeled.",
-
-                    "Disorganized and hard to follow; missing essential diagrams or annotations.",
-
-                    "Extremely chaotic and incomplete layout.",
-
-                    "No systematic steps or diagrams shown.",
-
-                ),
-
-            ]
-
-            for row_cells in sa_rubric_rows:
-
-                r = t_rub2.row()
-
-                for idx, ctext in enumerate(row_cells):
-
-                    r.cell(ctext, style=FontFace(emphasis="BOLD") if idx == 0 else None)
-
-
+        pdf.set_font("Helvetica", "I", 7.8)
+        pdf.cell(0, 5.0, "No measurement rubrics configured for this syllabus. (Faculty can define custom rubrics in Part VII)", new_x="LMARGIN", new_y="NEXT")
 
     pdf.ln(3.0)
 
@@ -1320,7 +1138,11 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
 
                 if not aligned_set or co.co_id.strip().upper() in aligned_set:
 
-                    r.cell("Scores/Problem Solving Rubric")
+                    matching_rubs = [r for r in rubrics if (r.get("assessment_code") or "").upper().strip() == code or code in (r.get("title") or "").upper()]
+                    if matching_rubs:
+                        r.cell(_clean_text(matching_rubs[0].get("title", "Measurement Rubric")))
+                    else:
+                        r.cell("Scores / Assessment Items")
 
                 else:
 
