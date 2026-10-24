@@ -839,8 +839,6 @@
     <button class="btn btn-outline" id="btnToggleSidebarHeader" onclick="toggleSidebar()" title="Toggle Subjects Sidebar" style="font-weight:700;">
       &#9776; My Subjects (<span id="headerSubCount">0</span>)
     </button>
-    <a class="btn btn-outline" href="/api/download-sample-pdf" target="_blank">Download Sample EE 211.pdf</a>
-    <button class="btn btn-outline" onclick="analyzeSamplePdf()">Import Sample EE 211.pdf</button>
     <button class="btn btn-primary" style="background:#eab308; color:#0f172a; border-color:#ca8a04;" onclick="exportSyllabusPdf()">Export Created Syllabus (.pdf)</button>
     <button class="btn btn-primary" style="background:#0284c7; color:#ffffff; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
     <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Consolidated Class Record (.xlsx)</button>
@@ -2833,7 +2831,7 @@
   async function uploadAndAnalyzePdf() {
     const fileInput = document.getElementById("syllabusPdfInput");
     if (!fileInput.files || !fileInput.files.length) {
-      alert("Please select a PDF syllabus file first, or click 'Import Sample EE 211.pdf'.");
+      alert("Please select a PDF syllabus file first.");
       return;
     }
     const fd = new FormData();
