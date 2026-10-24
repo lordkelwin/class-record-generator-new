@@ -45,25 +45,30 @@ def derive_email_for_user(username: str, full_name: str = "") -> str:
 
 def resolve_user_contact(username_or_dict: Any) -> Tuple[str, str]:
     """Returns (email, full_name) for a given username or user dict."""
+    uname = ""
+    fname = ""
+    email = ""
     if isinstance(username_or_dict, dict):
-        uname = username_or_dict.get("username", "")
+        uname = str(username_or_dict.get("username") or "").strip()
         fname = username_or_dict.get("full_name") or username_or_dict.get("name") or uname
-        email = username_or_dict.get("email") or derive_email_for_user(uname, fname)
-        return email, fname
+        email = username_or_dict.get("email") or ""
+    else:
+        uname = str(username_or_dict or "").strip()
 
-    uname = str(username_or_dict or "").strip()
     try:
         import auth
         users = auth._load_users()
         user = users.get(uname) or users.get(auth.LEGACY_USERNAME_ALIASES.get(uname, uname))
         if user:
-            fname = user.get("full_name") or uname
-            email = user.get("email") or derive_email_for_user(uname, fname)
+            fname = fname or user.get("full_name") or uname
+            email = email or user.get("email") or derive_email_for_user(uname, fname)
             return email, fname
     except Exception:
         pass
 
-    return f"{uname}@usep.edu.ph", uname
+    if not email:
+        email = derive_email_for_user(uname, fname) if (uname or fname) else "noreply@usep.edu.ph"
+    return email, fname or uname
 
 
 def _append_notification_log(entry: Dict[str, Any]) -> None:
