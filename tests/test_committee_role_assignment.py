@@ -18,6 +18,14 @@ c_id = res.get_json()["courses"][0]["id"]
 # Reset course workflow to draft
 doc = courses_store.find_course(c_id)
 doc["workflow"] = syllabus_workflow.default_workflow()
+if not doc.get("blueprint"): doc["blueprint"] = {}
+if not doc["blueprint"].get("metadata"): doc["blueprint"]["metadata"] = {}
+doc["blueprint"]["metadata"]["course_description"] = "Comprehensive study of electrical networks."
+doc["blueprint"]["metadata"]["syllabus_assessment_activities"] = [
+    {"code": "FA1", "activity": "Seatwork", "weight_pct": 0, "type": "formative"},
+    {"code": "SA1", "activity": "Quizzes", "weight_pct": 50, "type": "summative"},
+    {"code": "SA2", "activity": "Exam", "weight_pct": 50, "type": "summative"}
+]
 courses_store.save_course_doc(doc)
 
 # Submit with custom committee roles: Arenga is Chair, Basan is Member, Ravida is Member

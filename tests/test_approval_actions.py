@@ -19,16 +19,25 @@ print("Testing course ID:", c_id)
 # Reset workflow to clean draft
 doc = courses_store.find_course(c_id)
 doc["workflow"] = syllabus_workflow.default_workflow()
+if not doc.get("blueprint"): doc["blueprint"] = {}
+if not doc["blueprint"].get("metadata"): doc["blueprint"]["metadata"] = {}
+doc["blueprint"]["metadata"]["course_description"] = "Comprehensive study of electrical networks."
+doc["blueprint"]["metadata"]["syllabus_assessment_activities"] = [
+    {"code": "FA1", "activity": "Seatwork", "weight_pct": 0, "type": "formative"},
+    {"code": "SA1", "activity": "Quizzes", "weight_pct": 50, "type": "summative"},
+    {"code": "SA2", "activity": "Exam", "weight_pct": 50, "type": "summative"}
+]
 courses_store.save_course_doc(doc)
 
 # 1. Faculty submits syllabus
 res = client.post(f"/api/courses/{c_id}/workflow/submit", json={
     "committee_members": [
-        {"username": "faculty_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Chair"},
+        {"username": "faculty_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Member"},
         {"username": "faculty_arenga", "name": "Engr. Delan Zoe H. Arenga", "role": "Review Committee Member"},
-        {"username": "faculty_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Member"}
+        {"username": "faculty_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Chair"}
     ]
 })
+print("STATUS:", res.status_code, res.get_json())
 assert res.status_code == 200
 print("Course submitted for review.")
 
@@ -38,6 +47,7 @@ with client.session_transaction() as sess:
     sess["username"] = "faculty_basan"
 
 res = client.get("/api/workflow/requests")
+print("STATUS:", res.status_code, res.get_json())
 assert res.status_code == 200
 reqs = res.get_json()
 pending_ids = [c["id"] for c in reqs.get("pending_action_for_me", [])]
@@ -49,6 +59,7 @@ print("Verified user_can_act is TRUE for Review Committee member (Engr. Basan)!"
 # 3. Test Fill Review Checklist
 print("\n--- 3. Test Fill Review Checklist (FM-USeP-MID-02) ---")
 res = client.get(f"/api/courses/{c_id}/evaluation-form")
+print("STATUS:", res.status_code, res.get_json())
 assert res.status_code == 200
 eval_data = res.get_json()
 assert eval_data["is_reviewer"] is True
@@ -61,6 +72,7 @@ res = client.put(f"/api/courses/{c_id}/evaluation-form", json={
     "recommendations": "Add criteria for laboratory components.",
     "overall_recommendation": "Revise and Resubmit"
 })
+print("STATUS:", res.status_code, res.get_json())
 assert res.status_code == 200, f"Checklist save failed: {res.get_json()}"
 print("Verified Review Checklist saved successfully by Committee Member!")
 
@@ -70,6 +82,7 @@ res = client.post(f"/api/courses/{c_id}/workflow/sign", json={
     "decision": "return",
     "remarks": "Please address observations in Part VII rubrics.",
 })
+print("STATUS:", res.status_code, res.get_json())
 assert res.status_code == 200, f"Return failed: {res.get_json()}"
 wf = res.get_json()["workflow"]
 assert wf["status"] == "returned"
@@ -90,11 +103,37 @@ assert wf["can_submit"] is True
 res = client.post(f"/api/courses/{c_id}/workflow/submit", json={
     "submission_notes": "Revised rubric criteria as requested."
 })
+print("STATUS:", res.status_code, res.get_json())
 assert res.status_code == 200
 print("Verified Faculty successfully resubmitted course after revision!")
 
 # 6. Committee Signs & Approves
 print("\n--- 6. Test Sign & Approve through Workflow ---")
+# Member 1: Arenga
+with client.session_transaction() as sess:
+    sess["username"] = "faculty_arenga"
+
+res = client.post(f"/api/courses/{c_id}/workflow/sign", json={
+    "decision": "approve",
+    "remarks": "Member 1 approved.",
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+})
+assert res.status_code == 200
+
+# Member 2: Ravida
+with client.session_transaction() as sess:
+    sess["username"] = "faculty_ravida"
+
+res = client.post(f"/api/courses/{c_id}/workflow/sign", json={
+    "decision": "approve",
+    "remarks": "Member 2 approved.",
+    "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+})
+assert res.status_code == 200
+wf = res.get_json()["workflow"]
+assert wf["status"] == "for_committee_chair"
+
+# Chair: Basan
 with client.session_transaction() as sess:
     sess["username"] = "faculty_basan"
 
@@ -118,6 +157,7 @@ res = client.post(f"/api/courses/{c_id}/workflow/sign", json={
     "remarks": "Endorsed for QA review.",
     "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
 })
+print("STATUS:", res.status_code, res.get_json())
 assert res.status_code == 200
 wf = res.get_json()["workflow"]
 assert wf["status"] == "for_qa_countersign"

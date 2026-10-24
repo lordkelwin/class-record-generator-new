@@ -312,8 +312,30 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
     pdf.set_y(y_cap_hdr + hdr_h1 + hdr_h2)
 
     # Table 1 Data Rows (Cream background #FDF2D0, white grid lines)
+    # Check if a custom / synchronized Course Assessment Plan is defined in blueprint metadata
+    cap_data = meta.course_assessment_plan if getattr(meta, "course_assessment_plan", None) else []
+    if cap_data:
+        plan_rows = [
+            {
+                "label": r.get("component_name") or r.get("code") or "Assessment",
+                "clo_plans": r.get("clo_plans") or {},
+            }
+            for r in cap_data
+        ]
+    else:
+        plan_rows = [
+            {
+                "label": sa_r["label"],
+                "clo_plans": {
+                    co.co_id: (DEFAULT_ASSESSMENT_PLAN_CELL_TEXT if sa_r["clo_aligned"].get(co.co_id, True) else "N/A")
+                    for co in outcomes
+                },
+            }
+            for sa_r in sa_rows
+        ]
+
     body_row_h = 28.0
-    for r_idx, sa_r in enumerate(sa_rows):
+    for r_idx, pr in enumerate(plan_rows):
         y_r = pdf.get_y()
         if r_idx % 2 == 0:
             pdf.set_fill_color(252, 238, 197)
@@ -324,15 +346,16 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
         pdf.rect(left_m, y_r, comp_col_w, body_row_h, style="DF")
         pdf.set_xy(left_m + 1.5, y_r + (body_row_h - 5.0) / 2.0)
         pdf.set_font("Helvetica", "B", 9.0)
-        pdf.cell(comp_col_w - 3.0, 5.0, _clean_pdf_text(sa_r["label"]), border=0, align="L")
+        pdf.cell(comp_col_w - 3.0, 5.0, _clean_pdf_text(pr["label"]), border=0, align="L")
 
-        # Draw each CLO column cell with multi-line rubric description
+        # Draw each CLO column cell with multi-line rubric / plan description
         pdf.set_font("Helvetica", "", 8.5)
         for c_idx, co in enumerate(outcomes):
             cx = left_m + comp_col_w + c_idx * clo_col_w
             pdf.rect(cx, y_r, clo_col_w, body_row_h, style="DF")
-            is_aligned = sa_r["clo_aligned"].get(co.co_id, True)
-            cell_txt = DEFAULT_ASSESSMENT_PLAN_CELL_TEXT if is_aligned else "N/A"
+            cell_txt = pr["clo_plans"].get(co.co_id, DEFAULT_ASSESSMENT_PLAN_CELL_TEXT)
+            if not cell_txt or not str(cell_txt).strip():
+                cell_txt = "N/A"
             lines = cell_txt.split("\n")
             line_h = 4.1
             total_txt_h = len(lines) * line_h

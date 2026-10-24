@@ -591,6 +591,7 @@ class CourseMetadata:
     learning_plan_table: List[Dict[str, str]] = field(default_factory=get_default_learning_plan_table)
     references_table: List[Dict[str, str]] = field(default_factory=get_default_references_table)
     policies_table: List[Dict[str, str]] = field(default_factory=get_default_policies_table)
+    course_assessment_plan: List[Dict[str, Any]] = field(default_factory=list)
     learning_plan_topics: List[str] = field(default_factory=list)
     references: str = ""
     classroom_policies: str = ""

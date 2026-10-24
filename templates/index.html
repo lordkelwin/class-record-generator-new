@@ -330,6 +330,52 @@
       accent-color: #d97706;
     }
         /* ---------- Part IX Learning Plan Checkboxes & Merged Assessments ---------- */
+        /* ---------- Syllabus Formatter Toolbar & Buttons ---------- */
+    #syllabusFormattingToolbar {
+      display: none;
+      z-index: 99999;
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 4px 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+      gap: 4px;
+      align-items: center;
+      border: 1px solid #334155;
+    }
+    .sft-btn {
+      background: transparent;
+      color: #f8fafc;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      user-select: none;
+    }
+    .sft-btn:hover {
+      background: #334155;
+      border-color: #64748b;
+      color: #ffffff;
+    }
+    .sft-btn:active {
+      background: #0284c7;
+    }
+    .syl-format-pill-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+    }
+
     .lp-clo-chip {
       display: inline-flex;
       align-items: center;
@@ -1722,9 +1768,23 @@
 
     <!-- PART IX. COURSE LEARNING PLAN TABLE (7-COLUMN TABLE AS PER EE 211.PDF) -->
     <div class="card">
-      <div class="card-header">
-        <h2>Part IX. Course Learning Plan Table (As Per Sample Syllabus FM-USeP-MID-01)</h2>
-        <div style="display:flex; gap:8px;">
+      <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+        <div>
+          <h2>Part IX. Course Learning Plan Table (As Per Sample Syllabus FM-USeP-MID-01)</h2>
+          <div style="margin-top:4px;">
+            <div class="syl-format-pill-bar">
+              <span style="font-size:0.68rem; font-weight:700; color:#475569; margin-right:2px;">Format Field:</span>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px; font-weight:700;" onmousedown="event.preventDefault(); SyllabusFormatter.toggleBold();" title="Bold selection">B</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px; font-style:italic;" onmousedown="event.preventDefault(); SyllabusFormatter.toggleItalic();" title="Italic selection">I</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onmousedown="event.preventDefault(); SyllabusFormatter.insertBullet('• ');" title="Add bullet (•)">• Bullet</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onmousedown="event.preventDefault(); SyllabusFormatter.insertBullet('  o ');" title="Add sub-bullet (o)">o Sub</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onmousedown="event.preventDefault(); SyllabusFormatter.insertNumberedList();" title="Add numbered list">1. List</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px;" onmousedown="event.preventDefault(); SyllabusFormatter.insertEnDash();" title="En-dash (–)">– Dash</button>
+              <button type="button" class="btn btn-light btn-xs" style="padding:1px 5px;" onmousedown="event.preventDefault(); SyllabusFormatter.insertParagraph();" title="New Paragraph (¶)">¶ Break</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
           <button class="btn btn-light btn-sm" onclick="addLearningPlanExamRow('MIDTERM EXAMINATION')">+ Add Midterm Exam Row</button>
           <button class="btn btn-light btn-sm" onclick="addLearningPlanExamRow('FINAL EXAMINATION')">+ Add Final Exam Row</button>
           <button class="btn btn-primary btn-sm" onclick="addLearningPlanRow()">+ Add Learning Plan Topic Row</button>
@@ -1923,13 +1983,26 @@
 
     <div class="grid-4" style="grid-template-columns: 1fr 1fr;">
       <div class="card">
-        <div class="card-header">
-          <h2>Course Assessment Plan (As Declared in Syllabus)</h2>
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h2 style="margin-bottom:2px;">Course Assessment Plan (As Declared in Syllabus)</h2>
+            <div style="font-size:0.75rem; color:#64748b;">Synchronized with Syllabus Part VI (Assessment Tasks). Table is editable per component and CLO.</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button type="button" class="btn btn-outline-primary btn-xs" onclick="syncCourseAssessmentPlanFromSyllabus(true)" title="Re-sync components and CLO alignments directly from Syllabus Part VI">
+              🔄 Sync from Syllabus
+            </button>
+            <button type="button" class="btn btn-primary btn-xs" onclick="addCourseAssessmentPlanRow()">
+              + Add Component
+            </button>
+          </div>
         </div>
-        <table>
-          <thead id="capPlanHead"></thead>
-          <tbody id="capPlanBody"></tbody>
-        </table>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead id="capPlanHead"></thead>
+            <tbody id="capPlanBody"></tbody>
+          </table>
+        </div>
       </div>
       <div class="card">
         <div class="card-header">
@@ -2864,7 +2937,20 @@
   </div>
 </div>
 
-<script>
+  <!-- FLOATING SYLLABUS FORMATTING TOOLBAR -->
+  <div id="syllabusFormattingToolbar">
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.toggleBold();" title="Bold (**text**)"><strong>B</strong></button>
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.toggleItalic();" title="Italic (*text*)"><em>I</em></button>
+    <div style="width:1px; height:18px; background:#475569; margin:0 3px;"></div>
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.insertBullet('• ');" title="Insert Bullet (•)">• Bullet</button>
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.insertBullet('  o ');" title="Insert Sub-bullet (  o )">o Sub-bullet</button>
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.insertNumberedList();" title="Insert Numbered List (1., 2.)">1. Numbered</button>
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.insertEnDash();" title="Insert En-dash (–)">– Dash</button>
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.insertParagraph();" title="Insert Paragraph Break (¶)">¶ Break</button>
+    <button type="button" class="sft-btn" onmousedown="event.preventDefault(); SyllabusFormatter.clearFormatting();" title="Clear Formatting / Bullets" style="color:#ef4444;">✕</button>
+  </div>
+
+  <script>
   window.CURRENT_USER = {{ current_user|tojson if current_user else 'null' }};
   let blueprint = null;
   let transmutation = [];
@@ -6349,8 +6435,10 @@
           ${allCloCols.map(col => {
             const val = getStudentCloScore(st, col);
             return `<td style="text-align:center;">
-              <input type="number" style="width:62px; text-align:center; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" min="0" max="${col.max_score}" value="${val}"
-                title="${escapeHtml(col.item_id)} - ${escapeHtml(col.clo_id)} (Max: ${col.max_score})"
+              <input type="number" step="any" min="0" max="${col.max_score}" value="${val}"
+                style="width:62px; text-align:center; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}"
+                title="${escapeHtml(col.item_id)} - ${escapeHtml(col.clo_id)} (Max score allowed: ${col.max_score})"
+                oninput="validateAndLimitScoreInput(this, ${col.max_score})"
                 onchange="updateStudentCloScore(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value)"
                 ${isCrLocked ? 'disabled' : ''} />
             </td>`;
@@ -6378,6 +6466,324 @@
     checkClassRecordLock();
   }
 
+    // =========================================================================
+  // SYLLABUS TEXT FORMATTER (Bold, Bullets, En-dash, Paragraphs, Auto-Enter)
+  // =========================================================================
+  const SyllabusFormatter = {
+    activeElement: null,
+
+    getActiveTarget() {
+      if (this.activeElement && document.body.contains(this.activeElement)) {
+        return this.activeElement;
+      }
+      const active = document.activeElement;
+      if (active && active.tagName === "TEXTAREA") {
+        this.activeElement = active;
+        return active;
+      }
+      return null;
+    },
+
+    applyToSelection(transformFn) {
+      const ta = this.getActiveTarget();
+      if (!ta) return;
+      const val = ta.value;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const selected = val.substring(start, end);
+
+      const replacement = transformFn(selected, val, start, end);
+      ta.value = val.substring(0, start) + replacement.text + val.substring(end);
+      ta.selectionStart = replacement.newStart !== undefined ? replacement.newStart : start;
+      ta.selectionEnd = replacement.newEnd !== undefined ? replacement.newEnd : start + replacement.text.length;
+      ta.focus();
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+      ta.dispatchEvent(new Event("change", { bubbles: true }));
+    },
+
+    toggleBold() {
+      this.applyToSelection((sel) => {
+        if (!sel) return { text: "**Bold Text**", newStart: 2, newEnd: 11 };
+        if (sel.startsWith("**") && sel.endsWith("**") && sel.length >= 4) {
+          return { text: sel.slice(2, -2) };
+        }
+        return { text: `**${sel}**` };
+      });
+    },
+
+    toggleItalic() {
+      this.applyToSelection((sel) => {
+        if (!sel) return { text: "*Italic Text*", newStart: 1, newEnd: 12 };
+        if (sel.startsWith("*") && sel.endsWith("*") && sel.length >= 2) {
+          return { text: sel.slice(1, -1) };
+        }
+        return { text: `*${sel}*` };
+      });
+    },
+
+    insertBullet(prefix = "• ") {
+      this.applyToSelection((sel, fullVal, start, end) => {
+        if (!sel) {
+          const lineStart = fullVal.lastIndexOf("\n", start - 1) + 1;
+          const lineEnd = fullVal.indexOf("\n", start);
+          const line = fullVal.substring(lineStart, lineEnd === -1 ? fullVal.length : lineEnd);
+          if (line.startsWith(prefix)) {
+            return { text: "", newStart: start, newEnd: start };
+          }
+          return { text: prefix, newStart: start + prefix.length, newEnd: start + prefix.length };
+        }
+        const lines = sel.split("\n");
+        const allHave = lines.every(l => l.trim().startsWith(prefix.trim()));
+        const transformed = lines.map(l => {
+          if (allHave) {
+            return l.replace(new RegExp(`^\\s*${prefix.trim()}\\s*`), "");
+          }
+          return l.trim() ? `${prefix}${l.replace(/^[\s•\-*o]+/, "")}` : l;
+        }).join("\n");
+        return { text: transformed };
+      });
+    },
+
+    insertNumberedList() {
+      this.applyToSelection((sel) => {
+        const text = sel || "List item 1\nList item 2";
+        const lines = text.split("\n");
+        const transformed = lines.map((l, i) => `${i + 1}. ${l.replace(/^[\s•\-*o\d\.]+\s*/, "")}`).join("\n");
+        return { text: transformed };
+      });
+    },
+
+    insertEnDash() {
+      this.applyToSelection(() => ({ text: " – " }));
+    },
+
+    insertParagraph() {
+      this.applyToSelection(() => ({ text: "\n\n" }));
+    },
+
+    clearFormatting() {
+      this.applyToSelection((sel) => {
+        if (!sel) return { text: "" };
+        const cleaned = sel.split("\n").map(l => {
+          return l.replace(/^[\s•\-*o\d\.]+\s*/, "").replace(/\*\*/g, "").replace(/\*/g, "");
+        }).join("\n");
+        return { text: cleaned };
+      });
+    },
+
+    handleEnterKey(e) {
+      const ta = e.target;
+      if (!ta || ta.tagName !== "TEXTAREA") return;
+      const val = ta.value;
+      const selStart = ta.selectionStart;
+      const selEnd = ta.selectionEnd;
+      if (selStart !== selEnd) return;
+
+      const lineStart = val.lastIndexOf("\n", selStart - 1) + 1;
+      const lineEnd = val.indexOf("\n", selStart);
+      const currentLine = val.substring(lineStart, lineEnd === -1 ? val.length : lineEnd);
+
+      const bulletMatch = currentLine.match(/^(\s*)(•|\*|\-|\o|\d+\.)\s+/);
+      if (bulletMatch) {
+        const fullPrefix = bulletMatch[0];
+        const bulletChar = bulletMatch[2];
+        const indent = bulletMatch[1];
+        const lineContent = currentLine.substring(fullPrefix.length).trim();
+
+        if (lineContent === "") {
+          e.preventDefault();
+          const before = val.substring(0, lineStart);
+          const after = val.substring(lineStart + fullPrefix.length);
+          ta.value = before + after;
+          ta.selectionStart = ta.selectionEnd = lineStart;
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+          ta.dispatchEvent(new Event("change", { bubbles: true }));
+          return;
+        }
+
+        e.preventDefault();
+        let nextPrefix = fullPrefix;
+        if (/^\d+\./.test(bulletChar)) {
+          const nextNum = parseInt(bulletChar, 10) + 1;
+          nextPrefix = `${indent}${nextNum}. `;
+        }
+        const before = val.substring(0, selStart);
+        const after = val.substring(selStart);
+        ta.value = before + "\n" + nextPrefix + after;
+        ta.selectionStart = ta.selectionEnd = selStart + 1 + nextPrefix.length;
+        ta.dispatchEvent(new Event("input", { bubbles: true }));
+        ta.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    },
+
+    showToolbarFor(ta) {
+      const tb = document.getElementById("syllabusFormattingToolbar");
+      if (!tb || !ta) return;
+      const rect = ta.getBoundingClientRect();
+      tb.style.display = "flex";
+      tb.style.position = "fixed";
+      let top = rect.top - 38;
+      if (top < 10) top = rect.bottom + 6;
+      let left = Math.max(10, rect.left);
+      tb.style.top = `${top}px`;
+      tb.style.left = `${left}px`;
+    },
+
+    hideToolbar() {
+      const tb = document.getElementById("syllabusFormattingToolbar");
+      if (tb) tb.style.display = "none";
+    }
+  };
+
+  document.addEventListener("focusin", (e) => {
+    if (e.target && e.target.tagName === "TEXTAREA") {
+      const sylTab = document.getElementById("tab-syllabus");
+      const cloTab = document.getElementById("tab-cloreport");
+      if ((sylTab && sylTab.contains(e.target)) || (cloTab && cloTab.contains(e.target))) {
+        SyllabusFormatter.activeElement = e.target;
+        SyllabusFormatter.showToolbarFor(e.target);
+      }
+    }
+  });
+
+  document.addEventListener("focusout", (e) => {
+    setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || active.tagName !== "TEXTAREA") {
+        SyllabusFormatter.hideToolbar();
+      }
+    }, 250);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target && e.target.tagName === "TEXTAREA") {
+      SyllabusFormatter.handleEnterKey(e);
+    }
+  });
+
+  // =========================================================================
+  // COURSE ASSESSMENT PLAN (Synchronized with Syllabus Part VI & Editable)
+  // =========================================================================
+  function ensureCourseAssessmentPlan(forceSync = false) {
+    const m = (blueprint && blueprint.metadata) || {};
+    if (!m) return [];
+    if (!forceSync && m.course_assessment_plan && Array.isArray(m.course_assessment_plan) && m.course_assessment_plan.length > 0) {
+      return m.course_assessment_plan;
+    }
+
+    const sylActs = (m.syllabus_assessment_activities || []).filter(a => {
+      const isFa = String(a.type || "").toLowerCase().startsWith("form") || String(a.code || "").toUpperCase().startsWith("FA");
+      return !isFa || (parseFloat(a.weight_pct) || 0) > 0;
+    });
+
+    const acts = sylActs.length > 0 ? sylActs : [
+      { code: "SA1", activity: "Quizzes", weight_pct: 30, clo_aligned: "CLO1, CLO2" },
+      { code: "SA2", activity: "Term Examination", weight_pct: 50, clo_aligned: "CLO1, CLO2" }
+    ];
+
+    const outcomes = (blueprint && blueprint.course_outcomes) || [];
+    const rubrics = (blueprint && blueprint.rubrics) || [];
+    const defRubricText = "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)";
+
+    const plan = acts.map(act => {
+      const code = (act.code || "SA1").trim().toUpperCase();
+      const actName = act.activity || act.description || code;
+      const wt = parseFloat(act.weight_pct) || 0;
+      const label = `${actName} (${wt.toFixed(0)}%)`;
+      const alignedClos = parseCloList(act.clo_aligned);
+
+      let rubricDesc = defRubricText;
+      const matchedRubric = rubrics.find(r => (r.assessment_codes || []).some(c => c.toUpperCase() === code));
+      if (matchedRubric && matchedRubric.title) {
+        rubricDesc = `${matchedRubric.title} (Rubric-evaluated)`;
+      } else if (act.description && act.description.trim()) {
+        rubricDesc = act.description.trim();
+      }
+
+      const cloPlans = {};
+      outcomes.forEach(co => {
+        const isAligned = alignedClos.length === 0 || alignedClos.some(c => c.toUpperCase() === co.co_id.toUpperCase());
+        cloPlans[co.co_id] = isAligned ? rubricDesc : "N/A";
+      });
+
+      return {
+        code: code,
+        component_name: label,
+        weight_pct: wt,
+        clo_plans: cloPlans
+      };
+    });
+
+    m.course_assessment_plan = plan;
+    return plan;
+  }
+
+  function updateCapComponentName(idx, val) {
+    const list = ensureCourseAssessmentPlan(false);
+    if (list[idx]) {
+      list[idx].component_name = val.trim();
+      queueAutoSave();
+    }
+  }
+
+  function updateCapCellText(idx, coId, val) {
+    const list = ensureCourseAssessmentPlan(false);
+    if (list[idx]) {
+      if (!list[idx].clo_plans) list[idx].clo_plans = {};
+      list[idx].clo_plans[coId] = val;
+      queueAutoSave();
+    }
+  }
+
+  function toggleCapCellNa(idx, coId) {
+    const list = ensureCourseAssessmentPlan(false);
+    if (list[idx]) {
+      if (!list[idx].clo_plans) list[idx].clo_plans = {};
+      const current = String(list[idx].clo_plans[coId] || "").trim().toUpperCase();
+      const defRubricText = "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)";
+      if (current === "N/A") {
+        list[idx].clo_plans[coId] = defRubricText;
+      } else {
+        list[idx].clo_plans[coId] = "N/A";
+      }
+      queueAutoSave();
+      renderLiveGradebookAndReports();
+    }
+  }
+
+  function addCourseAssessmentPlanRow() {
+    const list = ensureCourseAssessmentPlan(false);
+    const outcomes = (blueprint && blueprint.course_outcomes) || [];
+    const cloPlans = {};
+    const defRubricText = "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)";
+    outcomes.forEach(co => {
+      cloPlans[co.co_id] = defRubricText;
+    });
+    const nextNum = list.length + 1;
+    list.push({
+      code: `SA${nextNum}`,
+      component_name: `Assessment Component ${nextNum} (20%)`,
+      weight_pct: 20,
+      clo_plans: cloPlans
+    });
+    queueAutoSave();
+    renderLiveGradebookAndReports();
+  }
+
+  function removeCourseAssessmentPlanRow(idx) {
+    const list = ensureCourseAssessmentPlan(false);
+    if (list.length <= 1) return;
+    list.splice(idx, 1);
+    queueAutoSave();
+    renderLiveGradebookAndReports();
+  }
+
+  function syncCourseAssessmentPlanFromSyllabus(force = true) {
+    ensureCourseAssessmentPlan(force);
+    queueAutoSave();
+    renderLiveGradebookAndReports();
+  }
+
   function _formatShortSaLabel(catName, saCode, wt) {
     const low = String(catName || "").toLowerCase();
     const wtStr = `${wt.toFixed(0)}%`;
@@ -6391,29 +6797,48 @@
     const outcomes = blueprint.course_outcomes || [];
     const rubricText = "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)";
 
-    // 1. Course Assessment Plan Table (Matching AEE 321_EE 3A_CLO Report.pdf)
+    // 1. Course Assessment Plan Table (Synchronized with Syllabus & Fully Editable)
+    const capList = ensureCourseAssessmentPlan(false);
     document.getElementById("capPlanHead").innerHTML = `
       <tr>
-        <th rowspan="2" style="background:#f6cc66; color:#0f172a; vertical-align:middle;">Assessment Component</th>
-        <th colspan="${Math.max(1, outcomes.length)}" style="background:#f4c248; color:#0f172a; text-align:center;">Course Assessment Plan</th>
+        <th rowspan="2" style="background:#f6cc66; color:#0f172a; vertical-align:middle; width:160px;">Assessment Component</th>
+        <th colspan="${Math.max(1, outcomes.length)}" style="background:#f4c248; color:#0f172a; text-align:center;">Course Assessment Plan (As Declared in Syllabus)</th>
+        <th rowspan="2" style="background:#f6cc66; color:#0f172a; vertical-align:middle; width:46px; text-align:center;"></th>
       </tr>
       <tr>
-        ${outcomes.map(co => `<th style="background:#f8d576; color:#0f172a; text-align:center;">${escapeHtml(co.co_id)}</th>`).join("")}
+        ${outcomes.map(co => `<th style="background:#f8d576; color:#0f172a; text-align:center; min-width:140px;">${escapeHtml(co.co_id)}</th>`).join("")}
       </tr>
     `;
-    document.getElementById("capPlanBody").innerHTML = saCodes.map(sc => {
-      const wt = saWeights[sc] || 0;
-      const lbl = _formatShortSaLabel(saNames?.[sc], sc, wt);
-      const measured = outcomes.filter(co => saCloPairs.some(p => p.saCode === sc && p.coId === co.co_id));
+
+    document.getElementById("capPlanBody").innerHTML = capList.map((row, pIdx) => {
+      const cloPlans = row.clo_plans || {};
       return `
         <tr style="background:#fdf2d0;">
-          <td style="font-weight:700; vertical-align:middle;">${escapeHtml(lbl)}</td>
+          <td style="vertical-align:top;">
+            <input type="text" class="form-control" style="font-weight:700; width:100%; font-size:0.79rem; padding:4px 6px; background:#fff;"
+                   value="${escapeHtml(row.component_name || row.code)}"
+                   onchange="updateCapComponentName(${pIdx}, this.value)"
+                   placeholder="e.g. Quiz (30%)" />
+          </td>
           ${outcomes.map(co => {
-            const has = measured.some(m => m.co_id === co.co_id);
-            return `<td style="text-align:center; font-size:0.78rem; line-height:1.35;">
-              ${has ? escapeHtml(rubricText) : 'N/A'}
-            </td>`;
+            const val = cloPlans[co.co_id] !== undefined ? cloPlans[co.co_id] : "N/A";
+            const isNa = String(val).trim().toUpperCase() === "N/A";
+            return `
+              <td style="vertical-align:top; background:${isNa ? '#fefce8' : '#fef9c3'};">
+                <textarea rows="3" style="font-size:0.73rem; width:100%; padding:4px 5px; font-family:inherit; border:1px solid ${isNa ? '#cbd5e1' : '#f59e0b'}; border-radius:4px; line-height:1.3; background:${isNa ? '#f8fafc' : '#ffffff'}; color:${isNa ? '#94a3b8' : '#0f172a'};"
+                          onchange="updateCapCellText(${pIdx}, '${escapeHtml(co.co_id)}', this.value)">${escapeHtml(val)}</textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                  <span style="font-size:0.67rem; color:${isNa ? '#16a34a' : '#dc2626'}; cursor:pointer; text-decoration:underline; font-weight:600;"
+                        onclick="toggleCapCellNa(${pIdx}, '${escapeHtml(co.co_id)}')">
+                    ${isNa ? '✓ Set Plan Text' : '✕ Set N/A'}
+                  </span>
+                </div>
+              </td>
+            `;
           }).join("")}
+          <td style="vertical-align:middle; text-align:center;">
+            <button type="button" class="btn btn-danger btn-xs" style="padding:1px 6px;" onclick="removeCourseAssessmentPlanRow(${pIdx})" title="Delete component">&times;</button>
+          </td>
         </tr>
       `;
     }).join("");
@@ -6517,14 +6942,84 @@
     `).join("");
   }
 
+  function getItemCloMaxScore(itemId, cloId) {
+    if (!blueprint || !blueprint.categories) return 30.0;
+    for (const cat of blueprint.categories) {
+      for (const it of (cat.items || [])) {
+        if (it.item_id === itemId) {
+          const ptsMap = ensureItemCloPoints(it);
+          const clos = parseCloList(it.co_id);
+          const totalItPts = clos.reduce((acc, c) => acc + (parseFloat(ptsMap[c.toUpperCase()]) || 0), 0) || (parseFloat(it.max_score) || 30.0);
+          const cloUpper = (cloId || "").toUpperCase();
+          if (ptsMap && ptsMap[cloUpper] !== undefined && parseFloat(ptsMap[cloUpper]) > 0) {
+            return parseFloat(ptsMap[cloUpper]);
+          }
+          return totalItPts / Math.max(1, clos.length);
+        }
+      }
+    }
+    return 30.0;
+  }
+
+  function validateAndLimitScoreInput(inputEl, maxScore) {
+    if (inputEl.value === "") return;
+    const max = parseFloat(maxScore) || 0;
+    let val = parseFloat(inputEl.value);
+    if (isNaN(val)) return;
+    if (val > max) {
+      inputEl.value = max;
+      showScoreLimitToast(inputEl, `Score limited to max score of ${max}`);
+    } else if (val < 0) {
+      inputEl.value = 0;
+    }
+  }
+
+  function showScoreLimitToast(inputEl, msg) {
+    let tip = document.getElementById("scoreLimitToast");
+    if (!tip) {
+      tip = document.createElement("div");
+      tip.id = "scoreLimitToast";
+      tip.style.position = "fixed";
+      tip.style.zIndex = "99999";
+      tip.style.background = "#dc2626";
+      tip.style.color = "#ffffff";
+      tip.style.fontSize = "0.72rem";
+      tip.style.fontWeight = "700";
+      tip.style.padding = "3px 8px";
+      tip.style.borderRadius = "4px";
+      tip.style.boxShadow = "0 2px 8px rgba(0,0,0,0.25)";
+      tip.style.pointerEvents = "none";
+      tip.style.transition = "opacity 0.2s ease";
+      document.body.appendChild(tip);
+    }
+    tip.textContent = msg;
+    const rect = inputEl.getBoundingClientRect();
+    tip.style.top = `${Math.max(5, rect.top - 24)}px`;
+    tip.style.left = `${Math.max(5, rect.left)}px`;
+    tip.style.opacity = "1";
+    tip.style.display = "block";
+    clearTimeout(inputEl._toastTimer);
+    inputEl._toastTimer = setTimeout(() => {
+      tip.style.opacity = "0";
+      setTimeout(() => { tip.style.display = "none"; }, 200);
+    }, 1600);
+  }
+
   function updateStudentCloScore(sIdx, itemId, cloId, val) {
     if (!currentWorkflow || currentWorkflow.status !== "approved") return;
     if (!blueprint.students[sIdx].scores) blueprint.students[sIdx].scores = {};
-    const numVal = val === "" ? 0 : parseFloat(val);
-    const cloKey = `${itemId}__${cloId.toUpperCase()}`;
-    blueprint.students[sIdx].scores[cloKey] = isNaN(numVal) ? 0 : numVal;
 
-    // Also update total item score as sum of aligned CLO scores
+    const maxPts = getItemCloMaxScore(itemId, cloId);
+    let numVal = val === "" ? 0 : parseFloat(val);
+    if (isNaN(numVal) || numVal < 0) numVal = 0;
+    if (numVal > maxPts) {
+      numVal = maxPts;
+    }
+
+    const cloKey = `${itemId}__${cloId.toUpperCase()}`;
+    blueprint.students[sIdx].scores[cloKey] = Math.round(numVal * 100) / 100;
+
+    // Also update total item score as sum of aligned CLO scores (bounded by item max score)
     let itemObj = null;
     (blueprint.categories || []).forEach(cat => {
       (cat.items || []).forEach(it => {
@@ -6536,9 +7031,10 @@
       const sumItem = clos.reduce((acc, c) => {
         return acc + (parseFloat(blueprint.students[sIdx].scores[`${itemId}__${c.toUpperCase()}`]) || 0);
       }, 0);
-      blueprint.students[sIdx].scores[itemId] = Math.round(sumItem * 100) / 100;
+      const itMax = parseFloat(itemObj.max_score) || (maxPts * clos.length);
+      blueprint.students[sIdx].scores[itemId] = Math.round(Math.min(itMax, sumItem) * 100) / 100;
     } else {
-      blueprint.students[sIdx].scores[itemId] = isNaN(numVal) ? 0 : numVal;
+      blueprint.students[sIdx].scores[itemId] = numVal;
     }
     renderLiveGradebookAndReports();
     queueAutoSave();
