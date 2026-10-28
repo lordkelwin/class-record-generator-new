@@ -579,7 +579,14 @@ def check_and_dispatch_bottleneck_reminders(all_courses: Optional[List[Dict[str,
     now = datetime.now()
 
     for item in all_courses:
-        doc = item.get("doc_raw") or item
+        doc = item.get("doc_raw")
+        if not doc or not doc.get("blueprint"):
+            cid = item.get("id")
+            owner = item.get("owner")
+            if cid and owner:
+                doc = courses_store.get_course(owner, cid) if (owner and cid) else (courses_store.find_course(cid) if cid else None)
+        if not doc or not doc.get("blueprint"):
+            continue
         cid = doc.get("id")
         wf = doc.get("workflow") or {}
         status = wf.get("status")

@@ -534,3 +534,5 @@ def list_all_workflow_courses() -> List[Dict[str, Any]]:
                 continue
     results.sort(key=lambda x: (x.get("workflow", {}).get("submitted_at") or x.get("updated_at") or ""), reverse=True)
     return results
+
+load_course = get_course

@@ -1190,7 +1190,7 @@ def api_get_workflow_requests():
     # Check and dispatch automatic 3-day bottleneck reminders
     try:
         import notification_service
-        notification_service.check_and_dispatch_bottleneck_reminders(all_courses)
+        notification_service.check_and_dispatch_bottleneck_reminders()
     except Exception as e:
         pass
 

@@ -1,65 +1,74 @@
-import sys, os
+import os
+import sys
+import unittest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import app, courses_store
+import app
+import courses_store
 
-client = app.app.test_client()
-with client.session_transaction() as sess:
-    sess["username"] = "faculty_tano"
 
-res = client.get("/api/courses")
-assert res.status_code == 200, "Could not list courses"
-c_id = res.get_json()["courses"][0]["id"]
-print("Testing course ID:", c_id)
+class Part7Part8RubricsTestCase(unittest.TestCase):
+    def setUp(self):
+        self.client = app.app.test_client()
+        self.username = "faculty_tano"
+        doc = courses_store.create_course(
+            username=self.username,
+            course_code="EE 411",
+            course_title="Feedback and Control Systems",
+            programs=["EE"]
+        )
+        self.course_id = doc["id"]
+        doc = courses_store.find_course(self.course_id)
+        if not doc.get("blueprint"):
+            doc["blueprint"] = {}
+        doc["blueprint"]["rubrics"] = []
+        courses_store.save_course_doc(doc)
 
-# Reset rubrics to empty for clean testing
-doc = courses_store.find_course(c_id)
-doc["blueprint"]["rubrics"] = []
-courses_store.save_course_doc(doc)
+    def tearDown(self):
+        try:
+            courses_store.delete_course(self.username, self.course_id)
+        except Exception:
+            pass
 
-# Test GET course
-res = client.get(f"/api/courses/{c_id}")
-assert res.status_code == 200
-bp = res.get_json()["blueprint"]
-rubrics = bp.get("rubrics", [])
-print(f"Course blueprint has {len(rubrics)} rubrics by default (should be empty):")
-for r in rubrics:
-    print(f" - {r.get('title')} (scale: {r.get('scale_type')}, criteria: {len(r.get('criteria', []))})")
-assert len(rubrics) == 0, f"Expected 0 rubrics by default, got {len(rubrics)}"
+    def test_rubrics_workflow_and_pdf_export(self):
+        with self.client.session_transaction() as sess:
+            sess["username"] = self.username
 
-# Test faculty creating their own custom rubric
-custom_rubric = {
-    "rubric_id": "rub_custom_fac_1",
-    "title": "Custom Analytic Rubric",
-    "assessment_code": "SA1",
-    "target_part": "Entire Assessment",
-    "used_for": "Faculty Defined Assessment",
-    "clo_ids": ["CLO1"],
-    "scale_type": "points_5",
-    "levels": [
-        {"level": 5, "label": "Excellent (5)"},
-        {"level": 3, "label": "Satisfactory (3)"},
-        {"level": 0, "label": "Unacceptable (0)"}
-    ],
-    "criteria": [
-        {"name": "Accuracy", "weight_pct": 50.0, "descriptors": ["Exact", "Partial", "Wrong"]},
-        {"name": "Clarity", "weight_pct": 50.0, "descriptors": ["Clear", "Adequate", "Unclear"]}
-    ],
-    "notes": "Faculty custom rubric"
-}
-bp["rubrics"] = [custom_rubric]
-save_res = client.put(f"/api/courses/{c_id}", json={"blueprint": bp})
-assert save_res.status_code == 200
+        c_id = self.course_id
+        res = self.client.get(f"/api/courses/{c_id}")
+        self.assertEqual(res.status_code, 200)
+        bp = res.get_json()["blueprint"]
+        rubrics = bp.get("rubrics", [])
+        self.assertEqual(len(rubrics), 0)
 
-# Test export PDF
-res = client.get(f"/api/courses/{c_id}/export-pdf")
-print("PDF Export status code:", res.status_code)
-assert res.status_code == 200, f"PDF export failed: {res.status_code}"
-assert len(res.data) > 10000, f"PDF too small: {len(res.data)} bytes"
-print(f"PDF successfully generated: {len(res.data):,} bytes")
+        custom_rubric = {
+            "rubric_id": "rub_custom_fac_1",
+            "title": "Custom Analytic Rubric",
+            "assessment_code": "SA1",
+            "target_part": "Entire Assessment",
+            "used_for": "Faculty Defined Assessment",
+            "clo_ids": ["CLO1"],
+            "scale_type": "points_5",
+            "levels": [
+                {"level": 5, "label": "Excellent (5)"},
+                {"level": 3, "label": "Satisfactory (3)"},
+                {"level": 0, "label": "Unacceptable (0)"}
+            ],
+            "criteria": [
+                {"name": "Accuracy", "weight_pct": 50.0, "descriptors": ["Exact", "Partial", "Wrong"]},
+                {"name": "Clarity", "weight_pct": 50.0, "descriptors": ["Clear", "Adequate", "Unclear"]}
+            ],
+            "notes": "Faculty custom rubric"
+        }
+        bp["rubrics"] = [custom_rubric]
+        save_res = self.client.put(f"/api/courses/{c_id}", json={"blueprint": bp})
+        self.assertEqual(save_res.status_code, 200)
 
-# Clean rubrics back to empty
-bp["rubrics"] = []
-client.put(f"/api/courses/{c_id}", json={"blueprint": bp})
+        res = self.client.get(f"/api/courses/{c_id}/export-pdf")
+        self.assertEqual(res.status_code, 200)
+        self.assertGreater(len(res.data), 10000)
 
-print(">>> ALL TESTS PASSED SUCCESSFULLY! <<<")
+
+if __name__ == "__main__":
+    unittest.main()

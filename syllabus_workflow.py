@@ -116,7 +116,16 @@ def get_queue_age(doc: Dict[str, Any], now_dt: Optional[datetime] = None) -> Dic
     now = now_dt or datetime.now()
     entered_str = wf.get("step_entered_at")
     if not entered_str:
-        sigs = wf.get("signatures") or []
+        if status in REVISION_STATUSES:
+            rev_req = wf.get("revision_request") or {}
+            entered_str = rev_req.get("requested_at")
+            if not entered_str and wf.get("history"):
+                for h in reversed(wf["history"]):
+                    if h.get("action") in {"revision_requested", "revision_endorsed"}:
+                        entered_str = h.get("at")
+                        break
+        else:
+            sigs = wf.get("signatures") or []
         if sigs:
             entered_str = sigs[-1].get("signed_at")
         elif wf.get("submitted_at"):
@@ -760,6 +769,7 @@ def request_revision(doc: Dict[str, Any], user: Dict[str, Any], reason: str = ""
     target_status = "revision_for_associate_dean" if is_ph else "revision_for_program_head"
 
     wf["status"] = target_status
+    wf["step_entered_at"] = now_ts
     wf["revision_reason"] = (reason or "").strip()
     wf["revision_request"] = {
         "requested_by": user["username"],

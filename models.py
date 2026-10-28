@@ -484,6 +484,17 @@ def get_default_policies_table() -> List[Dict[str, str]]:
         },
         {
             "number": "8",
+            "title": "Inclusivity and Reasonable Accommodation",
+            "description": (
+                "The University promotes an inclusive learning environment and equitable access to learning opportunities. "
+                "Learners who may require reasonable accommodation are encouraged to avail of the University's established "
+                "mechanism under the Procedures Manual on Provision of Reasonable Accommodation for Learners with Special "
+                "Needs (PM-USeP-PRA). Duly endorsed instructional and assessment-related accommodations shall be implemented "
+                "in accordance with University procedures while maintaining the essential learning outcomes and academic requirements of the course."
+            ),
+        },
+        {
+            "number": "9",
             "title": "Conduct of Quizzes and Examinations",
             "description": (
                 "• Keep calculator jackets, smartphones, and irrelevant items inside bags.\n"
@@ -494,7 +505,7 @@ def get_default_policies_table() -> List[Dict[str, str]]:
             ),
         },
         {
-            "number": "9",
+            "number": "10",
             "title": "Use of Calculators",
             "description": (
                 "Allowed calculators must follow the Professional Regulatory Commission (PRC) recommendations "
@@ -502,7 +513,7 @@ def get_default_policies_table() -> List[Dict[str, str]]:
             ),
         },
         {
-            "number": "10",
+            "number": "11",
             "title": "Group Work and Independent Effort",
             "description": (
                 "Every group must ensure equitable contributions from all members. Directly sharing completed circuits, "
@@ -510,14 +521,14 @@ def get_default_policies_table() -> List[Dict[str, str]]:
             ),
         },
         {
-            "number": "11",
+            "number": "12",
             "title": "Cleanliness and Energy Conservation",
             "description": (
                 "Observe cleanliness before and after class. Ensure all plugged devices and lights are turned off before leaving the classroom."
             ),
         },
         {
-            "number": "12",
+            "number": "13",
             "title": "Communication Channels",
             "description": (
                 "Official announcements and course updates will be posted via the USeP Virtual Environment (UVE), email, or official class group chat. "
