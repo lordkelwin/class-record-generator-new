@@ -1397,10 +1397,10 @@
         &#9776; Subjects (<span id="asbCountBadge">0</span>)
       </button>
       <div class="asb-info">
-        <span class="asb-code" id="asbCode">EE 211</span>
-        <span class="asb-sec" id="asbSec">EE 2A</span>
-        <span class="asb-title" id="asbTitle">Electrical Circuits 1</span>
-        <span class="asb-sem" id="asbSemAy">1st Semester, A.Y. 2026-2027</span>
+        <span class="asb-code" id="asbCode">—</span>
+        <span class="asb-sec" id="asbSec">—</span>
+        <span class="asb-title" id="asbTitle">No Subject Selected</span>
+        <span class="asb-sem" id="asbSemAy">Select a course or click '+ New Subject'</span>
       </div>
     </div>
     <div class="asb-right">
@@ -3640,6 +3640,7 @@
           checkClassRecordLock();
           checkSyllabusLock();
           renderWorkflowStepper();
+          renderDashboard();
           clearAllSyllabusFormInputs();
           return;
         }
@@ -8613,7 +8614,27 @@
   }
 
   function renderDashboard() {
-    if (!blueprint) return;
+    if (!blueprint) {
+      const dt = document.getElementById("dashTitle"); if (dt) dt.textContent = "Class Dashboard — No Subject Selected";
+      const ds = document.getElementById("dashSubtitle"); if (ds) ds.textContent = "Please select a course from the sidebar or click '+ Create / Add New Subject' to view class analytics.";
+      const kpis = document.getElementById("dashKpis");
+      if (kpis) {
+        kpis.innerHTML = `
+          <div class="kpi"><div class="k-label">Students Enrolled</div><div class="k-value">0</div><div class="k-sub">No Active Subject</div></div>
+          <div class="kpi" style="border-left-color:#64748b;"><div class="k-label">Assessments</div><div class="k-value">0</div><div class="k-sub">0 Formative · 0 Summative</div></div>
+          <div class="kpi" style="border-left-color:#b45309;"><div class="k-label">Class Avg</div><div class="k-value">—</div><div class="k-sub">No records</div></div>
+          <div class="kpi" style="border-left-color:#15803d;"><div class="k-label">Passing Rate</div><div class="k-value">—</div><div class="k-sub">No records</div></div>
+          <div class="kpi" style="border-left-color:#15803d;"><div class="k-label">CLOs Attained</div><div class="k-value">—</div><div class="k-sub">No records</div></div>
+        `;
+      }
+      const b1 = document.getElementById("dashAssessBars"); if (b1) b1.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:18px 0; text-align:center;">No assessment data available.</div>';
+      const b2 = document.getElementById("dashStudentProfile"); if (b2) b2.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:18px 0; text-align:center;">No student records available.</div>';
+      const b3 = document.getElementById("dashHeatmap"); if (b3) b3.innerHTML = '<tr><td style="color:#64748b; font-size:0.85rem; padding:18px; text-align:center;">No student scores recorded.</td></tr>';
+      const b4 = document.getElementById("dashCloAttain"); if (b4) b4.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:18px 0; text-align:center;">No CLO attainment data available.</div>';
+      const b5 = document.getElementById("dashAlignMap"); if (b5) b5.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:18px 0; text-align:center;">No outcome alignment map available.</div>';
+      const b6 = document.getElementById("dashAlignTable"); if (b6) b6.innerHTML = '<tr><td style="color:#64748b; font-size:0.85rem; padding:18px; text-align:center;">No outcome alignment matrix available.</td></tr>';
+      return;
+    }
     if (!gradebookCache) { renderLiveGradebookAndReports(); return; }
     const gc = gradebookCache;
     const m = blueprint.metadata || {};
@@ -10272,7 +10293,7 @@
                       <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
                         ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : (status === 'for_student_acknowledgment' ? 'Endorse to Dean for Signature' : 'Sign & Endorse'))))}
                       </button>
-                    `}`}
+                    `}
                     <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
                       ↩️ Return for Revision
                     </button>
