@@ -506,7 +506,8 @@ def create_course(
     if not faculty_name:
         faculty_name = "Engr. Elwin Jay J. Tano"
 
-    from sample_syllabus import get_designated_program_heads
+    from sample_syllabus import get_designated_program_heads, DEFAULT_ORIENTATION_ROW, parse_sdg_string_to_table
+    from models import get_default_policies_table
     heads = get_designated_program_heads(init_programs)
     computed_ph = " / ".join(heads)
 
@@ -515,6 +516,8 @@ def create_course(
         if " - " in cat_code or " – " in cat_code:
             cat_code = cat_code.split(" - ")[0].split(" – ")[0].strip()
         cat_title = (catalog_course_data.get("title") or course_title).strip()
+        cat_yr = catalog_course_data.get("year_level") or "Second Year"
+        cat_sdgs = catalog_course_data.get("sdgs") or "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
         bp = get_blank_blueprint(
             course_code=cat_code,
             course_title=cat_title,
@@ -531,10 +534,16 @@ def create_course(
             sections=init_sections,
             program_head=computed_ph,
             dean_name="Engr. Joie D. Cataytay, Ph.D.",
+            year_level=cat_yr,
+            sdg_alignments=cat_sdgs,
         )
         bp.metadata.program_heads = heads
         bp.metadata.passing_percentage = 75.0
-        bp.metadata.learning_plan_table = []
+        bp.metadata.year_level = cat_yr
+        bp.metadata.sdg_alignments = cat_sdgs
+        bp.metadata.sdg_table = parse_sdg_string_to_table(cat_sdgs)
+        bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
+        bp.metadata.policies_table = get_default_policies_table()
         bp_dict = bp.to_dict()
     else:
         bp = get_blank_blueprint(
@@ -550,12 +559,13 @@ def create_course(
         )
         bp.metadata.program_heads = heads
         bp.metadata.passing_percentage = 75.0
-        bp.metadata.learning_plan_table = []
+        bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
+        bp.metadata.policies_table = get_default_policies_table()
         bp_dict = bp.to_dict()
 
     payload = {
-        "course_code": course_code,
-        "course_title": course_title,
+        "course_code": bp.metadata.course_code,
+        "course_title": bp.metadata.course_title,
         "section": init_section,
         "sections": init_sections,
         "programs": bp.metadata.programs,

@@ -1255,9 +1255,15 @@
             <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">College QA Head</div>
             <div style="font-size:0.65rem; color:#64748b;">Countersign</div>
           </div>
-          <!-- Step 6: Dean Approval -->
+          <!-- Step 6: Student Acknowledgment -->
+          <div class="wf-step" id="step_student_ack" style="position:relative; z-index:2; text-align:center; min-width:95px;">
+            <div class="wf-circle" id="circle_student_ack" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">6</div>
+            <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">Student Ack</div>
+            <div style="font-size:0.65rem; color:#64748b;">FM-USeP-MID-07</div>
+          </div>
+          <!-- Step 7: Dean Approval -->
           <div class="wf-step" id="step_dean" style="position:relative; z-index:2; text-align:center; min-width:90px;">
-            <div class="wf-circle" id="circle_dean" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">6</div>
+            <div class="wf-circle" id="circle_dean" style="width:34px; height:34px; border-radius:50%; background:#e2e8f0; color:#64748b; display:flex; align-items:center; justify-content:center; margin:0 auto 5px; font-weight:700; font-size:0.82rem; border:3px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.15);">7</div>
             <div style="font-size:0.73rem; font-weight:700; color:#1e293b;">Dean Approval</div>
             <div style="font-size:0.65rem; color:#64748b;">Lock-In &amp; Release</div>
           </div>
@@ -1304,9 +1310,6 @@
         <div style="display:flex; gap:8px; align-items:center;">
           <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportAcknowledgmentPdf()">
             📄 Download FM-USeP-MID-07 (.pdf)
-          </button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="openStudentAckModal()">
-            ✍️ Sign Student Acknowledgment
           </button>
         </div>
       </div>
@@ -3160,6 +3163,7 @@
           checkClassRecordLock();
           checkSyllabusLock();
           renderWorkflowStepper();
+          clearAllSyllabusFormInputs();
           return;
         }
         hideNoSubjectPlaceholder();
@@ -3407,11 +3411,53 @@
     }, 2500);
   }
 
+  function getOrientationRow() {
+    return {
+      ilo: "• Recognize the university VMGO & Institutional Graduate Attributes.\n• Appreciates the significance of PEOs and PGOs of the program.\n• Recognize the rules and regulations of the course and the grading system.",
+      clo: "",
+      time_frame: "1 hour",
+      topics: "• Course Orientation\n• VMGO & IGA of the University\n• PEOs & PGOs of the program\n• Rules and regulations of the course & grading system\n• Presentation of the course outline",
+      tla: "• On-site or online meeting",
+      required_reading: "• USeP Student Handbook (2016 edition)",
+      assessment_activities: "• N/A",
+      merge_assessment_with_prev: false
+    };
+  }
+
+  function clearAllSyllabusFormInputs() {
+    const ids = [
+      "meta_course_code", "meta_course_title", "meta_credit_units", "meta_lec_lab",
+      "meta_schedule", "meta_room", "meta_section", "meta_program_code", "meta_semester_ay",
+      "meta_year_level", "meta_office", "meta_workload_description", "meta_passing_grade_conditions",
+      "meta_faculty_email", "meta_faculty_contact", "meta_consultation_hours", "meta_course_description"
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    const tbodies = [
+      "prereqCoreqTableBody", "sdgTableBody", "learningPlanTableBody",
+      "referencesTableBody", "policiesTableBody", "coTableBody"
+    ];
+    tbodies.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = "";
+    });
+    const catCont = document.getElementById("categoriesContainer");
+    if (catCont) catCont.innerHTML = "";
+    const rubCont = document.getElementById("rubricsContainer");
+    if (rubCont) rubCont.innerHTML = "";
+  }
+
   // Modals: New Subject
   function openNewSubjectModal() {
     populateModalCatalog();
     renderModalProgramPills("catalog");
     renderModalProgramPills("custom");
+    const mCustCode = document.getElementById("modalCustCode"); if (mCustCode) mCustCode.value = "";
+    const mCustTitle = document.getElementById("modalCustTitle"); if (mCustTitle) mCustTitle.value = "";
+    const mCustSec = document.getElementById("modalCustSection"); if (mCustSec) mCustSec.value = "1A";
+    const mCatSec = document.getElementById("modalCatSection"); if (mCatSec) mCatSec.value = "1A";
     document.getElementById("newSubjectModal").style.display = "flex";
   }
 
@@ -3596,7 +3642,12 @@
       const res = await fetch(`/api/courses/${courseId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       const wasActive = currentCourseId === courseId;
-      if (wasActive) currentCourseId = null;
+      if (wasActive) {
+        currentCourseId = null;
+        blueprint = null;
+        localStorage.removeItem("usep_active_course_id");
+        clearAllSyllabusFormInputs();
+      }
       await loadCoursesList();
     } catch (e) {
       alert("Failed to delete subject: " + e.message);
@@ -3985,8 +4036,8 @@
 
       m.prereq_coreq_table = _parseReqStringsToTable(m.prerequisites, m.corequisites);
       m.sdg_table = _parseSdgStringToTable(m.sdg_alignments);
-      // Item 12: Do not autogenerate dummy learning plan table to prevent mishaps
-      if (!m.learning_plan_table) m.learning_plan_table = [];
+      m.learning_plan_table = [getOrientationRow()];
+      m.policies_table = getDefaultPoliciesTable();
 
       document.getElementById("meta_course_title").value = m.course_title;
       document.getElementById("meta_credit_units").value = m.credit_units;
@@ -4101,6 +4152,18 @@
       document.getElementById("rawPdfTextPreview").textContent = blueprint.raw_text_preview;
     }
 
+    if (!m.learning_plan_table || !m.learning_plan_table.length) {
+      m.learning_plan_table = [getOrientationRow()];
+    }
+    if (!m.policies_table || !m.policies_table.length) {
+      m.policies_table = getDefaultPoliciesTable();
+    }
+    if (!m.prereq_coreq_table || !m.prereq_coreq_table.length) {
+      m.prereq_coreq_table = _parseReqStringsToTable(m.prerequisites, m.corequisites);
+    }
+    if (!m.sdg_table || !m.sdg_table.length) {
+      m.sdg_table = _parseSdgStringToTable(m.sdg_alignments);
+    }
     renderCourseOutcomes();
     renderSyllabusTables();
     renderCategories();
@@ -8198,6 +8261,8 @@
         badge.style.background = "#e0e7ff"; badge.style.color = "#3730a3";
       } else if (wf.status === "for_qa_countersign") {
         badge.style.background = "#f3e8ff"; badge.style.color = "#6b21a8";
+      } else if (wf.status === "for_student_acknowledgment") {
+        badge.style.background = "#e0f2fe"; badge.style.color = "#0369a1";
       } else if (wf.status === "for_dean_approval") {
         badge.style.background = "#dbeafe"; badge.style.color = "#1e40af";
       } else if (wf.status === "approved") {
@@ -8210,21 +8275,22 @@
     const cycleBadge = document.getElementById("wfCycleBadge");
     if (cycleBadge) cycleBadge.textContent = `Cycle ${wf.cycle || 1}`;
 
-    // Update Progress Stepper Circles & Bar (0 to 5)
+    // Update Progress Stepper Circles & Bar (0 to 6)
     const statusToIdx = {
       "draft": 0, "returned": 0,
       "for_committee_review": 1,
       "for_committee_chair": 2,
       "for_program_head": 3,
       "for_qa_countersign": 4,
-      "for_dean_approval": 5,
-      "approved": 6,
+      "for_student_acknowledgment": 5,
+      "for_dean_approval": 6,
+      "approved": 7,
     };
     const curIdx = statusToIdx[wf.status] ?? 0;
 
     const pBar = document.getElementById("wfProgressBar");
     if (pBar) {
-      const pct = Math.min(100, Math.round((curIdx / 5) * 100));
+      const pct = Math.min(100, Math.round((curIdx / 6) * 100));
       pBar.style.width = `${pct}%`;
       pBar.style.background = wf.status === "approved" ? "#16a34a" : "#2563eb";
     }
@@ -8235,13 +8301,14 @@
       2: "circle_committee_chair",
       3: "circle_program_head",
       4: "circle_qa_head",
-      5: "circle_dean",
+      5: "circle_student_ack",
+      6: "circle_dean",
     };
 
-    const stepKeys = ["draft", "committee_members", "committee_chair", "program_head", "qa_head", "dean"];
+    const stepKeys = ["draft", "committee_members", "committee_chair", "program_head", "qa_head", "student_ack", "dean"];
     const sigs = wf.signatures || [];
 
-    for (let i = 0; i <= 5; i++) {
+    for (let i = 0; i <= 6; i++) {
       const el = document.getElementById(circleMap[i]);
       if (!el) continue;
       if (i < curIdx || wf.status === "approved") {
@@ -8293,7 +8360,16 @@
           } else {
             subTextEl.innerHTML = `<span style="color:#94a3b8;">Pending Members</span>`;
           }
-        } else { // 3: program_head, 4: qa_head, 5: dean
+        } else if (i === 5) { // student_ack
+          const totalAck = (wf.student_acknowledgments || []).length;
+          if (curIdx > 5 || wf.status === "approved") {
+            subTextEl.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ Acknowledged</span>`;
+          } else if (curIdx === 5) {
+            subTextEl.innerHTML = `<span style="color:#d97706; font-weight:700;">⏳ Student Signatures</span>`;
+          } else {
+            subTextEl.innerHTML = `<span style="color:#94a3b8;">Pending QA</span>`;
+          }
+        } else { // 3: program_head, 4: qa_head, 6: dean
           const sig = sigs.find(s => s.step === stepKeys[i]);
           if (sig) {
             subTextEl.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ ${escapeHtml(sig.full_name)}</span><br><span style="color:#475569;">🕒 ${formatWorkflowTimestamp(sig.signed_at)}</span>`;
@@ -8370,6 +8446,7 @@
         else if (wf.status === "for_committee_chair") signBtnText = "✍️ Endorse Committee Review (Chair)";
         else if (wf.status === "for_program_head") signBtnText = "✍️ Sign & Endorse (Program Head)";
         else if (wf.status === "for_qa_countersign") signBtnText = "✍️ Countersign Syllabus (QA Head)";
+        else if (wf.status === "for_student_acknowledgment") signBtnText = "▶ Forward to Dean for Final Approval";
         else if (wf.status === "for_dean_approval") signBtnText = "✍️ Final Approval & Lock-in (Dean)";
         btnSign.innerHTML = signBtnText;
         btnSign.onclick = () => openSignatureModal("approve");
@@ -8428,7 +8505,9 @@
       } else if (wf.status === "for_program_head") {
         descEl.innerHTML = "<strong>Status: With Program Head.</strong> Recommending approval and endorsing syllabus to College QA Head.";
       } else if (wf.status === "for_qa_countersign") {
-        descEl.innerHTML = "<strong>Status: With College QA Head.</strong> Countersigning syllabus (required before Dean's approval).";
+        descEl.innerHTML = "<strong>Status: With College QA Head.</strong> Countersigning syllabus (required before Student Acknowledgment).";
+      } else if (wf.status === "for_student_acknowledgment") {
+        descEl.innerHTML = "<strong>Status: For Student Acknowledgment (FM-USeP-MID-07).</strong> Enrolled students sign acknowledgment via student login portal prior to Dean's final approval.";
       } else if (wf.status === "for_dean_approval") {
         descEl.innerHTML = "<strong>Status: With Dean.</strong> Final Dean approval and official lock-in.";
       } else if (wf.status === "approved") {

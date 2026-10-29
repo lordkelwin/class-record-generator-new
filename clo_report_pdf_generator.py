@@ -464,8 +464,8 @@ def generate_clo_report_pdf_bytes(
         wrapped_clo_cells = {}
         for co in outcomes:
             cell_txt = pr["clo_plans"].get(co.co_id, "")
-            if not cell_txt or str(cell_txt).strip().upper() == "N/A":
-                cell_txt = ""
+            if not cell_txt:
+                cell_txt = "N/A"
             c_lines = _wrap_pdf_text_lines(pdf, cell_txt, clo_col_w - 3.0) if cell_txt else []
             wrapped_clo_cells[co.co_id] = c_lines
             if len(c_lines) > max_cell_lines:

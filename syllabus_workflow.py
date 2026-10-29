@@ -60,6 +60,15 @@ WORKFLOW_STEPS: List[Dict[str, Any]] = [
         "scope": "college",
     },
     {
+        "key": "student_ack",
+        "role": "student",
+        "label": "Student Acknowledgment",
+        "action_label": "Acknowledged by Students (FM-USeP-MID-07)",
+        "status": "for_student_acknowledgment",
+        "requires_checklist": False,
+        "scope": "class",
+    },
+    {
         "key": "dean",
         "role": "dean",
         "label": "Dean",
@@ -79,6 +88,7 @@ STATUS_LABELS = {
     "for_committee_chair": "For Committee Chair Endorsement",
     "for_program_head": "For Program Head Approval",
     "for_qa_countersign": "For QA Head Countersign",
+    "for_student_acknowledgment": "For Student Acknowledgment (FM-USeP-MID-07)",
     "for_dean_approval": "For Dean's Approval",
     "approved": "Approved & Locked",
     "revision_for_program_head": "Revision Request: Awaiting Program Head Endorsement",
@@ -229,6 +239,10 @@ def get_reviewers_for_step(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
             if "associate_dean" in w_roles:
                 reviewers.append(_clean_user(uname, u))
         return reviewers
+
+    # Step 5: Student Acknowledgment
+    if status == "for_student_acknowledgment":
+        return [_clean_user(owner, users.get(owner) or {"username": owner})]
 
     # Step 4: QA Head
     if status == "for_qa_countersign":
@@ -413,8 +427,8 @@ def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[
         return False
     if user.get("role") == "admin":
         return True
-    if doc.get("owner") == user.get("username"):
-        return False  # nobody reviews/approves their own syllabus
+    if doc.get("owner") == user.get("username") and step.get("key") != "student_ack":
+        return False  # nobody reviews/approves their own syllabus (except forwarding student ack to dean)
     if user.get("role") == "staff" or (user.get("is_staff") and not user.get("can_access_faculty_tools", True)):
         return False  # staff has oversight only and cannot sign review stages
 
@@ -460,6 +474,13 @@ def user_can_act(user: Dict[str, Any], doc: Dict[str, Any], step: Optional[Dict[
         return user_canonical == assigned_comm and user_canonical not in signed_chair
 
     user_roles = set(user.get("workflow_roles") or [])
+    if step.get("key") == "student_ack":
+        if user.get("username") == doc.get("owner"):
+            return True
+        if user.get("role") in {"admin", "dean", "associate_dean", "program_head", "qa_head"}:
+            return True
+        return bool(user_roles.intersection({"dean", "associate_dean", "program_head", "qa_head"}))
+
     step_role = step["role"]
     if step_role == "dean":
         if not ("dean" in user_roles or "associate_dean" in user_roles):

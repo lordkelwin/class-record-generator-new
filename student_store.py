@@ -297,11 +297,12 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
 
                 wf = doc.get("workflow") or {}
                 status = wf.get("status") or "draft"
-                # QA approved check (Step 5 counter-signed by QA)
+                # QA approved check (Counter-signed by QA, awaiting student ack or Dean approval)
                 is_qa_approved = (
-                    status.lower() == "approved"
+                    status.lower() in {"for_student_acknowledgment", "for_dean_approval", "approved"}
                     or wf.get("step") == 5
                     or wf.get("qa_approved_at") is not None
+                    or any(s.get("step") == "qa_head" for s in wf.get("signatures", []))
                 )
 
                 meta = bp.get("metadata") or {}

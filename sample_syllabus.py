@@ -1,4 +1,5 @@
 import os
+import re
 from typing import List, Dict, Any, Optional
 from fpdf import FPDF
 from models import (
@@ -12,6 +13,8 @@ from models import (
     CQIPlan,
     get_default_cqi_indicators,
     get_default_policies_table,
+    get_default_references_table,
+    get_default_syllabus_assessment_activities,
 )
 
 
@@ -76,8 +79,6 @@ def get_default_sample_students() -> List[StudentRecord]:
     return students
 
 
-
-
 def get_default_rubrics() -> List[Dict[str, Any]]:
     """Returns an empty list by default, allowing faculty to define their own custom rubrics."""
     return []
@@ -126,16 +127,17 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
         ),
         CourseOutcome(
             co_id="CLO2",
-            description="Given multi-source electrical networks and time-varying circuits, the student will determine equivalent circuits and complete electrical responses by correctly applying fundamental network theorems and circuit principles.",
+            description="Given interconnected electrical elements and energy storage devices, the student will simplify complex circuits into their equivalent models by systematically applying network reduction theorems.",
             program_outcomes="PGO e",
-            graduate_outcome_desc="e) Identify, formulate, and solve engineering problems",
-            performance_indicator="e.2. Apply concepts, theories, and principles in solving engineering problem(s)",
+            graduate_outcome_desc="e) Identify, formulate, and solve complex engineering problems",
+            performance_indicator="e.2. Formulate and solve complex engineering problems.",
             iga_aligned="IGA5",
             target_score_pct=75.0,
             target_class_pass_pct=50.0,
         ),
     ]
 
+    # Categories strictly matching USeP EE 211 Math 211 grading policy
     categories = [
         # MIDTERM PERIOD
         AssessmentCategory(
@@ -149,7 +151,7 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
             items=[
                 AssessmentItem(
                     "A1",
-                    "FA1 Group Activity 1 (DC/AC Laws & Network Theorems)",
+                    "FA1 Group Activity 1 (Nodal & Mesh Analysis Exercise)",
                     100.0,
                     "CLO1, CLO2",
                     100.0,
@@ -168,7 +170,7 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
             items=[
                 AssessmentItem(
                     "A2",
-                    "FA1 Group Activity 2 (Network Theorems Simulation)",
+                    "FA2 Group Activity 2 (Superposition & Thevenin Circuit Simulation)",
                     100.0,
                     "CLO1, CLO2",
                     100.0,
@@ -253,7 +255,7 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
             items=[
                 AssessmentItem(
                     "A4",
-                    "FA1 Group Activity 4 (AC Sinusoidal Steady-State)",
+                    "FA2 Group Activity 4 (AC Steady-State Analysis & Phasor Exercise)",
                     100.0,
                     "CLO1, CLO2",
                     100.0,
@@ -272,7 +274,7 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
             items=[
                 AssessmentItem(
                     "Q3",
-                    "Quiz 3 (Energy Elements & First/Second-Order Circuits)",
+                    "Quiz 3 (Energy-Storing Elements & First-Order Transients)",
                     30.0,
                     "CLO1, CLO2",
                     20.0,
@@ -280,7 +282,7 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
                 ),
                 AssessmentItem(
                     "Q4",
-                    "Quiz 4 (Phasor & Frequency-Domain Circuit Analysis)",
+                    "Quiz 4 (Second-Order Transients, Sinusoids & Phasor Analysis)",
                     30.0,
                     "CLO1, CLO2",
                     20.0,
@@ -328,6 +330,17 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
     )
 
 
+DEFAULT_ORIENTATION_ROW: Dict[str, str] = {
+    "ilo": "• Recognize the university VMGO & Institutional Graduate Attributes.\n• Appreciates the significance of PEOs and PGOs of the program.\n• Recognize the rules and regulations of the course and the grading system.",
+    "clo": "",
+    "time_frame": "1 hour",
+    "topics": "• Course Orientation\n• VMGO & IGA of the University\n• PEOs & PGOs of the program\n• Rules and regulations of the course & grading system\n• Presentation of the course outline",
+    "tla": "• On-site or online meeting",
+    "required_reading": "• USeP Student Handbook (2016 edition)",
+    "assessment_activities": "• N/A",
+}
+
+
 def parse_prereqs_coreqs_to_table(prereqs: str = "", coreqs: str = "") -> List[Dict[str, str]]:
     table: List[Dict[str, str]] = []
     if prereqs and prereqs.strip() and prereqs.strip().lower() != "none":
@@ -351,20 +364,24 @@ def parse_prereqs_coreqs_to_table(prereqs: str = "", coreqs: str = "") -> List[D
     return table
 
 
+def parse_sdg_string_to_table(sdg_str: str = "") -> List[Dict[str, str]]:
+    from catalog_data import UN_SDG_CATALOG
+    nums = re.findall(r"\b\d{1,2}\b", sdg_str or "")
+    rows = []
+    for num_str in nums:
+        match_obj = next((s for s in UN_SDG_CATALOG if s["sdg"].startswith(f"{num_str}:")), None)
+        if match_obj and not any(r["sdg"] == match_obj["sdg"] for r in rows):
+            rows.append({"sdg": match_obj["sdg"], "description": match_obj["description"]})
+    if not rows and len(UN_SDG_CATALOG) >= 9:
+        rows.append({"sdg": UN_SDG_CATALOG[6]["sdg"], "description": UN_SDG_CATALOG[6]["description"]})
+        rows.append({"sdg": UN_SDG_CATALOG[8]["sdg"], "description": UN_SDG_CATALOG[8]["description"]})
+    return rows
+
+
 def build_learning_plan_from_topics(topics: List[str]) -> List[Dict[str, str]]:
     if not topics:
-        return []
-    plan: List[Dict[str, str]] = [
-        {
-            "ilo": "• Recognize the university VMGO & Institutional Graduate Attributes.\n• Appreciates the significance of PEOs and PGOs of the program.\n• Recognize the rules and regulations of the course and the grading system.",
-            "clo": "",
-            "time_frame": "1 hour",
-            "topics": "• Course Orientation\n• VMGO & IGA of the University\n• PEOs & PGOs of the program\n• Rules and regulations of the course & grading system\n• Presentation of the course outline",
-            "tla": "• On-site or online meeting",
-            "required_reading": "• USeP Student Handbook (2016 edition)",
-            "assessment_activities": "• N/A",
-        }
-    ]
+        return [dict(DEFAULT_ORIENTATION_ROW)]
+    plan: List[Dict[str, str]] = [dict(DEFAULT_ORIENTATION_ROW)]
     mid = max(1, len(topics) // 2)
     for idx, t in enumerate(topics):
         if idx == mid:
@@ -396,7 +413,6 @@ def build_learning_plan_from_topics(topics: List[str]) -> List[Dict[str, str]]:
         "assessment_activities": "• SA2 – Term Examination",
     })
     return plan
-
 
 
 DESIGNATED_PROGRAM_HEADS: Dict[str, str] = {
@@ -441,6 +457,8 @@ def get_blank_blueprint(
     sections: Optional[List[str]] = None,
     program_code: str = "EE",
     program_name: str = "",
+    year_level: str = "Second Year",
+    sdg_alignments: str = "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure",
 ) -> SyllabusBlueprint:
     """Returns a completely clean starter blueprint for creating a syllabus from scratch."""
     if course_code and (" - " in course_code or " – " in course_code):
@@ -487,11 +505,13 @@ def get_blank_blueprint(
         prerequisites=prerequisites,
         corequisites=corequisites,
         contact_hours=contact_hours,
+        year_level=year_level or "Second Year",
+        sdg_alignments=sdg_alignments,
         prereq_coreq_table=parse_prereqs_coreqs_to_table(prerequisites, corequisites),
-        sdg_table=[],
-        syllabus_assessment_activities=[],
-        learning_plan_table=[],
-        references_table=[],
+        sdg_table=parse_sdg_string_to_table(sdg_alignments),
+        syllabus_assessment_activities=get_default_syllabus_assessment_activities(),
+        learning_plan_table=[dict(DEFAULT_ORIENTATION_ROW)],
+        references_table=get_default_references_table(),
         policies_table=get_default_policies_table(),
     )
 
