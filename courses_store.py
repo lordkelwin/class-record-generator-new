@@ -660,17 +660,45 @@ def duplicate_course(username: str, course_id: str, new_section: str = "", clear
     return new_doc
 
 
-def delete_course(username: str, course_id: str) -> bool:
-    user_dir = _get_user_courses_dir(username)
-    safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
-    fp = os.path.join(user_dir, f"{safe_id}.json")
-    if os.path.exists(fp):
-        try:
-            os.remove(fp)
-            return True
-        except Exception:
-            return False
-    return False
+def delete_course(username_or_course_id: str, course_id: Optional[str] = None) -> bool:
+    if course_id is None:
+        target_id = username_or_course_id
+        safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", target_id)
+        if os.path.exists(COURSES_BASE_DIR):
+            for uname in os.listdir(COURSES_BASE_DIR):
+                user_dir = os.path.join(COURSES_BASE_DIR, uname)
+                if os.path.isdir(user_dir):
+                    fp = os.path.join(user_dir, f"{safe_id}.json")
+                    if os.path.exists(fp):
+                        try:
+                            os.remove(fp)
+                            return True
+                        except Exception:
+                            return False
+        return False
+    else:
+        username = username_or_course_id
+        user_dir = _get_user_courses_dir(username)
+        safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
+        fp = os.path.join(user_dir, f"{safe_id}.json")
+        if os.path.exists(fp):
+            try:
+                os.remove(fp)
+                return True
+            except Exception:
+                return False
+        if os.path.exists(COURSES_BASE_DIR):
+            for uname in os.listdir(COURSES_BASE_DIR):
+                u_dir = os.path.join(COURSES_BASE_DIR, uname)
+                if os.path.isdir(u_dir):
+                    f_path = os.path.join(u_dir, f"{safe_id}.json")
+                    if os.path.exists(f_path):
+                        try:
+                            os.remove(f_path)
+                            return True
+                        except Exception:
+                            return False
+        return False
 
 
 def find_course(course_id: str) -> Optional[Dict[str, Any]]:
