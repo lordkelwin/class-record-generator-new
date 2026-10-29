@@ -467,7 +467,7 @@ def admin_required(view):
     return wrapper
 
 
-PUBLIC_ENDPOINTS = {"auth.login", "student_login", "student_logout", "static"}
+PUBLIC_ENDPOINTS = {"auth.login", "student_login", "student_logout", "static", "api_download_roster_template"}
 PASSWORD_CHANGE_ALLOWED = {"auth.change_password", "auth.logout", "static"}
 
 
