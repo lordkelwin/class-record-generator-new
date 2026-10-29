@@ -120,9 +120,9 @@ res = client.post(f"/api/courses/{c_id}/workflow/sign", json={
 })
 assert res.status_code == 200
 
-# Member 2: Ravida
+# Member 2: Basan
 with client.session_transaction() as sess:
-    sess["username"] = "faculty_ravida"
+    sess["username"] = "faculty_basan"
 
 res = client.post(f"/api/courses/{c_id}/workflow/sign", json={
     "decision": "approve",
@@ -133,9 +133,9 @@ assert res.status_code == 200
 wf = res.get_json()["workflow"]
 assert wf["status"] == "for_committee_chair"
 
-# Chair: Basan
+# Chair: Ravida
 with client.session_transaction() as sess:
-    sess["username"] = "faculty_basan"
+    sess["username"] = "faculty_ravida"
 
 res = client.post(f"/api/courses/{c_id}/workflow/sign", json={
     "decision": "approve",

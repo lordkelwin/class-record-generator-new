@@ -240,6 +240,60 @@ def _wrap_html_email(title: str, preheader: str, content_html: str, callout_html
 # --------------------------------------------------------------------------
 # High-Level Workflow Notification Triggers
 # --------------------------------------------------------------------------
+def notify_coauthor_submission_needed(doc: Dict[str, Any], submitter_user: Dict[str, Any], pending_authors: List[Dict[str, Any]]) -> None:
+    """Notifies co-authors that an author has initiated submission and their endorsement click is needed."""
+    code = doc.get("course_code") or (doc.get("blueprint") or {}).get("metadata", {}).get("course_code") or "Course"
+    title = doc.get("course_title") or (doc.get("blueprint") or {}).get("metadata", {}).get("course_title") or "Subject"
+    program = doc.get("program") or "Engineering"
+    submitter_name = submitter_user.get("full_name") or submitter_user.get("username")
+    wf = doc.get("workflow") or {}
+    notes = wf.get("submission_notes") or ""
+
+    recipients = []
+    for a in pending_authors:
+        em, _ = resolve_user_contact(a.get("username") or a)
+        if not em and a.get("email"):
+            em = a["email"]
+        if em and em not in recipients:
+            recipients.append(em)
+
+    subject = f"📝 [Action Required: Co-Author Submission] {code} - {title}"
+    plain = f"""USeP College of Engineering • Co-Author Syllabus Submission Confirmation
+
+Dear Faculty Co-Author,
+
+Engr. {submitter_name} has submitted the course syllabus for:
+Course: {code} – {title}
+Program: {program}
+
+Because this syllabus has multiple designated faculty authors, all involved faculty must click Submit individually before the syllabus is officially forwarded to the Syllabus Review Committee.
+
+Please sign in to the USeP OBE Portal, review the course syllabus, and confirm your submission endorsement.
+"""
+    callout = f"""
+    <div class="callout" style="border-left-color:#2563eb; background:#eff6ff;">
+      <h4 style="margin:0 0 6px; color:#1e40af;">👥 Multi-Faculty Co-Author Submission Required</h4>
+      <table class="meta-table">
+        <tr><td class="label">Course:</td><td><strong>{code}</strong> – {title}</td></tr>
+        <tr><td class="label">Initiated By:</td><td>{submitter_name}</td></tr>
+        <tr><td class="label">Action Required:</td><td><strong>Review & Confirm Submission</strong></td></tr>
+      </table>
+    </div>
+    """
+    content = f"""
+    <p>Engr. <strong>{submitter_name}</strong> has submitted the syllabus for <strong>{code} ({title})</strong> for review.</p>
+    <p>As an author/co-author of this course, university policy requires that all involved faculty confirm submission individually before it is forwarded to the Review Committee.</p>
+    """
+    html = _wrap_html_email(
+        title=f"Co-Author Submission Needed: {code}",
+        preheader=f"Submission confirmation required for {code} co-authored with {submitter_name}",
+        content_html=content,
+        callout_html=callout
+    )
+
+    send_email(recipients, subject, plain, html, category="coauthor_submission_needed", course_id=doc.get("id"))
+
+
 def notify_syllabus_submitted(doc: Dict[str, Any], submitter_user: Dict[str, Any], committee_members: List[Dict[str, Any]]) -> None:
     """Notifies Review Committee members that a syllabus has been submitted for review."""
     code = doc.get("course_code") or (doc.get("blueprint") or {}).get("metadata", {}).get("course_code") or "Course"

@@ -1589,6 +1589,28 @@
           <input type="text" id="meta_consultation_hours" oninput="syncMetaFromInputs()" />
         </div>
       </div>
+
+      <!-- Authors & Co-Authors (Faculty Writers) Section (Part IV) -->
+      <div style="margin-top:12px; margin-bottom:14px; padding:12px 14px; background:#f8fafc; border:1px solid #bfdbfe; border-radius:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <strong style="font-size:0.86rem; color:#1e3a8a;">👥 Course Writers &amp; Co-Authors (Part IV)</strong>
+            <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">All included faculty can edit this syllabus and must individually submit for approval.</span>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <select id="coauthorSelect" style="padding:4px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.78rem; max-width:280px;">
+              <option value="">-- Add Faculty Co-Author --</option>
+            </select>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addCoAuthorFromDropdown()" style="font-size:0.75rem; padding:4px 10px; font-weight:700;">
+              + Add Co-Author
+            </button>
+          </div>
+        </div>
+        <div id="coauthorsListContainer" style="display:flex; flex-wrap:wrap; gap:8px;">
+          <!-- Dynamically populated authors list -->
+        </div>
+      </div>
+
       <div class="grid-4" style="grid-template-columns: 1fr 1fr;">
         <div class="form-group">
           <label>Course Description (Part V)</label>
@@ -2706,6 +2728,9 @@
         <div style="font-size:0.74rem; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:0.04em;">Subject Being Submitted:</div>
         <div style="font-size:1.05rem; font-weight:800; color:#0f172a; margin-top:2px;" id="submitModalCourseTitle">EE 211 - Electrical Circuits 1</div>
         <div style="font-size:0.78rem; color:#475569;" id="submitModalCourseMeta">EE 2A • 1st Semester, A.Y. 2026-2027</div>
+        <div id="submitModalCoauthorsNotice" style="display:none; margin-top:8px; padding:6px 10px; background:#fef3c7; border:1px solid #fde68a; border-radius:6px; font-size:0.77rem; color:#92400e;">
+          👥 <strong>Multi-Faculty Authorship:</strong> This course is co-authored by multiple faculty. All involved faculty must individually click Submit before the syllabus is forwarded to the Review Committee.
+        </div>
       </div>
 
       <!-- Review Committee Composition (Minimum 3 Members) -->
@@ -3124,6 +3149,7 @@
                 <div class="sc-top">
                   <span class="sc-code">${escapeHtml(c.course_code)}</span>
                   <span class="sc-sec">Sec ${escapeHtml(c.section)}</span>
+                  ${c.is_coauthor ? '<span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:0.65rem; padding:1px 5px; border-radius:4px; font-weight:700;">Co-Author</span>' : ''}
                 </div>
                 <div class="sc-title" title="${escapeHtml(c.course_title)}">${escapeHtml(c.course_title)}</div>
                 <div class="sc-meta">
@@ -3132,7 +3158,11 @@
                 </div>
                 <div class="sc-actions" onclick="event.stopPropagation()">
                   <button class="sc-btn" title="Duplicate for another section" onclick="openDuplicateModal('${c.id}')">&#128203; Copy</button>
-                  <button class="sc-btn danger" title="Delete subject" onclick="confirmDeleteCourse(event, '${c.id}', '${escapeHtml(c.course_code)}', '${escapeHtml(c.section)}')">&#128465; Delete</button>
+                  ${!c.is_coauthor ? `
+                    <button class="sc-btn danger" title="Delete subject" onclick="confirmDeleteCourse(event, '${c.id}', '${escapeHtml(c.course_code)}', '${escapeHtml(c.section)}')">&#128465; Delete</button>
+                  ` : `
+                    <button class="sc-btn" disabled title="Co-authors cannot delete a subject initialized by another faculty" style="opacity:0.35; cursor:not-allowed;">&#128465; Delete</button>
+                  `}
                 </div>
               </div>
             `).join("")}
@@ -3922,6 +3952,8 @@
 
     renderProgramPills();
     renderSectionChips();
+    renderCoauthorsList();
+    populateCoauthorDropdown();
     document.getElementById("meta_semester_ay").value = m.semester_ay || "";
     document.getElementById("meta_faculty_name").value = m.faculty_name || "";
     document.getElementById("meta_program_head").value = m.program_head || "";
@@ -4143,6 +4175,114 @@
     syncMetaFromInputs();
     updateActiveSubjectBar();
     queueAutoSave();
+  }
+
+  // --- Co-Authors (Faculty Writers) Manager ---
+  function renderCoauthorsList() {
+    const container = document.getElementById("coauthorsListContainer");
+    if (!container || !blueprint) return;
+    const meta = blueprint.metadata || {};
+    let authors = meta.authors || [];
+
+    const owner = (currentCourse && currentCourse.owner) ? currentCourse.owner : "";
+    const leadName = meta.faculty_name || owner || "Lead Author";
+
+    if (!authors.length) {
+      authors = [{
+        username: owner,
+        name: leadName,
+        email: meta.faculty_email || "",
+        role: "Lead Author"
+      }];
+      meta.authors = authors;
+    }
+
+    container.innerHTML = authors.map((a, idx) => {
+      const isLead = (a.role === "Lead Author") || (idx === 0) || (owner && a.username === owner);
+      const badgeStyle = isLead
+        ? "background:#dbeafe; color:#1e40af; border:1px solid #93c5fd;"
+        : "background:#f1f5f9; color:#334155; border:1px solid #cbd5e1;";
+      const roleLabel = isLead ? "Lead Author / Initializer" : "Co-Author";
+
+      return `
+        <div class="author-card" style="${badgeStyle} border-radius:8px; padding:6px 12px; display:inline-flex; align-items:center; gap:8px; font-size:0.79rem;">
+          <span style="font-weight:700;">${escapeHtml(a.name || a.username)}</span>
+          <span style="font-size:0.7rem; opacity:0.85; background:rgba(0,0,0,0.06); padding:2px 6px; border-radius:4px; font-weight:600;">${roleLabel}</span>
+          ${!isLead ? `
+            <button type="button" onclick="removeCoAuthor(${idx})" title="Remove co-author"
+              style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:0.9rem; padding:0 2px; line-height:1;">
+              &times;
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join("");
+  }
+
+  function populateCoauthorDropdown() {
+    const sel = document.getElementById("coauthorSelect");
+    if (!sel) return;
+    const roster = catalogData?.faculty_roster || {};
+    const seen = new Set();
+    let opts = '<option value="">-- Add Faculty Co-Author --</option>';
+
+    Object.keys(roster).forEach(code => {
+      const grp = roster[code] || {};
+      const allF = [...(grp.full_time || []), ...(grp.part_time || [])];
+      allF.forEach(f => {
+        if (!seen.has(f.name)) {
+          seen.add(f.name);
+          const uname = f.username || f.name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+          opts += `<option value="${escapeHtml(uname)}" data-name="${escapeHtml(f.name)}" data-email="${escapeHtml(f.email || '')}">${escapeHtml(f.name)} [${code}]</option>`;
+        }
+      });
+    });
+    sel.innerHTML = opts;
+  }
+
+  function addCoAuthorFromDropdown() {
+    if (!blueprint) return;
+    const sel = document.getElementById("coauthorSelect");
+    if (!sel || !sel.value) return;
+
+    const opt = sel.selectedOptions[0];
+    const username = sel.value;
+    const name = opt.getAttribute("data-name") || opt.textContent.split("[")[0].trim();
+    const email = opt.getAttribute("data-email") || "";
+
+    const meta = blueprint.metadata || {};
+    let authors = meta.authors || [];
+
+    if (authors.some(a => (a.username && a.username.toLowerCase() === username.toLowerCase()) || (a.name && a.name.toLowerCase() === name.toLowerCase()))) {
+      alert("This faculty member is already included as an author.");
+      return;
+    }
+
+    authors.push({
+      username: username,
+      name: name,
+      email: email,
+      role: "Co-Author"
+    });
+
+    meta.authors = authors;
+    sel.value = "";
+    renderCoauthorsList();
+    syncMetaFromInputs();
+    queueAutoSave();
+  }
+
+  function removeCoAuthor(idx) {
+    if (!blueprint) return;
+    const meta = blueprint.metadata || {};
+    let authors = meta.authors || [];
+    if (idx >= 0 && idx < authors.length) {
+      authors.splice(idx, 1);
+      meta.authors = authors;
+      renderCoauthorsList();
+      syncMetaFromInputs();
+      queueAutoSave();
+    }
   }
 
   function autoSuggestSectionsFromPrograms() {
@@ -7951,13 +8091,37 @@
     if (btnContainer) {
       btnContainer.innerHTML = "";
 
-      // 1. Submit button (for owner when in draft or returned)
+      // Co-author submission status notice
+      if (wf.is_awaiting_coauthors) {
+        const subCount = (wf.submitted_authors || []).length;
+        const totCount = (wf.authors || []).length;
+        const pendingList = (wf.pending_authors || []).map(a => a.name).join(", ");
+        const coauthorNotice = document.createElement("div");
+        coauthorNotice.style.cssText = "background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:6px 12px; font-size:0.79rem; color:#1e40af; font-weight:600; display:flex; align-items:center; gap:6px;";
+        coauthorNotice.innerHTML = `👥 Multi-Faculty Submission in Progress (${subCount}/${totCount} Authors Confirmed). Awaiting: <strong style="color:#1d4ed8;">${escapeHtml(pendingList)}</strong>`;
+        btnContainer.appendChild(coauthorNotice);
+      }
+
+      // 1. Submit button (for author when in draft or returned)
       if (wf.can_submit) {
         const btnSubmit = document.createElement("button");
         btnSubmit.className = "btn btn-primary btn-sm";
-        btnSubmit.innerHTML = "🚀 Submit for Committee Review";
+        if (wf.is_awaiting_coauthors) {
+          const subCount = (wf.submitted_authors || []).length;
+          const totCount = (wf.authors || []).length;
+          btnSubmit.innerHTML = `🚀 Confirm &amp; Submit as Co-Author (${subCount}/${totCount} Confirmed)`;
+        } else {
+          btnSubmit.innerHTML = "🚀 Submit for Committee Review";
+        }
         btnSubmit.onclick = submitSyllabusForReview;
         btnContainer.appendChild(btnSubmit);
+      } else if (wf.user_has_submitted && wf.is_awaiting_coauthors) {
+        const btnWaiting = document.createElement("button");
+        btnWaiting.className = "btn btn-light btn-sm";
+        btnWaiting.disabled = true;
+        btnWaiting.style.cssText = "color:#15803d; font-weight:700; background:#f0fdf4; border:1px solid #bbf7d0;";
+        btnWaiting.innerHTML = `✓ Submission Confirmed (Waiting for Co-Authors)`;
+        btnContainer.appendChild(btnWaiting);
       }
 
       // 2. Withdraw button
@@ -8573,6 +8737,11 @@
 
     renderSubmitCommitteeRows();
 
+    const coNotice = document.getElementById("submitModalCoauthorsNotice");
+    if (coNotice) {
+      const isMulti = currentWorkflow && (currentWorkflow.is_multi_authored || (currentWorkflow.authors && currentWorkflow.authors.length > 1));
+      coNotice.style.display = isMulti ? "block" : "none";
+    }
     const modal = document.getElementById("submitSyllabusModal");
     if (modal) modal.style.display = "flex";
   }
@@ -8614,7 +8783,11 @@
         return;
       }
       closeSubmitSyllabusModal();
-      alert(`Syllabus successfully submitted!\nNotification dispatched to Review Committee (${assignedCommName}).`);
+      if (data.awaiting_coauthors) {
+        alert(data.message || "Your individual submission has been recorded! Waiting for remaining co-authors to confirm submission.");
+      } else {
+        alert(data.message || `Syllabus successfully submitted!\nNotification dispatched to Review Committee (${assignedCommName}).`);
+      }
       currentWorkflow = data.workflow;
       renderWorkflowState(currentWorkflow);
       loadApprovalRequests(true);

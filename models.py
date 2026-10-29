@@ -595,6 +595,7 @@ class CourseMetadata:
     consultation_hours: str = "Monday-Friday, 8:00 AM – 05:00 PM (excluding lunch break)"
     faculty_email: str = "ejjtano0120241110@usep.edu.ph"
     faculty_contact: str = "09262995868"
+    authors: List[Dict[str, Any]] = field(default_factory=list)
     sdg_alignments: str = "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
     prereq_coreq_table: List[Dict[str, str]] = field(default_factory=get_default_prereq_coreq_table)
     sdg_table: List[Dict[str, str]] = field(default_factory=get_default_sdg_table)
@@ -664,6 +665,37 @@ class CourseMetadata:
         else:
             self.sections = ["EE 2A"]
             self.section = "EE 2A"
+
+        # 5. Normalize authors list (Multiple faculty authors)
+        if not self.authors and self.faculty_name:
+            self.authors = [{
+                "username": "",
+                "name": self.faculty_name,
+                "email": self.faculty_email,
+                "contact": self.faculty_contact,
+                "consultation_hours": self.consultation_hours,
+                "role": "Lead Author"
+            }]
+        elif self.authors:
+            cleaned_auths = []
+            seen = set()
+            for a in self.authors:
+                if isinstance(a, dict):
+                    name = (a.get("name") or a.get("full_name") or a.get("username") or "").strip()
+                    uname = (a.get("username") or "").strip()
+                    key = uname.lower() if uname else name.lower()
+                    if key and key not in seen:
+                        seen.add(key)
+                        cleaned_auths.append({
+                            "username": uname,
+                            "name": name,
+                            "email": a.get("email") or "",
+                            "contact": a.get("contact") or "",
+                            "consultation_hours": a.get("consultation_hours") or "",
+                            "role": a.get("role") or ("Lead Author" if not cleaned_auths else "Co-Author"),
+                        })
+            if cleaned_auths:
+                self.authors = cleaned_auths
 
 
 

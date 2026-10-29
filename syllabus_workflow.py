@@ -498,10 +498,19 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
            committee_members: Optional[List[Dict[str, Any]]] = None,
            submission_notes: Optional[str] = None) -> Dict[str, Any]:
     wf = get_workflow(doc)
-    if doc.get("owner") != user["username"]:
-        raise WorkflowError("Only the faculty who owns this syllabus can submit it for review.")
-    if wf["status"] not in EDITABLE_STATUSES:
+    import courses_store
+    authors = courses_store.get_doc_authors(doc)
+    author_unames = [(a.get("username") or "").strip().lower() for a in authors]
+    u_lower = (user.get("username") or "").strip().lower()
+    is_admin = (user.get("role") == "admin")
+    owner_lower = (doc.get("owner") or "").strip().lower()
+
+    if u_lower != owner_lower and u_lower not in author_unames and not is_admin:
+        raise WorkflowError("Only an author/writer of this syllabus can submit it for review.")
+
+    if wf["status"] not in EDITABLE_STATUSES and not wf.get("is_awaiting_coauthors"):
         raise WorkflowError(f"This syllabus is already {status_label(wf['status'])}.")
+
     bp = doc.get("blueprint") or {}
     problems = validate_for_submission(bp)
     if problems:
@@ -509,7 +518,7 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
 
     # Committee must have at least three (3) members
     if committee_members is None:
-        committee_members = [
+        committee_members = wf.get("committee_members") or [
             {"username": "faculty_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Chair"},
             {"username": "faculty_arenga", "name": "Engr. Delan Zoe H. Arenga", "role": "Review Committee Member"},
             {"username": "faculty_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Member"},
@@ -517,31 +526,80 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     if len(committee_members) < 3:
         raise WorkflowError(f"The Syllabus Review Committee must have at least three (3) members (currently has {len(committee_members)}).")
 
-    wf["status"] = WORKFLOW_STEPS[0]["status"]
-    wf["content_hash"] = compute_hash(bp)
-    wf["submitted_at"] = _now()
-    wf["step_entered_at"] = wf["submitted_at"]
-    wf["submitted_by"] = user["username"]
-    wf["submitted_by_name"] = user.get("full_name") or user["username"]
+    # Record this author's individual submission
+    if "author_submissions" not in wf or not isinstance(wf["author_submissions"], dict):
+        wf["author_submissions"] = {}
+
+    now_ts = _now()
+    user_name = user.get("full_name") or user.get("username")
+    wf["author_submissions"][user["username"]] = {
+        "submitted_at": now_ts,
+        "name": user_name,
+        "notes": (submission_notes or "").strip()
+    }
+
+    # Preserve committee members & notes in workflow
     wf["committee_members"] = committee_members
     wf["checklist"]["committee_members"] = committee_members
     chair_member = next((m for m in committee_members if m.get("role") == "Review Committee Chair"), committee_members[0])
     wf["assigned_committee"] = chair_member.get("username") or assigned_committee or "faculty_basan"
     wf["assigned_committee_name"] = ", ".join(m.get("name") for m in committee_members)
-    wf["submission_notes"] = (submission_notes or "").strip()
-    wf["signatures"] = []
-    wf["approved_at"] = None
-    _log(wf, user["username"], "submitted", remarks=wf["submission_notes"], step="faculty")
-    return wf
+    if submission_notes:
+        wf["submission_notes"] = (submission_notes or "").strip()
+
+    # Check if all authors have submitted individually
+    submitted_unames = set((k or "").strip().lower() for k in wf["author_submissions"].keys())
+    pending_authors = [a for a in authors if (a.get("username") or "").strip().lower() not in submitted_unames]
+
+    if pending_authors:
+        # Still awaiting confirmation from other co-authors!
+        wf["is_awaiting_coauthors"] = True
+        wf["status"] = "draft"
+        _log(wf, user["username"], "coauthor_submission_confirmed",
+             remarks=f"Submission confirmed by {user_name} ({len(submitted_unames)}/{len(authors)} authors confirmed). Awaiting: {', '.join(a['name'] for a in pending_authors)}.",
+             step="faculty")
+        return wf
+    else:
+        # All involved authors have submitted individually!
+        wf["is_awaiting_coauthors"] = False
+        wf["status"] = WORKFLOW_STEPS[0]["status"]
+        wf["content_hash"] = compute_hash(bp)
+        wf["submitted_at"] = now_ts
+        wf["step_entered_at"] = now_ts
+        wf["submitted_by"] = ", ".join(a.get("username") or a.get("name") for a in authors)
+        wf["submitted_by_name"] = ", ".join(a.get("name") for a in authors)
+        wf["signatures"] = []
+        wf["approved_at"] = None
+        _log(wf, user["username"], "submitted",
+             remarks=f"All {len(authors)} faculty author(s) confirmed submission: {wf['submitted_by_name']}.",
+             step="faculty")
+        return wf
 
 
 def withdraw(doc: Dict[str, Any], user: Dict[str, Any]) -> Dict[str, Any]:
     wf = get_workflow(doc)
-    if doc.get("owner") != user["username"]:
-        raise WorkflowError("Only the owner can withdraw this submission.")
+    import courses_store
+    authors = courses_store.get_doc_authors(doc)
+    author_unames = [(a.get("username") or "").strip().lower() for a in authors]
+    u_lower = (user.get("username") or "").strip().lower()
+    is_admin = (user.get("role") == "admin")
+    owner_lower = (doc.get("owner") or "").strip().lower()
+
+    if u_lower != owner_lower and u_lower not in author_unames and not is_admin:
+        raise WorkflowError("Only an author/writer of this syllabus can withdraw its submission.")
+
+    if wf.get("is_awaiting_coauthors"):
+        wf["is_awaiting_coauthors"] = False
+        wf["author_submissions"] = {}
+        wf["status"] = "draft"
+        _log(wf, user["username"], "withdrawn", remarks="Submission withdrawn during co-author confirmation.", step="faculty")
+        return wf
+
     if wf["status"] != WORKFLOW_STEPS[0]["status"] or wf["signatures"]:
         raise WorkflowError("A submission can only be withdrawn before the review committee signs it.")
     wf["status"] = "draft"
+    wf["is_awaiting_coauthors"] = False
+    wf["author_submissions"] = {}
     _log(wf, user["username"], "withdrawn", step="faculty")
     return wf
 
@@ -595,6 +653,8 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
         wf["status"] = "returned"
         wf["cycle"] = int(wf.get("cycle", 1)) + 1
         wf["signatures"] = []
+        wf["author_submissions"] = {}
+        wf["is_awaiting_coauthors"] = False
         _log(wf, user["username"], "returned", remarks=remarks, step=step["key"])
         return wf
 
@@ -718,14 +778,35 @@ def public_view(doc: Dict[str, Any]) -> Dict[str, Any]:
     wf = get_workflow(doc)
     step = current_step(wf)
     q_age = get_queue_age(doc)
+    import courses_store
+    authors = courses_store.get_doc_authors(doc)
+    author_submissions = wf.get("author_submissions") or {}
+    if wf.get("status") == "returned":
+        author_submissions = {}
+    submitted_unames = set((k or "").strip().lower() for k in author_submissions.keys())
+    pending_authors = [a for a in authors if (a.get("username") or "").strip().lower() not in submitted_unames]
+    submitted_authors = [a for a in authors if (a.get("username") or "").strip().lower() in submitted_unames]
+
+    # Dynamic status label if awaiting co-author submission
+    status_lbl = status_label(wf["status"])
+    if wf.get("is_awaiting_coauthors") and wf["status"] == "draft":
+        status_lbl = f"Draft (Awaiting Co-Authors: {len(submitted_authors)}/{len(authors)} Submitted)"
+
     return {
+        "authors": authors,
+        "author_submissions": author_submissions,
+        "is_awaiting_coauthors": wf.get("is_awaiting_coauthors", False),
+        "pending_authors": pending_authors,
+        "submitted_authors": submitted_authors,
+        "all_authors_submitted": len(pending_authors) == 0,
+        "is_multi_authored": len(authors) > 1,
         "days_in_queue": q_age["days_in_queue"],
         "is_bottleneck": q_age["is_overdue"],
         "step_entered_at": q_age["step_entered_at"],
         "threshold_days": q_age["threshold_days"],
         "last_reminder_sent_at": q_age.get("last_reminder_sent_at"),
         "status": wf["status"],
-        "status_label": status_label(wf["status"]),
+        "status_label": status_lbl,
         "locked": wf["status"] not in EDITABLE_STATUSES,
         "approved": wf["status"] == "approved",
         "cycle": wf.get("cycle", 1),
@@ -847,6 +928,8 @@ def handle_revision_action(doc: Dict[str, Any], user: Dict[str, Any], action: st
         wf["status"] = "draft"
         wf["cycle"] = prev_cycle + 1
         wf["signatures"] = []
+        wf["author_submissions"] = {}
+        wf["is_awaiting_coauthors"] = False
         wf["approved_at"] = None
         rev_req["status"] = "approved"
         rev_req["approved_by"] = user["username"]

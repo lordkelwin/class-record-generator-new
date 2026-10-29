@@ -77,6 +77,85 @@ def parse_semester_ay(semester_ay_str: str) -> Tuple[str, str, str]:
     return (school_year, semester, group_label)
 
 
+def get_doc_authors(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Extracts the list of authors/faculty writers for this syllabus.
+    Guaranteed to return at least the course initializer/owner as Lead Author.
+    """
+    owner = doc.get("owner", "")
+    bp = doc.get("blueprint") or {}
+    meta = bp.get("metadata") or {}
+    raw_authors = doc.get("authors") or meta.get("authors") or []
+    cleaned_authors: List[Dict[str, Any]] = []
+    seen = set()
+    owner_name = meta.get("faculty_name") or owner
+
+    for a in raw_authors:
+        if isinstance(a, dict):
+            uname = (a.get("username") or "").strip()
+            name = (a.get("name") or a.get("full_name") or uname).strip()
+            if not uname and owner and name.lower() == owner_name.lower():
+                uname = owner
+            key_u = uname.lower() if uname else None
+            key_n = name.lower() if name else None
+            if (key_u and key_u in seen) or (key_n and key_n in seen):
+                continue
+            if key_u: seen.add(key_u)
+            if key_n: seen.add(key_n)
+            cleaned_authors.append({
+                "username": uname,
+                "name": name,
+                "email": a.get("email") or "",
+                "contact": a.get("contact") or "",
+                "consultation_hours": a.get("consultation_hours") or "",
+                "role": a.get("role") or ("Lead Author" if (owner and uname.lower() == owner.lower()) or not cleaned_authors else "Co-Author")
+            })
+        elif isinstance(a, str) and a.strip():
+            uname = a.strip()
+            name = uname
+            if owner and uname.lower() == owner.lower() and owner_name:
+                name = owner_name
+            key_u = uname.lower()
+            key_n = name.lower()
+            if key_u in seen or key_n in seen:
+                continue
+            seen.add(key_u)
+            seen.add(key_n)
+            cleaned_authors.append({
+                "username": uname,
+                "name": name,
+                "email": "",
+                "contact": "",
+                "consultation_hours": "",
+                "role": "Lead Author" if (owner and uname.lower() == owner.lower()) or not cleaned_authors else "Co-Author"
+            })
+
+    # Ensure the initializing owner is always present as Lead Author
+    if owner:
+        owner_lower = owner.lower()
+        has_owner = any((a.get("username") or "").lower() == owner_lower for a in cleaned_authors)
+        if not has_owner:
+            cleaned_authors.insert(0, {
+                "username": owner,
+                "name": owner_name,
+                "email": meta.get("faculty_email") or "",
+                "contact": meta.get("faculty_contact") or "",
+                "consultation_hours": meta.get("consultation_hours") or "",
+                "role": "Lead Author"
+            })
+    if not cleaned_authors:
+        cleaned_authors = [{
+            "username": owner or "faculty",
+            "name": owner_name or "Faculty Member",
+            "email": meta.get("faculty_email") or "",
+            "contact": meta.get("faculty_contact") or "",
+            "consultation_hours": meta.get("consultation_hours") or "",
+            "role": "Lead Author"
+        }]
+
+    return cleaned_authors
+
+
 def _summary_from_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     bp_dict = doc.get("blueprint", {})
     meta = bp_dict.get("metadata", {})
@@ -91,9 +170,15 @@ def _summary_from_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     sections = meta.get("sections") or ([s.strip() for s in (meta.get("section") or doc.get("section") or "1A").split(",") if s.strip()] or ["1A"])
     program_names = meta.get("program_names") or ([meta.get("program_name")] if meta.get("program_name") else ["Bachelor of Science in Electrical Engineering"])
 
+    authors = get_doc_authors(doc)
+    author_names = [a.get("name") for a in authors if a.get("name")]
+
     return {
         "id": doc.get("id"),
         "owner": doc.get("owner"),
+        "authors": authors,
+        "author_names": author_names,
+        "is_multi_authored": len(authors) > 1,
         "course_code": (meta.get("course_code") or doc.get("course_code") or "New Course").strip(),
         "course_title": (meta.get("course_title") or doc.get("course_title") or "Untitled Subject").strip(),
         "section": (meta.get("section") or doc.get("section") or "1A").strip(),
@@ -160,30 +245,56 @@ def ensure_user_has_default_course(username: str, faculty_name: str = "") -> Dic
 
 def list_courses(username: str, faculty_name: str = "") -> Dict[str, Any]:
     """
-    Returns:
-      {
-        "courses": [ summary1, summary2, ... ],
-        "groups": [
-          { "group_label": "...", "school_year": "...", "semester": "...", "courses": [ ... ] }
-        ],
-        "total": int
-      }
+    Returns all courses owned by the user, PLUS courses where the user is an author/co-author.
     """
     user_dir = _get_user_courses_dir(username)
-    files = [f for f in os.listdir(user_dir) if f.endswith(".json")]
-    if not files:
-        return {"courses": [], "groups": [], "total": 0}
-
+    files = [f for f in os.listdir(user_dir) if f.endswith(".json")] if os.path.exists(user_dir) else []
 
     courses_list: List[Dict[str, Any]] = []
+    seen_ids = set()
+
     for fn in files:
         fp = os.path.join(user_dir, fn)
         try:
             with open(fp, "r", encoding="utf-8") as f:
                 doc = json.load(f)
-                courses_list.append(_summary_from_doc(doc))
-        except Exception as e:
+                summ = _summary_from_doc(doc)
+                summ["is_owner"] = True
+                summ["is_coauthor"] = False
+                courses_list.append(summ)
+                seen_ids.add(summ["id"])
+        except Exception:
             continue
+
+    # Also include courses where this user is listed as a co-author across other faculty workspaces
+    u_lower = (username or "").strip().lower()
+    if u_lower and os.path.exists(COURSES_BASE_DIR):
+        for other_user in os.listdir(COURSES_BASE_DIR):
+            if other_user.lower() == u_lower:
+                continue
+            other_dir = os.path.join(COURSES_BASE_DIR, other_user)
+            if not os.path.isdir(other_dir):
+                continue
+            for fn in os.listdir(other_dir):
+                if not fn.endswith(".json"):
+                    continue
+                cid = fn[:-5]
+                if cid in seen_ids:
+                    continue
+                fp = os.path.join(other_dir, fn)
+                try:
+                    with open(fp, "r", encoding="utf-8") as f:
+                        doc = json.load(f)
+                        authors = get_doc_authors(doc)
+                        author_unames = [(a.get("username") or "").strip().lower() for a in authors]
+                        if u_lower in author_unames:
+                            summ = _summary_from_doc(doc)
+                            summ["is_owner"] = False
+                            summ["is_coauthor"] = True
+                            courses_list.append(summ)
+                            seen_ids.add(summ["id"])
+                except Exception:
+                    continue
 
     # Sort courses by updated_at descending
     courses_list.sort(key=lambda c: c.get("updated_at") or "", reverse=True)
@@ -227,34 +338,44 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
     user_dir = _get_user_courses_dir(username)
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
     fp = os.path.join(user_dir, f"{safe_id}.json")
-    if not os.path.exists(fp):
-        return None
-    try:
-        with open(fp, "r", encoding="utf-8") as f:
-            doc = json.load(f)
-            bp = doc.get("blueprint")
-            if isinstance(bp, dict) and "rubrics" not in bp:
-                bp["rubrics"] = []
+    if os.path.exists(fp):
+        try:
+            with open(fp, "r", encoding="utf-8") as f:
+                doc = json.load(f)
+                bp = doc.get("blueprint")
+                if isinstance(bp, dict) and "rubrics" not in bp:
+                    bp["rubrics"] = []
+                return doc
+        except Exception:
+            pass
+
+    # If not in user's direct folder, search other user folders if user is an author or admin
+    doc = find_course(course_id)
+    if doc:
+        authors = get_doc_authors(doc)
+        author_unames = [(a.get("username") or "").strip().lower() for a in authors]
+        u_lower = (username or "").strip().lower()
+        if u_lower == (doc.get("owner") or "").lower() or u_lower in author_unames or username == "admin":
             return doc
-    except Exception:
-        return None
+    return None
 
 
 def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Saves or updates course blueprint and summary metadata.
+    Saves or updates course blueprint, authors, and summary metadata.
+    Preserves original initializer/owner when edited by co-authors.
     """
-    user_dir = _get_user_courses_dir(username)
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
-    fp = os.path.join(user_dir, f"{safe_id}.json")
+    existing = find_course(safe_id) or {}
 
-    existing = {}
-    if os.path.exists(fp):
-        try:
-            with open(fp, "r", encoding="utf-8") as f:
-                existing = json.load(f)
-        except Exception:
-            existing = {}
+    # Target directory and owner: always maintain original owner if course already exists
+    if existing:
+        orig_owner = existing.get("owner") or username
+    else:
+        orig_owner = username
+
+    user_dir = _get_user_courses_dir(orig_owner)
+    fp = os.path.join(user_dir, f"{safe_id}.json")
 
     bp_dict = payload.get("blueprint") or payload.get("blueprint_dict") or existing.get("blueprint") or {}
     meta = bp_dict.get("metadata", {})
@@ -311,9 +432,17 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
             bp_dict["metadata"]["program_code"] = ", ".join(programs)
         bp_dict["metadata"]["semester_ay"] = semester_ay
 
+    # Sanitize & extract authors
+    raw_authors = payload.get("authors") or meta.get("authors") or existing.get("authors") or []
+    temp_auth_doc = {"owner": orig_owner, "authors": raw_authors, "blueprint": bp_dict}
+    cleaned_authors = get_doc_authors(temp_auth_doc)
+    if "metadata" in bp_dict:
+        bp_dict["metadata"]["authors"] = cleaned_authors
+
     doc = {
         "id": safe_id,
-        "owner": username,
+        "owner": orig_owner,
+        "authors": cleaned_authors,
         "created_at": created_at,
         "updated_at": now_iso,
         "course_code": course_code,
@@ -475,12 +604,17 @@ def find_course(course_id: str) -> Optional[Dict[str, Any]]:
 
 
 def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
-    """Saves an entire course document back to its owner's storage."""
+    """Saves an entire course document back to its owner's storage, syncing authors."""
     owner = doc.get("owner") or "default"
     user_dir = _get_user_courses_dir(owner)
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", doc["id"])
     fp = os.path.join(user_dir, f"{safe_id}.json")
     doc["updated_at"] = datetime.now().isoformat(timespec="seconds")
+    authors = get_doc_authors(doc)
+    doc["authors"] = authors
+    bp = doc.get("blueprint") or {}
+    if "metadata" in bp:
+        bp["metadata"]["authors"] = authors
     for attempt in range(5):
         try:
             with open(fp, "w", encoding="utf-8") as f:

@@ -425,10 +425,19 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
     pdf.cell(138.0, 5.5, "PART IV. FACULTY INFORMATION", new_x="LMARGIN", new_y="NEXT")
     pdf.set_xy(12.5, pdf.get_y() + 0.5)
     pdf.set_font(fn_main, "", 8)
+    import courses_store
+    doc_authors = courses_store.get_doc_authors(doc) if doc else (meta.authors if hasattr(meta, "authors") and meta.authors else [])
+    if doc_authors and len(doc_authors) > 1:
+        fac_name_val = "\n".join(f"• {a.get('name', '')} ({a.get('role', 'Faculty Writer')})" for a in doc_authors)
+        fac_email_val = "\n".join(f"• {a.get('email', '')}" for a in doc_authors if a.get('email')) or meta.faculty_email
+    else:
+        fac_name_val = meta.faculty_name
+        fac_email_val = meta.faculty_email
+
     with pdf.table(col_widths=(36.0, 4.0, 98.0), width=138.0, line_height=4.4, align="L") as t_fac:
         for k, v in [
-            ("Faculty Name", _clean_text(meta.faculty_name, has_ttf)),
-            ("Email Address", _clean_text(meta.faculty_email, has_ttf)),
+            ("Faculty Name", _clean_text(fac_name_val, has_ttf)),
+            ("Email Address", _clean_text(fac_email_val, has_ttf)),
             ("Contact Number", _clean_text(meta.faculty_contact, has_ttf)),
             ("Office", _clean_text(meta.office or meta.college, has_ttf)),
             ("Consultation Hours", _clean_text(meta.consultation_hours, has_ttf)),
@@ -887,8 +896,17 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         pdf.ln(5.0)
 
         pdf.set_font(fn_narrow, "B", 8.5)
-        orig_author = (doc.get("author_name") if doc else "") or meta.faculty_name
-        rev_author = meta.faculty_name
+        import courses_store
+        doc_authors = courses_store.get_doc_authors(doc) if doc else (meta.authors if hasattr(meta, "authors") and meta.authors else [])
+        if doc_authors and len(doc_authors) > 1:
+            prepared_by_names = ", ".join(a.get("name", "") for a in doc_authors)
+            prepared_by_title = "Faculty Writers"
+        else:
+            prepared_by_names = meta.faculty_name
+            prepared_by_title = "Faculty in Charge"
+
+        orig_author = (doc.get("author_name") if doc else "") or prepared_by_names
+        rev_author = prepared_by_names
         pdf.cell(col_w, 4.2, _clean_text(orig_author.upper(), has_ttf), border=0)
         pdf.cell(col_w, 4.2, _clean_text(rev_author.upper(), has_ttf), border=0)
         pdf.cell(col_w, 4.2, _clean_text(comm_name.upper(), has_ttf), border=0)
@@ -916,13 +934,22 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         pdf.cell(101.8, 4.5, "Recommending Approval:", border=0, new_x="LMARGIN", new_y="NEXT")
         pdf.ln(5.0)
 
+        import courses_store
+        doc_authors = courses_store.get_doc_authors(doc) if doc else (meta.authors if hasattr(meta, "authors") and meta.authors else [])
+        if doc_authors and len(doc_authors) > 1:
+            prepared_by_names = ", ".join(a.get("name", "") for a in doc_authors)
+            prepared_by_title = "Faculty Writers"
+        else:
+            prepared_by_names = meta.faculty_name
+            prepared_by_title = "Faculty in Charge"
+
         pdf.set_font(fn_narrow, "B", 8.8)
-        pdf.cell(col_w, 4.2, _clean_text(meta.faculty_name.upper(), has_ttf), border=0)
+        pdf.cell(col_w, 4.2, _clean_text(prepared_by_names.upper(), has_ttf), border=0)
         pdf.cell(col_w, 4.2, _clean_text(comm_name.upper(), has_ttf), border=0)
         pdf.cell(101.8, 4.2, _clean_text(ph_name.upper(), has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
 
         pdf.set_font(fn_main, "", 7.8)
-        pdf.cell(col_w, 3.8, "Faculty in Charge", border=0)
+        pdf.cell(col_w, 3.8, prepared_by_title, border=0)
         pdf.cell(col_w, 3.8, _clean_text(comm_title, has_ttf), border=0)
         pdf.cell(101.8, 3.8, _clean_text(ph_title, has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
 

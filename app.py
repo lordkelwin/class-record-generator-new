@@ -731,13 +731,19 @@ def api_get_course(course_id):
 
     wf_view = syllabus_workflow.public_view(doc)
 
-    wf_view["can_submit"] = (doc.get("owner") == username) and (wf_view["status"] in syllabus_workflow.EDITABLE_STATUSES)
+    authors = courses_store.get_doc_authors(doc)
+    author_unames = [(a.get("username") or "").lower() for a in authors]
+    u_lower = (username or "").lower()
+    is_author = (u_lower == (doc.get("owner") or "").lower()) or (u_lower in author_unames) or (user and user.get("role") == "admin")
+    user_has_submitted = (wf_view.get("status") != "returned") and (username in (wf_view.get("author_submissions") or {}))
 
-    wf_view["can_withdraw"] = (doc.get("owner") == username) and (wf_view["status"] == "for_committee_review") and not wf_view["signatures"]
-
+    wf_view["is_author"] = is_author
+    wf_view["user_has_submitted"] = user_has_submitted
+    wf_view["can_submit"] = is_author and (not user_has_submitted) and (wf_view["status"] in syllabus_workflow.EDITABLE_STATUSES)
+    wf_view["can_withdraw"] = is_author and (wf_view.get("is_awaiting_coauthors") or (wf_view["status"] == "for_committee_review" and not wf_view.get("signatures")))
     wf_view["can_sign"] = syllabus_workflow.user_can_act(user, doc)
     wf_view["user_can_act"] = syllabus_workflow.user_can_act(user, doc)
-    wf_view["can_request_revision"] = (doc.get("owner") == (user.get("username") if user else "") or (user and user.get("role") == "admin")) and (wf_view["status"] == "approved")
+    wf_view["can_request_revision"] = is_author and (wf_view["status"] == "approved")
 
     cr_view = class_record_workflow.public_cr_view(doc, user)
 
@@ -1000,13 +1006,19 @@ def api_get_course_workflow(course_id):
 
     uname = user["username"] if user else ""
 
-    wf_view["can_submit"] = (doc.get("owner") == uname) and (wf_view["status"] in syllabus_workflow.EDITABLE_STATUSES)
+    authors = courses_store.get_doc_authors(doc)
+    author_unames = [(a.get("username") or "").lower() for a in authors]
+    u_lower = (uname or "").lower()
+    is_author = (u_lower == (doc.get("owner") or "").lower()) or (u_lower in author_unames) or (user and user.get("role") == "admin")
+    user_has_submitted = (wf_view.get("status") != "returned") and (uname in (wf_view.get("author_submissions") or {}))
 
-    wf_view["can_withdraw"] = (doc.get("owner") == uname) and (wf_view["status"] == "for_committee_review") and not wf_view["signatures"]
-
+    wf_view["is_author"] = is_author
+    wf_view["user_has_submitted"] = user_has_submitted
+    wf_view["can_submit"] = is_author and (not user_has_submitted) and (wf_view["status"] in syllabus_workflow.EDITABLE_STATUSES)
+    wf_view["can_withdraw"] = is_author and (wf_view.get("is_awaiting_coauthors") or (wf_view["status"] == "for_committee_review" and not wf_view.get("signatures")))
     wf_view["can_sign"] = syllabus_workflow.user_can_act(user, doc)
     wf_view["user_can_act"] = syllabus_workflow.user_can_act(user, doc)
-    wf_view["can_request_revision"] = (doc.get("owner") == (user.get("username") if user else "") or (user and user.get("role") == "admin")) and (wf_view["status"] == "approved")
+    wf_view["can_request_revision"] = is_author and (wf_view["status"] == "approved")
 
     wf_view["can_edit_checklist"] = (
 
@@ -1140,6 +1152,11 @@ def api_get_workflow_requests():
         wf = c.get("workflow") or {}
         cr_wf = c.get("class_record_workflow") or {}
         is_owner = (c.get("owner") == user["username"])
+        authors = c.get("authors") or (courses_store.get_doc_authors(doc_raw) if doc_raw else [])
+        author_unames = [(a.get("username") or "").lower() for a in authors]
+        is_coauthor = (not is_owner) and (user["username"].lower() in author_unames)
+        is_author = is_owner or is_coauthor
+
         can_act = False
         if doc_raw and (is_admin or not is_owner):
             can_act = syllabus_workflow.user_can_act(user, doc_raw)
@@ -1165,10 +1182,18 @@ def api_get_workflow_requests():
         }
         if can_act and wf.get("status") in ACTIVE_SYL_REVIEW_STATUSES:
             pending_action_for_me.append(c)
+        elif doc_raw and wf.get("is_awaiting_coauthors") and is_author:
+            user_has_sub = user["username"] in (wf.get("author_submissions") or {})
+            if not user_has_sub:
+                c_copy = dict(c)
+                c_copy["user_can_act"] = True
+                c_copy["action_label"] = "Co-Author Submission Confirmation Required"
+                pending_action_for_me.append(c_copy)
 
-        if is_owner:
+        if is_author:
             my_submitted_requests.append(c)
-            my_submitted_class_records.append(c)
+            if is_owner:
+                my_submitted_class_records.append(c)
 
         if can_sign_cr and cr_wf.get("status") in {"for_program_head", "for_associate_dean", "for_qa_countersign", "for_dean_approval"}:
             pending_cr_action_for_me.append(c)
@@ -1277,24 +1302,34 @@ def api_submit_syllabus(course_id):
 
         courses_store.save_course_doc(doc)
 
-        # Dispatch automated email notification to assigned review committee members
         import notification_service
-        notification_service.notify_syllabus_submitted(
-            doc,
-            submitter_user=user,
-            committee_members=wf.get("committee_members") or []
-        )
-
-        comm_name = wf.get("assigned_committee_name") or "the Review Committee"
+        pub_wf = syllabus_workflow.public_view(doc)
+        if wf.get("is_awaiting_coauthors"):
+            pending_authors = pub_wf.get("pending_authors") or []
+            notification_service.notify_coauthor_submission_needed(
+                doc,
+                submitter_user=user,
+                pending_authors=pending_authors
+            )
+            msg = f"Your individual submission has been recorded. Awaiting confirmation from {len(pending_authors)} remaining co-author(s): {', '.join(a['name'] for a in pending_authors)}."
+        else:
+            notification_service.notify_syllabus_submitted(
+                doc,
+                submitter_user=user,
+                committee_members=wf.get("committee_members") or []
+            )
+            comm_name = wf.get("assigned_committee_name") or "the Review Committee"
+            authors_count = len(pub_wf.get("authors") or [])
+            if authors_count > 1:
+                msg = f"All {authors_count} faculty authors confirmed submission! Syllabus forwarded to {comm_name}."
+            else:
+                msg = f"Syllabus submitted and notification sent to {comm_name}."
 
         return jsonify({
-
             "success": True,
-
-            "message": f"Syllabus submitted and notification sent to {comm_name}.",
-
-            "workflow": syllabus_workflow.public_view(doc),
-
+            "awaiting_coauthors": wf.get("is_awaiting_coauthors", False),
+            "message": msg,
+            "workflow": pub_wf,
         })
 
     except syllabus_workflow.WorkflowError as e:
