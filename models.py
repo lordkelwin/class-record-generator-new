@@ -889,10 +889,17 @@ class SyllabusBlueprint:
             cat_filtered = {k: v for k, v in cat.items() if k in AssessmentCategory.__dataclass_fields__ and k != "items"}
             categories.append(AssessmentCategory(**cat_filtered, items=items))
 
-        students = [
-            StudentRecord(**{k: v for k, v in st.items() if k in StudentRecord.__dataclass_fields__})
-            for st in data.get("students", [])
-        ]
+        students = []
+        for st in data.get("students", []):
+            st_dict = {k: v for k, v in st.items() if k in StudentRecord.__dataclass_fields__}
+            if not st_dict.get("last_name"):
+                name = st.get("name", "")
+                parts = [p.strip() for p in name.split(",", 1)]
+                st_dict["last_name"] = parts[0] if parts and parts[0] else "Student"
+                st_dict["first_name"] = parts[1] if len(parts) > 1 else ""
+            if "first_name" not in st_dict:
+                st_dict["first_name"] = ""
+            students.append(StudentRecord(**st_dict))
 
         cqi_raw = data.get("cqi_plan", {})
         if cqi_raw:

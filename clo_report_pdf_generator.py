@@ -233,109 +233,201 @@ def _compute_clo_report_metrics(blueprint: SyllabusBlueprint) -> Tuple[List[Dict
     return sa_rows, overall_weighted
 
 
-def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
+def generate_clo_report_pdf_bytes(
+    blueprint: SyllabusBlueprint,
+    doc: Optional[Dict[str, Any]] = None,
+) -> bytes:
     """
-    Generates the USeP Course Learning Outcome Assessment Report PDF
-    matching 'AEE 321_EE 3A_CLO Report.pdf'.
+    Generates the official USeP Course Learning Outcome Evaluation Result PDF
+    conforming strictly to the controlled form FM-USeP-MID-10.
     """
     meta = blueprint.metadata
+    doc = doc or {}
     outcomes = blueprint.course_outcomes or []
     sa_rows, overall_weighted = _compute_clo_report_metrics(blueprint)
 
     pdf = FPDF(orientation="P", unit="mm", format="A4")
-    pdf.set_auto_page_break(auto=True, margin=14.0)
-    pdf.set_margins(left=18.0, top=14.0, right=18.0)
+    pdf.set_auto_page_break(auto=True, margin=10.0)
+    pdf.set_margins(left=18.0, top=12.0, right=18.0)
     pdf.add_page()
 
     page_w = 210.0
     left_m = 18.0
     usable_w = page_w - 2 * left_m  # 174.0 mm
 
-    # 1. Centered USeP Seal & University Name Header
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    logo_path = os.path.join(base_dir, "static", "logo_1_Image39.jpg")
-    if os.path.exists(logo_path):
-        try:
-            logo_w = 26.0
-            pdf.image(logo_path, x=(page_w - logo_w) / 2.0, y=13.0, w=logo_w, h=logo_w)
-            pdf.set_y(41.0)
-        except Exception:
-            pdf.set_y(18.0)
-    else:
-        pdf.set_y(18.0)
-
-    pdf.set_font("Times", "B", 13.5)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(usable_w, 6.5, _clean_pdf_text(meta.university.upper()), align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4.5)
-
-    # 2. Metadata Block (5 rows: unbordered bold label on left, bordered box on right)
-    lbl_w = 58.0
-    val_w = usable_w - lbl_w  # 116.0 mm
-    row_h = 5.4
-
-    units_short = _format_units_short(meta.credit_units)
-    prog_short = _format_program_short(meta.program_name, meta.department, meta.program_code)
-    faculty_title_case = meta.faculty_name.title() if meta.faculty_name.isupper() else meta.faculty_name
-
-    meta_rows = [
-        ("Name of Faculty:", faculty_title_case),
-        ("Course Title, Description and Units:", f"{meta.course_code} - {meta.course_title} ({units_short})"),
-        ("Semester and Academic Year:", meta.semester_ay),
-        ("Program:", prog_short),
-        ("Academic Unit:", meta.academic_unit or "Engineering"),
-    ]
+    # 1. Official Header (FM-USeP-MID-10 Controlled Form Header: Logo | Address | Doc Control Box)
+    hdr_top_y = 12.0
+    hdr_h = 22.0
+    logo_box_w = 22.0
+    ctrl_box_w = 48.0
+    mid_addr_w = usable_w - logo_box_w - ctrl_box_w  # 104.0 mm
 
     pdf.set_draw_color(0, 0, 0)
     pdf.set_line_width(0.25)
-    for k_lbl, v_txt in meta_rows:
-        pdf.set_font("Helvetica", "B", 9.0)
-        pdf.cell(lbl_w, row_h, _clean_pdf_text(k_lbl), border=0, align="L")
-        pdf.set_font("Helvetica", "", 9.0)
-        pdf.cell(val_w, row_h, _clean_pdf_text(v_txt), border=1, align="L", new_x="LMARGIN", new_y="NEXT")
 
-    pdf.ln(4.5)
+    # 1a. Logo Box (Left)
+    pdf.rect(left_m, hdr_top_y, logo_box_w, hdr_h)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_path = os.path.join(base_dir, "static", "image1.jpg")
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join(base_dir, "static", "logo_1_Image39.jpg")
+    if os.path.exists(logo_path):
+        try:
+            pdf.image(logo_path, x=left_m + 1.0, y=hdr_top_y + 1.0, w=20.0, h=20.0)
+        except Exception:
+            pass
 
-    # 3. TABLE 1: COURSE ASSESSMENT PLAN (As declared in the Syllabus)
-    pdf.set_font("Helvetica", "B", 9.5)
-    pdf.cell(usable_w, 5.5, "COURSE ASSESSMENT PLAN (As declared in the Syllabus)", align="C", new_x="LMARGIN", new_y="NEXT")
+    # 1b. Address Block (Middle)
+    mid_x = left_m + logo_box_w
+    pdf.rect(mid_x, hdr_top_y, mid_addr_w, hdr_h)
+    pdf.set_xy(mid_x, hdr_top_y + 1.2)
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.cell(mid_addr_w, 3.8, "Republic of the Philippines", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_x(mid_x)
+    pdf.set_font("Helvetica", "B", 9.0)
+    pdf.cell(mid_addr_w, 4.0, "University of Southeastern Philippines", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_x(mid_x)
+    pdf.set_font("Helvetica", "", 7.5)
+    pdf.cell(mid_addr_w, 3.4, _clean_pdf_text("Iñigo St., Bo. Obrero, Davao City 8000"), align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_x(mid_x)
+    pdf.cell(mid_addr_w, 3.2, "Telephone: (082) 227-8192", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_x(mid_x)
+    pdf.cell(mid_addr_w, 3.2, "Website: www.usep.edu.ph | Email: president@usep.edu.ph", align="C", new_x="LMARGIN", new_y="NEXT")
+
+    # 1c. Document Control Box (Right: FM-USeP-MID-10)
+    ctrl_x = mid_x + mid_addr_w
+    pdf.rect(ctrl_x, hdr_top_y, ctrl_box_w, hdr_h)
+    ctrl_rows = [
+        ("Form No.", "FM-USeP-MID-10"),
+        ("Issue Status", "01"),
+        ("Revision No.", "00"),
+        ("Date Effective", "18 August 2026"),
+        ("Approved by", "President"),
+    ]
+    lbl_ctrl_w = 22.0
+    val_ctrl_w = ctrl_box_w - lbl_ctrl_w
+    cell_ctrl_h = hdr_h / len(ctrl_rows)  # 4.4 mm
+    for c_idx, (c_lbl, c_val) in enumerate(ctrl_rows):
+        cy = hdr_top_y + c_idx * cell_ctrl_h
+        pdf.line(ctrl_x, cy, ctrl_x + ctrl_box_w, cy)
+        pdf.set_xy(ctrl_x + 1.0, cy)
+        pdf.set_font("Helvetica", "B", 7.2)
+        pdf.cell(lbl_ctrl_w - 1.0, cell_ctrl_h, _clean_pdf_text(c_lbl), border=0, align="L")
+        pdf.line(ctrl_x + lbl_ctrl_w, cy, ctrl_x + lbl_ctrl_w, cy + cell_ctrl_h)
+        pdf.set_xy(ctrl_x + lbl_ctrl_w + 1.0, cy)
+        pdf.set_font("Helvetica", "", 7.2)
+        pdf.cell(val_ctrl_w - 1.0, cell_ctrl_h, _clean_pdf_text(c_val), border=0, align="L")
+
+    # 2. Document Title (Centered Box)
+    title_y = hdr_top_y + hdr_h
+    title_h = 6.2
+    pdf.rect(left_m, title_y, usable_w, title_h)
+    pdf.set_xy(left_m, title_y)
+    pdf.set_font("Helvetica", "B", 11.5)
+    pdf.cell(usable_w, title_h, "COURSE LEARNING OUTCOME EVALUATION RESULT", align="C", border=0)
+
+    # 3. Basic Details Block (Rows 9-13 retrieved from syllabus creation)
+    pdf.set_y(title_y + title_h + 1.8)
+
+    faculty_name = (doc.get("faculty_name") or meta.faculty_name or "").strip()
+    if faculty_name.isupper():
+        faculty_name = faculty_name.title()
+
+    course_code = (doc.get("course_code") or meta.course_code or "").strip()
+    course_title = (doc.get("course_title") or meta.course_title or "").strip()
+    if course_code and course_title.upper().startswith(course_code.upper()):
+        course_title = re.sub(r"^" + re.escape(course_code) + r"\s*[-–:]?\s*", "", course_title, flags=re.I).strip()
+
+    course_desc = (doc.get("course_description") or meta.course_description or "").strip()
+    credit_units_raw = doc.get("credit_units") or meta.credit_units or "3 Units"
+    units_short = _format_units_short(credit_units_raw)
+
+    if course_desc:
+        course_full_info = f"{course_code} - {course_title}, {course_desc} ({units_short})"
+    else:
+        course_full_info = f"{course_code} - {course_title} ({units_short})"
+
+    semester_ay = (doc.get("semester_ay") or meta.semester_ay or "").strip()
+    program_str = (doc.get("program_name") or meta.program_name or doc.get("department") or meta.department or "").strip()
+    academic_unit_str = (doc.get("academic_unit") or meta.academic_unit or doc.get("college") or meta.college or "Engineering").strip()
+
+    meta_rows = [
+        ("Name of Faculty:", faculty_name),
+        ("Course Title, Description and Units:", course_full_info),
+        ("Semester and Academic Year:", semester_ay),
+        ("Program:", program_str),
+        ("Academic Unit:", academic_unit_str),
+    ]
+
+    lbl_w = 58.0
+    val_w = usable_w - lbl_w
+
+    pdf.set_draw_color(0, 0, 0)
+    pdf.set_line_width(0.25)
+    for idx, (k_lbl, v_txt) in enumerate(meta_rows):
+        cur_y = pdf.get_y()
+        pdf.set_font("Helvetica", "", 8.5)
+        wrapped_val_lines = _wrap_pdf_text_lines(pdf, v_txt, val_w - 3.0)
+        line_cnt = len(wrapped_val_lines)
+        row_h = max(4.8, line_cnt * 3.6 + 1.2)
+
+        # Draw left label cell
+        pdf.rect(left_m, cur_y, lbl_w, row_h)
+        pdf.set_xy(left_m + 1.5, cur_y + max(0.6, (row_h - 3.8) / 2.0))
+        pdf.set_font("Helvetica", "B", 8.5)
+        pdf.cell(lbl_w - 3.0, 3.8, _clean_pdf_text(k_lbl), border=0, align="L")
+
+        # Draw right value cell
+        pdf.rect(left_m + lbl_w, cur_y, val_w, row_h)
+        pdf.set_font("Helvetica", "", 8.5)
+        total_txt_h = line_cnt * 3.6
+        val_start_y = cur_y + max(0.6, (row_h - total_txt_h) / 2.0)
+        for l_i, l_str in enumerate(wrapped_val_lines):
+            pdf.set_xy(left_m + lbl_w + 1.5, val_start_y + l_i * 3.6)
+            pdf.cell(val_w - 3.0, 3.6, _clean_pdf_text(l_str), border=0, align="L")
+
+        pdf.set_y(cur_y + row_h)
+
+    pdf.ln(2.2)
+
+    # 4. TABLE 1: COURSE ASSESSMENT PLAN (As declared in the Syllabus)
+    pdf.set_font("Helvetica", "B", 9.0)
+    pdf.cell(usable_w, 4.8, "COURSE ASSESSMENT PLAN (As declared in the Syllabus)", align="C", new_x="LMARGIN", new_y="NEXT")
 
     n_clos = max(1, len(outcomes))
-    comp_col_w = 58.0
-    clo_area_w = usable_w - comp_col_w  # 116.0 mm
+    comp_col_w = 56.0
+    clo_area_w = usable_w - comp_col_w  # 118.0 mm
     clo_col_w = clo_area_w / n_clos
 
-    # Gold/Amber Header matching sample PDF
+    # Gold/Amber Header matching sample
     y_cap_hdr = pdf.get_y()
-    hdr_h1 = 5.2
-    hdr_h2 = 5.2
+    hdr_h1 = 4.8
+    hdr_h2 = 4.8
 
-    pdf.set_draw_color(255, 255, 255)
-    pdf.set_line_width(0.35)
+    pdf.set_draw_color(0, 0, 0)
+    pdf.set_line_width(0.25)
 
     # Left merged header cell: "Assessment Component"
-    pdf.set_fill_color(246, 204, 102)
+    pdf.set_fill_color(255, 217, 102)  # #FFD966
     pdf.rect(left_m, y_cap_hdr, comp_col_w, hdr_h1 + hdr_h2, style="DF")
-    pdf.set_xy(left_m + 1.5, y_cap_hdr + 2.8)
-    pdf.set_font("Helvetica", "B", 9.0)
-    pdf.cell(comp_col_w - 3.0, 5.0, "Assessment Component", border=0, align="L")
+    pdf.set_xy(left_m + 1.5, y_cap_hdr + 2.4)
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.cell(comp_col_w - 3.0, 4.8, "Assessment Component", border=0, align="L")
 
     # Right top header cell: "Course Assessment Plan"
-    pdf.set_fill_color(244, 194, 72)
+    pdf.set_fill_color(241, 194, 50)  # #F1C232
     pdf.set_xy(left_m + comp_col_w, y_cap_hdr)
     pdf.cell(clo_area_w, hdr_h1, "Course Assessment Plan", border=1, align="C", fill=True)
 
     # Right sub-header cells: CLO1, CLO2, ...
-    pdf.set_fill_color(248, 213, 118)
+    pdf.set_fill_color(255, 217, 102)  # #FFD966
     pdf.set_xy(left_m + comp_col_w, y_cap_hdr + hdr_h1)
     for co in outcomes:
         pdf.cell(clo_col_w, hdr_h2, _clean_pdf_text(co.co_id), border=1, align="C", fill=True)
 
     pdf.set_y(y_cap_hdr + hdr_h1 + hdr_h2)
 
-    # Table 1 Data Rows (Cream background #FDF2D0, white grid lines)
-    # Check if a custom / synchronized Course Assessment Plan is defined in blueprint metadata.
-    # Strictly filter so only Summative Assessments (SA) are included, never Formative Assessments (FA).
+    # Table 1 Data Rows (Cream background #FFF2CC, thin black grid lines)
     cap_data = meta.course_assessment_plan if getattr(meta, "course_assessment_plan", None) else []
     if cap_data:
         plan_rows = [
@@ -352,7 +444,7 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
             {
                 "label": sa_r["label"],
                 "clo_plans": {
-                    co.co_id: (DEFAULT_ASSESSMENT_PLAN_CELL_TEXT if sa_r["clo_aligned"].get(co.co_id, True) else "N/A")
+                    co.co_id: (DEFAULT_ASSESSMENT_PLAN_CELL_TEXT if sa_r["clo_aligned"].get(co.co_id, True) else "")
                     for co in outcomes
                 },
                 "custom_h": None,
@@ -360,69 +452,64 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
             for sa_r in sa_rows
         ]
 
-    # Every block dynamically adjusts its height based on its content
-    line_h = 3.8
+    # Dynamically optimizes table size with available text to maximize space and avoid wastage!
+    line_h = 3.4
     for r_idx, pr in enumerate(plan_rows):
         y_r = pdf.get_y()
-        if r_idx % 2 == 0:
-            pdf.set_fill_color(252, 238, 197)
-        else:
-            pdf.set_fill_color(253, 244, 215)
+        pdf.set_fill_color(255, 242, 204)  # #FFF2CC
 
         # 1. Calculate wrapped lines for left component label
-        pdf.set_font("Helvetica", "B", 9.0)
+        pdf.set_font("Helvetica", "B", 8.5)
         lbl_lines = _wrap_pdf_text_lines(pdf, pr["label"], comp_col_w - 4.0)
         max_cell_lines = len(lbl_lines)
 
         # 2. Calculate wrapped lines for each CLO cell block
-        pdf.set_font("Helvetica", "", 8.5)
+        pdf.set_font("Helvetica", "", 7.8)
         wrapped_clo_cells = {}
         for co in outcomes:
-            cell_txt = pr["clo_plans"].get(co.co_id, DEFAULT_ASSESSMENT_PLAN_CELL_TEXT)
-            if not cell_txt or not str(cell_txt).strip():
-                cell_txt = "N/A"
-            c_lines = _wrap_pdf_text_lines(pdf, cell_txt, clo_col_w - 3.0)
+            cell_txt = pr["clo_plans"].get(co.co_id, "")
+            if not cell_txt or str(cell_txt).strip().upper() == "N/A":
+                cell_txt = ""
+            c_lines = _wrap_pdf_text_lines(pdf, cell_txt, clo_col_w - 3.0) if cell_txt else []
             wrapped_clo_cells[co.co_id] = c_lines
             if len(c_lines) > max_cell_lines:
                 max_cell_lines = len(c_lines)
 
-        # Dynamic block height calculation: adapts to the largest cell in this row
-        needed_h = max(18.0, max_cell_lines * line_h + 5.0)
-        if pr.get("custom_h") and pr["custom_h"] > 14.0:
-            body_row_h = max(pr["custom_h"], needed_h)
-        else:
-            body_row_h = needed_h
+        # Dynamic space optimization: compact height adapts to content
+        needed_h = max(8.5, max_cell_lines * line_h + 2.5)
+        body_row_h = needed_h
 
         # Draw left component cell block
         pdf.rect(left_m, y_r, comp_col_w, body_row_h, style="DF")
-        pdf.set_font("Helvetica", "B", 9.0)
-        lbl_total_h = len(lbl_lines) * 4.2
-        start_lbl_y = y_r + max(1.5, (body_row_h - lbl_total_h) / 2.0)
+        pdf.set_font("Helvetica", "B", 8.5)
+        lbl_total_h = len(lbl_lines) * 3.8
+        start_lbl_y = y_r + max(1.0, (body_row_h - lbl_total_h) / 2.0)
         for l_i, l_txt in enumerate(lbl_lines):
-            pdf.set_xy(left_m + 1.5, start_lbl_y + l_i * 4.2)
-            pdf.cell(comp_col_w - 3.0, 4.2, _clean_pdf_text(l_txt), border=0, align="L")
+            pdf.set_xy(left_m + 1.5, start_lbl_y + l_i * 3.8)
+            pdf.cell(comp_col_w - 3.0, 3.8, _clean_pdf_text(l_txt), border=0, align="L")
 
         # Draw each CLO column cell block with wrapped, centered text
-        pdf.set_font("Helvetica", "", 8.5)
+        pdf.set_font("Helvetica", "", 7.8)
         for c_idx, co in enumerate(outcomes):
             cx = left_m + comp_col_w + c_idx * clo_col_w
             pdf.rect(cx, y_r, clo_col_w, body_row_h, style="DF")
-            lines = wrapped_clo_cells.get(co.co_id, ["N/A"])
-            total_txt_h = len(lines) * line_h
-            start_y = y_r + max(1.5, (body_row_h - total_txt_h) / 2.0)
-            for l_i, line_str in enumerate(lines):
-                pdf.set_xy(cx + 1.5, start_y + l_i * line_h)
-                pdf.cell(clo_col_w - 3.0, line_h, _clean_pdf_text(line_str), border=0, align="C")
+            lines = wrapped_clo_cells.get(co.co_id, [])
+            if lines:
+                total_txt_h = len(lines) * line_h
+                start_y = y_r + max(1.0, (body_row_h - total_txt_h) / 2.0)
+                for l_i, line_str in enumerate(lines):
+                    pdf.set_xy(cx + 1.0, start_y + l_i * line_h)
+                    pdf.cell(clo_col_w - 2.0, line_h, _clean_pdf_text(line_str), border=0, align="C")
 
         pdf.set_y(y_r + body_row_h)
 
-    pdf.ln(4.5)
+    pdf.ln(2.2)
 
-    # 4. TABLE 2: COURSE LEARNING OUTCOME EVALUATION RESULT (Based on Class Record)
-    pdf.set_font("Helvetica", "B", 9.5)
+    # 5. TABLE 2: COURSE LEARNING OUTCOME EVALUATION RESULT (Based on Class Record)
+    pdf.set_font("Helvetica", "B", 9.0)
     pdf.cell(
         usable_w,
-        5.5,
+        4.8,
         "COURSE LEARNING OUTCOME EVALUATION RESULT (Based on Class Record)",
         align="C",
         new_x="LMARGIN",
@@ -430,107 +517,118 @@ def generate_clo_report_pdf_bytes(blueprint: SyllabusBlueprint) -> bytes:
     )
 
     y_eval_hdr = pdf.get_y()
-    pdf.set_draw_color(255, 255, 255)
-    pdf.set_line_width(0.35)
+    pdf.set_draw_color(0, 0, 0)
+    pdf.set_line_width(0.25)
 
-    # Left merged header cell: "Assessment Component" (Green #9CC37E)
-    pdf.set_fill_color(156, 195, 126)
+    # Left merged header cell: "Assessment Component" (Green #93C47D)
+    pdf.set_fill_color(147, 196, 125)  # #93C47D
     pdf.rect(left_m, y_eval_hdr, comp_col_w, hdr_h1 + hdr_h2, style="DF")
-    pdf.set_xy(left_m + 1.5, y_eval_hdr + 2.8)
-    pdf.set_font("Helvetica", "B", 9.0)
-    pdf.cell(comp_col_w - 3.0, 5.0, "Assessment Component", border=0, align="L")
+    pdf.set_xy(left_m + 1.5, y_eval_hdr + 2.4)
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.cell(comp_col_w - 3.0, 4.8, "Assessment Component", border=0, align="L")
 
-    # Right top header cell: "Course Assessment Plan"
-    pdf.set_fill_color(138, 184, 103)
+    # Right top header cell: "Course Assessment Plan" (Green #6AA84F)
+    pdf.set_fill_color(106, 168, 79)  # #6AA84F
     pdf.set_xy(left_m + comp_col_w, y_eval_hdr)
     pdf.cell(clo_area_w, hdr_h1, "Course Assessment Plan", border=1, align="C", fill=True)
 
     # Right sub-header cells: CLO1, CLO2, ...
-    pdf.set_fill_color(168, 204, 140)
+    pdf.set_fill_color(147, 196, 125)  # #93C47D
     pdf.set_xy(left_m + comp_col_w, y_eval_hdr + hdr_h1)
     for co in outcomes:
         pdf.cell(clo_col_w, hdr_h2, _clean_pdf_text(co.co_id), border=1, align="C", fill=True)
 
     pdf.set_y(y_eval_hdr + hdr_h1 + hdr_h2)
 
-    eval_row_h = 5.4
+    eval_row_h = 5.0
     for r_idx, sa_r in enumerate(sa_rows):
-        if r_idx % 2 == 0:
-            pdf.set_fill_color(226, 239, 218)
-        else:
-            pdf.set_fill_color(237, 245, 232)
+        pdf.set_fill_color(217, 234, 211)  # #D9EAD3
 
-        pdf.set_font("Helvetica", "B", 9.0)
+        pdf.set_font("Helvetica", "B", 8.5)
         pdf.cell(comp_col_w, eval_row_h, _clean_pdf_text(sa_r["label"]), border=1, align="L", fill=True)
 
-        pdf.set_font("Helvetica", "", 9.0)
+        pdf.set_font("Helvetica", "", 8.5)
         for co in outcomes:
-            pct = sa_r["clo_pass_pcts"].get(co.co_id, 0.0)
-            pdf.cell(clo_col_w, eval_row_h, f"{pct:.2f}%", border=1, align="C", fill=True)
+            is_aligned = sa_r["clo_aligned"].get(co.co_id, False)
+            if is_aligned:
+                pct = sa_r["clo_pass_pcts"].get(co.co_id, 0.0)
+                val_display = f"{pct:.0f}%"
+            else:
+                val_display = ""
+            pdf.cell(clo_col_w, eval_row_h, val_display, border=1, align="C", fill=True)
         pdf.ln(eval_row_h)
 
     # Overall (Weighted Average %) Row
-    pdf.set_fill_color(226, 239, 218)
-    pdf.set_font("Helvetica", "B", 9.0)
+    pdf.set_fill_color(217, 234, 211)
+    pdf.set_font("Helvetica", "B", 8.5)
     pdf.cell(comp_col_w, eval_row_h, "Overall (Weighted Average %)", border=1, align="L", fill=True)
     for co in outcomes:
         ov_pct = overall_weighted.get(co.co_id, 0.0)
         pdf.cell(clo_col_w, eval_row_h, f"{ov_pct:.2f}%", border=1, align="C", fill=True)
     pdf.ln(eval_row_h + 1.5)
 
-    # 5. Explanatory Note below Table 2
+    # 6. Explanatory Note below Table 2
     pdf.set_text_color(0, 0, 0)
-    pdf.set_font("Helvetica", "", 7.8)
+    pdf.set_font("Helvetica", "", 7.5)
     note_text = (
         "Note: Weighted Average is computed as **Summation of Score x (weight/total applicable weights)**. "
         "An overall rating of below 50% indicates non-attainment of the course outcome and adjustment in "
         "the TLAs and assessment activities may be required. Submit this together with the Class Record."
     )
-    pdf.multi_cell(usable_w, 3.8, _clean_pdf_text(note_text), align="L", markdown=True)
-    pdf.ln(3.5)
+    pdf.multi_cell(usable_w, 3.4, _clean_pdf_text(note_text), align="L", markdown=True)
+    pdf.ln(2.5)
 
-    # 6. Signatories & Actions Needed Boxes (Matching bottom of AEE 321_EE 3A_CLO Report.pdf)
+    # 7. Signatories & Actions Needed Boxes (Conforming to FM-USeP-MID-10)
     sig_y = pdf.get_y()
     left_sig_x = left_m
-    right_sig_x = left_m + 112.0
+    right_sig_x = left_m + 104.0
+    sig_w = 68.0
 
-    pdf.set_font("Helvetica", "", 9.0)
+    pdf.set_font("Helvetica", "", 8.5)
     pdf.set_xy(left_sig_x, sig_y)
-    pdf.cell(60.0, 5.0, "Prepared by:", border=0, align="L")
+    pdf.cell(60.0, 4.2, "Prepared by:", border=0, align="L")
     pdf.set_xy(right_sig_x, sig_y)
-    pdf.cell(60.0, 5.0, "Reviewed and Noted by:", border=0, align="L")
+    pdf.cell(60.0, 4.2, "Reviewed and Noted by:", border=0, align="L")
 
-    name_y = sig_y + 10.5
-    pdf.set_font("Helvetica", "B", 9.5)
+    name_y = sig_y + 8.5
+    faculty_sig = faculty_name.upper() if faculty_name else (meta.faculty_name or "").upper()
+    prog_head_sig = (doc.get("program_head") or meta.program_head or "").strip().upper()
+
+    pdf.set_font("Helvetica", "B", 9.0)
     pdf.set_xy(left_sig_x, name_y)
-    pdf.cell(85.0, 5.0, _clean_pdf_text(meta.faculty_name.upper()), border=0, align="L")
+    pdf.cell(85.0, 4.4, _clean_pdf_text(faculty_sig), border=0, align="L")
     pdf.set_xy(right_sig_x, name_y)
-    pdf.cell(62.0, 5.0, _clean_pdf_text(meta.program_head.upper()), border=0, align="L")
+    pdf.cell(sig_w, 4.4, _clean_pdf_text(prog_head_sig), border=0, align="L")
+
+    pdf.set_font("Helvetica", "", 8.0)
+    pdf.set_xy(left_sig_x, name_y + 4.0)
+    pdf.cell(85.0, 3.8, "Faculty", border=0, align="L")
+    pdf.set_xy(right_sig_x, name_y + 4.0)
+    pdf.cell(sig_w, 3.8, "Program Head", border=0, align="L")
 
     now = datetime.now()
-    date_str = f"Date: {now.month}/{now.day:02d}/{now.year}"
-    date_y = name_y + 4.8
-    pdf.set_font("Helvetica", "", 9.0)
+    date_str = f"Date: {now.strftime('%B %d, %Y')}"
+    date_y = name_y + 8.0
     pdf.set_xy(left_sig_x, date_y)
-    pdf.cell(85.0, 4.8, date_str, border=0, align="L")
+    pdf.cell(85.0, 3.8, date_str, border=0, align="L")
     pdf.set_xy(right_sig_x, date_y)
-    pdf.cell(62.0, 4.8, date_str, border=0, align="L")
+    pdf.cell(sig_w, 3.8, date_str, border=0, align="L")
 
     # Actions Needed bordered rectangular boxes
-    box_y = date_y + 5.2
-    box_h = 10.5
-    left_box_w = 112.0
-    right_box_w = usable_w - left_box_w  # 62.0 mm
+    box_y = date_y + 5.0
+    box_h = 16.0
+    left_box_w = 85.0
+    right_box_w = usable_w - left_box_w  # 89.0 mm
 
     pdf.set_draw_color(0, 0, 0)
     pdf.set_line_width(0.25)
     pdf.rect(left_m, box_y, left_box_w, box_h)
     pdf.rect(left_m + left_box_w, box_y, right_box_w, box_h)
 
-    pdf.set_font("Helvetica", "", 8.8)
-    pdf.set_xy(left_m + 1.0, box_y + 1.0)
-    pdf.cell(50.0, 4.2, "Actions Needed:", border=0, align="L")
-    pdf.set_xy(left_m + left_box_w + 1.0, box_y + 1.0)
-    pdf.cell(50.0, 4.2, "Actions Needed:", border=0, align="L")
+    pdf.set_font("Helvetica", "", 8.0)
+    pdf.set_xy(left_m + 1.5, box_y + 1.2)
+    pdf.cell(50.0, 3.6, "Actions Needed:", border=0, align="L")
+    pdf.set_xy(left_m + left_box_w + 1.5, box_y + 1.2)
+    pdf.cell(50.0, 3.6, "Actions Needed:", border=0, align="L")
 
     return bytes(pdf.output())

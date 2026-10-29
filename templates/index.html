@@ -990,6 +990,7 @@
       </button>
       <button class="btn btn-primary" style="background:#eab308; color:#0f172a; border-color:#ca8a04;" onclick="exportSyllabusPdf()">Export Created Syllabus (.pdf)</button>
       <button class="btn btn-primary" style="background:#0284c7; color:#ffffff; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
+      <button class="btn btn-success" style="background:#15803d; color:#ffffff; border-color:#166534;" onclick="exportCloReportExcel()">Export CLO Report (.xlsx)</button>
       <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Consolidated Class Record (.xlsx)</button>
     {% endif %}
     {% if current_user %}
@@ -1664,7 +1665,21 @@
         </div>
       </div>
 
-      <div class="grid-4" style="grid-template-columns: 1fr 1fr;">
+          <div class="card" style="margin-bottom:14px; border:1px solid #cbd5e1; background:#ffffff;">
+      <div class="card-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="font-size:0.92rem; margin:0; color:#1e293b;">FM-USeP-MID-10 Basic Details (Retrieved from Syllabus Creation)</h2>
+        <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.75rem; font-weight:700;">FM-USeP-MID-10 Issue 01 Rev 00</span>
+      </div>
+      <div style="padding:12px 16px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px; font-size:0.83rem;">
+        <div><strong>Name of Faculty:</strong> <span id="cloReportFaculty" style="color:#0f172a;">—</span></div>
+        <div><strong>Course Title, Desc. &amp; Units:</strong> <span id="cloReportCourse" style="color:#0f172a;">—</span></div>
+        <div><strong>Semester &amp; Academic Year:</strong> <span id="cloReportSemAy" style="color:#0f172a;">—</span></div>
+        <div><strong>Program:</strong> <span id="cloReportProgram" style="color:#0f172a;">—</span></div>
+        <div><strong>Academic Unit:</strong> <span id="cloReportAcademicUnit" style="color:#0f172a;">—</span></div>
+      </div>
+    </div>
+
+<div class="grid-4" style="grid-template-columns: 1fr 1fr;">
         <div class="form-group">
           <label>Course Description (Part V)</label>
           <textarea id="meta_course_description" rows="4" oninput="syncMetaFromInputs()"></textarea>
@@ -2029,6 +2044,7 @@
           <button id="btnCrImportRoster" class="btn btn-light btn-sm" onclick="uploadStudentRoster()">Import Roster (.csv/.xlsx)</button>
           <button id="btnCrAddStudent" class="btn btn-primary btn-sm" onclick="addStudentRow()">+ Add Student</button>
           <button class="btn btn-primary btn-sm" style="background:#0284c7; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
+          <button class="btn btn-success btn-sm" style="background:#15803d; border-color:#166534;" onclick="exportCloReportExcel()">Export CLO Report (.xlsx)</button>
           <button class="btn btn-success btn-sm" onclick="exportExcelWorkbook()">Download Full USeP Excel Workbook (.xlsx)</button>
         </div>
       </div>
@@ -2050,7 +2066,8 @@
           </div>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-primary" style="background:#0284c7; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Assessment Report (.pdf)</button>
+          <button class="btn btn-primary" style="background:#0284c7; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf) [FM-USeP-MID-10]</button>
+          <button class="btn btn-success" style="background:#15803d; border-color:#166534;" onclick="exportCloReportExcel()">📊 Export CLO Evaluation Result (.xlsx) [FM-USeP-MID-10]</button>
           <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Full Excel Class Record (.xlsx)</button>
         </div>
       </div>
@@ -7137,6 +7154,25 @@
   }
 
   function renderTab4Reports(saCodes, saWeights, saNames, saCloPairs, saCloPassCounts, cloFinalPassCounts, allCloCols) {
+    // Populate FM-USeP-MID-10 Basic Details
+    const fSpan = document.getElementById("cloReportFaculty");
+    if (fSpan) fSpan.textContent = blueprint.metadata.faculty_name || "—";
+    const cSpan = document.getElementById("cloReportCourse");
+    if (cSpan) {
+      const code = (blueprint.metadata.course_code || "").trim();
+      const title = (blueprint.metadata.course_title || "").trim();
+      const desc = (blueprint.metadata.course_description || "").trim();
+      const units = (blueprint.metadata.credit_units || "").trim();
+      cSpan.textContent = `${code} - ${title}${desc ? ', ' + desc : ''}${units ? ' (' + units + ')' : ''}`;
+    }
+    const sSpan = document.getElementById("cloReportSemAy");
+    if (sSpan) sSpan.textContent = blueprint.metadata.semester_ay || "—";
+    const pSpan = document.getElementById("cloReportProgram");
+    if (pSpan) pSpan.textContent = blueprint.metadata.program_name || blueprint.metadata.department || "—";
+    const uSpan = document.getElementById("cloReportAcademicUnit");
+    if (uSpan) uSpan.textContent = blueprint.metadata.academic_unit || blueprint.metadata.college || "Engineering";
+
+
     const nStudents = Math.max(1, (blueprint.students || []).length);
     const outcomes = blueprint.course_outcomes || [];
     const rubricText = "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)";
@@ -7507,12 +7543,36 @@
     window.URL.revokeObjectURL(url);
   }
 
+    async function exportCloReportExcel() {
+    syncMetaFromInputs();
+    const res = await fetch("/api/export-clo-report-excel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ blueprint, course_id: currentCourseId })
+    });
+    if (!res.ok) {
+      alert("Failed to generate CLO Evaluation Result Excel (FM-USeP-MID-10).");
+      return;
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const code = (blueprint.metadata.course_code || "Course").trim();
+    const sec = (blueprint.metadata.section || "Section").trim();
+    a.href = url;
+    a.download = `${code}_${sec}_CLO_Evaluation_Result_FM-USeP-MID-10.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
   async function exportCloReportPdf() {
     syncMetaFromInputs();
     const res = await fetch("/api/export-clo-report-pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ blueprint })
+      body: JSON.stringify({ blueprint, course_id: currentCourseId })
     });
     if (!res.ok) {
       alert("Failed to generate CLO Assessment Report PDF.");
