@@ -898,7 +898,7 @@ def api_create_course():
 
 
 
-@app.route("/api/courses/<course_id>", methods=["PUT"])
+@app.route("/api/courses/<course_id>", methods=["PUT", "POST"])
 
 @faculty_tools_required
 def api_update_course(course_id):

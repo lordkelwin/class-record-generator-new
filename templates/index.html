@@ -864,19 +864,76 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
+      transition: color 0.2s ease;
     }
     .asb-status.saving {
       color: #d97706;
     }
+    .asb-status.error {
+      color: #dc2626;
+    }
     .asb-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #059669;
       display: inline-block;
+      transition: background 0.2s ease, transform 0.2s ease;
     }
     .asb-status.saving .asb-dot {
       background: #d97706;
+      animation: dotPulse 1.1s infinite ease-in-out;
+    }
+    .asb-status.error .asb-dot, .asb-dot-error {
+      background: #dc2626 !important;
+    }
+    @keyframes dotPulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(1.35); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes badgePulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+      50% { transform: scale(1.22); box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+    .badge-pulse {
+      animation: badgePulse 0.9s ease-in-out 3;
+    }
+    #liveToastContainer {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      z-index: 100000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      max-width: 380px;
+    }
+    .live-toast {
+      pointer-events: auto;
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 11px 15px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      border: 1px solid #334155;
+      font-size: 0.83rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      animation: toastSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .live-toast.success { border-left: 4px solid #10b981; }
+    .live-toast.warning { border-left: 4px solid #f59e0b; }
+    .live-toast.info { border-left: 4px solid #3b82f6; }
+    .live-toast.error { border-left: 4px solid #ef4444; }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
     }
 
     /* Modal Overlay & Box */
@@ -3373,6 +3430,146 @@
   let activeModalTab = "catalog";
   let targetDuplicateCourseId = null;
 
+
+  // =========================================================================
+  // REAL-TIME AUTO-SYNC ENGINE (Background Polling for Approvals & Active Course)
+  // =========================================================================
+  let realtimeSyncTimer = null;
+  let lastApprovalsSummaryHash = "";
+  let lastWorkflowSyncHash = "";
+
+  function computeApprovalsSummaryHash(data) {
+    if (!data) return "";
+    const act = (data.pending_action_for_me || []).map(x => `${x.id}:${x.workflow?.status || ''}`).join(",");
+    const crAct = (data.pending_cr_action_for_me || []).map(x => `${x.id}:${x.class_record_workflow?.status || ''}`).join(",");
+    const subs = (data.my_submitted_requests || []).map(x => `${x.id}:${x.workflow?.status || ''}`).join(",");
+    const inst = (data.institutional_requests || []).length;
+    return `${data.pending_count || 0}|${act}|${crAct}|${subs}|${inst}`;
+  }
+
+  async function runRealtimeSyncCycle() {
+    if (document.hidden) return; // Gentle on background tab
+
+    // 1. Live Poll Approval Requests
+    try {
+      const res = await fetch("/api/workflow/requests");
+      if (res.ok) {
+        const data = await res.json();
+        const newHash = computeApprovalsSummaryHash(data);
+        if (newHash !== lastApprovalsSummaryHash) {
+          const badgeEl = document.getElementById("approvalsBadge");
+          const prevPending = parseInt(badgeEl?.textContent || "0", 10);
+          const newPending = data.pending_count || 0;
+
+          lastApprovalsSummaryHash = newHash;
+          await loadApprovalRequests(false, true); // true = isBackground
+
+          if (newPending > prevPending) {
+            if (badgeEl) {
+              badgeEl.classList.remove("badge-pulse");
+              void badgeEl.offsetWidth; // trigger reflow
+              badgeEl.classList.add("badge-pulse");
+            }
+            const newlyAdded = (data.pending_action_for_me || []).find(x => x.course_code);
+            const code = newlyAdded ? newlyAdded.course_code : 'Syllabus';
+            showLiveToast(`🔔 New approval request requires your action: ${code}`, 'info');
+          }
+        }
+      }
+    } catch(e) {
+      console.debug("Live sync approvals poll:", e);
+    }
+
+    // 2. Live Poll Active Course Workflow Status
+    if (currentCourseId && blueprint) {
+      try {
+        const wfRes = await fetch(`/api/courses/${currentCourseId}/workflow`);
+        if (wfRes.ok) {
+          const wfData = await wfRes.json();
+          const curStatus = wfData.status || '';
+          const curSigs = (wfData.signatures || []).length;
+          const curAcks = (wfData.student_acknowledgments || []).length;
+          const newWfHash = `${curStatus}:${curSigs}:${curAcks}:${Boolean(wfData.is_locked)}`;
+
+          if (newWfHash !== lastWorkflowSyncHash) {
+            const wasApproved = currentWorkflow && (currentWorkflow.status === 'approved');
+            const isNowApproved = curStatus === 'approved';
+            lastWorkflowSyncHash = newWfHash;
+            currentWorkflow = wfData;
+
+            renderWorkflowStepper();
+            checkSyllabusLock();
+            checkClassRecordLock();
+
+            if (isNowApproved && !wasApproved) {
+              showLiveToast(`🎉 Syllabus '${blueprint.metadata?.course_code || ''}' has been approved by the Dean! Class Record unlocked.`, 'success');
+            } else if (curStatus.includes('revision') || curStatus.includes('returned')) {
+              showLiveToast(`⚠️ Updates on syllabus review for '${blueprint.metadata?.course_code || ''}'`, 'warning');
+            }
+          }
+        }
+      } catch(e) {
+        console.debug("Live sync active course poll:", e);
+      }
+    }
+  }
+
+  function startRealtimeSyncEngine() {
+    if (realtimeSyncTimer) clearInterval(realtimeSyncTimer);
+    setTimeout(runRealtimeSyncCycle, 1500);
+    realtimeSyncTimer = setInterval(runRealtimeSyncCycle, 4500);
+
+    document.addEventListener("visibilitychange", function() {
+      if (!document.hidden) {
+        runRealtimeSyncCycle();
+      }
+    });
+
+    // Global listener for input and change events inside studio to ensure auto-save
+    document.addEventListener("input", function(e) {
+      if (!blueprint) return;
+      const target = e.target;
+      if (!target || !target.closest) return;
+      if (target.closest(".main-workspace")) {
+        if (target.id && target.id.startsWith("meta_")) {
+          syncMetaFromInputs(false);
+        }
+        queueAutoSave(800);
+      }
+    });
+
+    document.addEventListener("change", function(e) {
+      if (!blueprint) return;
+      const target = e.target;
+      if (!target || !target.closest) return;
+      if (target.closest(".main-workspace")) {
+        if (target.id && target.id.startsWith("meta_")) {
+          syncMetaFromInputs(false);
+        }
+        queueAutoSave(150);
+      }
+    });
+
+    // Save immediately before user navigates away or closes tab
+    window.addEventListener("beforeunload", function() {
+      if (blueprint && currentCourseId) {
+        syncMetaFromInputs(false);
+        const payload = {
+          course_code: blueprint.metadata.course_code,
+          course_title: blueprint.metadata.course_title,
+          section: blueprint.metadata.section,
+          sections: blueprint.metadata.sections,
+          program_code: blueprint.metadata.program_code,
+          programs: blueprint.metadata.programs,
+          semester_ay: blueprint.metadata.semester_ay,
+          blueprint: blueprint,
+        };
+        const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+        navigator.sendBeacon(`/api/courses/${currentCourseId}`, blob);
+      }
+    });
+  }
+
   async function initApp() {
     try {
       const catRes = await fetch("/api/catalog");
@@ -3393,10 +3590,12 @@
     if (currentUser && !currentUser.can_access_faculty_tools) {
       switchTab("tab-approvals");
       loadApprovalRequests(true);
+      startRealtimeSyncEngine();
       return;
     }
     await loadCoursesList();
     updateSyllabusStepUI('tab-syllabus');
+    startRealtimeSyncEngine();
     loadApprovalRequests();
   }
 
@@ -3612,13 +3811,54 @@
     if (hero) hero.style.display = "none";
   }
 
+  let lastSavedPayloadHash = "";
+  let isSavingCourse = false;
+
+  function computeCourseHash(payload) {
+    try {
+      return JSON.stringify(payload);
+    } catch(e) {
+      return "";
+    }
+  }
+
+  function showLiveToast(message, type = 'info', durationMs = 4500) {
+    let container = document.getElementById("liveToastContainer");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "liveToastContainer";
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `live-toast ${type}`;
+    const icon = type === 'success' ? '✅' : (type === 'warning' ? '⚠️' : (type === 'error' ? '❌' : '🔔'));
+    toast.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:1.1rem;">${icon}</span>
+        <span>${escapeHtml(message)}</span>
+      </div>
+      <button type="button" style="background:transparent; border:none; color:inherit; font-size:1rem; cursor:pointer; padding:0 4px; line-height:1;" onclick="this.parentElement.remove()">&times;</button>
+    `;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(20px)";
+      setTimeout(() => toast.remove(), 300);
+    }, durationMs);
+  }
+
   async function saveActiveCourseToServer(showToast = false) {
     if (!blueprint) return;
-    syncMetaFromInputs();
+    if (isSavingCourse && !showToast) return; // Prevent overlapping concurrent saves
+    isSavingCourse = true;
+
+    syncMetaFromInputs(false); // Don't re-trigger queueAutoSave inside sync
     const saveStat = document.getElementById("asbSaveStatus");
     if (saveStat) {
       saveStat.className = "asb-status saving";
-      saveStat.innerHTML = '<span class="asb-dot"></span> Saving subject...';
+      saveStat.innerHTML = '<span class="asb-dot asb-pulse"></span> Saving changes...';
     }
 
     const payload = {
@@ -3631,6 +3871,16 @@
       semester_ay: blueprint.metadata.semester_ay,
       blueprint: blueprint,
     };
+
+    const currentHash = computeCourseHash(payload);
+    if (!showToast && currentHash === lastSavedPayloadHash && currentCourseId) {
+      isSavingCourse = false;
+      if (saveStat) {
+        saveStat.className = "asb-status";
+        saveStat.innerHTML = '<span class="asb-dot"></span> All changes saved';
+      }
+      return;
+    }
 
     try {
       let res;
@@ -3651,36 +3901,44 @@
         localStorage.setItem("usep_active_course_id", currentCourseId);
       }
 
+      lastSavedPayloadHash = currentHash;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
       if (saveStat) {
         saveStat.className = "asb-status";
-        saveStat.innerHTML = '<span class="asb-dot"></span> All changes saved';
+        saveStat.innerHTML = `<span class="asb-dot"></span> All changes saved <span style="font-size:0.69rem; color:#64748b; font-weight:normal; margin-left:3px;">(${timeStr})</span>`;
       }
       updateActiveSubjectBar();
-      // Reload sidebar to reflect updated semester or course info without reloading workspace
+      // Silently refresh sidebar without re-rendering active studio
       await loadCoursesList(currentCourseId, false);
 
       if (showToast) {
-        alert(`Subject '${blueprint.metadata.course_code} (${blueprint.metadata.section})' saved successfully!`);
+        showLiveToast(`Subject '${blueprint.metadata.course_code} (${blueprint.metadata.section})' saved successfully!`, 'success');
       }
     } catch (e) {
       console.error("Save course failed:", e);
       if (saveStat) {
-        saveStat.className = "asb-status";
-        saveStat.innerHTML = '<span class="asb-dot"></span> Save failed';
+        saveStat.className = "asb-status error";
+        saveStat.innerHTML = '<span class="asb-dot asb-dot-error"></span> Auto-save failed (retrying in 5s)';
       }
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => saveActiveCourseToServer(false), 5000);
+    } finally {
+      isSavingCourse = false;
     }
   }
 
-  function queueAutoSave() {
+  function queueAutoSave(delayMs = 800) {
     const saveStat = document.getElementById("asbSaveStatus");
     if (saveStat) {
       saveStat.className = "asb-status saving";
-      saveStat.innerHTML = '<span class="asb-dot"></span> Unsaved changes...';
+      saveStat.innerHTML = '<span class="asb-dot asb-pulse"></span> Saving changes...';
     }
     clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
       saveActiveCourseToServer(false);
-    }, 2500);
+    }, delayMs);
   }
 
   function getOrientationRow() {
@@ -6160,7 +6418,8 @@
     renderPoliciesTable();
   }
 
-  function syncMetaFromInputs() {
+  function syncMetaFromInputs(doQueue = true) {
+    if (!blueprint || !blueprint.metadata) return;
     const m = blueprint.metadata;
     m.university = document.getElementById("meta_university").value;
     m.college = document.getElementById("meta_college").value;
@@ -6199,6 +6458,9 @@
       m.iga_framework = document.getElementById("meta_iga_framework").value;
     }
     updateActiveSubjectBar();
+    if (doQueue) {
+      queueAutoSave(800);
+    }
   }
 
   async function onPassingCutoffChange() {
@@ -7230,27 +7492,29 @@
       });
 
       return `
-        <tr>
+        <tr id="stRow_${sIdx}">
           <td>${sIdx + 1}</td>
-          <td><input type="text" style="width:95px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.student_id)}" onchange="blueprint.students[${sIdx}].student_id=this.value;" ${isCrLocked ? 'disabled' : ''} /></td>
+          <td><input type="text" style="width:95px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.student_id)}" oninput="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(800);" onchange="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
           <td><input type="text" style="width:170px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.last_name)}, ${escapeHtml(st.first_name)}"
-            onchange="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim();" ${isCrLocked ? 'disabled' : ''} /></td>
+            oninput="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(800);"
+            onchange="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
           ${allCloCols.map(col => {
             const val = getStudentCloScore(st, col);
             return `<td style="text-align:center;">
               <input type="number" step="any" min="0" max="${col.max_score}" value="${val}"
+                data-col-item="${escapeHtml(col.item_id)}" data-col-clo="${escapeHtml(col.clo_id)}"
                 style="width:62px; text-align:center; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}"
                 title="${escapeHtml(col.item_id)} - ${escapeHtml(col.clo_id)} (Max score allowed: ${col.max_score})"
-                oninput="validateAndLimitScoreInput(this, ${col.max_score})"
+                oninput="validateAndLimitScoreInput(this, ${col.max_score}); liveCalculateStudentRow(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value);"
                 onchange="updateStudentCloScore(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value)"
                 ${isCrLocked ? 'disabled' : ''} />
             </td>`;
           }).join("")}
-          <td style="text-align:center; font-weight:700; background:#f0f9ff;">${mg.toFixed(2)}</td>
-          <td style="text-align:center; font-weight:700; background:#f0f9ff;">${fg.toFixed(2)}</td>
-          <td style="text-align:center; font-weight:700; background:#fffbeb;">${afg.toFixed(2)}</td>
-          <td style="text-align:center; font-weight:800;">${typeof finGrade === 'number' ? finGrade.toFixed(2) : finGrade}</td>
-          <td style="text-align:center;"><span class="badge ${passed ? 'badge-pass' : 'badge-fail'}">${passed ? 'PASSED' : 'FAILED'}</span></td>
+          <td id="stMg_${sIdx}" style="text-align:center; font-weight:700; background:#f0f9ff;">${mg.toFixed(2)}</td>
+          <td id="stFg_${sIdx}" style="text-align:center; font-weight:700; background:#f0f9ff;">${fg.toFixed(2)}</td>
+          <td id="stAfg_${sIdx}" style="text-align:center; font-weight:700; background:#fffbeb;">${afg.toFixed(2)}</td>
+          <td id="stFin_${sIdx}" style="text-align:center; font-weight:800;">${typeof finGrade === 'number' ? finGrade.toFixed(2) : finGrade}</td>
+          <td style="text-align:center;"><span id="stRem_${sIdx}" class="badge ${passed ? 'badge-pass' : 'badge-fail'}">${passed ? 'PASSED' : 'FAILED'}</span></td>
           ${studentSaCloGrades.map(g => `<td style="text-align:center; background:#f8fafc;">${g.toFixed(2)}</td>`).join("")}
           ${studentCloFinalGrades.map(g => `<td style="text-align:center; font-weight:700; background:#eff6ff;">${g.toFixed(2)}</td>`).join("")}
           <td>${isCrLocked ? '<span title="Locked during review / finalization" style="font-size:0.85rem; color:#94a3b8;">🔒</span>' : `<button class="btn btn-danger btn-sm" onclick="removeStudentRow(${sIdx})">&times;</button>`}</td>
@@ -7960,6 +8224,83 @@
       tip.style.opacity = "0";
       setTimeout(() => { tip.style.display = "none"; }, 200);
     }, 1600);
+  }
+
+  function liveCalculateStudentRow(sIdx, itemId, cloId, val) {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") return;
+    if (!blueprint || !blueprint.students || !blueprint.students[sIdx]) return;
+    const st = blueprint.students[sIdx];
+    if (!st.scores) st.scores = {};
+
+    let numVal = val === "" ? 0 : parseFloat(val);
+    if (isNaN(numVal) || numVal < 0) numVal = 0;
+    const maxPts = getItemCloMaxScore(itemId, cloId);
+    if (numVal > maxPts) numVal = maxPts;
+
+    st.scores[`${itemId}__${cloId.toUpperCase()}`] = numVal;
+
+    // Sum aligned CLOs for item
+    (blueprint.categories || []).forEach(cat => {
+      (cat.items || []).forEach(it => {
+        if (it.item_id === itemId) {
+          const clos = parseCloList(it.co_id);
+          const sumItem = clos.reduce((acc, c) => {
+            return acc + (parseFloat(st.scores[`${itemId}__${c.toUpperCase()}`]) || 0);
+          }, 0);
+          const itMax = parseFloat(it.max_score) || (maxPts * clos.length);
+          st.scores[itemId] = Math.round(Math.min(itMax, sumItem) * 100) / 100;
+        }
+      });
+    });
+
+    // Compute Term Grades in real-time
+    const termGrades = {};
+    ["Midterm", "Finals"].forEach(tName => {
+      let tTotal = 0.0;
+      (blueprint.categories || []).filter(c => c.term === tName).forEach(cat => {
+        const isFA = (cat.assessment_type || "SA").toUpperCase() === "FA";
+        if (isFA) return;
+        const items = cat.items || [];
+        let num = 0.0;
+        let sumWt = 0.0;
+        items.forEach(it => {
+          const clos = parseCloList(it.co_id);
+          clos.forEach(c => {
+            const sc = parseFloat(st.scores[`${it.item_id}__${c.toUpperCase()}`]) || 0;
+            const maxS = getItemCloMaxScore(it.item_id, c);
+            const effWt = (parseFloat(it.weight_pct) || 0) / Math.max(1, clos.length);
+            num += (sc * effWt) / maxS;
+            sumWt += effWt;
+          });
+        });
+        const catBase50 = sumWt > 0 ? (num / sumWt) * 50.0 + 50.0 : 50.0;
+        tTotal += (catBase50 * sumWt) / 100.0;
+      });
+      termGrades[tName] = tTotal;
+    });
+
+    const mg = termGrades.Midterm;
+    const fg = termGrades.Finals;
+    const afg = (mg + fg) * 0.5;
+    const finGrade = lookupUsepGrade(afg);
+    const passed = finGrade !== "UW" && finGrade <= 3.00;
+
+    // Directly update row DOM elements without rebuilding entire table
+    const elMg = document.getElementById(`stMg_${sIdx}`);
+    if (elMg) elMg.textContent = mg.toFixed(2);
+    const elFg = document.getElementById(`stFg_${sIdx}`);
+    if (elFg) elFg.textContent = fg.toFixed(2);
+    const elAfg = document.getElementById(`stAfg_${sIdx}`);
+    if (elAfg) elAfg.textContent = afg.toFixed(2);
+    const elFin = document.getElementById(`stFin_${sIdx}`);
+    if (elFin) elFin.textContent = typeof finGrade === 'number' ? finGrade.toFixed(2) : finGrade;
+    const elRem = document.getElementById(`stRem_${sIdx}`);
+    if (elRem) {
+      elRem.className = `badge ${passed ? 'badge-pass' : 'badge-fail'}`;
+      elRem.textContent = passed ? 'PASSED' : 'FAILED';
+    }
+
+    queueAutoSave(800);
   }
 
   function updateStudentCloScore(sIdx, itemId, cloId, val) {
@@ -9507,7 +9848,7 @@
     }
   }
 
-  async function loadApprovalRequests(forceRefresh = false) {
+  async function loadApprovalRequests(forceRefresh = false, isBackground = false) {
     try {
       const res = await fetch("/api/workflow/requests");
       if (!res.ok) return;
@@ -9588,10 +9929,22 @@
         roleBadge.textContent = `${u.full_name || u.username} (${u.position_title || u.role})`;
       }
 
-      // Auto-set initial filter
-      if (isStaffUser) {
-        approvalsState.filter = "all";
-      } else if (!forceRefresh) {
+      // Auto-set initial filter ONLY on initial/forced load, NOT during background polling
+      if (!isBackground) {
+        if (isStaffUser) {
+          approvalsState.filter = "all";
+        } else if (!forceRefresh) {
+          if (approvalsState.pendingActionForMe.length > 0) {
+            approvalsState.filter = "action";
+          } else if (approvalsState.mySubmissions.length > 0) {
+            approvalsState.filter = "submissions";
+          } else if (canViewInst) {
+            approvalsState.filter = "all";
+          } else {
+            approvalsState.filter = "submissions";
+          }
+        }
+      }
         if (approvalsState.pendingActionForMe.length > 0) {
           approvalsState.filter = "action";
         } else if (approvalsState.mySubmissions.length > 0) {
@@ -13463,5 +13816,6 @@
   </div>
 </div>
 
+<div id="liveToastContainer"></div>
 </body>
 </html>
