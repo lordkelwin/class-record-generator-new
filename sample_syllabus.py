@@ -416,14 +416,14 @@ def build_learning_plan_from_topics(topics: List[str]) -> List[Dict[str, str]]:
 
 
 DESIGNATED_PROGRAM_HEADS: Dict[str, str] = {
-    "EE": "Engr. Charito O. Claro",
-    "CE": "Engr. Bonifacio T. Aznar Jr.",
-    "ECE": "Engr. Rosanna C. Ucat",
-    "ME": "Engr. Randy B. Tongson",
-    "SE": "Engr. Sheena S. Arcega",
-    "ABE": "Engr. Sheila C. Cogay",
-    "GE": "Engr. Fillmore D. Masancay",
-    "MinE": "Engr. Mark John S. Pag-alaman",
+    "EE": "Charito O. Claro",
+    "CE": "Bonifacio T. Aznar Jr.",
+    "ECE": "Rosanna C. Ucat",
+    "ME": "Randy B. Tongson",
+    "SE": "Sheena S. Arcega",
+    "ABE": "Ruel Tuyogon",
+    "GE": "Fillmore D. Masancay",
+    "MinE": "Mark John S. Pag-alaman",
     "BSGeo": "Dean Lester P. Rejas",
 }
 
@@ -436,7 +436,7 @@ def get_designated_program_heads(programs: Optional[List[str]] = None, primary_c
             if k.upper() == p_clean and v not in heads:
                 heads.append(v)
     if not heads:
-        heads = ["Engr. Charito O. Claro"]
+        heads = ["Charito O. Claro"]
     return heads
 
 def get_blank_blueprint(
@@ -452,7 +452,7 @@ def get_blank_blueprint(
     prerequisites: str = "",
     corequisites: str = "",
     program_head: str = "",
-    dean_name: str = "Engr. Joie D. Cataytay, Ph.D.",
+    dean_name: str = "Joie D. Cataytay",
     programs: Optional[List[str]] = None,
     sections: Optional[List[str]] = None,
     program_code: str = "EE",
@@ -471,7 +471,7 @@ def get_blank_blueprint(
     init_sections = sections or ([s.strip() for s in section.split(",") if s.strip()] if section else ["EE 2A"])
     heads = get_designated_program_heads(init_programs, program_code)
     computed_ph = (" / ".join(heads)) if (not program_head or len(heads) > 1) else program_head
-    computed_dean = dean_name or "Engr. Joie D. Cataytay, Ph.D."
+    computed_dean = dean_name or "Joie D. Cataytay"
     dept_name = program_name or "Bachelor of Science in Electrical Engineering"
     if dept_name.startswith("Department of "):
         dept_name = dept_name.replace("Department of ", "Bachelor of Science in ")
@@ -494,7 +494,7 @@ def get_blank_blueprint(
         room="TBA",
         semester_ay=semester_ay or "1st Semester, A.Y. 2026-2027",
         section=section or "EE 2A",
-        faculty_name=faculty_name or "Engr. Elwin Jay J. Tano",
+        faculty_name=faculty_name or "Elwin Jay J. Tano",
         program_head=computed_ph,
         program_heads=heads,
         dean_name=computed_dean,

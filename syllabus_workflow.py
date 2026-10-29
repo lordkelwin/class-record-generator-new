@@ -540,9 +540,9 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     # Committee must have at least three (3) members
     if committee_members is None:
         committee_members = wf.get("committee_members") or [
-            {"username": "faculty_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Chair"},
-            {"username": "faculty_arenga", "name": "Engr. Delan Zoe H. Arenga", "role": "Review Committee Member"},
-            {"username": "faculty_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Member"},
+            {"username": "faculty_basan", "name": "Nikka Samantha A. Basan", "role": "Review Committee Chair"},
+            {"username": "faculty_arenga", "name": "Delan Zoe H. Arenga", "role": "Review Committee Member"},
+            {"username": "faculty_ravida", "name": "Kim P. Ravida", "role": "Review Committee Member"},
         ]
     if len(committee_members) < 3:
         raise WorkflowError(f"The Syllabus Review Committee must have at least three (3) members (currently has {len(committee_members)}).")

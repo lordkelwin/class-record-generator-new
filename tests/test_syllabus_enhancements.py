@@ -13,16 +13,16 @@ class TestSyllabusEnhancements(unittest.TestCase):
     def test_designated_program_heads_single_and_multiple(self):
         # Single program
         ee_heads = get_designated_program_heads(["EE"])
-        self.assertEqual(ee_heads, ["Engr. Charito O. Claro"])
+        self.assertEqual(ee_heads, ["Charito O. Claro"])
 
         ce_heads = get_designated_program_heads(["CE"])
-        self.assertEqual(ce_heads, ["Engr. Bonifacio T. Aznar Jr."])
+        self.assertEqual(ce_heads, ["Bonifacio T. Aznar Jr."])
 
         # Multiple accommodated programs
         multi_heads = get_designated_program_heads(["EE", "CE", "ME"])
-        self.assertIn("Engr. Charito O. Claro", multi_heads)
-        self.assertIn("Engr. Bonifacio T. Aznar Jr.", multi_heads)
-        self.assertIn("Engr. Randy B. Tongson", multi_heads)
+        self.assertIn("Charito O. Claro", multi_heads)
+        self.assertIn("Bonifacio T. Aznar Jr.", multi_heads)
+        self.assertIn("Randy B. Tongson", multi_heads)
         self.assertEqual(len(multi_heads), 3)
 
     def test_get_blank_blueprint_autofills(self):
@@ -36,12 +36,12 @@ class TestSyllabusEnhancements(unittest.TestCase):
         self.assertEqual(bp.metadata.course_title, "Electrical Circuits 1")
 
         # Program heads should combine all designated heads
-        self.assertIn("Engr. Charito O. Claro", bp.metadata.program_head)
-        self.assertIn("Engr. Bonifacio T. Aznar Jr.", bp.metadata.program_head)
+        self.assertIn("Charito O. Claro", bp.metadata.program_head)
+        self.assertIn("Bonifacio T. Aznar Jr.", bp.metadata.program_head)
         self.assertEqual(len(bp.metadata.program_heads), 2)
 
-        # Dean auto-fill
-        self.assertEqual(bp.metadata.dean_name, "Engr. Joie D. Cataytay, Ph.D.")
+        # Dean auto-fill without honorifics
+        self.assertEqual(bp.metadata.dean_name, "Joie D. Cataytay")
 
         # Base-50 cutoff default
         self.assertEqual(bp.metadata.transmutation_base, 50)
@@ -62,9 +62,9 @@ class TestSyllabusEnhancements(unittest.TestCase):
         self.assertEqual(doc["course_title"], "Structural Theory")
         bp_dict = doc["blueprint"]
         meta = bp_dict["metadata"]
-        self.assertEqual(meta["faculty_name"], "Engr. Elwin Jay J. Tano")
-        self.assertEqual(meta["program_head"], "Engr. Bonifacio T. Aznar Jr.")
-        self.assertEqual(meta["dean_name"], "Engr. Joie D. Cataytay, Ph.D.")
+        self.assertEqual(meta["faculty_name"], "Elwin Jay J. Tano")
+        self.assertEqual(meta["program_head"], "Bonifacio T. Aznar Jr.")
+        self.assertEqual(meta["dean_name"], "Joie D. Cataytay")
         self.assertEqual(meta["passing_percentage"], 75.0)
         self.assertEqual(len(meta["learning_plan_table"]), 1)
         self.assertIn("Course Orientation", meta["learning_plan_table"][0]["topics"])

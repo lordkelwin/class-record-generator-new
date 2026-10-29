@@ -60,18 +60,18 @@ dean_user = json.loads(resp4.read().decode("utf-8"))["user"]
 print(f"Switched to: {dean_user['full_name']} | Has e-signature? {dean_user['has_signature']}")
 assert dean_user["has_signature"] is True, "Dean Cataytay should have e-signature!"
 
-# Verify Program Heads from updated document
+# Verify Program Heads from updated document (without honorific titles)
 head_names = [h['full_name'] for h in sigs['program_heads']]
 expected_heads = [
-    "Engr. Charito O. Claro",
-    "Engr. Rosanna C. Ucat",
-    "Engr. Randy B. Tongson",
-    "Engr. Fillmore D. Masancay",
-    "Engr. Mark John S. Pag-alaman",
+    "Charito O. Claro",
+    "Rosanna C. Ucat",
+    "Randy B. Tongson",
+    "Fillmore D. Masancay",
+    "Mark John S. Pag-alaman",
     "Dean Lester P. Rejas",
-    "Engr. Bonifacio T. Aznar Jr.",
-    "Engr. Sheena S. Arcega",
-    "Engr. Ruel Tuyogon"
+    "Bonifacio T. Aznar Jr.",
+    "Sheena S. Arcega",
+    "Ruel Tuyogon"
 ]
 for eh in expected_heads:
     assert any(eh in hn for hn in head_names), f"Expected program head {eh} not found in {head_names}"

@@ -1812,7 +1812,7 @@
         </div>
         <div class="form-group">
           <label>Faculty Name (Auto-Suggest Roster)</label>
-          <input type="text" id="meta_faculty_name" list="facultyListPresets" placeholder="e.g. Engr. Elwin Jay J. Tano" oninput="syncMetaFromInputs()" />
+          <input type="text" id="meta_faculty_name" list="facultyListPresets" placeholder="e.g. Elwin Jay J. Tano" oninput="syncMetaFromInputs()" />
           <datalist id="facultyListPresets"></datalist>
         </div>
         <div class="form-group">
@@ -1824,8 +1824,8 @@
           <label>Dean (Approver)</label>
           <input type="text" id="meta_dean_name" list="deanListPresets" oninput="syncMetaFromInputs()" />
           <datalist id="deanListPresets">
-            <option value="JOIE D. CATAYTAY">Dr. Joie D. Cataytay (Dean, College of Engineering)</option>
-            <option value="Engr. Joie D. Cataytay, Ph.D.">Engr. Joie D. Cataytay, Ph.D. (Dean, College of Engineering)</option>
+            <option value="JOIE D. CATAYTAY">Joie D. Cataytay (Dean, College of Engineering)</option>
+            <option value="Joie D. Cataytay">Engr. Joie D. Cataytay, Ph.D. (Dean, College of Engineering)</option>
           </datalist>
         </div>
         <div class="form-group">
@@ -4061,9 +4061,15 @@
     const prev = document.getElementById("modalCatCoursePreview");
     if (!prev || !course) return;
 
+    const yrLvl = course.year_level || "Second Year";
+    const prereqTxt = course.prereqs || "None";
+    const coreqTxt = course.coreqs ? ` &nbsp;|&nbsp; <strong>Co-requisite(s):</strong> ${escapeHtml(course.coreqs)}` : "";
     prev.innerHTML = `
       <div><strong>${escapeHtml(course.code)}: ${escapeHtml(course.title)}</strong> (${escapeHtml(course.credit_units || '3.0 Units')})</div>
-      <div style="margin-top:4px;">${escapeHtml(course.description ? course.description.slice(0, 180) + '...' : '')}</div>
+      <div style="margin-top:5px; font-size:0.75rem; color:#0f766e; background:#ecfdf5; padding:4px 8px; border-radius:4px; border:1px solid #a7f3d0;">
+        📅 <strong>Year Level:</strong> ${escapeHtml(yrLvl)} &nbsp;|&nbsp; 🔗 <strong>Pre-requisite(s):</strong> ${escapeHtml(prereqTxt)}${coreqTxt}
+      </div>
+      <div style="margin-top:5px;">${escapeHtml(course.description ? course.description.slice(0, 180) + '...' : '')}</div>
       <div style="margin-top:4px; color:#1e40af;"><strong>Weekly Topics:</strong> ${(course.topics || []).length} topics configured in catalog.</div>
     `;
   }
@@ -4775,11 +4781,11 @@
     if (acctHolder && (!m.faculty_name || m.faculty_name === "Faculty in Charge")) {
       m.faculty_name = acctHolder;
     }
-    if (!m.faculty_name) m.faculty_name = acctHolder || "Engr. Elwin Jay J. Tano";
+    if (!m.faculty_name) m.faculty_name = acctHolder || "Elwin Jay J. Tano";
     document.getElementById("meta_faculty_name").value = m.faculty_name;
 
     // Auto-fill dean_name if empty
-    if (!m.dean_name) m.dean_name = "Engr. Joie D. Cataytay, Ph.D.";
+    if (!m.dean_name) m.dean_name = "Joie D. Cataytay";
     document.getElementById("meta_dean_name").value = m.dean_name;
 
     // Auto-fill program_head
@@ -4863,14 +4869,14 @@
   ];
 
     const DESIGNATED_PROGRAM_HEADS_MAP = {
-    "EE": "Engr. Charito O. Claro",
-    "CE": "Engr. Bonifacio T. Aznar Jr.",
-    "ECE": "Engr. Rosanna C. Ucat",
-    "ME": "Engr. Randy B. Tongson",
-    "SE": "Engr. Sheena S. Arcega",
-    "ABE": "Engr. Sheila C. Cogay",
-    "GE": "Engr. Fillmore D. Masancay",
-    "MinE": "Engr. Mark John S. Pag-alaman",
+    "EE": "Charito O. Claro",
+    "CE": "Bonifacio T. Aznar Jr.",
+    "ECE": "Rosanna C. Ucat",
+    "ME": "Randy B. Tongson",
+    "SE": "Sheena S. Arcega",
+    "ABE": "Ruel Tuyogon",
+    "GE": "Fillmore D. Masancay",
+    "MinE": "Mark John S. Pag-alaman",
     "BSGeo": "Dean Lester P. Rejas"
   };
 
@@ -4884,7 +4890,7 @@
         }
       }
     });
-    return list.length ? list.join(" / ") : "Engr. Charito O. Claro";
+    return list.length ? list.join(" / ") : "Charito O. Claro";
   }
 
   function updateProgramHeadsForSelectedPrograms() {
@@ -9641,18 +9647,18 @@
   }
 
   let submitModalCommitteeState = [
-    { username: "faculty_basan", name: "Engr. Nikka Samantha A. Basan", role: "Review Committee Chair" },
-    { username: "faculty_arenga", name: "Engr. Delan Zoe H. Arenga", role: "Review Committee Member" },
-    { username: "faculty_ravida", name: "Engr. Kim P. Ravida", role: "Review Committee Member" }
+    { username: "faculty_basan", name: "Nikka Samantha A. Basan", role: "Review Committee Chair" },
+    { username: "faculty_arenga", name: "Delan Zoe H. Arenga", role: "Review Committee Member" },
+    { username: "faculty_ravida", name: "Kim P. Ravida", role: "Review Committee Member" }
   ];
 
   function renderSubmitCommitteeRows() {
     const container = document.getElementById("submitCommitteeList");
     if (!container) return;
     const rawSignatories = (approvalsState.signatories && approvalsState.signatories.review_committee) || [
-      { username: "faculty_basan", full_name: "Engr. Nikka Samantha A. Basan", position_title: "Faculty Member" },
-      { username: "faculty_arenga", full_name: "Engr. Delan Zoe H. Arenga", position_title: "Faculty Member" },
-      { username: "faculty_ravida", full_name: "Engr. Kim P. Ravida", position_title: "Faculty Member" }
+      { username: "faculty_basan", full_name: "Nikka Samantha A. Basan", position_title: "Faculty Member" },
+      { username: "faculty_arenga", full_name: "Delan Zoe H. Arenga", position_title: "Faculty Member" },
+      { username: "faculty_ravida", full_name: "Kim P. Ravida", position_title: "Faculty Member" }
     ];
     const seenSigs = new Set();
     const signatories = [];
@@ -9753,7 +9759,7 @@
 
     // pick one not yet selected if possible
     const existingUnames = submitModalCommitteeState.map(m => m.username);
-    const candidate = signatories.find(s => !existingUnames.includes(s.username)) || signatories[0] || { username: "faculty_basan", full_name: "Engr. Nikka Samantha A. Basan" };
+    const candidate = signatories.find(s => !existingUnames.includes(s.username)) || signatories[0] || { username: "faculty_basan", full_name: "Nikka Samantha A. Basan" };
     submitModalCommitteeState.push({
       username: candidate.username,
       name: candidate.full_name,
@@ -9949,16 +9955,6 @@
           } else {
             approvalsState.filter = "submissions";
           }
-        }
-      }
-        if (approvalsState.pendingActionForMe.length > 0) {
-          approvalsState.filter = "action";
-        } else if (approvalsState.mySubmissions.length > 0) {
-          approvalsState.filter = "submissions";
-        } else if (canViewInst) {
-          approvalsState.filter = "all";
-        } else {
-          approvalsState.filter = "submissions";
         }
       }
       document.getElementById("btnFilterPendingAction")?.classList.toggle("active", approvalsState.filter === "action");
@@ -11671,9 +11667,9 @@
     const commEl = document.getElementById("evalCommitteeMembersSummary");
     if (commEl) {
       const commList = (currentWorkflow?.committee_members && currentWorkflow.committee_members.length) ? currentWorkflow.committee_members : [
-        { name: "Engr. Nikka Samantha A. Basan", role: "Review Committee Chair" },
-        { name: "Engr. Delan Zoe H. Arenga", role: "Review Committee Member" },
-        { name: "Engr. Kim P. Ravida", role: "Review Committee Member" }
+        { name: "Nikka Samantha A. Basan", role: "Review Committee Chair" },
+        { name: "Delan Zoe H. Arenga", role: "Review Committee Member" },
+        { name: "Kim P. Ravida", role: "Review Committee Member" }
       ];
       commEl.textContent = commList.map(m => `${m.name} (${m.role})`).join(" • ");
     }

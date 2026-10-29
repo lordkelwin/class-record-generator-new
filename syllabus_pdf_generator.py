@@ -933,7 +933,7 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
     if is_owner_ph:
         # Recommending Approval: Associate Dean
         assoc_sig = wf_sigs.get("associate_dean")
-        ph_display_name = assoc_sig.get("full_name") if assoc_sig else "Engr. Delan Zoe H. Arenga"
+        ph_display_name = assoc_sig.get("full_name") if assoc_sig else "Delan Zoe H. Arenga"
         ph_display_title = assoc_sig.get("title") if assoc_sig else "Associate Dean, College of Engineering"
         ph_time = f"Signed: {assoc_sig.get('signed_at')[:16].replace('T', ' ')}" if assoc_sig else ""
         ph_sig_data = assoc_sig.get("signature_data") if assoc_sig else (users.get("faculty_arenga", {}).get("signature_data") or "")
@@ -941,7 +941,7 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         # Recommending Approval: Program Head(s)
         prog_clean = (meta.department or "").replace("Department of ", "").replace("Bachelor of Science in ", "").strip()
         ph_sig = wf_sigs.get("program_head")
-        ph_display_name = ph_sig.get("full_name") if ph_sig else (meta.program_head or "Engr. Charito O. Claro")
+        ph_display_name = ph_sig.get("full_name") if ph_sig else (meta.program_head or "Charito O. Claro")
         num_heads = len(getattr(meta, "program_heads", [])) if hasattr(meta, "program_heads") and meta.program_heads else (len(ph_display_name.split("/")) if "/" in ph_display_name else 1)
         if num_heads > 1:
             ph_display_title = ph_sig.get("title") if ph_sig else "Program Heads"
@@ -953,7 +953,7 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
 
     # 3. Approved by (Dean)
     dean_sig = wf_sigs.get("dean")
-    dean_name = dean_sig.get("full_name") if dean_sig else (meta.dean_name or "Engr. Joie D. Cataytay, Ph.D.")
+    dean_name = dean_sig.get("full_name") if dean_sig else (meta.dean_name or "Joie D. Cataytay")
     dean_title = dean_sig.get("title") if dean_sig else "Dean, College of Engineering"
     dean_time = f"Approved & Locked: {dean_sig.get('signed_at')[:16].replace('T', ' ')}" if dean_sig else ""
     dean_sig_data = dean_sig.get("signature_data") if dean_sig else (users.get("dean_cataytay", {}).get("signature_data") or "")
@@ -965,7 +965,7 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
 
     # 4. Countersigned by (College QA Head) - alongside Dean at bottom right
     qa_sig = wf_sigs.get("qa_head")
-    qa_name = qa_sig.get("full_name") if qa_sig else "Engr. Sheena S. Arcega"
+    qa_name = qa_sig.get("full_name") if qa_sig else "Sheena S. Arcega"
     qa_title = qa_sig.get("title") if qa_sig else "College Quality Assurance Head"
     qa_time = f"Countersigned: {qa_sig.get('signed_at')[:16].replace('T', ' ')}" if qa_sig else ""
     qa_sig_data = qa_sig.get("signature_data") if qa_sig else (users.get("qa_arcega", {}).get("signature_data") or "")

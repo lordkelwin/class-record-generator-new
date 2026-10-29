@@ -139,6 +139,45 @@ def api_faculty_roster():
     return jsonify(OFFICIAL_FACULTY_ROSTER)
 
 
+@app.route("/api/db/programs", methods=["GET"])
+def api_db_programs():
+    import academic_db
+    return jsonify(academic_db.get_all_programs())
+
+
+@app.route("/api/db/courses", methods=["GET"])
+def api_db_courses():
+    import academic_db
+    prog = request.args.get("program", "BSEE")
+    yr = request.args.get("year_level")
+    return jsonify(academic_db.get_courses_by_program(prog, yr))
+
+
+@app.route("/api/db/courses/<course_code>", methods=["GET"])
+def api_db_course(course_code):
+    import academic_db
+    prog = request.args.get("program")
+    c = academic_db.get_course(course_code, prog)
+    if not c:
+        return jsonify({"error": "Course not found"}), 404
+    return jsonify(c)
+
+
+@app.route("/api/db/faculty", methods=["GET"])
+def api_db_faculty():
+    import academic_db
+    dept = request.args.get("department") or request.args.get("dept")
+    return jsonify(academic_db.get_all_faculty(dept))
+
+
+@app.route("/api/db/search-courses", methods=["GET"])
+def api_db_search_courses():
+    import academic_db
+    query = request.args.get("q", "").strip()
+    prog = request.args.get("program")
+    return jsonify(academic_db.search_courses(query, prog))
+
+
 
 
 
@@ -803,7 +842,7 @@ def api_create_course():
         if faculty_name and (not meta.get("faculty_name") or meta.get("faculty_name") in ("", "Faculty in Charge", "ELWIN JAY J. TANO")):
             meta["faculty_name"] = faculty_name
         if not meta.get("dean_name"):
-            meta["dean_name"] = "Engr. Joie D. Cataytay, Ph.D."
+            meta["dean_name"] = "Joie D. Cataytay"
         meta["passing_percentage"] = meta.get("passing_percentage") or 75.0
 
         sec = (data.get("section") or meta.get("section") or "1A").strip()

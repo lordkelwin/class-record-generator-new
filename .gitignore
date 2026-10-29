@@ -51,6 +51,7 @@ data/secret_key
 # Runtime data & temp extractions
 data/courses/
 extracted_curricula/
+scratch/
 
 
 # Notification logs

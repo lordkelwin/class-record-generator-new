@@ -262,7 +262,7 @@ def notify_coauthor_submission_needed(doc: Dict[str, Any], submitter_user: Dict[
 
 Dear Faculty Co-Author,
 
-Engr. {submitter_name} has submitted the course syllabus for:
+{submitter_name} has submitted the course syllabus for:
 Course: {code} – {title}
 Program: {program}
 
@@ -281,7 +281,7 @@ Please sign in to the USeP OBE Portal, review the course syllabus, and confirm y
     </div>
     """
     content = f"""
-    <p>Engr. <strong>{submitter_name}</strong> has submitted the syllabus for <strong>{code} ({title})</strong> for review.</p>
+    <p><strong>{submitter_name}</strong> has submitted the syllabus for <strong>{code} ({title})</strong> for review.</p>
     <p>As an author/co-author of this course, university policy requires that all involved faculty confirm submission individually before it is forwarded to the Review Committee.</p>
     """
     html = _wrap_html_email(
@@ -336,7 +336,7 @@ Please log in to the OBE Portal to fill out Review Checklist Form FM-USeP-MID-02
     </div>
     """
     content = f"""
-    <p>Engr. <strong>{submitter_name}</strong> has submitted the syllabus for <strong>{code} ({title})</strong> for formal review and committee evaluation.</p>
+    <p><strong>{submitter_name}</strong> has submitted the syllabus for <strong>{code} ({title})</strong> for formal review and committee evaluation.</p>
     <p>You have been designated as a member of the Review Committee for this course. Please inspect the course outcomes, assessment tasks, and alignment matrix against institutional standards.</p>
     """
     html = _wrap_html_email(
@@ -416,7 +416,7 @@ def notify_syllabus_decision(doc: Dict[str, Any], decision: str, reviewer_user: 
         subject = f"✅ [OBE Syllabus Approved & Locked] {code} - {title}"
         plain = f"""USeP College of Engineering • Syllabus Approved & Locked
 
-Dear Engr. {owner_name},
+Dear {owner_name},
 
 Congratulations! Your course syllabus for {code} ({title}) has successfully passed all sequential review committee endorsements and has been officially approved by the College Dean.
 
@@ -441,7 +441,7 @@ Thank you for your commitment to OBE academic excellence.
         subject = f"↩️ [OBE Syllabus Returned for Revision] {code} - {title}"
         plain = f"""USeP College of Engineering • Syllabus Returned for Revision
 
-Dear Engr. {owner_name},
+Dear {owner_name},
 
 Your syllabus for {code} ({title}) was returned for revision by {reviewer_name}.
 Remarks / Required Modifications:
@@ -480,7 +480,7 @@ def notify_revision_requested(doc: Dict[str, Any], owner_user: Dict[str, Any], t
 
 Dear {target_role},
 
-Engr. {owner_name} has requested an official revision cycle for the approved syllabus:
+{owner_name} has requested an official revision cycle for the approved syllabus:
 Course: {code} – {title}
 Reason for Revision: "{reason}"
 
@@ -516,7 +516,7 @@ def notify_revision_decision(doc: Dict[str, Any], action: str, reviewer_user: Di
         subject = f"✅ [OBE Syllabus Revision Approved] {code} - {title}"
         plain = f"""USeP College of Engineering • Syllabus Revision Request Approved
 
-Dear Engr. {owner_name},
+Dear {owner_name},
 
 Your request for a syllabus revision cycle for {code} ({title}) has been approved by {reviewer_name}.
 The syllabus is now unlocked for Cycle editing in your workspace.
@@ -541,7 +541,7 @@ Remarks: {remarks or 'Approved for updates.'}
         subject = f"❌ [OBE Syllabus Revision Request Rejected] {code} - {title}"
         plain = f"""USeP College of Engineering • Syllabus Revision Request Rejected
 
-Dear Engr. {owner_name},
+Dear {owner_name},
 
 Your request for syllabus revision for {code} ({title}) was rejected by {reviewer_name}.
 Remarks / Reason:

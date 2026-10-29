@@ -504,36 +504,52 @@ def create_course(
         except Exception:
             pass
     if not faculty_name:
-        faculty_name = "Engr. Elwin Jay J. Tano"
+        faculty_name = "Elwin Jay J. Tano"
 
     from sample_syllabus import get_designated_program_heads, DEFAULT_ORIENTATION_ROW, parse_sdg_string_to_table
     from models import get_default_policies_table
+    import academic_db
+
     heads = get_designated_program_heads(init_programs)
     computed_ph = " / ".join(heads)
 
+    clean_course_code = course_code.strip()
+    if " - " in clean_course_code or " – " in clean_course_code:
+        clean_course_code = clean_course_code.split(" - ")[0].split(" – ")[0].strip()
+
+    primary_prog = init_programs[0] if init_programs else "BSEE"
+    db_course = academic_db.get_course(clean_course_code, primary_prog) or academic_db.get_course(clean_course_code)
+
     if from_catalog and catalog_course_data:
-        cat_code = (catalog_course_data.get("code") or course_code).strip()
+        cat_code = (catalog_course_data.get("code") or clean_course_code).strip()
         if " - " in cat_code or " – " in cat_code:
             cat_code = cat_code.split(" - ")[0].split(" – ")[0].strip()
-        cat_title = (catalog_course_data.get("title") or course_title).strip()
-        cat_yr = catalog_course_data.get("year_level") or "Second Year"
-        cat_sdgs = catalog_course_data.get("sdgs") or "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
+        cat_title = (catalog_course_data.get("title") or (db_course.get("course_title") if db_course else "") or course_title).strip()
+        cat_yr = catalog_course_data.get("year_level") or (db_course.get("year_level") if db_course else "") or "Second Year"
+        cat_sdgs = catalog_course_data.get("sdgs") or (db_course.get("sdgs") if db_course else "") or "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
+        prereqs = catalog_course_data.get("prereqs") or (db_course.get("prerequisites") if db_course else "") or ""
+        coreqs = catalog_course_data.get("coreqs") or (db_course.get("corequisites") if db_course else "") or ""
+        units = catalog_course_data.get("credit_units") or (db_course.get("credit_units") if db_course else "") or "3.0 Units – Lecture"
+        lec_lab = catalog_course_data.get("lec_lab") or (db_course.get("lec_lab") if db_course else "") or "Lecture"
+        contact_hours = catalog_course_data.get("hours") or (db_course.get("contact_hours") if db_course else "") or "3 Hours/Week"
+        desc = catalog_course_data.get("description") or (db_course.get("description") if db_course else "") or ""
+
         bp = get_blank_blueprint(
             course_code=cat_code,
             course_title=cat_title,
             section=init_section,
             semester_ay=semester_ay,
             faculty_name=faculty_name,
-            credit_units=catalog_course_data.get("credit_units") or "3.0 Units – Lecture",
-            lec_lab=catalog_course_data.get("lec_lab") or "Lecture",
-            contact_hours=catalog_course_data.get("hours") or "3 Hours/Week",
-            course_description=catalog_course_data.get("description") or "",
-            prerequisites=catalog_course_data.get("prereqs") or "",
-            corequisites=catalog_course_data.get("coreqs") or "",
+            credit_units=units,
+            lec_lab=lec_lab,
+            contact_hours=contact_hours,
+            course_description=desc,
+            prerequisites=prereqs,
+            corequisites=coreqs,
             programs=init_programs if init_programs else None,
             sections=init_sections,
             program_head=computed_ph,
-            dean_name="Engr. Joie D. Cataytay, Ph.D.",
+            dean_name="Joie D. Cataytay",
             year_level=cat_yr,
             sdg_alignments=cat_sdgs,
         )
@@ -546,19 +562,52 @@ def create_course(
         bp.metadata.policies_table = get_default_policies_table()
         bp_dict = bp.to_dict()
     else:
+        cust_title = course_title
+        cust_yr = "Second Year"
+        cust_prereqs = ""
+        cust_coreqs = ""
+        cust_units = "3.0 Units – Lecture"
+        cust_lec_lab = "Lecture"
+        cust_hours = "3 Hours/Week"
+        cust_desc = ""
+        cust_sdgs = "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
+
+        if db_course:
+            if not cust_title or cust_title in ("Untitled Subject", "New Course"):
+                cust_title = db_course.get("course_title") or cust_title
+            cust_yr = db_course.get("year_level") or cust_yr
+            cust_prereqs = db_course.get("prerequisites") or ""
+            cust_coreqs = db_course.get("corequisites") or ""
+            cust_units = db_course.get("credit_units") or cust_units
+            cust_lec_lab = db_course.get("lec_lab") or cust_lec_lab
+            cust_hours = db_course.get("contact_hours") or cust_hours
+            cust_desc = db_course.get("description") or ""
+            cust_sdgs = db_course.get("sdgs") or cust_sdgs
+
         bp = get_blank_blueprint(
-            course_code=course_code,
-            course_title=course_title,
+            course_code=clean_course_code,
+            course_title=cust_title,
             section=init_section,
             semester_ay=semester_ay,
             faculty_name=faculty_name,
+            credit_units=cust_units,
+            lec_lab=cust_lec_lab,
+            contact_hours=cust_hours,
+            course_description=cust_desc,
+            prerequisites=cust_prereqs,
+            corequisites=cust_coreqs,
             programs=init_programs if init_programs else None,
             sections=init_sections,
             program_head=computed_ph,
-            dean_name="Engr. Joie D. Cataytay, Ph.D.",
+            dean_name="Joie D. Cataytay",
+            year_level=cust_yr,
+            sdg_alignments=cust_sdgs,
         )
         bp.metadata.program_heads = heads
         bp.metadata.passing_percentage = 75.0
+        bp.metadata.year_level = cust_yr
+        bp.metadata.sdg_alignments = cust_sdgs
+        bp.metadata.sdg_table = parse_sdg_string_to_table(cust_sdgs)
         bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
         bp.metadata.policies_table = get_default_policies_table()
         bp_dict = bp.to_dict()

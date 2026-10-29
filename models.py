@@ -558,10 +558,10 @@ class CourseMetadata:
     semester_ay: str = "1st Semester, A.Y. 2026-2027"
     section: str = "EE 2A"
     sections: List[str] = field(default_factory=list)
-    faculty_name: str = "Engr. Elwin Jay J. Tano"
-    program_head: str = "Engr. Charito O. Claro"
+    faculty_name: str = "Elwin Jay J. Tano"
+    program_head: str = "Charito O. Claro"
     program_heads: List[str] = field(default_factory=list)
-    dean_name: str = "Engr. Joie D. Cataytay, Ph.D."
+    dean_name: str = "Joie D. Cataytay"
     transmutation_base: int = 50  # Base-50 formula: (Score/Items)*50 + 50
     passing_percentage: float = 75.0  # 75 in Base-50 (which equals 50% raw score) = 3.00
     grading_mode: str = "two_term"

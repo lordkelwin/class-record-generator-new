@@ -278,13 +278,13 @@ def ensure_default_admin() -> None:
 
         # Seed standard signatory/workflow test accounts
         seed_accounts = [
-            ("faculty_tano", "Engr. Elwin Jay J. Tano", "faculty", ["review_committee"], "Faculty Member", "EE"),
-            ("faculty_basan", "Engr. Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
-            ("faculty_arenga", "Engr. Delan Zoe H. Arenga", "faculty", ["associate_dean", "review_committee"], "Associate Dean, College of Engineering", "ECE"),
-            ("faculty_ravida", "Engr. Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
-            ("faculty_claro", "Engr. Charito O. Claro", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
-            ("qahead_ce", "Engr. College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
-            ("dean_cataytay", "Engr. Joie D. Cataytay, Ph.D.", "faculty", ["dean", "review_committee"], "Dean, College of Engineering", "*"),
+            ("faculty_tano", "Elwin Jay J. Tano", "faculty", ["review_committee"], "Faculty Member", "EE"),
+            ("faculty_basan", "Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
+            ("faculty_arenga", "Delan Zoe H. Arenga", "faculty", ["associate_dean", "review_committee"], "Associate Dean, College of Engineering", "ECE"),
+            ("faculty_ravida", "Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
+            ("faculty_claro", "Charito O. Claro", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
+            ("qahead_ce", "College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
+            ("dean_cataytay", "Joie D. Cataytay", "faculty", ["dean", "review_committee"], "Dean, College of Engineering", "*"),
             ("staff_office", "Academic Affairs Staff", "staff", ["staff"], "Academic Programs Staff (Oversight)", "*"),
         ]
         for uname, fname, role, w_roles, pos, prog in seed_accounts:

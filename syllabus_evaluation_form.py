@@ -299,8 +299,8 @@ def generate_syllabus_evaluation_pdf(doc: Dict[str, Any], user_info: Optional[Di
         "department": _clean_text(meta.get("department") or "Department of Electrical Engineering"),
         "semester_ay": _clean_text(meta.get("semester_ay") or doc.get("semester_ay") or "1st Semester, A.Y. 2026-2027"),
         "credit_units": _clean_text(meta.get("credit_units") or "3.0 Units"),
-        "dean_name": _clean_text(meta.get("dean_name") or "Engr. Joie D. Cataytay, Ph.D."),
-        "program_head": _clean_text(meta.get("program_head") or "Engr. Charito O. Claro, PECE"),
+        "dean_name": _clean_text(meta.get("dean_name") or "Joie D. Cataytay"),
+        "program_head": _clean_text(meta.get("program_head") or "Charito O. Claro"),
     }
     _unused_meta = {
         "course_code": str(meta.get("course_code") or doc.get("course_code") or "EE 211").strip(),
@@ -310,8 +310,8 @@ def generate_syllabus_evaluation_pdf(doc: Dict[str, Any], user_info: Optional[Di
         "department": str(meta.get("department") or "Department of Electrical Engineering").strip(),
         "semester_ay": str(meta.get("semester_ay") or doc.get("semester_ay") or "1st Semester, A.Y. 2026-2027").strip(),
         "credit_units": str(meta.get("credit_units") or "3.0 Units").strip(),
-        "dean_name": str(meta.get("dean_name") or "Engr. Joie D. Cataytay, Ph.D.").strip(),
-        "program_head": str(meta.get("program_head") or "Engr. Charito O. Claro").strip(),
+        "dean_name": str(meta.get("dean_name") or "Joie D. Cataytay").strip(),
+        "program_head": str(meta.get("program_head") or "Charito O. Claro").strip(),
     }
 
     pdf = USePEvalPDF(course_meta)

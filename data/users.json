@@ -17,11 +17,11 @@
     "password_hash": "scrypt:32768:8:1$McPGeHsM4jgtWLyu$2c5758f4eaa930e986d6a5d8d409f7486514ecfb58070c839c31ab11f9a2c6471f75ebe6dd02d4cc7477cac62bd5dc1d21e22908ab31fff666208075f1f76059",
     "must_change_password": false,
     "created_at": "2026-10-23T00:56:06",
-    "last_login": "2026-10-29T18:07:09",
+    "last_login": "2026-10-29T18:48:51",
     "email": "system.administrator@usep.edu.ph"
   },
   "faculty_tano": {
-    "full_name": "Engr. Elwin Jay J. Tano",
+    "full_name": "Elwin Jay J. Tano",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -34,12 +34,12 @@
     "password_hash": "scrypt:32768:8:1$eJQDeHv7VP2x0C7Z$d258c4fda80e3a89588e3b2062ab7cd9b2c978fd407bddf2b6c1627337d7c67eb2d1f0a6692588b953502bc3e802ce0738c18b7f13981684e1cd3a6c20575cd0",
     "must_change_password": false,
     "created_at": "2026-10-23T15:27:35",
-    "last_login": "2026-10-29T14:51:04",
+    "last_login": "2026-10-29T18:49:12",
     "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     "email": "elwin.tano@usep.edu.ph"
   },
   "qahead_ce": {
-    "full_name": "Engr. College QA Head",
+    "full_name": "College QA Head",
     "role": "faculty",
     "workflow_roles": [
       "qa_head"
@@ -58,7 +58,7 @@
     "has_signature": true
   },
   "dean_cataytay": {
-    "full_name": "Engr. Joie D. Cataytay, Ph.D.",
+    "full_name": "Joie D. Cataytay",
     "role": "faculty",
     "workflow_roles": [
       "dean",
@@ -78,7 +78,7 @@
     "has_signature": true
   },
   "faculty_ramos": {
-    "full_name": "Engr. Ramil Alvin B. Ramos",
+    "full_name": "Ramil Alvin B. Ramos",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -95,7 +95,7 @@
     "email": "ramil.ramos@usep.edu.ph"
   },
   "faculty_mabunga": {
-    "full_name": "Engr. Donley Glenn Mabunga",
+    "full_name": "Donley Glenn Mabunga",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -112,7 +112,7 @@
     "email": "donley.mabunga@usep.edu.ph"
   },
   "faculty_lolo": {
-    "full_name": "Engr. Jayson P. Lolo",
+    "full_name": "Jayson P. Lolo",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -127,7 +127,7 @@
     "email": "jayson.lolo@usep.edu.ph"
   },
   "faculty_canda": {
-    "full_name": "Engr. Roberto I. Canda",
+    "full_name": "Roberto I. Canda",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -144,7 +144,7 @@
     "email": "roberto.canda@usep.edu.ph"
   },
   "faculty_simpao": {
-    "full_name": "Engr. Filmann T. Simpao",
+    "full_name": "Filmann T. Simpao",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -161,7 +161,7 @@
     "email": "filmann.simpao@usep.edu.ph"
   },
   "faculty_ucat": {
-    "full_name": "Engr. Rosanna C. Ucat",
+    "full_name": "Rosanna C. Ucat",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
@@ -179,7 +179,7 @@
     "email": "rosanna.ucat@usep.edu.ph"
   },
   "faculty_villasencio_e": {
-    "full_name": "Engr. Ernani Villasencio",
+    "full_name": "Ernani Villasencio",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -196,7 +196,7 @@
     "email": "ernani.villasencio@usep.edu.ph"
   },
   "faculty_andripa": {
-    "full_name": "Engr. Kim Andripa",
+    "full_name": "Kim Andripa",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -211,7 +211,7 @@
     "email": "kim.andripa@usep.edu.ph"
   },
   "faculty_camposo": {
-    "full_name": "Engr. Cherry Vic O. Camposo",
+    "full_name": "Cherry Vic O. Camposo",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -226,7 +226,7 @@
     "email": "cherry.camposo@usep.edu.ph"
   },
   "faculty_simplicio": {
-    "full_name": "Engr. Hans Marc C. Simplicio",
+    "full_name": "Hans Marc C. Simplicio",
     "role": "faculty",
     "workflow_roles": [
       "staff"
@@ -243,7 +243,7 @@
     "email": "hans.simplicio@usep.edu.ph"
   },
   "faculty_estrera": {
-    "full_name": "Engr. Aquileo B. Estrera",
+    "full_name": "Aquileo B. Estrera",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -260,7 +260,7 @@
     "email": "aquileo.estrera@usep.edu.ph"
   },
   "faculty_gonzales": {
-    "full_name": "Engr. Christopher C. Gonzales",
+    "full_name": "Christopher C. Gonzales",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -277,7 +277,7 @@
     "email": "christopher.gonzales@usep.edu.ph"
   },
   "faculty_payao": {
-    "full_name": "Engr. John Nerie L. Payao",
+    "full_name": "John Nerie L. Payao",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -294,7 +294,7 @@
     "email": "john.payao@usep.edu.ph"
   },
   "faculty_rebuta": {
-    "full_name": "Engr. Dennis G. Rebuta",
+    "full_name": "Dennis G. Rebuta",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -311,7 +311,7 @@
     "email": "dennis.rebuta@usep.edu.ph"
   },
   "faculty_guarin": {
-    "full_name": "Engr. Glemar O. Guarin",
+    "full_name": "Glemar O. Guarin",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -326,7 +326,7 @@
     "email": "glemar.guarin@usep.edu.ph"
   },
   "faculty_bungao": {
-    "full_name": "Engr. Pherly Grace I. Bungao",
+    "full_name": "Pherly Grace I. Bungao",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -343,7 +343,7 @@
     "email": "pherly.bungao@usep.edu.ph"
   },
   "faculty_canada": {
-    "full_name": "Engr. Kevin G. Ca\u00f1ada",
+    "full_name": "Kevin G. Ca\u00f1ada",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -360,7 +360,7 @@
     "email": "kevin.ada@usep.edu.ph"
   },
   "faculty_masancay": {
-    "full_name": "Engr. Fillmore D. Masancay",
+    "full_name": "Fillmore D. Masancay",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
@@ -378,7 +378,7 @@
     "email": "fillmore.masancay@usep.edu.ph"
   },
   "faculty_abas": {
-    "full_name": "Engr. Niron James Abas",
+    "full_name": "Niron James Abas",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -393,7 +393,7 @@
     "email": "niron.abas@usep.edu.ph"
   },
   "faculty_calibo": {
-    "full_name": "Engr. Norvein L. Calibo",
+    "full_name": "Norvein L. Calibo",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -410,7 +410,7 @@
     "email": "norvein.calibo@usep.edu.ph"
   },
   "faculty_pagalaman": {
-    "full_name": "Engr. Mark John S. Pag-alaman",
+    "full_name": "Mark John S. Pag-alaman",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
@@ -428,7 +428,7 @@
     "email": "mark.alaman@usep.edu.ph"
   },
   "faculty_rapal": {
-    "full_name": "Engr. Elma Jane D. Rapal",
+    "full_name": "Elma Jane D. Rapal",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -445,7 +445,7 @@
     "email": "elma.rapal@usep.edu.ph"
   },
   "faculty_castillo": {
-    "full_name": "Engr. Lorel M. Castillo",
+    "full_name": "Lorel M. Castillo",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -529,7 +529,7 @@
     "email": "lester.rejas@usep.edu.ph"
   },
   "faculty_aznar": {
-    "full_name": "Engr. Bonifacio T. Aznar Jr.",
+    "full_name": "Bonifacio T. Aznar Jr.",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
@@ -547,7 +547,7 @@
     "email": "bonifacio.jr@usep.edu.ph"
   },
   "faculty_caparida": {
-    "full_name": "Engr. Maria Cynthia Donita Caparida",
+    "full_name": "Maria Cynthia Donita Caparida",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -564,7 +564,7 @@
     "email": "maria.caparida@usep.edu.ph"
   },
   "faculty_esberto": {
-    "full_name": "Engr. Ma. Dely P. Esberto",
+    "full_name": "Ma. Dely P. Esberto",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -581,7 +581,7 @@
     "email": "ma.esberto@usep.edu.ph"
   },
   "faculty_lawas": {
-    "full_name": "Engr. Jeremias M. Lawas",
+    "full_name": "Jeremias M. Lawas",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -598,7 +598,7 @@
     "email": "jeremias.lawas@usep.edu.ph"
   },
   "faculty_ledesma": {
-    "full_name": "Engr. Reymar S. Ledesma",
+    "full_name": "Reymar S. Ledesma",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -615,7 +615,7 @@
     "email": "reymar.ledesma@usep.edu.ph"
   },
   "faculty_torrico": {
-    "full_name": "Engr. Eduardo S. Torrico Jr.",
+    "full_name": "Eduardo S. Torrico Jr.",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -632,7 +632,7 @@
     "email": "eduardo.jr@usep.edu.ph"
   },
   "faculty_reconalla": {
-    "full_name": "Engr. Dalia M. Reconalla",
+    "full_name": "Dalia M. Reconalla",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -649,7 +649,7 @@
     "email": "dalia.reconalla@usep.edu.ph"
   },
   "faculty_lim": {
-    "full_name": "Engr. Ernesto B. Lim Jr.",
+    "full_name": "Ernesto B. Lim Jr.",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -664,7 +664,7 @@
     "email": "ernesto.jr@usep.edu.ph"
   },
   "faculty_ramas": {
-    "full_name": "Engr. Florizel Ramas",
+    "full_name": "Florizel Ramas",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -679,7 +679,7 @@
     "email": "florizel.ramas@usep.edu.ph"
   },
   "faculty_villasencio_m": {
-    "full_name": "Engr. Maria Cynthia Donita Villasencio",
+    "full_name": "Maria Cynthia Donita Villasencio",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -694,7 +694,7 @@
     "email": "maria.villasencio@usep.edu.ph"
   },
   "faculty_arcega": {
-    "full_name": "Engr. Sheena S. Arcega",
+    "full_name": "Sheena S. Arcega",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
@@ -713,7 +713,7 @@
     "email": "sheena.arcega@usep.edu.ph"
   },
   "faculty_arnuco": {
-    "full_name": "Engr. Rheanie R. Arnuco",
+    "full_name": "Rheanie R. Arnuco",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -730,7 +730,7 @@
     "email": "rheanie.arnuco@usep.edu.ph"
   },
   "faculty_cedeno": {
-    "full_name": "Engr. Kathleen C. Cede\u00f1o",
+    "full_name": "Kathleen C. Cede\u00f1o",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -747,7 +747,7 @@
     "email": "kathleen.cede@usep.edu.ph"
   },
   "faculty_dy": {
-    "full_name": "Engr. Jayvee Moore S. Dy",
+    "full_name": "Jayvee Moore S. Dy",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -762,7 +762,7 @@
     "email": "jayvee.dy@usep.edu.ph"
   },
   "faculty_abenoja": {
-    "full_name": "Engr. Ryan M. Abenoja",
+    "full_name": "Ryan M. Abenoja",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -779,7 +779,7 @@
     "email": "ryan.abenoja@usep.edu.ph"
   },
   "faculty_bayron": {
-    "full_name": "Engr. Roland R. Bayron",
+    "full_name": "Roland R. Bayron",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -796,7 +796,7 @@
     "email": "roland.bayron@usep.edu.ph"
   },
   "faculty_cantones": {
-    "full_name": "Engr. Ruben V. Cantones",
+    "full_name": "Ruben V. Cantones",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -813,7 +813,7 @@
     "email": "ruben.cantones@usep.edu.ph"
   },
   "faculty_chetangyie": {
-    "full_name": "Engr. Alona J. Che-Tangyie",
+    "full_name": "Alona J. Che-Tangyie",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -830,7 +830,7 @@
     "email": "alona.tangyie@usep.edu.ph"
   },
   "faculty_cogay": {
-    "full_name": "Engr. Sheila C. Cogay",
+    "full_name": "Sheila C. Cogay",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -847,7 +847,7 @@
     "email": "sheila.cogay@usep.edu.ph"
   },
   "faculty_limbaro": {
-    "full_name": "Engr. Honeybee S. Limbaro",
+    "full_name": "Honeybee S. Limbaro",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -864,7 +864,7 @@
     "email": "honeybee.limbaro@usep.edu.ph"
   },
   "faculty_lusares": {
-    "full_name": "Engr. Ronnie O. Lusares",
+    "full_name": "Ronnie O. Lusares",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -881,7 +881,7 @@
     "email": "ronnie.lusares@usep.edu.ph"
   },
   "faculty_montepio": {
-    "full_name": "Engr. Roger C. Montepio, Ph.D.",
+    "full_name": "Roger C. Montepio",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -898,7 +898,7 @@
     "email": "roger.montepio@usep.edu.ph"
   },
   "faculty_parenas": {
-    "full_name": "Engr. Renato C. Pare\u00f1as",
+    "full_name": "Renato C. Pare\u00f1as",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -915,7 +915,7 @@
     "email": "renato.as@usep.edu.ph"
   },
   "faculty_sevilla": {
-    "full_name": "Engr. Teofilo Sevilla Jr.",
+    "full_name": "Teofilo Sevilla Jr.",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -932,7 +932,7 @@
     "email": "teofilo.jr@usep.edu.ph"
   },
   "faculty_agato": {
-    "full_name": "Engr. Kristine Faith Agato",
+    "full_name": "Kristine Faith Agato",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -947,7 +947,7 @@
     "email": "kristine.agato@usep.edu.ph"
   },
   "faculty_amplayo": {
-    "full_name": "Engr. Ireneo P. Amplayo",
+    "full_name": "Ireneo P. Amplayo",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -962,7 +962,7 @@
     "email": "ireneo.amplayo@usep.edu.ph"
   },
   "faculty_generalao": {
-    "full_name": "Engr. Irvin C. Generalao",
+    "full_name": "Irvin C. Generalao",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -977,7 +977,7 @@
     "email": "irvin.generalao@usep.edu.ph"
   },
   "faculty_millan": {
-    "full_name": "Engr. Filbert John Millan",
+    "full_name": "Filbert John Millan",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -992,7 +992,7 @@
     "email": "filbert.millan@usep.edu.ph"
   },
   "faculty_rofosala": {
-    "full_name": "Engr. Ben-Hur C. Rofosala",
+    "full_name": "Ben-Hur C. Rofosala",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -1007,7 +1007,7 @@
     "email": "ben.rofosala@usep.edu.ph"
   },
   "faculty_villacuer": {
-    "full_name": "Engr. Aldrin I. Villacuer",
+    "full_name": "Aldrin I. Villacuer",
     "role": "faculty",
     "workflow_roles": [],
     "position_title": "Part-Time Faculty Member",
@@ -1112,7 +1112,7 @@
     "email": "maxwell.jr@usep.edu.ph"
   },
   "faculty_basan": {
-    "full_name": "Engr. Nikka Samantha A. Basan",
+    "full_name": "Nikka Samantha A. Basan",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -1131,7 +1131,7 @@
     "has_signature": true
   },
   "faculty_claro": {
-    "full_name": "Engr. Charito O. Claro",
+    "full_name": "Charito O. Claro",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
@@ -1145,13 +1145,13 @@
     "password_hash": "scrypt:32768:8:1$K9jmpKXZECqjTa6n$df5ac5114c4ae49acb0886fdd1fc1689132d7889d4fbda9d91b48c946ccb9f1a3322a636df91a39dd9661b94750a4b5f481497908b934c564bd4f257e8b06b51",
     "must_change_password": false,
     "created_at": "2026-10-24T06:42:46",
-    "last_login": "2026-10-29T11:48:38",
+    "last_login": "2026-10-29T18:17:00",
     "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     "email": "charito.claro@usep.edu.ph",
     "has_signature": true
   },
   "faculty_arenga": {
-    "full_name": "Engr. Delan Zoe H. Arenga",
+    "full_name": "Delan Zoe H. Arenga",
     "role": "faculty",
     "workflow_roles": [
       "associate_dean",
@@ -1171,7 +1171,7 @@
     "has_signature": true
   },
   "faculty_ravida": {
-    "full_name": "Engr. Kim P. Ravida",
+    "full_name": "Kim P. Ravida",
     "role": "faculty",
     "workflow_roles": [
       "review_committee"
@@ -1190,7 +1190,7 @@
     "has_signature": true
   },
   "faculty_tongson": {
-    "full_name": "Engr. Randy B. Tongson",
+    "full_name": "Randy B. Tongson",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
@@ -1208,7 +1208,7 @@
     "email": "randy.tongson@usep.edu.ph"
   },
   "faculty_tuyogon": {
-    "full_name": "Engr. Ruel Tuyogon",
+    "full_name": "Ruel Tuyogon",
     "role": "faculty",
     "workflow_roles": [
       "program_head",
