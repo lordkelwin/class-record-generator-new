@@ -490,7 +490,7 @@ def install_auth(app) -> None:
     def _require_login():
         endpoint = request.endpoint or ""
         path = request.path or ""
-        if endpoint in PUBLIC_ENDPOINTS or path.startswith("/student/login") or path.startswith("/static"):
+        if endpoint in PUBLIC_ENDPOINTS or path.startswith("/student/login") or path.startswith("/static") or path == "/api/roster-template.csv":
             return None
         user = current_user()
         is_api = path.startswith("/api/")
@@ -506,7 +506,7 @@ def install_auth(app) -> None:
             if (
                 path.startswith("/student")
                 or path.startswith("/api/student")
-                or (path.startswith("/api/courses/") and ("export" in path or "acknowledgment" in path))
+                or path.startswith("/api/courses/")
             ):
                 return None
             return redirect(url_for("student_dashboard"))

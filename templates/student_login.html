@@ -69,10 +69,11 @@
     <div>When your faculty instructor imports or updates the class record roster, your enrolled subjects are automatically linked to your Student ID. Syllabi approved by QA will appear ready for your electronic signature.</div>
   </div>
 
-  <div style="text-align:center; margin-top:20px; font-size:0.82rem;">
-    <span style="color:#64748b;">Are you a faculty member or administrator?</span><br />
-    <a href="{{ url_for('auth.login') }}" style="color:#7f1d1d; font-weight:700; text-decoration:none;">
-      👔 Go to Faculty &amp; Staff Studio Login &rarr;
+  <div style="margin-top:22px; padding:14px; background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; text-align:center;">
+    <div style="font-weight:700; color:#9a3412; font-size:0.88rem; margin-bottom:3px;">👔 Faculty Member or Academic Administrator?</div>
+    <div style="font-size:0.78rem; color:#b45309; margin-bottom:10px;">Return to the Faculty Studio to create, review, and approve course syllabi.</div>
+    <a href="{{ url_for('auth.login') }}" style="display:inline-block; padding:9px 20px; background:#7f1d1d; color:#ffffff; font-weight:700; font-size:0.85rem; border-radius:6px; text-decoration:none; box-shadow:0 1px 3px rgba(0,0,0,0.12); transition:background 0.15s ease;">
+      &larr; Back to Faculty Portal
     </a>
   </div>
 {% endblock %}

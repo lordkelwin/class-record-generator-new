@@ -382,12 +382,15 @@
                   {% endif %}
                 </div>
 
-                <div style="display:flex; gap:8px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
-                  <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.78rem;">
-                    📄 View Syllabus
+                <div style="display:flex; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0; flex-wrap:wrap;">
+                  <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;" onclick="openReviewSyllabusModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}')">
+                    🔍 Review Syllabus
+                  </button>
+                  <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:0.85; justify-content:center; font-size:0.76rem;" title="Download complete official syllabus PDF">
+                    📄 View PDF
                   </a>
-                  <button class="btn-sp btn-sp-primary" style="flex:1.2; justify-content:center;" onclick="openSignModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}', '{{ c.schedule }}')">
-                    ✍️ Sign Acknowledgment
+                  <button class="btn-sp btn-sp-primary" style="flex:1.15; justify-content:center; font-size:0.78rem;" onclick="openSignModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}', '{{ c.schedule }}')">
+                    ✍️ Sign Ack
                   </button>
                 </div>
               </div>
@@ -430,6 +433,11 @@
                   <div style="font-size:0.76rem; color:#166534; font-weight:600; margin-top:6px; background:#dcfce7; padding:4px 8px; border-radius:4px;">
                     Signed on: {{ c.acknowledged_at or 'Verified' }}
                   </div>
+                  {% if c.comment %}
+                    <div style="margin-top:6px; padding:6px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid #16a34a; border-radius:4px; font-size:0.74rem; color:#334155;">
+                      <strong style="color:#166534;">💬 My Feedback / Remarks:</strong> <em>"{{ c.comment }}"</em>
+                    </div>
+                  {% endif %}
                 </div>
 
                 <div style="display:flex; gap:8px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
@@ -533,6 +541,14 @@
           </div>
         </div>
 
+        <div style="margin-top:14px;">
+          <label for="studentComment" style="display:block; font-weight:700; font-size:0.84rem; margin-bottom:4px; color:#1e293b;">
+            💬 Comments / Feedback on Syllabus (Optional):
+          </label>
+          <textarea id="studentComment" rows="2" placeholder="Share any feedback, questions regarding policies, or remarks for your instructor..." style="width:100%; padding:8px 10px; font-size:0.84rem; border:1px solid #cbd5e1; border-radius:6px; font-family:inherit; box-sizing:border-box; resize:vertical;"></textarea>
+          <span style="font-size:0.72rem; color:#64748b; display:block; margin-top:2px;">Your instructor and academic administrators will be able to review your feedback.</span>
+        </div>
+
         <div style="margin-top:18px;">
           <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#334155; cursor:pointer;">
             <input type="checkbox" id="chkConfirmSign" style="margin-top:3px;" />
@@ -543,6 +559,34 @@
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; border-top:1px solid #e2e8f0; padding-top:14px;">
           <button type="button" class="btn-sp btn-sp-outline" onclick="closeSignModal()">Cancel</button>
           <button type="button" class="btn-sp btn-sp-primary" id="btnSubmitSign" onclick="submitCourseAcknowledgment()">Submit Signed Acknowledgment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Syllabus Quick Review Modal -->
+  <div class="sp-modal-backdrop" id="reviewSyllabusBackdrop">
+    <div class="sp-modal" style="max-width:780px;">
+      <div style="padding:16px 20px; background:#1e293b; color:#ffffff; border-radius:9px 9px 0 0; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h3 style="margin:0; font-size:1.05rem; font-weight:700;" id="reviewModalTitle">Course Syllabus Review</h3>
+          <div style="font-size:0.75rem; color:#94a3b8;" id="reviewModalSubtitle"></div>
+        </div>
+        <button onclick="closeReviewSyllabusModal()" style="background:none; border:none; color:#ffffff; font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div style="padding:20px; max-height:72vh; overflow-y:auto;" id="reviewModalBody">
+        <div style="text-align:center; padding:30px; color:#64748b;">Loading course syllabus details...</div>
+      </div>
+      <div style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; border-radius:0 0 9px 9px; flex-wrap:wrap; gap:10px;">
+        <a id="reviewPdfLink" href="#" target="_blank" class="btn-sp btn-sp-outline" style="font-size:0.78rem;">
+          📄 Open Full PDF in New Tab
+        </a>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-sp btn-sp-outline" onclick="closeReviewSyllabusModal()">Close</button>
+          <button type="button" class="btn-sp btn-sp-primary" id="btnProceedToSignFromReview" onclick="proceedToSignFromReview()">
+            ✍️ Proceed to Sign Acknowledgment
+          </button>
         </div>
       </div>
     </div>
@@ -674,6 +718,8 @@
       document.getElementById("modalCourseInfo").textContent = `${code} - ${title}`;
       document.getElementById("modalFaculty").textContent = faculty || "Faculty Instructor";
       document.getElementById("chkConfirmSign").checked = false;
+      const commentInput = document.getElementById("studentComment");
+      if (commentInput) commentInput.value = "";
       document.getElementById("signModalBackdrop").style.display = "flex";
 
       if (signPad) {
@@ -727,12 +773,14 @@
       btn.textContent = "Submitting...";
 
       try {
+        const commentVal = (document.getElementById("studentComment")?.value || "").trim();
         const res = await fetch("/api/student/sign-acknowledgment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             course_id: activeSigningCourseId,
-            signature_data: sigData
+            signature_data: sigData,
+            comment: commentVal
           })
         });
 
@@ -808,6 +856,105 @@
         alert("An error occurred while saving signature.");
       }
     }
-  </script>
+  
+    let activeReviewCourseData = null;
+
+    async function openReviewSyllabusModal(courseId, code, title, faculty) {
+      document.getElementById("reviewModalTitle").textContent = `${code} - ${title}`;
+      document.getElementById("reviewModalSubtitle").textContent = `Faculty: ${faculty || 'Instructor'}`;
+      document.getElementById("reviewPdfLink").href = `/api/courses/${courseId}/export-pdf`;
+      document.getElementById("reviewModalBody").innerHTML = '<div style="text-align:center; padding:30px; color:#64748b;">Loading course syllabus details...</div>';
+      document.getElementById("reviewSyllabusBackdrop").style.display = "flex";
+
+      activeReviewCourseData = { courseId, code, title, faculty };
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}`);
+        if (!res.ok) throw new Error("Failed to load course details");
+        const course = await res.json();
+        renderReviewSyllabusContent(course);
+      } catch (e) {
+        document.getElementById("reviewModalBody").innerHTML = `<div style="color:#b91c1c; padding:20px; text-align:center;">Could not load syllabus preview: ${e.message}. You can view the full PDF using the button below.</div>`;
+      }
+    }
+
+    function closeReviewSyllabusModal() {
+      document.getElementById("reviewSyllabusBackdrop").style.display = "none";
+    }
+
+    function proceedToSignFromReview() {
+      if (!activeReviewCourseData) return;
+      const { courseId, code, title, faculty } = activeReviewCourseData;
+      closeReviewSyllabusModal();
+      openSignModal(courseId, code, title, faculty, '');
+    }
+
+    function renderReviewSyllabusContent(doc) {
+      const bp = doc.blueprint || {};
+      const meta = bp.metadata || {};
+      const clos = bp.clos || [];
+      const assess = bp.assessment_tasks || bp.tasks || [];
+      const policies = bp.classroom_policies || [];
+
+      let html = `
+        <div style="margin-bottom:16px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; font-size:0.83rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+            <div><strong>Program:</strong> ${escapeHtml(doc.program_name || meta.program_name || 'Engineering')}</div>
+            <div><strong>Credit Units:</strong> ${escapeHtml(doc.credit_units || meta.credit_units || '3 Units')}</div>
+            <div><strong>Prerequisite(s):</strong> ${escapeHtml(doc.prerequisites || meta.prerequisites || 'None')}</div>
+            <div><strong>Term / AY:</strong> ${escapeHtml(doc.semester_ay || meta.semester_ay || 'First Semester, AY 2026-2027')}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <h4 style="margin:0 0 6px; font-size:0.9rem; color:#1e293b; border-bottom:1.5px solid #cbd5e1; padding-bottom:4px;">I. Course Description</h4>
+          <div style="font-size:0.82rem; color:#334155; line-height:1.5;">${escapeHtml(doc.course_description || meta.course_description || 'No description provided.')}</div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <h4 style="margin:0 0 6px; font-size:0.9rem; color:#1e293b; border-bottom:1.5px solid #cbd5e1; padding-bottom:4px;">IV. Course Learning Outcomes (CLOs)</h4>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${clos.length ? clos.map((c, i) => `
+              <div style="padding:6px 10px; background:#f1f5f9; border-radius:4px; font-size:0.8rem;">
+                <strong style="color:#7f1d1d;">${escapeHtml(c.code || `CLO ${i+1}`)}:</strong> ${escapeHtml(c.statement || c.description || '')}
+              </div>
+            `).join('') : '<div style="font-size:0.8rem; color:#94a3b8; font-style:italic;">No CLOs defined.</div>'}
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <h4 style="margin:0 0 6px; font-size:0.9rem; color:#1e293b; border-bottom:1.5px solid #cbd5e1; padding-bottom:4px;">VI &amp; VIII. Assessment &amp; Grading Policy</h4>
+          <div style="font-size:0.82rem; color:#334155; margin-bottom:6px;">
+            Passing Cutoff Score: <strong>${escapeHtml(String(meta.passing_percentage || 75))}%</strong> (Base-50 Transmutation Standard)
+          </div>
+          ${assess.length ? `
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+              <thead><tr style="background:#f1f5f9; text-align:left;"><th style="padding:4px 8px;">Activity</th><th style="padding:4px 8px;">CLO Mapping</th><th style="padding:4px 8px;">Weight</th></tr></thead>
+              <tbody>${assess.map(a => `<tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:4px 8px;">${escapeHtml(a.name || a.label || '')}</td><td style="padding:4px 8px;">${escapeHtml(a.clo_code || a.clo || '')}</td><td style="padding:4px 8px;">${escapeHtml(String(a.weight_percent || a.weight || ''))}%</td></tr>`).join('')}</tbody>
+            </table>
+          ` : ''}
+        </div>
+
+        <div>
+          <h4 style="margin:0 0 6px; font-size:0.9rem; color:#1e293b; border-bottom:1.5px solid #cbd5e1; padding-bottom:4px;">XI. Classroom &amp; Academic Policies</h4>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${policies.length ? policies.map(p => `
+              <div style="padding:6px 10px; background:#fffdf5; border-left:3px solid #f59e0b; border-radius:3px; font-size:0.79rem; color:#334155;">
+                <strong>${escapeHtml(p.title || p.category || 'Policy')}:</strong> ${escapeHtml(p.content || p.description || '')}
+              </div>
+            `).join('') : '<div style="font-size:0.8rem; color:#64748b;">Standard University academic integrity, attendance, and grading policies apply.</div>'}
+          </div>
+        </div>
+      `;
+
+      document.getElementById("reviewModalBody").innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+</script>
 </body>
 </html>

@@ -1635,8 +1635,14 @@
             </div>
           </div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportAcknowledgmentPdf()">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline-success btn-sm" onclick="openImportRosterModal()" title="Upload class roster via CSV or Excel">
+            📥 Import Student List (.csv / .xlsx)
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openManualStudentModal()" title="Manually encode an enrolled student">
+            ➕ Manually Encode Student
+          </button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportAcknowledgmentPdf()" title="Download official controlled form FM-USeP-MID-07">
             📄 Download FM-USeP-MID-07 (.pdf)
           </button>
         </div>
@@ -13427,43 +13433,75 @@
       const res = await fetch(`/api/courses/${currentCourseId}/student-acknowledgment`);
       if (!res.ok) return;
       const data = await res.json();
-      const acks = data.acknowledgments || [];
-      const totalStud = data.total_students || 0;
-      const count = acks.length;
+      const roster = data.roster || [];
+      const totalStud = data.total_students || roster.length;
+      const count = data.total_acknowledged || roster.filter(r => r.is_acknowledged).length;
 
       if (progressEl) {
         if (totalStud > 0) {
           const pct = Math.round((count / totalStud) * 100);
-          progressEl.innerHTML = `Student Acknowledgment Status: <strong>${count} of ${totalStud} students acknowledged (${pct}%)</strong>`;
+          progressEl.innerHTML = `Student Acknowledgment Status: <strong>${count} of ${totalStud} enrolled students acknowledged (${pct}%)</strong>`;
         } else {
-          progressEl.innerHTML = `Student Acknowledgment Status: <strong>${count} student signature(s) recorded</strong>`;
+          progressEl.innerHTML = `Student Acknowledgment Status: <span style="color:#64748b; font-weight:normal;">No students enrolled yet. Use <strong>Import Student List</strong> or <strong>Manually Encode</strong> above.</span>`;
         }
       }
 
       if (container) {
-        if (!acks.length) {
-          container.innerHTML = '<div style="padding:14px; text-align:center; color:#94a3b8; font-size:0.78rem; font-style:italic;">No student acknowledgment signatures recorded yet. Students can sign above or via Student Portal.</div>';
+        if (!roster.length) {
+          container.innerHTML = `
+            <div style="padding:22px; text-align:center; color:#64748b; font-size:0.8rem;">
+              <div style="font-size:1.6rem; margin-bottom:6px;">📋</div>
+              <div style="font-weight:700; color:#1e293b; margin-bottom:4px;">No students enrolled in this course roster yet</div>
+              <div style="margin-bottom:12px;">Import a class list (.csv/.xlsx) or manually encode enrolled students so they can view, acknowledge, and comment on the syllabus in their Student Portal.</div>
+              <div style="display:flex; justify-content:center; gap:8px;">
+                <button type="button" class="btn btn-sm btn-success" onclick="openImportRosterModal()">📥 Import Student List</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openManualStudentModal()">➕ Encode Student Manually</button>
+              </div>
+            </div>
+          `;
         } else {
           container.innerHTML = `
             <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
               <thead>
                 <tr style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; text-align:left; color:#334155;">
-                  <th style="padding:6px 10px;">#</th>
-                  <th style="padding:6px 10px;">Student ID</th>
+                  <th style="padding:6px 10px; width:30px;">#</th>
+                  <th style="padding:6px 10px; width:110px;">Student ID</th>
                   <th style="padding:6px 10px;">Student Name</th>
-                  <th style="padding:6px 10px;">Timestamp</th>
-                  <th style="padding:6px 10px;">Digital Signature</th>
+                  <th style="padding:6px 10px; width:110px;">Program / Sec</th>
+                  <th style="padding:6px 10px; text-align:center; width:100px;">Status</th>
+                  <th style="padding:6px 10px; width:130px;">Acknowledged At</th>
+                  <th style="padding:6px 10px; width:110px;">Digital Signature</th>
+                  <th style="padding:6px 10px;">Student Feedback / Comments</th>
+                  <th style="padding:6px 10px; text-align:center; width:50px;">Action</th>
                 </tr>
               </thead>
               <tbody>
-                ${acks.map((a, idx) => `
-                  <tr style="border-bottom:1px solid #e2e8f0;">
+                ${roster.map((r, idx) => `
+                  <tr style="border-bottom:1px solid #e2e8f0; ${r.is_acknowledged ? 'background:#f0fdf4;' : ''}">
                     <td style="padding:6px 10px; color:#64748b;">${idx + 1}</td>
-                    <td style="padding:6px 10px; font-weight:700;">${escapeHtml(a.student_id || '—')}</td>
-                    <td style="padding:6px 10px; font-weight:600; color:#0f172a;">${escapeHtml(a.student_name || '')}</td>
-                    <td style="padding:6px 10px; color:#475569;">${formatWorkflowTimestamp(a.acknowledged_at || a.date)}</td>
+                    <td style="padding:6px 10px; font-weight:700; color:#0f172a;">${escapeHtml(r.student_id || '—')}</td>
+                    <td style="padding:6px 10px; font-weight:600; color:#0f172a;">${escapeHtml(r.name || '')}</td>
+                    <td style="padding:6px 10px; color:#475569;">${escapeHtml(r.program_year || '—')}</td>
+                    <td style="padding:6px 10px; text-align:center;">
+                      ${r.is_acknowledged 
+                        ? '<span class="badge" style="background:#dcfce7; color:#166534; font-weight:700; padding:2px 8px; border-radius:10px; font-size:0.7rem;">✓ Signed</span>' 
+                        : '<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700; padding:2px 8px; border-radius:10px; font-size:0.7rem;">⏳ Pending</span>'}
+                    </td>
+                    <td style="padding:6px 10px; color:#475569;">
+                      ${r.is_acknowledged ? formatWorkflowTimestamp(r.acknowledged_at) : '<span style="color:#94a3b8; font-style:italic;">Awaiting sign-in</span>'}
+                    </td>
                     <td style="padding:6px 10px;">
-                      ${a.signature_data ? `<img src="${a.signature_data}" alt="Signature" style="max-height:28px; max-width:90px; object-fit:contain; border:1px solid #cbd5e1; border-radius:3px; background:#fff; padding:2px;" />` : '<span style="color:#16a34a; font-weight:700;">✓ Verified Electronic Signature</span>'}
+                      ${r.is_acknowledged && r.signature_data 
+                        ? `<img src="${r.signature_data}" alt="Signature" style="max-height:28px; max-width:90px; object-fit:contain; border:1px solid #cbd5e1; border-radius:3px; background:#fff; padding:2px;" />` 
+                        : (r.is_acknowledged ? '<span style="color:#166534; font-weight:700;">✓ Verified E-Signature</span>' : '—')}
+                    </td>
+                    <td style="padding:6px 10px; max-width:240px;">
+                      ${r.comment 
+                        ? `<div style="background:#ffffff; border:1px solid #cbd5e1; border-left:3px solid #0284c7; padding:4px 8px; border-radius:4px; font-size:0.73rem; color:#1e293b; line-height:1.35;">💬 <em>"${escapeHtml(r.comment)}"</em></div>` 
+                        : '<span style="color:#94a3b8; font-style:italic; font-size:0.72rem;">No comments</span>'}
+                    </td>
+                    <td style="padding:6px 10px; text-align:center;">
+                      <button type="button" class="btn btn-sm btn-outline-danger" style="padding:2px 6px; font-size:0.68rem; line-height:1;" onclick="removeStudentFromRoster('${escapeHtml(r.student_id)}')" title="Remove student from roster">✕</button>
                     </td>
                   </tr>
                 `).join('')}
@@ -13604,6 +13642,183 @@
         btn.disabled = false;
         btn.textContent = "Confirm & Seal Acknowledgment";
       }
+    }
+  }
+
+  
+  // -------------------------------------------------------------------------
+  // STUDENT ROSTER MANAGEMENT AT SYLLABUS ACKNOWLEDGMENT STAGE
+  // -------------------------------------------------------------------------
+  function openImportRosterModal() {
+    if (!currentCourseId) {
+      alert("Please select or load an active course first.");
+      return;
+    }
+    const modal = document.getElementById("importRosterModal");
+    if (!modal) return;
+    document.getElementById("rosterFileInput").value = "";
+    document.getElementById("rosterPasteText").value = "";
+    document.getElementById("importRosterStatusMsg").innerHTML = "";
+    modal.style.display = "flex";
+  }
+
+  function closeImportRosterModal() {
+    const modal = document.getElementById("importRosterModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function submitImportRoster() {
+    if (!currentCourseId) return;
+    const fileInput = document.getElementById("rosterFileInput");
+    const pasteText = (document.getElementById("rosterPasteText")?.value || "").trim();
+    const statusMsg = document.getElementById("importRosterStatusMsg");
+    const btn = document.getElementById("btnSubmitRosterImport");
+
+    if (!fileInput.files.length && !pasteText) {
+      alert("Please select a .csv or .xlsx file, or paste student roster records.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Importing & Enrolling...";
+    statusMsg.innerHTML = '<span style="color:#0284c7;">Processing student roster...</span>';
+
+    try {
+      let res;
+      if (fileInput.files.length) {
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        res = await fetch(`/api/courses/${currentCourseId}/roster/import`, {
+          method: "POST",
+          body: formData
+        });
+      } else {
+        res = await fetch(`/api/courses/${currentCourseId}/roster/import`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paste_text: pasteText })
+        });
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        statusMsg.innerHTML = `<span style="color:#b91c1c;">${escapeHtml(data.error || 'Failed to import roster.')}</span>`;
+        return;
+      }
+
+      statusMsg.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ ${escapeHtml(data.message)}</span>`;
+      setTimeout(() => {
+        closeImportRosterModal();
+        loadStudentAcknowledgments();
+      }, 1000);
+    } catch (e) {
+      statusMsg.innerHTML = `<span style="color:#b91c1c;">Error: ${escapeHtml(e.message)}</span>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Upload & Enroll Students";
+    }
+  }
+
+  function openManualStudentModal() {
+    if (!currentCourseId) {
+      alert("Please select or load an active course first.");
+      return;
+    }
+    const modal = document.getElementById("manualStudentModal");
+    if (!modal) return;
+    document.getElementById("manualStudentId").value = "";
+    document.getElementById("manualStudentLastName").value = "";
+    document.getElementById("manualStudentFirstName").value = "";
+    document.getElementById("manualStudentEmail").value = "";
+    
+    // Auto-fill program/section from current course section if available
+    const curSec = document.getElementById("metaSection")?.value || "";
+    document.getElementById("manualStudentProgramYear").value = curSec || "BSEE 3A";
+    document.getElementById("manualStudentStatusMsg").innerHTML = "";
+    modal.style.display = "flex";
+  }
+
+  function closeManualStudentModal() {
+    const modal = document.getElementById("manualStudentModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function submitManualStudent() {
+    if (!currentCourseId) return;
+    const sid = (document.getElementById("manualStudentId")?.value || "").trim();
+    const last = (document.getElementById("manualStudentLastName")?.value || "").trim();
+    const first = (document.getElementById("manualStudentFirstName")?.value || "").trim();
+    const prog = (document.getElementById("manualStudentProgramYear")?.value || "").trim();
+    const email = (document.getElementById("manualStudentEmail")?.value || "").trim();
+    const statusMsg = document.getElementById("manualStudentStatusMsg");
+    const btn = document.getElementById("btnSubmitManualStudent");
+
+    if (!sid) {
+      alert("Student ID Number is required (e.g. 2024-00101).");
+      document.getElementById("manualStudentId")?.focus();
+      return;
+    }
+    if (!last) {
+      alert("Student Last Name is required (e.g. Dela Cruz).");
+      document.getElementById("manualStudentLastName")?.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Enrolling...";
+
+    try {
+      const res = await fetch(`/api/courses/${currentCourseId}/roster/add-student`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          student_id: sid,
+          last_name: last,
+          first_name: first,
+          name: `${last}, ${first}`.trim(),
+          program_year: prog,
+          email: email || `${sid.toLowerCase()}@usep.edu.ph`
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        statusMsg.innerHTML = `<span style="color:#b91c1c;">${escapeHtml(data.error || 'Failed to add student.')}</span>`;
+        return;
+      }
+
+      statusMsg.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ ${escapeHtml(data.message)}</span>`;
+      setTimeout(() => {
+        closeManualStudentModal();
+        loadStudentAcknowledgments();
+      }, 800);
+    } catch (e) {
+      statusMsg.innerHTML = `<span style="color:#b91c1c;">Error: ${escapeHtml(e.message)}</span>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save & Enroll Student";
+    }
+  }
+
+  async function removeStudentFromRoster(studentId) {
+    if (!currentCourseId || !studentId) return;
+    if (!confirm(`Are you sure you want to remove student '${studentId}' from this course roster?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/courses/${currentCourseId}/roster/remove-student`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: studentId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to remove student.");
+        return;
+      }
+      loadStudentAcknowledgments();
+    } catch (e) {
+      alert("Error removing student: " + e.message);
     }
   }
 
@@ -13772,6 +13987,110 @@
     <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
       <button class="btn btn-secondary btn-sm" onclick="closeApaCitationModal()">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="applyGeneratedApaCitation()">✔ Insert APA Citation</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: Import Student Roster (FM-USeP-MID-07 Stage) -->
+<div class="modal-overlay" id="importRosterModal" style="display:none;" onclick="if(event.target===this) closeImportRosterModal();">
+  <div class="modal-box" style="max-width:580px; width:92%;">
+    <div class="modal-header" style="border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+      <h3 style="margin:0; font-size:1.05rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
+        <span>📥</span> Import Enrolled Student Roster
+      </h3>
+      <button class="modal-close-btn" onclick="closeImportRosterModal()">&times;</button>
+    </div>
+    
+    <div style="font-size:0.78rem; color:#475569; background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 12px; border-radius:6px; margin:12px 0; line-height:1.45;">
+      <strong>Automatic Student Linkage:</strong> Enrolled students will immediately see this course on their Student Portal, ready for syllabus review and electronic signature.
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-weight:700; font-size:0.82rem; display:block; margin-bottom:4px; color:#1e293b;">
+        Option 1: Upload CSV or Excel File (.csv, .xlsx, .xls)
+      </label>
+      <input type="file" id="rosterFileInput" accept=".csv,.xlsx,.xls" style="font-size:0.8rem; padding:6px; border:1px solid #cbd5e1; border-radius:4px; width:100%; box-sizing:border-box;" />
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+        <span style="font-size:0.72rem; color:#64748b;">Columns supported: student_id, last_name, first_name, program_year, email</span>
+        <a href="/api/roster-template.csv" target="_blank" style="font-size:0.72rem; color:#0284c7; font-weight:700; text-decoration:none;">📥 Download Sample CSV Template</a>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-weight:700; font-size:0.82rem; display:block; margin-bottom:4px; color:#1e293b;">
+        Option 2: Or Paste Roster Records (One student per line)
+      </label>
+      <textarea id="rosterPasteText" rows="4" placeholder="Format: Student ID, Last Name, First Name, Program/Section&#10;e.g.&#10;2024-00101, Dela Cruz, Juan, BSEE 3A&#10;2024-00102, Santos, Maria, BSEE 3A" style="width:100%; font-size:0.78rem; font-family:monospace; padding:8px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box; resize:vertical;"></textarea>
+    </div>
+
+    <div id="importRosterStatusMsg" style="font-size:0.78rem; min-height:18px; margin-bottom:10px;"></div>
+
+    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; padding-top:10px;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeImportRosterModal()">Cancel</button>
+      <button type="button" class="btn btn-success btn-sm" id="btnSubmitRosterImport" onclick="submitImportRoster()">Upload &amp; Enroll Students</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Manually Encode Student (FM-USeP-MID-07 Stage) -->
+<div class="modal-overlay" id="manualStudentModal" style="display:none;" onclick="if(event.target===this) closeManualStudentModal();">
+  <div class="modal-box" style="max-width:500px; width:92%;">
+    <div class="modal-header" style="border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+      <h3 style="margin:0; font-size:1.05rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
+        <span>➕</span> Manually Encode Enrolled Student
+      </h3>
+      <button class="modal-close-btn" onclick="closeManualStudentModal()">&times;</button>
+    </div>
+
+    <div style="font-size:0.78rem; color:#475569; margin:12px 0 14px 0;">
+      Add a single student to this course roster. Their Student ID will automatically enable them to log into the Student Portal.
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div>
+        <label for="manualStudentId" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
+          Student ID Number <span style="color:#b91c1c;">*</span>
+        </label>
+        <input type="text" id="manualStudentId" placeholder="e.g. 2024-00101" required style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label for="manualStudentLastName" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
+            Last Name <span style="color:#b91c1c;">*</span>
+          </label>
+          <input type="text" id="manualStudentLastName" placeholder="e.g. Dela Cruz" required style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+        </div>
+        <div style="flex:1;">
+          <label for="manualStudentFirstName" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
+            First Name
+          </label>
+          <input type="text" id="manualStudentFirstName" placeholder="e.g. Juan" style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label for="manualStudentProgramYear" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
+            Program / Year / Section
+          </label>
+          <input type="text" id="manualStudentProgramYear" placeholder="e.g. BSEE 3A" style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+        </div>
+        <div style="flex:1;">
+          <label for="manualStudentEmail" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
+            Email (Optional)
+          </label>
+          <input type="email" id="manualStudentEmail" placeholder="e.g. 2024-00101@usep.edu.ph" style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+        </div>
+      </div>
+    </div>
+
+    <div id="manualStudentStatusMsg" style="font-size:0.78rem; min-height:18px; margin-top:12px;"></div>
+
+    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; padding-top:12px; margin-top:12px;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeManualStudentModal()">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" id="btnSubmitManualStudent" onclick="submitManualStudent()">Save &amp; Enroll Student</button>
     </div>
   </div>
 </div>

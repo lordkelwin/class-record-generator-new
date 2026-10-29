@@ -1723,6 +1723,7 @@ def api_course_student_acknowledgment(course_id):
         student_name = (data.get("student_name") or data.get("name") or "").strip()
         sig_data = (data.get("signature_data") or "").strip()
         email = (data.get("email") or "").strip()
+        comment = (data.get("comment") or "").strip()
         now_ts = datetime.now().isoformat(timespec="seconds")
 
         if not student_name:
@@ -1736,6 +1737,7 @@ def api_course_student_acknowledgment(course_id):
             "acknowledged_at": now_ts,
             "date": now_ts[:10],
             "ip_address": request.remote_addr or "",
+            "comment": comment,
         }
 
         updated = False
@@ -1759,6 +1761,53 @@ def api_course_student_acknowledgment(course_id):
             "total_acknowledged": len(acks),
         })
 
+    # Combined roster view mapping each enrolled student to acknowledgment status, signature, and comments
+    ack_by_id = {str(a.get("student_id") or "").strip().lower(): a for a in acks if a.get("student_id")}
+    ack_by_name = {str(a.get("student_name") or "").strip().lower(): a for a in acks if a.get("student_name")}
+
+    roster = []
+    for s in students:
+        sid = str(s.get("student_id") or "").strip()
+        sname = str(s.get("name") or "").strip()
+        if not sname:
+            last = s.get("last_name") or ""
+            first = s.get("first_name") or ""
+            sname = f"{last}, {first}".strip(", ") if (last or first) else sid
+
+        ack = ack_by_id.get(sid.lower()) or ack_by_name.get(sname.lower())
+        roster.append({
+            "student_id": sid,
+            "name": sname,
+            "last_name": s.get("last_name") or "",
+            "first_name": s.get("first_name") or "",
+            "program_year": s.get("program_year") or s.get("section") or "",
+            "email": s.get("email") or "",
+            "is_acknowledged": ack is not None,
+            "acknowledged_at": ack.get("acknowledged_at") if ack else None,
+            "signature_data": ack.get("signature_data") if ack else None,
+            "comment": ack.get("comment", "") if ack else "",
+        })
+
+    known_sids = {str(r.get("student_id") or "").strip().lower() for r in roster}
+    for a in acks:
+        asid = str(a.get("student_id") or "").strip().lower()
+        if asid and asid not in known_sids:
+            roster.append({
+                "student_id": a.get("student_id") or "",
+                "name": a.get("student_name") or "",
+                "last_name": "",
+                "first_name": "",
+                "program_year": "",
+                "email": a.get("email") or "",
+                "is_acknowledged": True,
+                "acknowledged_at": a.get("acknowledged_at"),
+                "signature_data": a.get("signature_data"),
+                "comment": a.get("comment", ""),
+            })
+            known_sids.add(asid)
+
+    total_ack = len([r for r in roster if r.get("is_acknowledged")])
+
     return jsonify({
         "course_id": course_id,
         "course_code": doc.get("course_code"),
@@ -1767,13 +1816,307 @@ def api_course_student_acknowledgment(course_id):
         "semester_ay": doc.get("semester_ay"),
         "is_approved": (doc.get("workflow") or {}).get("status") == "approved",
         "students": students,
+        "roster": roster,
         "acknowledgments": acks,
-        "total_students": len(students),
-        "total_acknowledged": len(acks),
+        "total_students": len(roster),
+        "total_acknowledged": total_ack,
     })
 
 
 import student_store
+
+
+@app.route("/api/roster-template.csv", methods=["GET"])
+def api_download_roster_template():
+    csv_data = (
+        "student_id,last_name,first_name,program_year,email\n"
+        "2024-00101,Dela Cruz,Juan,BSEE 3A,2024-00101@usep.edu.ph\n"
+        "2024-00102,Santos,Maria,BSEE 3A,2024-00102@usep.edu.ph\n"
+        "2024-00103,Reyes,Pedro,BSEE 3A,2024-00103@usep.edu.ph\n"
+    )
+    return send_file(
+        io.BytesIO(csv_data.encode("utf-8")),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="student_roster_template.csv",
+    )
+
+
+@app.route("/api/courses/<course_id>/roster/import", methods=["POST"])
+@faculty_tools_required
+def api_course_roster_import(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+    existing_by_id = {str(s.get("student_id") or "").strip().lower(): s for s in students if s.get("student_id")}
+
+    imported_list = []
+
+    if "file" in request.files and request.files["file"].filename:
+        f = request.files["file"]
+        ext = os.path.splitext(f.filename)[1].lower()
+        try:
+            if ext == ".csv":
+                df = pd.read_csv(f)
+            elif ext in (".xlsx", ".xls"):
+                df = pd.read_excel(f)
+            else:
+                return jsonify({"error": "Unsupported file format. Please upload a .csv or .xlsx file."}), 400
+
+            df.columns = [str(c).strip().lower() for c in df.columns]
+
+            for idx, row in df.iterrows():
+                sid = str(row.get("student_id", row.get("id", row.get("student no", row.get("student_no", f"2026-{1001 + idx}"))))).strip()
+                last = str(row.get("last_name", row.get("lastname", row.get("surname", "")))).strip()
+                first = str(row.get("first_name", row.get("firstname", row.get("given name", row.get("given_name", ""))))).strip()
+                full = str(row.get("name", row.get("student_name", row.get("full_name", "")))).strip()
+
+                if not last and full:
+                    if "," in full:
+                        parts = full.split(",", 1)
+                        last = parts[0].strip()
+                        first = parts[1].strip()
+                    else:
+                        parts = full.split()
+                        last = parts[-1] if parts else ""
+                        first = " ".join(parts[:-1]) if len(parts) > 1 else full
+
+                prog = str(row.get("program_year", row.get("program", row.get("section", doc.get("section") or "BSEE-3")))).strip()
+                email = str(row.get("email", row.get("email_address", f"{sid.lower()}@usep.edu.ph"))).strip()
+
+                if sid or last or first or full:
+                    imported_list.append({
+                        "student_id": sid,
+                        "last_name": last,
+                        "first_name": first,
+                        "name": f"{last}, {first}".strip(", ") if (last or first) else (full or sid),
+                        "program_year": prog,
+                        "email": email,
+                    })
+        except Exception as e:
+            return jsonify({"error": f"Failed to parse uploaded roster file: {e}"}), 400
+    else:
+        data = request.get_json(silent=True) or {}
+        raw_students = data.get("students") or []
+        paste_text = (data.get("paste_text") or "").strip()
+
+        if paste_text:
+            lines = paste_text.splitlines()
+            for idx, line in enumerate(lines):
+                line = line.strip()
+                if not line or line.lower().startswith("student") or line.lower().startswith("id"):
+                    continue
+                parts = [p.strip() for p in (line.split("\t") if "\t" in line else line.split(","))]
+                if len(parts) == 1:
+                    sid = parts[0]
+                    imported_list.append({"student_id": sid, "name": sid, "last_name": sid, "first_name": ""})
+                elif len(parts) >= 2:
+                    sid = parts[0]
+                    last = parts[1]
+                    first = parts[2] if len(parts) > 2 else ""
+                    prog = parts[3] if len(parts) > 3 else (doc.get("section") or "Engineering")
+                    imported_list.append({
+                        "student_id": sid,
+                        "last_name": last,
+                        "first_name": first,
+                        "name": f"{last}, {first}".strip(", "),
+                        "program_year": prog,
+                        "email": f"{sid.lower()}@usep.edu.ph"
+                    })
+        elif isinstance(raw_students, list):
+            for s in raw_students:
+                if isinstance(s, dict):
+                    sid = str(s.get("student_id") or "").strip()
+                    last = str(s.get("last_name") or "").strip()
+                    first = str(s.get("first_name") or "").strip()
+                    name = str(s.get("name") or "").strip()
+                    prog = str(s.get("program_year") or s.get("section") or doc.get("section") or "").strip()
+                    email = str(s.get("email") or f"{sid.lower()}@usep.edu.ph").strip()
+                    if sid:
+                        imported_list.append({
+                            "student_id": sid,
+                            "last_name": last,
+                            "first_name": first,
+                            "name": name or (f"{last}, {first}".strip(", ") if (last or first) else sid),
+                            "program_year": prog,
+                            "email": email,
+                        })
+
+    if not imported_list:
+        return jsonify({"error": "No valid student records found to import."}), 400
+
+    added_count = 0
+    updated_count = 0
+
+    for item in imported_list:
+        sid = item.get("student_id")
+        if not sid:
+            continue
+        sid_norm = sid.strip().lower()
+
+        student_store.register_or_update_student(
+            student_id=sid,
+            last_name=item.get("last_name") or "",
+            first_name=item.get("first_name") or "",
+            full_name=item.get("name") or "",
+            email=item.get("email") or "",
+            program_year=item.get("program_year") or "",
+        )
+
+        if sid_norm in existing_by_id:
+            existing = existing_by_id[sid_norm]
+            existing.update(item)
+            updated_count += 1
+        else:
+            student_rec = {
+                "student_id": sid,
+                "last_name": item.get("last_name") or "",
+                "first_name": item.get("first_name") or "",
+                "name": item.get("name") or sid,
+                "program_year": item.get("program_year") or "",
+                "email": item.get("email") or "",
+                "scores": {},
+            }
+            students.append(student_rec)
+            existing_by_id[sid_norm] = student_rec
+            added_count += 1
+
+    bp["students"] = students
+    doc["blueprint"] = bp
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "message": f"Successfully processed {len(imported_list)} student(s): {added_count} newly enrolled, {updated_count} updated.",
+        "total_students": len(students),
+        "added_count": added_count,
+        "updated_count": updated_count,
+    })
+
+
+@app.route("/api/courses/<course_id>/roster/add-student", methods=["POST"])
+@faculty_tools_required
+def api_course_roster_add_student(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    data = request.get_json(silent=True) or {}
+    sid = str(data.get("student_id") or "").strip()
+    last = str(data.get("last_name") or "").strip()
+    first = str(data.get("first_name") or "").strip()
+    full = str(data.get("name") or "").strip()
+    prog = str(data.get("program_year") or data.get("section") or doc.get("section") or "").strip()
+    email = str(data.get("email") or (f"{sid.lower()}@usep.edu.ph" if sid else "")).strip()
+
+    if not sid:
+        return jsonify({"error": "Student ID is required (e.g. 2024-00101)."}), 400
+
+    if not last and not full:
+        return jsonify({"error": "Student Last Name is required."}), 400
+
+    if not full:
+        full = f"{last}, {first}".strip(", ") if (last or first) else sid
+    if not last and full:
+        last = full.split(",")[0].strip() if "," in full else full
+
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+
+    student_store.register_or_update_student(
+        student_id=sid,
+        last_name=last,
+        first_name=first,
+        full_name=full,
+        email=email,
+        program_year=prog,
+    )
+
+    existing = None
+    for s in students:
+        if str(s.get("student_id") or "").strip().lower() == sid.lower():
+            existing = s
+            break
+
+    if existing:
+        existing["last_name"] = last
+        existing["first_name"] = first
+        existing["name"] = full
+        existing["program_year"] = prog
+        existing["email"] = email
+        msg = f"Student '{sid}' roster information updated."
+    else:
+        new_s = {
+            "student_id": sid,
+            "last_name": last,
+            "first_name": first,
+            "name": full,
+            "program_year": prog,
+            "email": email,
+            "scores": {},
+        }
+        students.append(new_s)
+        msg = f"Student '{sid}' ({full}) successfully enrolled in this course."
+
+    bp["students"] = students
+    doc["blueprint"] = bp
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "message": msg,
+        "total_students": len(students),
+        "student": {
+            "student_id": sid,
+            "name": full,
+            "last_name": last,
+            "first_name": first,
+            "program_year": prog,
+            "email": email,
+        }
+    })
+
+
+@app.route("/api/courses/<course_id>/roster/remove-student", methods=["POST"])
+@faculty_tools_required
+def api_course_roster_remove_student(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    data = request.get_json(silent=True) or {}
+    sid = str(data.get("student_id") or "").strip()
+    if not sid:
+        return jsonify({"error": "Student ID is required."}), 400
+
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+    students = [s for s in students if str(s.get("student_id") or "").strip().lower() != sid.lower()]
+
+    bp["students"] = students
+    doc["blueprint"] = bp
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "message": f"Student '{sid}' removed from course roster.",
+        "total_students": len(students),
+    })
 
 
 @app.route("/student/login", methods=["GET", "POST"], endpoint="student_login")
@@ -1867,6 +2210,7 @@ def api_student_sign_acknowledgment():
     data = request.get_json(silent=True) or {}
     course_id = (data.get("course_id") or "").strip()
     sig_data = (data.get("signature_data") or "").strip()
+    comment = (data.get("comment") or "").strip()
 
     if not course_id:
         return jsonify({"error": "Course ID is required."}), 400
@@ -1881,7 +2225,8 @@ def api_student_sign_acknowledgment():
         course_id=course_id,
         signature_data=sig_data,
         student_name=s_name,
-        ip_address=request.remote_addr or ""
+        ip_address=request.remote_addr or "",
+        comment=comment,
     )
 
     if not ok:

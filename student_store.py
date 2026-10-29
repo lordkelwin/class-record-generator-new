@@ -94,6 +94,51 @@ def find_student_in_course_rosters(student_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+def register_or_update_student(
+    student_id: str,
+    last_name: str = "",
+    first_name: str = "",
+    full_name: str = "",
+    email: str = "",
+    program_year: str = "",
+    signature_data: str = "",
+) -> Dict[str, Any]:
+    """Registers or updates a student profile in data/students.json."""
+    sid = _normalize_id(student_id)
+    if not sid:
+        return {}
+
+    if not full_name:
+        if first_name and last_name:
+            full_name = f"{first_name} {last_name}".strip()
+        elif last_name:
+            full_name = last_name
+        else:
+            full_name = sid
+    if not last_name and full_name:
+        parts = [p.strip() for p in full_name.split(",", 1)]
+        last_name = parts[0] if parts else full_name
+
+    with _lock:
+        students = _load_students()
+        st = students.get(sid, {})
+        st.update({
+            "student_id": sid,
+            "full_name": full_name or st.get("full_name") or sid,
+            "last_name": last_name or st.get("last_name") or "",
+            "first_name": first_name or st.get("first_name") or "",
+            "program_year": program_year or st.get("program_year") or "",
+            "email": email or st.get("email") or f"{sid.lower()}@usep.edu.ph",
+        })
+        if signature_data:
+            st["signature_data"] = signature_data
+        if "created_at" not in st:
+            st["created_at"] = datetime.now().isoformat(timespec="seconds")
+        students[sid] = st
+        _save_students(students)
+        return st
+
+
 def get_or_register_student(student_id: str, last_name_guess: str = "") -> Optional[Dict[str, Any]]:
     """
     Retrieves student from data/students.json or auto-registers from course rosters.
@@ -321,6 +366,7 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
                     "has_acknowledged": ack_record is not None,
                     "acknowledged_at": ack_record.get("acknowledged_at") if ack_record else None,
                     "signature_data": ack_record.get("signature_data") if ack_record else None,
+                    "comment": ack_record.get("comment", "") if ack_record else "",
                     "total_enrolled": len(students),
                     "total_acknowledged": len(acks),
                 }
@@ -360,6 +406,7 @@ def record_student_acknowledgment(
     signature_data: str,
     student_name: str = "",
     ip_address: str = "",
+    comment: str = "",
 ) -> Tuple[bool, str, Dict[str, Any]]:
     """
     Submits a student's electronic signature and timestamp for a course syllabus acknowledgment.
@@ -379,9 +426,10 @@ def record_student_acknowledgment(
     wf = doc.get("workflow") or {}
     status = wf.get("status") or "draft"
     is_qa_approved = (
-        status.lower() == "approved"
-        or wf.get("step") == 5
+        status.lower() in {"for_student_acknowledgment", "for_dean_approval", "approved"}
+        or wf.get("step") in (5, 6, 7)
         or wf.get("qa_approved_at") is not None
+        or any(s.get("step") == "qa_head" for s in wf.get("signatures", []))
     )
 
     if not is_qa_approved:
@@ -407,6 +455,7 @@ def record_student_acknowledgment(
         "acknowledged_at": now_ts,
         "date": now_date,
         "ip_address": ip_address,
+        "comment": (comment or "").strip(),
     }
 
     acks = doc.get("student_acknowledgments") or wf.get("student_acknowledgments") or []
