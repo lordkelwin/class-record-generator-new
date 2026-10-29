@@ -398,6 +398,31 @@ def build_learning_plan_from_topics(topics: List[str]) -> List[Dict[str, str]]:
     return plan
 
 
+
+DESIGNATED_PROGRAM_HEADS: Dict[str, str] = {
+    "EE": "Engr. Charito O. Claro",
+    "CE": "Engr. Bonifacio T. Aznar Jr.",
+    "ECE": "Engr. Rosanna C. Ucat",
+    "ME": "Engr. Randy B. Tongson",
+    "SE": "Engr. Sheena S. Arcega",
+    "ABE": "Engr. Sheila C. Cogay",
+    "GE": "Engr. Fillmore D. Masancay",
+    "MinE": "Engr. Mark John S. Pag-alaman",
+    "BSGeo": "Dean Lester P. Rejas",
+}
+
+def get_designated_program_heads(programs: Optional[List[str]] = None, primary_code: str = "EE") -> List[str]:
+    progs = programs if (programs and len(programs)) else ([primary_code] if primary_code else ["EE"])
+    heads = []
+    for p in progs:
+        p_clean = p.strip().upper()
+        for k, v in DESIGNATED_PROGRAM_HEADS.items():
+            if k.upper() == p_clean and v not in heads:
+                heads.append(v)
+    if not heads:
+        heads = ["Engr. Charito O. Claro"]
+    return heads
+
 def get_blank_blueprint(
     course_code: str = "",
     course_title: str = "",
@@ -410,8 +435,8 @@ def get_blank_blueprint(
     course_description: str = "",
     prerequisites: str = "",
     corequisites: str = "",
-    program_head: str = "CHARITO O. CLARO",
-    dean_name: str = "JOIE D. CATAYTAY",
+    program_head: str = "",
+    dean_name: str = "Engr. Joie D. Cataytay, Ph.D.",
     programs: Optional[List[str]] = None,
     sections: Optional[List[str]] = None,
     program_code: str = "EE",
@@ -426,10 +451,17 @@ def get_blank_blueprint(
             course_title = parts[1].strip()
     init_programs = programs or ([p.strip() for p in program_code.split(",") if p.strip()] if program_code else ["EE"])
     init_sections = sections or ([s.strip() for s in section.split(",") if s.strip()] if section else ["EE 2A"])
+    heads = get_designated_program_heads(init_programs, program_code)
+    computed_ph = (" / ".join(heads)) if (not program_head or len(heads) > 1) else program_head
+    computed_dean = dean_name or "Engr. Joie D. Cataytay, Ph.D."
+    dept_name = program_name or "Bachelor of Science in Electrical Engineering"
+    if dept_name.startswith("Department of "):
+        dept_name = dept_name.replace("Department of ", "Bachelor of Science in ")
+
     metadata = CourseMetadata(
         university="University of Southeastern Philippines",
         college="COLLEGE OF ENGINEERING",
-        department="Department of Electrical Engineering",
+        department=dept_name,
         address="Iñigo St., Bo. Obrero, Davao City 8000",
         program_name=program_name or "Bachelor of Science in Electrical Engineering",
         program_code=program_code or "EE",
@@ -444,9 +476,10 @@ def get_blank_blueprint(
         room="TBA",
         semester_ay=semester_ay or "1st Semester, A.Y. 2026-2027",
         section=section or "EE 2A",
-        faculty_name=faculty_name,
-        program_head=program_head,
-        dean_name=dean_name,
+        faculty_name=faculty_name or "Engr. Elwin Jay J. Tano",
+        program_head=computed_ph,
+        program_heads=heads,
+        dean_name=computed_dean,
         transmutation_base=50,
         passing_percentage=75.0,
         grading_mode="two_term",

@@ -107,6 +107,10 @@ os.makedirs(EXPORTS_DIR, exist_ok=True)
 
 
 
+@app.context_processor
+def inject_current_user():
+    return dict(current_user=current_user())
+
 @app.route("/")
 
 def index():
@@ -447,7 +451,7 @@ def api_transmutation():
 
     data = request.get_json(silent=True) or {}
 
-    passing_pct = float(data.get("passing_percentage", 60.0))
+    passing_pct = float(data.get("passing_percentage", 75.0))
 
     return jsonify({"transmutation": build_transmutation_table(passing_pct)})
 
@@ -787,8 +791,20 @@ def api_create_course():
         meta = bp_dict.get("metadata", {})
 
         c_code = (data.get("course_code") or meta.get("course_code") or "New Course").strip()
-
         c_title = (data.get("course_title") or meta.get("course_title") or "Untitled Subject").strip()
+        if " - " in c_code or " – " in c_code:
+            delim = " - " if " - " in c_code else " – "
+            parts = c_code.split(delim, 1)
+            c_code = parts[0].strip()
+            if not c_title or c_title in ("Untitled Subject", "New Subject", "Electrical Circuits 1"):
+                c_title = parts[1].strip()
+        meta["course_code"] = c_code
+        meta["course_title"] = c_title
+        if faculty_name and (not meta.get("faculty_name") or meta.get("faculty_name") in ("", "Faculty in Charge", "ELWIN JAY J. TANO")):
+            meta["faculty_name"] = faculty_name
+        if not meta.get("dean_name"):
+            meta["dean_name"] = "Engr. Joie D. Cataytay, Ph.D."
+        meta["passing_percentage"] = meta.get("passing_percentage") or 75.0
 
         sec = (data.get("section") or meta.get("section") or "1A").strip()
 
@@ -831,8 +847,13 @@ def api_create_course():
     cat_course = data.get("catalog_course_data")
 
     c_code = (data.get("course_code") or (cat_course.get("code") if cat_course else "") or "EE 211").strip()
-
     c_title = (data.get("course_title") or (cat_course.get("title") if cat_course else "") or "Electrical Circuits 1").strip()
+    if " - " in c_code or " – " in c_code:
+        delim = " - " if " - " in c_code else " – "
+        parts = c_code.split(delim, 1)
+        c_code = parts[0].strip()
+        if not c_title or c_title in ("Untitled Subject", "New Subject", "Electrical Circuits 1"):
+            c_title = parts[1].strip()
 
     sec = (data.get("section") or "EE 2A").strip()
 

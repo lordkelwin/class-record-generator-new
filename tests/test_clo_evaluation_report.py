@@ -130,7 +130,7 @@ class TestCloEvaluationReport(unittest.TestCase):
         self.assertIn("EE 211", c10_val)
         self.assertIn("Electrical Circuits 1", c10_val)
         self.assertIn("3 Units", c10_val)
-        self.assertIn("Fundamental principles of electric circuits", c10_val)
+        self.assertNotIn("Fundamental principles of electric circuits", c10_val)  # Course description excluded as requested
 
         self.assertEqual(ws["A11"].value, "Semester and Academic Year:")
         self.assertEqual(ws["C11"].value, "1st Semester, AY 2025-2026")

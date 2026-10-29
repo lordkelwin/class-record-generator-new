@@ -938,11 +938,15 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         ph_time = f"Signed: {assoc_sig.get('signed_at')[:16].replace('T', ' ')}" if assoc_sig else ""
         ph_sig_data = assoc_sig.get("signature_data") if assoc_sig else (users.get("faculty_arenga", {}).get("signature_data") or "")
     else:
-        # Recommending Approval: Program Head
+        # Recommending Approval: Program Head(s)
         prog_clean = (meta.department or "").replace("Department of ", "").replace("Bachelor of Science in ", "").strip()
         ph_sig = wf_sigs.get("program_head")
         ph_display_name = ph_sig.get("full_name") if ph_sig else (meta.program_head or "Engr. Charito O. Claro")
-        ph_display_title = ph_sig.get("title") if ph_sig else f"Program Head - {prog_clean}"
+        num_heads = len(getattr(meta, "program_heads", [])) if hasattr(meta, "program_heads") and meta.program_heads else (len(ph_display_name.split("/")) if "/" in ph_display_name else 1)
+        if num_heads > 1:
+            ph_display_title = ph_sig.get("title") if ph_sig else "Program Heads"
+        else:
+            ph_display_title = ph_sig.get("title") if ph_sig else f"Program Head - {prog_clean}"
         ph_time = f"Signed: {ph_sig.get('signed_at')[:16].replace('T', ' ')}" if ph_sig else ""
         ph_sig_data = ph_sig.get("signature_data") if ph_sig else (users.get("faculty_claro", {}).get("signature_data") or "")
     tmp_ph_sig = _save_data_url_image(ph_sig_data) if ph_sig_data else None
@@ -999,6 +1003,10 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
     pdf.set_font(fn_narrow, "B", 8.8)
     pdf.cell(col1_w, 4.0, _clean_text(prepared_by_names.upper(), has_ttf), border=0)
     pdf.set_xy(12.5 + col1_w, y_names1)
+    if len(ph_display_name) > 32:
+        pdf.set_font(fn_narrow, "B", 7.2)
+    else:
+        pdf.set_font(fn_narrow, "B", 8.8)
     pdf.cell(col2_w, 4.0, _clean_text(ph_display_name.upper(), has_ttf), border=0)
 
     pdf.set_xy(12.5, y_names1 + 4.0)

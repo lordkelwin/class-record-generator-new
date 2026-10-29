@@ -338,14 +338,10 @@ def generate_clo_report_pdf_bytes(
     if course_code and course_title.upper().startswith(course_code.upper()):
         course_title = re.sub(r"^" + re.escape(course_code) + r"\s*[-–:]?\s*", "", course_title, flags=re.I).strip()
 
-    course_desc = (doc.get("course_description") or meta.course_description or "").strip()
+    # Exclude course description in basic details as requested
     credit_units_raw = doc.get("credit_units") or meta.credit_units or "3 Units"
     units_short = _format_units_short(credit_units_raw)
-
-    if course_desc:
-        course_full_info = f"{course_code} - {course_title}, {course_desc} ({units_short})"
-    else:
-        course_full_info = f"{course_code} - {course_title} ({units_short})"
+    course_full_info = f"{course_code} - {course_title} ({units_short})"
 
     semester_ay = (doc.get("semester_ay") or meta.semester_ay or "").strip()
     program_str = (doc.get("program_name") or meta.program_name or doc.get("department") or meta.department or "").strip()

@@ -1459,6 +1459,7 @@
               <input type="time" id="sched_time_start" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="buildScheduleString()" />
               <span style="font-size:0.75rem; color:#64748b;">to</span>
               <input type="time" id="sched_time_end" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="buildScheduleString()" />
+              <button type="button" class="btn btn-sm btn-success" style="font-size:0.72rem; padding:2px 8px; font-weight:600;" onclick="appendScheduleBlock()">+ Add Schedule</button>
               <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="clearSchedulePicker()">Clear</button>
             </div>
           </div>
@@ -1492,7 +1493,7 @@
         </div>
         <div class="form-group">
           <label>Base-50 Passing Cutoff (75 = 3.00)</label>
-          <input type="number" id="meta_passing_pct" min="50" max="90" step="1" onchange="onPassingCutoffChange()" />
+          <input type="number" id="meta_passing_pct" value="75" min="50" max="90" step="1" onchange="onPassingCutoffChange()" />
         </div>
       </div>
     </div>
@@ -1672,7 +1673,7 @@
       </div>
       <div style="padding:12px 16px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px; font-size:0.83rem;">
         <div><strong>Name of Faculty:</strong> <span id="cloReportFaculty" style="color:#0f172a;">—</span></div>
-        <div><strong>Course Title, Desc. &amp; Units:</strong> <span id="cloReportCourse" style="color:#0f172a;">—</span></div>
+        <div><strong>Course Title &amp; Units:</strong> <span id="cloReportCourse" style="color:#0f172a;">—</span></div>
         <div><strong>Semester &amp; Academic Year:</strong> <span id="cloReportSemAy" style="color:#0f172a;">—</span></div>
         <div><strong>Program:</strong> <span id="cloReportProgram" style="color:#0f172a;">—</span></div>
         <div><strong>Academic Unit:</strong> <span id="cloReportAcademicUnit" style="color:#0f172a;">—</span></div>
@@ -2534,7 +2535,7 @@
           <select id="modalCatCollege" onchange="onModalCollegeChange()"></select>
         </div>
         <div class="form-group" style="margin-bottom:12px;">
-          <label>Department / Program</label>
+          <label>Program</label>
           <select id="modalCatDepartment" onchange="onModalDepartmentChange()"></select>
         </div>
         <div class="form-group" style="margin-bottom:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
@@ -3443,7 +3444,13 @@
     const deptSel = document.getElementById("modalCatDepartment");
     if (!col || !deptSel) return;
 
-    deptSel.innerHTML = (col.departments || []).map((d, i) => `<option value="${i}">${escapeHtml(d.department)}</option>`).join("");
+    deptSel.innerHTML = (col.departments || []).map((d, i) => {
+      let dName = d.program_name || d.department || "";
+      if (dName.startsWith("Department of ")) {
+        dName = dName.replace("Department of ", "Bachelor of Science in ");
+      }
+      return `<option value="${i}">${escapeHtml(dName)}</option>`;
+    }).join("");
     onModalDepartmentChange();
   }
 
@@ -3707,7 +3714,13 @@
     }
 
     deptSel.innerHTML = deptNames
-      .map(d => `<option value="${escapeHtml(d)}" ${d === curDept ? "selected" : ""}>${escapeHtml(d)}</option>`)
+      .map(d => {
+        let dDisp = d;
+        if (dDisp.startsWith("Department of ")) {
+          dDisp = dDisp.replace("Department of ", "Bachelor of Science in ");
+        }
+        return `<option value="${escapeHtml(d)}" ${d === curDept ? "selected" : ""}>${escapeHtml(dDisp)}</option>`;
+      })
       .join("");
 
     const deptObj = depts.find(d => d.department === deptSel.value) || depts[0] || { courses: [] };
@@ -3828,14 +3841,16 @@
     if (deptObj) {
       m.program_code = deptObj.program_code || m.program_code;
       m.program_name = deptObj.program_name || m.program_name;
+      m.programs = [m.program_code];
       document.getElementById("meta_program_code").value = m.program_code;
-      if (deptObj.program_head) {
-        m.program_head = deptObj.program_head;
-        document.getElementById("meta_program_head").value = m.program_head;
-      }
+      renderProgramPills();
+      updateProgramHeadsForSelectedPrograms();
       const firstCourse = (deptObj.courses || [])[0];
       if (firstCourse) {
-        m.course_code = firstCourse.code;
+        let code = firstCourse.code || "EE 211";
+        if (code.includes(" - ")) code = code.split(" - ")[0].trim();
+        if (code.includes(" – ")) code = code.split(" – ")[0].trim();
+        m.course_code = code;
       }
     }
     populateCollegeDepartmentCourseDropdowns();
@@ -3947,7 +3962,9 @@
     const m = blueprint.metadata;
     const selectedCollege = document.getElementById("meta_college").value;
     const selectedDept = document.getElementById("meta_department").value;
-    const selectedCode = document.getElementById("meta_course_code").value;
+    let selectedCode = document.getElementById("meta_course_code").value || "";
+    if (selectedCode.includes(" - ")) selectedCode = selectedCode.split(" - ")[0].trim();
+    if (selectedCode.includes(" – ")) selectedCode = selectedCode.split(" – ")[0].trim();
     m.course_code = selectedCode;
 
     const collegeObj = (catalogData.colleges || []).find(c => c.college === selectedCollege);
@@ -4013,6 +4030,11 @@
 
     document.getElementById("meta_university").value = m.university || "";
     populateCollegeDepartmentCourseDropdowns();
+
+    // Sanitize course_code so it never contains title
+    if (m.course_code && (m.course_code.includes(" - ") || m.course_code.includes(" – "))) {
+      m.course_code = m.course_code.split(" - ")[0].split(" – ")[0].trim();
+    }
     document.getElementById("meta_course_title").value = m.course_title || "";
     document.getElementById("meta_credit_units").value = m.credit_units || "";
     document.getElementById("meta_lec_lab").value = m.lec_lab || "Lecture";
@@ -4023,6 +4045,28 @@
 
     renderProgramPills();
     renderSectionChips();
+
+    // Auto-fill faculty_name to account holder if empty
+    const acctHolder = window.CURRENT_USER?.full_name || currentUser?.full_name || "";
+    if (acctHolder && (!m.faculty_name || m.faculty_name === "Faculty in Charge")) {
+      m.faculty_name = acctHolder;
+    }
+    if (!m.faculty_name) m.faculty_name = acctHolder || "Engr. Elwin Jay J. Tano";
+    document.getElementById("meta_faculty_name").value = m.faculty_name;
+
+    // Auto-fill dean_name if empty
+    if (!m.dean_name) m.dean_name = "Engr. Joie D. Cataytay, Ph.D.";
+    document.getElementById("meta_dean_name").value = m.dean_name;
+
+    // Auto-fill program_head
+    if (!m.program_head || m.program_head === "CHARITO O. CLARO") {
+      m.program_head = getProgramHeadsForCodes(m.programs || [m.program_code || "EE"]);
+    }
+    document.getElementById("meta_program_head").value = m.program_head;
+
+    // Auto-fill Base-50 cutoff to 75
+    m.passing_percentage = m.passing_percentage || 75;
+    document.getElementById("meta_passing_pct").value = m.passing_percentage;
     renderCoauthorsList();
     populateCoauthorDropdown();
     document.getElementById("meta_semester_ay").value = m.semester_ay || "";
@@ -4082,6 +4126,40 @@
     { code: "BSGeo", name: "BS Geology", full: "Bachelor of Science in Geology" },
   ];
 
+    const DESIGNATED_PROGRAM_HEADS_MAP = {
+    "EE": "Engr. Charito O. Claro",
+    "CE": "Engr. Bonifacio T. Aznar Jr.",
+    "ECE": "Engr. Rosanna C. Ucat",
+    "ME": "Engr. Randy B. Tongson",
+    "SE": "Engr. Sheena S. Arcega",
+    "ABE": "Engr. Sheila C. Cogay",
+    "GE": "Engr. Fillmore D. Masancay",
+    "MinE": "Engr. Mark John S. Pag-alaman",
+    "BSGeo": "Dean Lester P. Rejas"
+  };
+
+  function getProgramHeadsForCodes(codes) {
+    const list = [];
+    (codes || []).forEach(c => {
+      const code = (c || "").trim().toUpperCase();
+      for (const [k, v] of Object.entries(DESIGNATED_PROGRAM_HEADS_MAP)) {
+        if (k.toUpperCase() === code && !list.includes(v)) {
+          list.push(v);
+        }
+      }
+    });
+    return list.length ? list.join(" / ") : "Engr. Charito O. Claro";
+  }
+
+  function updateProgramHeadsForSelectedPrograms() {
+    if (!blueprint) return;
+    const progs = blueprint.metadata.programs && blueprint.metadata.programs.length ? blueprint.metadata.programs : [(blueprint.metadata.program_code || "EE")];
+    const phStr = getProgramHeadsForCodes(progs);
+    blueprint.metadata.program_head = phStr;
+    const phInp = document.getElementById("meta_program_head");
+    if (phInp) phInp.value = phStr;
+  }
+
   let modalSelectedPrograms = {
     catalog: ["EE"],
     custom: ["EE"]
@@ -4125,6 +4203,7 @@
     const inp = document.getElementById("meta_program_code");
     if (inp) inp.value = blueprint.metadata.program_code;
     renderProgramPills();
+    updateProgramHeadsForSelectedPrograms();
     syncMetaFromInputs();
     queueAutoSave();
   }
@@ -4136,6 +4215,7 @@
     const inp = document.getElementById("meta_program_code");
     if (inp) inp.value = blueprint.metadata.program_code;
     renderProgramPills();
+    updateProgramHeadsForSelectedPrograms();
     syncMetaFromInputs();
     queueAutoSave();
   }
@@ -4147,6 +4227,7 @@
     const inp = document.getElementById("meta_program_code");
     if (inp) inp.value = blueprint.metadata.program_code;
     renderProgramPills();
+    updateProgramHeadsForSelectedPrograms();
     syncMetaFromInputs();
     queueAutoSave();
   }
@@ -4169,6 +4250,7 @@
     const inp = document.getElementById("meta_program_code");
     if (inp) inp.value = prim;
     renderProgramPills();
+    updateProgramHeadsForSelectedPrograms();
     syncMetaFromInputs();
     queueAutoSave();
   }
@@ -5467,23 +5549,14 @@
 
   function addLearningPlanRow() {
     if (!blueprint.metadata.learning_plan_table) blueprint.metadata.learning_plan_table = [];
-    const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
-    const defClo = coOptions[0] || "CLO1";
-    const acts = blueprint.metadata.syllabus_assessment_activities || [];
-    let defAct = "• FA1 – Group Activity\n• SA1 – Quiz";
-    if (acts.length >= 2) {
-      defAct = `• ${acts[0].code} – ${acts[0].activity}\n• ${acts[1].code} – ${acts[1].activity}`;
-    } else if (acts.length === 1) {
-      defAct = `• ${acts[0].code} – ${acts[0].activity}`;
-    }
     blueprint.metadata.learning_plan_table.push({
-      ilo: "• Formulate and solve engineering problems for the topic.",
-      clo: defClo,
-      time_frame: "6 hours",
-      topics: "• NEW MODULE TOPIC",
-      tla: "• Student-based Learning\n• Collaborative and Team Learning\n• Problem sets\n• Lecture",
-      required_reading: "• Ref01-08",
-      assessment_activities: defAct,
+      ilo: "",
+      clo: "",
+      time_frame: "",
+      topics: "",
+      tla: "",
+      required_reading: "",
+      assessment_activities: "",
       merge_assessment_with_prev: false
     });
     renderLearningPlanTable();
@@ -7161,9 +7234,8 @@
     if (cSpan) {
       const code = (blueprint.metadata.course_code || "").trim();
       const title = (blueprint.metadata.course_title || "").trim();
-      const desc = (blueprint.metadata.course_description || "").trim();
       const units = (blueprint.metadata.credit_units || "").trim();
-      cSpan.textContent = `${code} - ${title}${desc ? ', ' + desc : ''}${units ? ' (' + units + ')' : ''}`;
+      cSpan.textContent = `${code} - ${title}${units ? ' (' + units + ')' : ''}`;
     }
     const sSpan = document.getElementById("cloReportSemAy");
     if (sSpan) sSpan.textContent = blueprint.metadata.semester_ay || "—";
@@ -12286,7 +12358,7 @@
     if (c) c.style.display = (c.style.display === "none") ? "block" : "none";
   }
 
-  function buildScheduleString() {
+  function getSelectedScheduleBlock() {
     const days = [];
     document.querySelectorAll(".sched-day:checked").forEach(cb => days.push(cb.value));
     const dayStr = days.join("");
@@ -12304,15 +12376,18 @@
       return `${String(h).padStart(2, "0")}:${m} ${ampm}`;
     }
 
-    let schedStr = "";
     if (dayStr && tStart && tEnd) {
-      schedStr = `${dayStr} ${formatTime12(tStart)} - ${formatTime12(tEnd)}`;
+      return `${dayStr} ${formatTime12(tStart)} - ${formatTime12(tEnd)}`;
     } else if (dayStr && tStart) {
-      schedStr = `${dayStr} ${formatTime12(tStart)}`;
+      return `${dayStr} ${formatTime12(tStart)}`;
     } else if (dayStr) {
-      schedStr = dayStr;
+      return dayStr;
     }
+    return "";
+  }
 
+  function buildScheduleString() {
+    const schedStr = getSelectedScheduleBlock();
     if (schedStr) {
       const inp = document.getElementById("meta_schedule");
       if (inp) {
@@ -12320,6 +12395,26 @@
         syncMetaFromInputs();
       }
     }
+  }
+
+  function appendScheduleBlock() {
+    const block = getSelectedScheduleBlock();
+    if (!block) {
+      alert("Please select days and time for the schedule block before adding.");
+      return;
+    }
+    const inp = document.getElementById("meta_schedule");
+    if (inp) {
+      const cur = inp.value.trim();
+      inp.value = cur ? `${cur} / ${block}` : block;
+      syncMetaFromInputs();
+    }
+    // Clear checkboxes and times ready for the next schedule
+    document.querySelectorAll(".sched-day").forEach(cb => cb.checked = false);
+    const s = document.getElementById("sched_time_start");
+    const e = document.getElementById("sched_time_end");
+    if (s) s.value = "";
+    if (e) e.value = "";
   }
 
   function clearSchedulePicker() {

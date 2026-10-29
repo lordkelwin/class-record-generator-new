@@ -542,7 +542,7 @@ def get_default_policies_table() -> List[Dict[str, str]]:
 class CourseMetadata:
     university: str = "University of Southeastern Philippines"
     college: str = "COLLEGE OF ENGINEERING"
-    department: str = "Department of Electrical Engineering"
+    department: str = "Bachelor of Science in Electrical Engineering"
     address: str = "Iñigo St., Bo. Obrero, Davao City 8000"
     program_name: str = "Bachelor of Science in Electrical Engineering"
     program_code: str = "EE"
@@ -558,9 +558,10 @@ class CourseMetadata:
     semester_ay: str = "1st Semester, A.Y. 2026-2027"
     section: str = "EE 2A"
     sections: List[str] = field(default_factory=list)
-    faculty_name: str = "ELWIN JAY J. TANO" 
-    program_head: str = "CHARITO O. CLARO"
-    dean_name: str = "JOIE D. CATAYTAY"
+    faculty_name: str = "Engr. Elwin Jay J. Tano"
+    program_head: str = "Engr. Charito O. Claro"
+    program_heads: List[str] = field(default_factory=list)
+    dean_name: str = "Engr. Joie D. Cataytay, Ph.D."
     transmutation_base: int = 50  # Base-50 formula: (Score/Items)*50 + 50
     passing_percentage: float = 75.0  # 75 in Base-50 (which equals 50% raw score) = 3.00
     grading_mode: str = "two_term"
