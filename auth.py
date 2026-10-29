@@ -386,6 +386,25 @@ def current_user():
     username = session.get("username")
     if not username:
         return None
+    if session.get("role") == "student":
+        return {
+            "username": username,
+            "student_id": session.get("student_id") or username,
+            "full_name": session.get("student_name") or username,
+            "role": "student",
+            "workflow_roles": ["student"],
+            "position_title": "Student",
+            "email": session.get("email") or f"{username}@usep.edu.ph",
+            "college": session.get("college", "COLLEGE OF ENGINEERING"),
+            "program_codes": session.get("program_codes", ["*"]),
+            "has_signature": bool(session.get("has_signature")),
+            "signature_data": session.get("signature_data", ""),
+            "must_change_password": False,
+            "is_staff": False,
+            "is_pure_staff": False,
+            "can_access_faculty_tools": False,
+            "is_admin_session": False,
+        }
     username = LEGACY_USERNAME_ALIASES.get(username, username)
     user = _load_users().get(username)
     if not user:
@@ -448,7 +467,7 @@ def admin_required(view):
     return wrapper
 
 
-PUBLIC_ENDPOINTS = {"auth.login", "static"}
+PUBLIC_ENDPOINTS = {"auth.login", "student_login", "student_logout", "static"}
 PASSWORD_CHANGE_ALLOWED = {"auth.change_password", "auth.logout", "static"}
 
 
@@ -470,14 +489,28 @@ def install_auth(app) -> None:
     @app.before_request
     def _require_login():
         endpoint = request.endpoint or ""
-        if endpoint in PUBLIC_ENDPOINTS:
+        path = request.path or ""
+        if endpoint in PUBLIC_ENDPOINTS or path.startswith("/student/login") or path.startswith("/static"):
             return None
         user = current_user()
-        is_api = request.path.startswith("/api/")
+        is_api = path.startswith("/api/")
         if not user:
             if is_api:
                 return jsonify({"error": "Authentication required. Please sign in again."}), 401
+            if path.startswith("/student"):
+                return redirect(url_for("student_login", next=request.full_path.rstrip("?")))
             return redirect(url_for("auth.login", next=request.full_path.rstrip("?")))
+
+        # If logged in user is a student:
+        if user.get("role") == "student":
+            if (
+                path.startswith("/student")
+                or path.startswith("/api/student")
+                or (path.startswith("/api/courses/") and ("export" in path or "acknowledgment" in path))
+            ):
+                return None
+            return redirect(url_for("student_dashboard"))
+
         if user["must_change_password"] and endpoint not in PASSWORD_CHANGE_ALLOWED:
             if is_api:
                 return jsonify({"error": "You must change your password before continuing."}), 403

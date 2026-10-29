@@ -34,7 +34,7 @@
     "password_hash": "scrypt:32768:8:1$eJQDeHv7VP2x0C7Z$d258c4fda80e3a89588e3b2062ab7cd9b2c978fd407bddf2b6c1627337d7c67eb2d1f0a6692588b953502bc3e802ce0738c18b7f13981684e1cd3a6c20575cd0",
     "must_change_password": false,
     "created_at": "2026-10-23T15:27:35",
-    "last_login": "2026-10-29T13:11:02",
+    "last_login": "2026-10-29T14:12:11",
     "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     "email": "elwin.tano@usep.edu.ph"
   },

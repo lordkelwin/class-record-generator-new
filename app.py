@@ -23,7 +23,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from flask import Flask, render_template, request, jsonify, send_file, Response
+from flask import Flask, render_template, request, jsonify, send_file, Response, session, redirect, url_for, flash
 
 
 
@@ -1750,6 +1750,151 @@ def api_course_student_acknowledgment(course_id):
         "total_students": len(students),
         "total_acknowledged": len(acks),
     })
+
+
+import student_store
+
+
+@app.route("/student/login", methods=["GET", "POST"], endpoint="student_login")
+def student_login():
+    user = current_user()
+    if user and user.get("role") == "student":
+        return redirect(url_for("student_dashboard"))
+
+    error = None
+    success = None
+    student_id = ""
+    next_url = request.args.get("next") or ""
+
+    if request.method == "POST":
+        student_id = (request.form.get("student_id") or "").strip()
+        secret = (request.form.get("secret") or "").strip()
+
+        ok, st, err_msg = student_store.verify_student_login(student_id, secret)
+        if ok and st:
+            session.clear()
+            session.permanent = True
+            session["username"] = st["student_id"]
+            session["student_id"] = st["student_id"]
+            session["student_name"] = st["full_name"]
+            session["role"] = "student"
+            session["email"] = st.get("email") or f"{st['student_id']}@usep.edu.ph"
+            session["has_signature"] = bool(st.get("signature_data"))
+            session["signature_data"] = st.get("signature_data", "")
+            auth.get_csrf_token()
+
+            if next_url and next_url.startswith("/student"):
+                return redirect(next_url)
+            return redirect(url_for("student_dashboard"))
+        else:
+            error = err_msg or "Authentication failed. Please verify your Student ID and Last Name."
+
+    return render_template("student_login.html", error=error, success=success, student_id=student_id, next_url=next_url)
+
+
+@app.route("/student/logout", methods=["GET", "POST"], endpoint="student_logout")
+def student_logout():
+    session.clear()
+    flash("You have been signed out from the Student Portal.", "info")
+    return redirect(url_for("student_login"))
+
+
+@app.route("/student", methods=["GET"])
+@app.route("/student/dashboard", methods=["GET"], endpoint="student_dashboard")
+def student_dashboard():
+    user = current_user()
+    if not user:
+        return redirect(url_for("student_login", next=request.path))
+
+    # If faculty or admin logged in, allow them to view student dashboard using demo/first student or their profile
+    sid = user.get("student_id") or user.get("username")
+    cdata = student_store.find_courses_for_student(sid)
+
+    # If user has no courses under username, but is faculty/admin, check if any student exists to demonstrate
+    if cdata["stats"]["total"] == 0 and user.get("role") != "student":
+        # Faculty preview mode
+        preview_st = {"student_id": "Faculty Preview", "full_name": user.get("full_name"), "program_year": "Faculty Studio Oversight", "signature_data": user.get("signature_data", "")}
+        return render_template("student_dashboard.html", student=preview_st, pending=[], acknowledged=[], in_review=[], stats={"total": 0, "pending_count": 0, "acknowledged_count": 0, "in_review_count": 0})
+
+    return render_template(
+        "student_dashboard.html",
+        student=cdata["student"] or {"student_id": sid, "full_name": user.get("full_name") or sid, "signature_data": user.get("signature_data", "")},
+        pending=cdata["pending"],
+        acknowledged=cdata["acknowledged"],
+        in_review=cdata["in_review"],
+        stats=cdata["stats"]
+    )
+
+
+@app.route("/api/student/courses", methods=["GET"])
+def api_student_courses():
+    user = current_user()
+    if not user or user.get("role") != "student":
+        return jsonify({"error": "Student authentication required."}), 401
+
+    sid = user.get("student_id") or user.get("username")
+    cdata = student_store.find_courses_for_student(sid)
+    return jsonify(cdata)
+
+
+@app.route("/api/student/sign-acknowledgment", methods=["POST"])
+def api_student_sign_acknowledgment():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Authentication required. Please sign in."}), 401
+
+    data = request.get_json(silent=True) or {}
+    course_id = (data.get("course_id") or "").strip()
+    sig_data = (data.get("signature_data") or "").strip()
+
+    if not course_id:
+        return jsonify({"error": "Course ID is required."}), 400
+    if not sig_data:
+        return jsonify({"error": "Electronic signature is required."}), 400
+
+    sid = user.get("student_id") or user.get("username")
+    s_name = user.get("full_name") or sid
+
+    ok, msg, ack_rec = student_store.record_student_acknowledgment(
+        student_id=sid,
+        course_id=course_id,
+        signature_data=sig_data,
+        student_name=s_name,
+        ip_address=request.remote_addr or ""
+    )
+
+    if not ok:
+        return jsonify({"error": msg}), 400
+
+    session["signature_data"] = sig_data
+    session["has_signature"] = True
+
+    return jsonify({
+        "success": True,
+        "message": msg,
+        "acknowledgment": ack_rec
+    })
+
+
+@app.route("/api/student/save-signature", methods=["POST"])
+def api_student_save_signature():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Authentication required."}), 401
+
+    data = request.get_json(silent=True) or {}
+    sig_data = (data.get("signature_data") or "").strip()
+    if not sig_data:
+        return jsonify({"error": "Signature data is required."}), 400
+
+    sid = user.get("student_id") or user.get("username")
+    saved = student_store.save_student_signature(sid, sig_data)
+    if saved:
+        session["signature_data"] = sig_data
+        session["has_signature"] = True
+        return jsonify({"success": True, "message": "Electronic signature saved successfully!"})
+
+    return jsonify({"error": "Failed to save signature."}), 500
 
 
 @app.route("/api/courses/<course_id>/export-acknowledgment-pdf", methods=["GET"])
