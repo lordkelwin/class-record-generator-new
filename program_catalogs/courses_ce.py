@@ -11,6 +11,7 @@ CE_COURSES = [
     # First Year - First Semester
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -28,6 +29,7 @@ CE_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -45,6 +47,7 @@ CE_COURSES = [
     },
     {
         "code": "GE 115",
+        "year_level": "First Year",
         "title": "The Life and Works of Jose Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -62,6 +65,7 @@ CE_COURSES = [
     },
     {
         "code": "Math 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -79,6 +83,7 @@ CE_COURSES = [
     },
     {
         "code": "Chem 111",
+        "year_level": "First Year",
         "title": "Chemistry for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -96,6 +101,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -113,6 +119,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 111",
+        "year_level": "First Year",
         "title": "Civil Engineering Orientation",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -130,6 +137,7 @@ CE_COURSES = [
     },
     {
         "code": "PE 111",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -147,6 +155,7 @@ CE_COURSES = [
     },
     {
         "code": "NSTP 111",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -165,6 +174,7 @@ CE_COURSES = [
     # First Year - Second Semester
     {
         "code": "GE 116",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -182,6 +192,7 @@ CE_COURSES = [
     },
     {
         "code": "GE 117",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -199,6 +210,7 @@ CE_COURSES = [
     },
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "Science, Technology and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -216,6 +228,7 @@ CE_COURSES = [
     },
     {
         "code": "Math 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -233,6 +246,7 @@ CE_COURSES = [
     },
     {
         "code": "Phys 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -250,6 +264,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 121",
+        "year_level": "First Year",
         "title": "Computer Aided Design and Drafting",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -267,6 +282,7 @@ CE_COURSES = [
     },
     {
         "code": "Geo 201",
+        "year_level": "Second Year",
         "title": "Engineering Geology",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -284,6 +300,7 @@ CE_COURSES = [
     },
     {
         "code": "PE 121",
+        "year_level": "First Year",
         "title": "Fitness Exercise",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -301,6 +318,7 @@ CE_COURSES = [
     },
     {
         "code": "NSTP 121",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -319,6 +337,7 @@ CE_COURSES = [
     # Off Semester 1
     {
         "code": "CpE 121",
+        "year_level": "First Year",
         "title": "Computer Fundamentals and Programming",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -337,6 +356,7 @@ CE_COURSES = [
     # Second Year - First Semester
     {
         "code": "GE 114",
+        "year_level": "First Year",
         "title": "Readings in the Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -354,6 +374,7 @@ CE_COURSES = [
     },
     {
         "code": "GE 211",
+        "year_level": "Second Year",
         "title": "Popular Literature",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -371,6 +392,7 @@ CE_COURSES = [
     },
     {
         "code": "GE 119",
+        "year_level": "First Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -388,6 +410,7 @@ CE_COURSES = [
     },
     {
         "code": "Math 211",
+        "year_level": "Second Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -405,6 +428,7 @@ CE_COURSES = [
     },
     {
         "code": "Math 212",
+        "year_level": "Second Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -422,6 +446,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 211",
+        "year_level": "Second Year",
         "title": "Statics and Dynamics of Rigid Bodies",
         "credit_units": "5.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -440,6 +465,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 122",
+        "year_level": "First Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -457,6 +483,7 @@ CE_COURSES = [
     },
     {
         "code": "PE 211",
+        "year_level": "Second Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -475,6 +502,7 @@ CE_COURSES = [
     # Second Year - Second Semester
     {
         "code": "GE 118",
+        "year_level": "First Year",
         "title": "Arts Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -492,6 +520,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 221",
+        "year_level": "Second Year",
         "title": "Numerical Solutions to CE Problems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -509,6 +538,7 @@ CE_COURSES = [
     },
     {
         "code": "GE EL 1",
+        "year_level": "First Year",
         "title": "GE Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -526,6 +556,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 221",
+        "year_level": "Second Year",
         "title": "Mechanics of Deformable Bodies",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -544,6 +575,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 323",
+        "year_level": "Third Year",
         "title": "Methods of Research",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -561,6 +593,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 222",
+        "year_level": "Second Year",
         "title": "Fundamentals of Surveying",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -578,6 +611,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 222L",
+        "year_level": "Second Year",
         "title": "Fundamentals of Surveying, Field",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -595,6 +629,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 223",
+        "year_level": "Second Year",
         "title": "Building System Design",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -612,6 +647,7 @@ CE_COURSES = [
     },
     {
         "code": "PE 221",
+        "year_level": "Second Year",
         "title": "Physical Activities Towards Health & Fitness II",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -630,6 +666,7 @@ CE_COURSES = [
     # Off Semester 2
     {
         "code": "CE 231",
+        "year_level": "Second Year",
         "title": "Engineering Utilities 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -647,6 +684,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 232",
+        "year_level": "Second Year",
         "title": "Engineering Utilities 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -665,6 +703,7 @@ CE_COURSES = [
     # Third Year - First Semester
     {
         "code": "GE EL 2",
+        "year_level": "First Year",
         "title": "GE Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -682,6 +721,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 321",
+        "year_level": "Third Year",
         "title": "Engineering Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -699,6 +739,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 311",
+        "year_level": "Third Year",
         "title": "Structural Theory",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -717,6 +758,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 312",
+        "year_level": "Third Year",
         "title": "Principle of Transportation Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -734,6 +776,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 313",
+        "year_level": "Third Year",
         "title": "Geotechnical Engineering, Lecture",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -752,6 +795,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 313L",
+        "year_level": "Third Year",
         "title": "Geotechnical Engineering, Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -769,6 +813,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 314",
+        "year_level": "Third Year",
         "title": "Quantity Surveying",
         "credit_units": "2.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -786,6 +831,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 315",
+        "year_level": "Third Year",
         "title": "Hydraulics, lecture",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -804,6 +850,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 315L",
+        "year_level": "Third Year",
         "title": "Hydraulics, lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -822,6 +869,7 @@ CE_COURSES = [
     # Third Year - Second Semester
     {
         "code": "CE 321",
+        "year_level": "Third Year",
         "title": "Highway and Railroad Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -839,6 +887,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 322",
+        "year_level": "Third Year",
         "title": "Construction Materials and Testing, lecture",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -856,6 +905,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 322L",
+        "year_level": "Third Year",
         "title": "Construction Materials and Testing, lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -873,6 +923,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 323",
+        "year_level": "Third Year",
         "title": "Principle of Steel & Timber Design",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -891,6 +942,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 324",
+        "year_level": "Third Year",
         "title": "Principle of Reinforced / Prestressed Concrete",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -909,6 +961,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 325",
+        "year_level": "Third Year",
         "title": "Hydrology",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -926,6 +979,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 326",
+        "year_level": "Third Year",
         "title": "Construction Methods and Project Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -943,6 +997,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 327",
+        "year_level": "Third Year",
         "title": "CE Laws, Ethics and Contracts",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -960,6 +1015,7 @@ CE_COURSES = [
     },
     {
         "code": "ES 322",
+        "year_level": "Third Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -978,6 +1034,7 @@ CE_COURSES = [
     # Off Semester 3
     {
         "code": "CE 331",
+        "year_level": "Third Year",
         "title": "Basic Driving and Automotive",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -995,6 +1052,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 332",
+        "year_level": "Third Year",
         "title": "Scaffold Erection",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1012,6 +1070,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 333",
+        "year_level": "Third Year",
         "title": "Disaster Risk Management",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -1030,6 +1089,7 @@ CE_COURSES = [
     # Fourth Year - First Semester
     {
         "code": "CE 411",
+        "year_level": "Fourth Year",
         "title": "CE Project (Specialization Project, Thesis) 1",
         "credit_units": "3.0 Units – Lecture & Research",
         "lec_lab": "Lecture",
@@ -1047,6 +1107,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 412",
+        "year_level": "Fourth Year",
         "title": "Field trip and Seminars",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1064,6 +1125,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 413",
+        "year_level": "Fourth Year",
         "title": "Computer Softwares in Structural Analysis",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -1081,6 +1143,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 414",
+        "year_level": "Fourth Year",
         "title": "Earthquake Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1098,6 +1161,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 415",
+        "year_level": "Fourth Year",
         "title": "Design of Steel Structures",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1115,6 +1179,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 416",
+        "year_level": "Fourth Year",
         "title": "Reinforced Concrete Design",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1132,6 +1197,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 417",
+        "year_level": "Fourth Year",
         "title": "Prestressed Concrete Design",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1150,6 +1216,7 @@ CE_COURSES = [
     # Fourth Year - Second Semester
     {
         "code": "CE 421",
+        "year_level": "Fourth Year",
         "title": "CE Project (Specialization Project, Thesis) 2",
         "credit_units": "3.0 Units – Lecture & Research",
         "lec_lab": "Lecture",
@@ -1167,6 +1234,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 422",
+        "year_level": "Fourth Year",
         "title": "Correlation Course",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1184,6 +1252,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 423",
+        "year_level": "Fourth Year",
         "title": "Specialization On-the-Job Training (320 hours)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Laboratory",
@@ -1201,6 +1270,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 424",
+        "year_level": "Fourth Year",
         "title": "FREE ELECTIVE",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -1218,6 +1288,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 425",
+        "year_level": "Fourth Year",
         "title": "Bridge Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1235,6 +1306,7 @@ CE_COURSES = [
     },
     {
         "code": "CE 426",
+        "year_level": "Fourth Year",
         "title": "Foundation and Retaining Wall Design",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",

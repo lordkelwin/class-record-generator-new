@@ -335,7 +335,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
         "dean_name": "JOIE D. CATAYTAY",
         "departments": [
             {
-                "department": "Department of Electrical Engineering",
+                "department": "Bachelor of Science in Electrical Engineering",
                 "program_name": "Bachelor of Science in Electrical Engineering",
                 "program_code": "EE",
                 "program_head": "CHARITO O. CLARO",
@@ -347,7 +347,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSEE_COURSES,
             },
             {
-                "department": "Department of Civil Engineering",
+                "department": "Bachelor of Science in Civil Engineering",
                 "program_name": "Bachelor of Science in Civil Engineering",
                 "program_code": "CE",
                 "program_head": "BONIFACIO T. AZNAR JR.",
@@ -359,7 +359,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSCE_COURSES,
             },
             {
-                "department": "Department of Electronics Engineering",
+                "department": "Bachelor of Science in Electronics Engineering",
                 "program_name": "Bachelor of Science in Electronics Engineering",
                 "program_code": "ECE",
                 "program_head": "ROSANNA C. UCAT",
@@ -371,7 +371,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSECE_COURSES,
             },
             {
-                "department": "Department of Mechanical Engineering",
+                "department": "Bachelor of Science in Mechanical Engineering",
                 "program_name": "Bachelor of Science in Mechanical Engineering",
                 "program_code": "ME",
                 "program_head": "DELFIN C. GABALES",
@@ -383,7 +383,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSME_COURSES,
             },
             {
-                "department": "Department of Sanitary Engineering",
+                "department": "Bachelor of Science in Sanitary Engineering",
                 "program_name": "Bachelor of Science in Sanitary Engineering",
                 "program_code": "SE",
                 "program_head": "FLORENCIO S. CHUA",
@@ -395,7 +395,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSSE_COURSES,
             },
             {
-                "department": "Department of Agricultural and Biosystems Engineering",
+                "department": "Bachelor of Science in Agricultural and Biosystems Engineering",
                 "program_name": "Bachelor of Science in Agricultural and Biosystems Engineering",
                 "program_code": "ABE",
                 "program_head": "SHEILA C. COGAY",
@@ -407,7 +407,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSABE_COURSES,
             },
             {
-                "department": "Department of Geodetic Engineering",
+                "department": "Bachelor of Science in Geodetic Engineering",
                 "program_name": "Bachelor of Science in Geodetic Engineering",
                 "program_code": "GE",
                 "program_head": "MELBOURNE R. BAUTISTA",
@@ -419,7 +419,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSGE_COURSES,
             },
             {
-                "department": "Department of Mining Engineering",
+                "department": "Bachelor of Science in Mining Engineering",
                 "program_name": "Bachelor of Science in Mining Engineering",
                 "program_code": "MinE",
                 "program_head": "MARK JOHN S. PAG-ALAMAN",
@@ -431,7 +431,7 @@ COLLEGE_DEPARTMENT_CATALOG: List[Dict[str, Any]] = [
                 "courses": BSMINE_COURSES,
             },
             {
-                "department": "Department of Geology",
+                "department": "Bachelor of Science in Geology",
                 "program_name": "Bachelor of Science in Geology",
                 "program_code": "BSGeo",
                 "program_head": "DEAN LESTER P. REJAS",

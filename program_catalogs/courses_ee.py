@@ -12,6 +12,7 @@ from typing import List, Dict, Any
 BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     {
         "code": "EE 211",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -34,6 +35,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 211L",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 1 Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -54,6 +56,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "CpE 121",
+        "year_level": "First Year",
         "title": "Computer Fundamentals and Programming",
         "credit_units": "3.0 Units (2 Lec, 1 Lab)",
         "lec_lab": "Lecture / Laboratory",
@@ -75,6 +78,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 221",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -95,6 +99,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 221L",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 2 Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -114,6 +119,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 222",
+        "year_level": "Second Year",
         "title": "Advanced Mathematics for Engineers",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -133,6 +139,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 221",
+        "year_level": "Second Year",
         "title": "Electronic Circuits: Devices and Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -153,6 +160,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 221L",
+        "year_level": "Second Year",
         "title": "Electronic Circuits: Devices and Analysis Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -171,6 +179,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 222",
+        "year_level": "Second Year",
         "title": "Electromagnetics",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -190,6 +199,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 311",
+        "year_level": "Third Year",
         "title": "Electrical Machines 1",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -210,6 +220,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 311L",
+        "year_level": "Third Year",
         "title": "Electrical Machines 1 Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -228,6 +239,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 312",
+        "year_level": "Third Year",
         "title": "Engineering Mathematics for EE",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -246,6 +258,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 313",
+        "year_level": "Third Year",
         "title": "Electrical Engineering Law, Codes, and Professional Ethics",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -264,6 +277,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 311",
+        "year_level": "Third Year",
         "title": "Industrial Electronics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -283,6 +297,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 311L",
+        "year_level": "Third Year",
         "title": "Industrial Electronics Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -301,6 +316,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 312",
+        "year_level": "Third Year",
         "title": "Fundamentals of Electronic Communications",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -320,6 +336,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 313",
+        "year_level": "Third Year",
         "title": "Logic Circuit Design and Switching Theory",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -339,6 +356,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 313L",
+        "year_level": "Third Year",
         "title": "Logic Circuit Design and Switching Theory Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -356,6 +374,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 321",
+        "year_level": "Third Year",
         "title": "Electrical Machines 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -375,6 +394,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 321L",
+        "year_level": "Third Year",
         "title": "Electrical Machines 2 Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -393,6 +413,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 322",
+        "year_level": "Third Year",
         "title": "Electrical Apparatus and Devices",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -411,6 +432,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 322L",
+        "year_level": "Third Year",
         "title": "Electrical Apparatus and Devices Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -428,6 +450,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 323",
+        "year_level": "Third Year",
         "title": "Instrumentation and Control",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -447,6 +470,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 323L",
+        "year_level": "Third Year",
         "title": "Instrumentation and Control Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -464,6 +488,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 324",
+        "year_level": "Third Year",
         "title": "Numerical Methods and Analysis",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -483,6 +508,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 324L",
+        "year_level": "Third Year",
         "title": "Numerical Methods and Analysis Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -500,6 +526,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 321",
+        "year_level": "Third Year",
         "title": "Microprocessor Systems",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -518,6 +545,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "AEE 321L",
+        "year_level": "Third Year",
         "title": "Microprocessor Systems Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -535,6 +563,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE EL 1",
+        "year_level": "First Year",
         "title": "EE Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -552,6 +581,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 400",
+        "year_level": "Fourth Year",
         "title": "Capstone Design Project",
         "credit_units": "3.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -569,6 +599,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 411",
+        "year_level": "Fourth Year",
         "title": "Power System Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -589,6 +620,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 411L",
+        "year_level": "Fourth Year",
         "title": "Power System Analysis Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -606,6 +638,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 412",
+        "year_level": "Fourth Year",
         "title": "Industrial Plant Visits and Seminars",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -623,6 +656,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 413",
+        "year_level": "Fourth Year",
         "title": "Electrical Systems & Illumination Engineering Design",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -643,6 +677,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 413L",
+        "year_level": "Fourth Year",
         "title": "Electrical Systems & Illumination Engineering Design Lab",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -660,6 +695,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 414L",
+        "year_level": "Fourth Year",
         "title": "Fundamentals of Power Plant Engineering Design",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -677,6 +713,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 314",
+        "year_level": "Third Year",
         "title": "Electrical Standards and Practice",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -696,6 +733,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 315",
+        "year_level": "Third Year",
         "title": "Feedback Control Systems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -717,6 +755,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 415",
+        "year_level": "Fourth Year",
         "title": "Distribution Systems and Substation Design",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -737,6 +776,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 415L",
+        "year_level": "Fourth Year",
         "title": "Distribution Systems and Substation Design Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -756,6 +796,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 401",
+        "year_level": "Fourth Year",
         "title": "Capstone Design Project 2",
         "credit_units": "3.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -775,6 +816,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE 421",
+        "year_level": "Fourth Year",
         "title": "On-the-Job Training (320 Hours)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Practicum / Industry Immersion",
@@ -793,6 +835,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE EL 2",
+        "year_level": "First Year",
         "title": "EE Elective 2: Renewable Energy Systems and Microgrids",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -812,6 +855,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE EL 3",
+        "year_level": "First Year",
         "title": "EE Elective 3: Correlation Course 1",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -831,6 +875,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
     },
     {
         "code": "EE EL 4",
+        "year_level": "First Year",
         "title": "EE Elective 4: Free Elective",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -853,6 +898,7 @@ BSEE_SPECIALIZED_COURSES: List[Dict[str, Any]] = [
 FOUNDATION_EE_COURSES = [
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -866,6 +912,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -879,6 +926,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "The Life and Works of Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -892,6 +940,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "GE 114",
+        "year_level": "First Year",
         "title": "Readings in Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -905,6 +954,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "MATH 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -918,6 +968,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "CHEM 111",
+        "year_level": "First Year",
         "title": "Chemistry for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -931,6 +982,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "BES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -944,6 +996,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "PE 1",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -957,6 +1010,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "NSTP 1",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -972,6 +1026,7 @@ FOUNDATION_EE_COURSES = [
     # FIRST YEAR - SECOND SEMESTER
     {
         "code": "GE 121",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -985,6 +1040,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "GE 122",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -998,6 +1054,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "MATH 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1011,6 +1068,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "MATH 122",
+        "year_level": "First Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1024,6 +1082,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "PHYS 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -1037,6 +1096,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "BES 121",
+        "year_level": "First Year",
         "title": "Computer-Aided Drafting",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1050,6 +1110,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "PE 2",
+        "year_level": "First Year",
         "title": "Fitness Exercises",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -1063,6 +1124,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "NSTP 2",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -1078,6 +1140,7 @@ FOUNDATION_EE_COURSES = [
     # FIRST YEAR - OFF-SEMESTER
     {
         "code": "BES 131",
+        "year_level": "First Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1091,6 +1154,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "SE 131",
+        "year_level": "First Year",
         "title": "Environmental Science and Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1106,6 +1170,7 @@ FOUNDATION_EE_COURSES = [
     # SECOND YEAR - FIRST SEMESTER
     {
         "code": "GE 213",
+        "year_level": "Second Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1119,6 +1184,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "MATH 211",
+        "year_level": "Second Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1132,6 +1198,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "CE 211",
+        "year_level": "Second Year",
         "title": "Engineering Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1145,6 +1212,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "ME 211",
+        "year_level": "Second Year",
         "title": "Fluid Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1158,6 +1226,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "ME 212",
+        "year_level": "Second Year",
         "title": "Basic Thermodynamics",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1171,6 +1240,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "BES 212",
+        "year_level": "Second Year",
         "title": "Basic Occupational Safety and Health",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1184,6 +1254,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "GE 214",
+        "year_level": "Second Year",
         "title": "Science and Technology and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1197,6 +1268,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "PE 3",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health and Fitness I",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -1212,6 +1284,7 @@ FOUNDATION_EE_COURSES = [
     # SECOND YEAR - SECOND SEMESTER
     {
         "code": "GE-E1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1225,6 +1298,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "GE 221",
+        "year_level": "Second Year",
         "title": "Arts Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1238,6 +1312,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "CE 221",
+        "year_level": "Second Year",
         "title": "Fundamentals of Deformable Bodies",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1251,6 +1326,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "PE 4",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health and Fitness II",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -1266,6 +1342,7 @@ FOUNDATION_EE_COURSES = [
     # THIRD YEAR - FIRST SEMESTER
     {
         "code": "GE-E2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1279,6 +1356,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "GE-E3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1292,6 +1370,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "EE 315",
+        "year_level": "Third Year",
         "title": "Material Science and Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1305,6 +1384,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "ECE 311",
+        "year_level": "Third Year",
         "title": "Principles of Communication Systems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1320,6 +1400,7 @@ FOUNDATION_EE_COURSES = [
     # THIRD YEAR - SECOND SEMESTER
     {
         "code": "BES 321",
+        "year_level": "Third Year",
         "title": "Engineering Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1333,6 +1414,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "BES 322",
+        "year_level": "Third Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1346,6 +1428,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "EE 324",
+        "year_level": "Third Year",
         "title": "Electrical Standards and Practice",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -1361,6 +1444,7 @@ FOUNDATION_EE_COURSES = [
     # FOURTH YEAR - FIRST SEMESTER
     {
         "code": "EE 414",
+        "year_level": "Fourth Year",
         "title": "Industrial Plant Visits and Seminars",
         "credit_units": "1.0 Unit – Field Trips & Seminars",
         "lec_lab": "Laboratory",
@@ -1374,6 +1458,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "EE 415",
+        "year_level": "Fourth Year",
         "title": "Fundamentals of Power Plant Engineering Design",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -1389,6 +1474,7 @@ FOUNDATION_EE_COURSES = [
     # FOURTH YEAR - SECOND SEMESTER
     {
         "code": "EE 422",
+        "year_level": "Fourth Year",
         "title": "On-the-Job Training (320 hrs)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Laboratory",
@@ -1402,6 +1488,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "EE 423",
+        "year_level": "Fourth Year",
         "title": "EE Elective 3: Correlation Course 1",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1415,6 +1502,7 @@ FOUNDATION_EE_COURSES = [
     },
     {
         "code": "EE 424",
+        "year_level": "Fourth Year",
         "title": "EE Elective 4: Free Elective",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",

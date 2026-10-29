@@ -11,6 +11,7 @@ SE_COURSES = [
     # FIRST YEAR - FIRST SEMESTER
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -24,6 +25,7 @@ SE_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -37,6 +39,7 @@ SE_COURSES = [
     },
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "The Life and Works of Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -50,6 +53,7 @@ SE_COURSES = [
     },
     {
         "code": "MATH 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -63,6 +67,7 @@ SE_COURSES = [
     },
     {
         "code": "CHEM 111",
+        "year_level": "First Year",
         "title": "Chemistry for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -76,6 +81,7 @@ SE_COURSES = [
     },
     {
         "code": "BES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -89,6 +95,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 111",
+        "year_level": "First Year",
         "title": "Sanitary Engineering Orientation",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -102,6 +109,7 @@ SE_COURSES = [
     },
     {
         "code": "PE 1",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Lecture & Activity",
         "lec_lab": "Lecture",
@@ -115,6 +123,7 @@ SE_COURSES = [
     },
     {
         "code": "NSTP 1",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -130,6 +139,7 @@ SE_COURSES = [
     # FIRST YEAR - SECOND SEMESTER
     {
         "code": "GE 121",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -143,6 +153,7 @@ SE_COURSES = [
     },
     {
         "code": "GE 122",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -156,6 +167,7 @@ SE_COURSES = [
     },
     {
         "code": "GE 123",
+        "year_level": "First Year",
         "title": "Science, Technology and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -169,6 +181,7 @@ SE_COURSES = [
     },
     {
         "code": "MATH 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -182,6 +195,7 @@ SE_COURSES = [
     },
     {
         "code": "PHYS 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -195,6 +209,7 @@ SE_COURSES = [
     },
     {
         "code": "BES 121",
+        "year_level": "First Year",
         "title": "Computer Aided Drafting",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -208,6 +223,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 121",
+        "year_level": "First Year",
         "title": "Environmental and Sanitary Chemistry",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -221,6 +237,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 121L",
+        "year_level": "First Year",
         "title": "Environmental and Sanitary Chemistry, Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -234,6 +251,7 @@ SE_COURSES = [
     },
     {
         "code": "PE 2",
+        "year_level": "First Year",
         "title": "Fitness Exercise",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -247,6 +265,7 @@ SE_COURSES = [
     },
     {
         "code": "NSTP 2",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -262,6 +281,7 @@ SE_COURSES = [
     # SECOND YEAR - FIRST SEMESTER
     {
         "code": "GE 211",
+        "year_level": "Second Year",
         "title": "Readings in Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -275,6 +295,7 @@ SE_COURSES = [
     },
     {
         "code": "GE 212",
+        "year_level": "Second Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -288,6 +309,7 @@ SE_COURSES = [
     },
     {
         "code": "GEOL 211",
+        "year_level": "Second Year",
         "title": "Engineering Geology",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -301,6 +323,7 @@ SE_COURSES = [
     },
     {
         "code": "MATH 211",
+        "year_level": "Second Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -314,6 +337,7 @@ SE_COURSES = [
     },
     {
         "code": "MATH 212",
+        "year_level": "Second Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -327,6 +351,7 @@ SE_COURSES = [
     },
     {
         "code": "COE 211",
+        "year_level": "Second Year",
         "title": "Computer Fundamentals and Programming",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -340,6 +365,7 @@ SE_COURSES = [
     },
     {
         "code": "BES 211",
+        "year_level": "Second Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -353,6 +379,7 @@ SE_COURSES = [
     },
     {
         "code": "CE 211",
+        "year_level": "Second Year",
         "title": "Mechanics of Rigid Bodies",
         "credit_units": "5.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -366,6 +393,7 @@ SE_COURSES = [
     },
     {
         "code": "PE 3",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -381,6 +409,7 @@ SE_COURSES = [
     # SECOND YEAR - SECOND SEMESTER
     {
         "code": "GE 221",
+        "year_level": "Second Year",
         "title": "Arts Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -394,6 +423,7 @@ SE_COURSES = [
     },
     {
         "code": "CE 221",
+        "year_level": "Second Year",
         "title": "Mechanics of Deformable Bodies",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -407,6 +437,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 221",
+        "year_level": "Second Year",
         "title": "Methods of Research",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -420,6 +451,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 222",
+        "year_level": "Second Year",
         "title": "Environmental Science and Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -433,6 +465,7 @@ SE_COURSES = [
     },
     {
         "code": "GE 222",
+        "year_level": "Second Year",
         "title": "Fundamentals of Surveying",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -446,6 +479,7 @@ SE_COURSES = [
     },
     {
         "code": "GE 222L",
+        "year_level": "Second Year",
         "title": "Fundamentals of Surveying, Field",
         "credit_units": "2.0 Units – Fieldwork",
         "lec_lab": "Laboratory",
@@ -459,6 +493,7 @@ SE_COURSES = [
     },
     {
         "code": "ME 221",
+        "year_level": "Second Year",
         "title": "Basic Mechanical Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -472,6 +507,7 @@ SE_COURSES = [
     },
     {
         "code": "EE 221",
+        "year_level": "Second Year",
         "title": "Basic Electrical Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -485,6 +521,7 @@ SE_COURSES = [
     },
     {
         "code": "PE 4",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness II",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -500,6 +537,7 @@ SE_COURSES = [
     # THIRD YEAR - FIRST SEMESTER
     {
         "code": "SE 311",
+        "year_level": "Third Year",
         "title": "Numerical Solutions to SE Problems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -513,6 +551,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 312",
+        "year_level": "Third Year",
         "title": "Geotechnical Engineering, Lecture",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -526,6 +565,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 312L",
+        "year_level": "Third Year",
         "title": "Geotechnical Engineering, Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -539,6 +579,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 313",
+        "year_level": "Third Year",
         "title": "Structural Theory",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -552,6 +593,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 314",
+        "year_level": "Third Year",
         "title": "Hydraulics, Lecture",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -565,6 +607,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 314L",
+        "year_level": "Third Year",
         "title": "Hydraulics, Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -578,6 +621,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 315",
+        "year_level": "Third Year",
         "title": "Hydrology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -591,6 +635,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 316",
+        "year_level": "Third Year",
         "title": "Microbiology and Parasitology for Environmental Engineers",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -604,6 +649,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 317",
+        "year_level": "Third Year",
         "title": "Solid and Hazardous Waste Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -619,6 +665,7 @@ SE_COURSES = [
     # THIRD YEAR - SECOND SEMESTER
     {
         "code": "SE 321",
+        "year_level": "Third Year",
         "title": "Construction Materials and Testing, Lecture",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -632,6 +679,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 321L",
+        "year_level": "Third Year",
         "title": "Construction Materials and Testing, Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -645,6 +693,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 322",
+        "year_level": "Third Year",
         "title": "Principle of Reinforced / Pre-stressed Concrete",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -658,6 +707,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 323",
+        "year_level": "Third Year",
         "title": "Sanitary Science, Fire Protection and Plumbing as Applied to Building",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -671,6 +721,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 324",
+        "year_level": "Third Year",
         "title": "Water Supply Planning and Development",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -684,6 +735,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 325",
+        "year_level": "Third Year",
         "title": "Sewerage and Urban Drainage",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -697,6 +749,7 @@ SE_COURSES = [
     },
     {
         "code": "BES 321",
+        "year_level": "Third Year",
         "title": "Basic Occupational Health and Safety",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -710,6 +763,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 326",
+        "year_level": "Third Year",
         "title": "Public Health Engineering",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -723,6 +777,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 327",
+        "year_level": "Third Year",
         "title": "Environmental Planning, Laws and Impact Assessment",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -736,6 +791,7 @@ SE_COURSES = [
     },
     {
         "code": "GE-E1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -751,6 +807,7 @@ SE_COURSES = [
     # OFF-SEMESTER (BETWEEN THIRD & FOURTH YEAR)
     {
         "code": "BES 331",
+        "year_level": "Third Year",
         "title": "Engineering Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -764,6 +821,7 @@ SE_COURSES = [
     },
     {
         "code": "BES 332",
+        "year_level": "Third Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -779,6 +837,7 @@ SE_COURSES = [
     # FOURTH YEAR - FIRST SEMESTER
     {
         "code": "GE-E2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -792,6 +851,7 @@ SE_COURSES = [
     },
     {
         "code": "GE-E3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -805,6 +865,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 411",
+        "year_level": "Fourth Year",
         "title": "SE Project 1",
         "credit_units": "3.0 Units – Capstone Design",
         "lec_lab": "Laboratory",
@@ -818,6 +879,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 412",
+        "year_level": "Fourth Year",
         "title": "Water Purification Process Design",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -831,6 +893,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 413",
+        "year_level": "Fourth Year",
         "title": "Sewerage and Industrial Wastewater Treatment",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -844,6 +907,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 414",
+        "year_level": "Fourth Year",
         "title": "Sanitary Engineering Laws, Contract and Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -857,6 +921,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 415L",
+        "year_level": "Fourth Year",
         "title": "Environmental Engineering Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -870,6 +935,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 416",
+        "year_level": "Fourth Year",
         "title": "Planning and Design in Environmental and Sanitary Engineering",
         "credit_units": "2.0 Units – Design Studio",
         "lec_lab": "Laboratory",
@@ -883,6 +949,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 417",
+        "year_level": "Fourth Year",
         "title": "Project Management",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -898,6 +965,7 @@ SE_COURSES = [
     # FOURTH YEAR - SECOND SEMESTER
     {
         "code": "SE 421",
+        "year_level": "Fourth Year",
         "title": "Correlation Course for SE",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -911,6 +979,7 @@ SE_COURSES = [
     },
     {
         "code": "SE-E1",
+        "year_level": "First Year",
         "title": "Free Elective",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -924,6 +993,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 422",
+        "year_level": "Fourth Year",
         "title": "Specialized On-the-Job Training (320 hrs)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Laboratory",
@@ -937,6 +1007,7 @@ SE_COURSES = [
     },
     {
         "code": "SE 423",
+        "year_level": "Fourth Year",
         "title": "SE Project 2",
         "credit_units": "3.0 Units – Capstone Design & Defense",
         "lec_lab": "Laboratory",

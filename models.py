@@ -600,7 +600,7 @@ class CourseMetadata:
     prereq_coreq_table: List[Dict[str, str]] = field(default_factory=get_default_prereq_coreq_table)
     sdg_table: List[Dict[str, str]] = field(default_factory=get_default_sdg_table)
     syllabus_assessment_activities: List[Dict[str, str]] = field(default_factory=get_default_syllabus_assessment_activities)
-    learning_plan_table: List[Dict[str, str]] = field(default_factory=get_default_learning_plan_table)
+    learning_plan_table: List[Dict[str, str]] = field(default_factory=list)
     references_table: List[Dict[str, str]] = field(default_factory=get_default_references_table)
     policies_table: List[Dict[str, str]] = field(default_factory=get_default_policies_table)
     course_assessment_plan: List[Dict[str, Any]] = field(default_factory=list)
@@ -608,6 +608,17 @@ class CourseMetadata:
     references: str = ""
     classroom_policies: str = ""
     def __post_init__(self):
+        # Clean course_code so it never contains the course title
+        if self.course_code and (" - " in self.course_code or " – " in self.course_code):
+            delim = " - " if " - " in self.course_code else " – "
+            parts = self.course_code.split(delim, 1)
+            self.course_code = parts[0].strip()
+            if not self.course_title or self.course_title == "Untitled Subject":
+                self.course_title = parts[1].strip()
+
+        if not self.policies_table:
+            self.policies_table = get_default_policies_table()
+
         # 1. Normalize programs list & program_code
         if self.programs:
             cleaned_progs = []

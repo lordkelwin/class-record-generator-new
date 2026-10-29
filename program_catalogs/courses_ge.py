@@ -10,6 +10,7 @@ GE_COURSES_LIST = [
     # FIRST YEAR - FIRST SEMESTER
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -23,6 +24,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -36,6 +38,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "Geodetic Engineering Orientation",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -49,6 +52,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 114",
+        "year_level": "First Year",
         "title": "General Surveying 1",
         "credit_units": "3.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -62,6 +66,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "BES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -75,6 +80,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "COE 111",
+        "year_level": "First Year",
         "title": "Computer Fundamentals and Programming",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -88,6 +94,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "MATH 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -101,6 +108,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "PE 1",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -114,6 +122,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "NSTP 1",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -129,6 +138,7 @@ GE_COURSES_LIST = [
     # FIRST YEAR - SECOND SEMESTER
     {
         "code": "GE 121",
+        "year_level": "First Year",
         "title": "General Surveying 2",
         "credit_units": "4.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -142,6 +152,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 122",
+        "year_level": "First Year",
         "title": "Intro to the Laws on Private & Public Lands",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -155,6 +166,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "PHYS 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -168,6 +180,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "BES 121",
+        "year_level": "First Year",
         "title": "Computer-Aided Drafting",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -181,6 +194,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GEOL 121",
+        "year_level": "First Year",
         "title": "Principles of Geology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -194,6 +208,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "MATH 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -207,6 +222,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "PE 2",
+        "year_level": "First Year",
         "title": "Fitness Exercise",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -220,6 +236,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "NSTP 2",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -235,6 +252,7 @@ GE_COURSES_LIST = [
     # FIRST YEAR - OFF-SEMESTER
     {
         "code": "MATH 131",
+        "year_level": "First Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -248,6 +266,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "CE 131",
+        "year_level": "First Year",
         "title": "Engineering Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -263,6 +282,7 @@ GE_COURSES_LIST = [
     # SECOND YEAR - FIRST SEMESTER
     {
         "code": "GE 211",
+        "year_level": "Second Year",
         "title": "Engineering Surveys",
         "credit_units": "4.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -276,6 +296,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 212",
+        "year_level": "Second Year",
         "title": "Theory of Errors & Adjustments",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -289,6 +310,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 213",
+        "year_level": "Second Year",
         "title": "Geometric Geodesy",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -302,6 +324,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 214",
+        "year_level": "Second Year",
         "title": "Cartography & Map Projections",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -315,6 +338,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 215",
+        "year_level": "Second Year",
         "title": "Geodetic Astronomy",
         "credit_units": "3.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -328,6 +352,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "MATH 211",
+        "year_level": "Second Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -341,6 +366,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "COE 212",
+        "year_level": "Second Year",
         "title": "Advanced Information & Communications Tech.",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -354,6 +380,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "PE 3",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -369,6 +396,7 @@ GE_COURSES_LIST = [
     # SECOND YEAR - SECOND SEMESTER
     {
         "code": "GE 124",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -382,6 +410,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 125",
+        "year_level": "First Year",
         "title": "Science, Technology, and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -395,6 +424,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 126",
+        "year_level": "First Year",
         "title": "The Life and Works of Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -408,6 +438,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 221",
+        "year_level": "Second Year",
         "title": "Readings in Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -421,6 +452,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 222",
+        "year_level": "Second Year",
         "title": "Hydrographic Surveying",
         "credit_units": "3.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -434,6 +466,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 223",
+        "year_level": "Second Year",
         "title": "Physical Geodesy",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -447,6 +480,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 224",
+        "year_level": "Second Year",
         "title": "GE Laws, Obligations Contracts, & Ethics",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -460,6 +494,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 225",
+        "year_level": "Second Year",
         "title": "Public Land Laws & Laws on Natural Resources",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -473,6 +508,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "PE 4",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness II",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -488,6 +524,7 @@ GE_COURSES_LIST = [
     # SECOND YEAR - OFF-SEMESTER
     {
         "code": "GE 231",
+        "year_level": "Second Year",
         "title": "Survey Camp - 120 Hours",
         "credit_units": "1.0 Unit – Field Camp",
         "lec_lab": "Laboratory",
@@ -503,6 +540,7 @@ GE_COURSES_LIST = [
     # THIRD YEAR - FIRST SEMESTER
     {
         "code": "GE-E1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -516,6 +554,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 311",
+        "year_level": "Third Year",
         "title": "Satellite Geodesy",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -529,6 +568,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 312",
+        "year_level": "Third Year",
         "title": "Geodetic Computations & Adjustments",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -542,6 +582,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 313",
+        "year_level": "Third Year",
         "title": "Land Registration Laws",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -555,6 +596,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 314",
+        "year_level": "Third Year",
         "title": "Geographic Information Systems",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -568,6 +610,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 315",
+        "year_level": "Third Year",
         "title": "Mine Surveying",
         "credit_units": "2.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -581,6 +624,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "BES 311",
+        "year_level": "Third Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -594,6 +638,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "EE 311",
+        "year_level": "Third Year",
         "title": "Electrical & Electronics Eng'g. for Geodetic Engrs.",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -609,6 +654,7 @@ GE_COURSES_LIST = [
     # THIRD YEAR - SECOND SEMESTER
     {
         "code": "GE-E2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -622,6 +668,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 321",
+        "year_level": "Third Year",
         "title": "Geodetic Surveying",
         "credit_units": "4.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -635,6 +682,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 322",
+        "year_level": "Third Year",
         "title": "Photogrammetry",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -648,6 +696,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 323",
+        "year_level": "Third Year",
         "title": "Property Surveys",
         "credit_units": "5.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -661,6 +710,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 324",
+        "year_level": "Third Year",
         "title": "Methods of Research",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -674,6 +724,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "BES 321",
+        "year_level": "Third Year",
         "title": "Engineering Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -687,6 +738,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "BES 322",
+        "year_level": "Third Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -702,6 +754,7 @@ GE_COURSES_LIST = [
     # THIRD YEAR - OFF-SEMESTER
     {
         "code": "GE 331",
+        "year_level": "Third Year",
         "title": "GE Immersion/OJT - (320 Hours)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Laboratory",
@@ -717,6 +770,7 @@ GE_COURSES_LIST = [
     # FOURTH YEAR - FIRST SEMESTER
     {
         "code": "GE-E3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -730,6 +784,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 226",
+        "year_level": "Second Year",
         "title": "Art Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -743,6 +798,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 227",
+        "year_level": "Second Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -756,6 +812,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 411",
+        "year_level": "Fourth Year",
         "title": "Special Studies in Geodetic Engineering (Project 1)",
         "credit_units": "3.0 Units – Capstone Design",
         "lec_lab": "Laboratory",
@@ -769,6 +826,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 412",
+        "year_level": "Fourth Year",
         "title": "Remote Sensing",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -782,6 +840,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 413",
+        "year_level": "Fourth Year",
         "title": "Land Administration & Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -795,6 +854,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GEn-E1",
+        "year_level": "First Year",
         "title": "GEn Elective",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -808,6 +868,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "SE 414",
+        "year_level": "Fourth Year",
         "title": "Intro to Environmental Science & Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -823,6 +884,7 @@ GE_COURSES_LIST = [
     # FOURTH YEAR - SECOND SEMESTER
     {
         "code": "GE 127",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -836,6 +898,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 421",
+        "year_level": "Fourth Year",
         "title": "Special Studies in Geodetic Engineering (Project 2 / Defense)",
         "credit_units": "3.0 Units – Capstone Design & Defense",
         "lec_lab": "Laboratory",
@@ -849,6 +912,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 422",
+        "year_level": "Fourth Year",
         "title": "Land Use Planning & Development",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -862,6 +926,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "GE 423",
+        "year_level": "Fourth Year",
         "title": "Correlation Course for GE",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -875,6 +940,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "FREE-E1",
+        "year_level": "First Year",
         "title": "Free Elective",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -888,6 +954,7 @@ GE_COURSES_LIST = [
     },
     {
         "code": "BES 421",
+        "year_level": "Fourth Year",
         "title": "Basic Occupational Health & Safety",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",

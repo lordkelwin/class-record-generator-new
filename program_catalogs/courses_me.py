@@ -8,6 +8,7 @@ ME_COURSES = [
     # First Year - First Semester
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -25,6 +26,7 @@ ME_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -42,6 +44,7 @@ ME_COURSES = [
     },
     {
         "code": "GE 116",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -59,6 +62,7 @@ ME_COURSES = [
     },
     {
         "code": "Math 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -76,6 +80,7 @@ ME_COURSES = [
     },
     {
         "code": "Chem 111",
+        "year_level": "First Year",
         "title": "Chemistry for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -93,6 +98,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 111",
+        "year_level": "First Year",
         "title": "Orientation to Mechanical Engineering",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -110,6 +116,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -127,6 +134,7 @@ ME_COURSES = [
     },
     {
         "code": "PE 111",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -144,6 +152,7 @@ ME_COURSES = [
     },
     {
         "code": "NSTP 111",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -162,6 +171,7 @@ ME_COURSES = [
     # First Year - Second Semester
     {
         "code": "GE 117",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -179,6 +189,7 @@ ME_COURSES = [
     },
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "Science, Technology, and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -196,6 +207,7 @@ ME_COURSES = [
     },
     {
         "code": "GE 118",
+        "year_level": "First Year",
         "title": "Arts Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -213,6 +225,7 @@ ME_COURSES = [
     },
     {
         "code": "Math 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -230,6 +243,7 @@ ME_COURSES = [
     },
     {
         "code": "Phys 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -247,6 +261,7 @@ ME_COURSES = [
     },
     {
         "code": "CpE 121",
+        "year_level": "First Year",
         "title": "Computer Fundamentals & Programming",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -264,6 +279,7 @@ ME_COURSES = [
     },
     {
         "code": "PE 121",
+        "year_level": "First Year",
         "title": "Fitness Exercises",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -281,6 +297,7 @@ ME_COURSES = [
     },
     {
         "code": "NSTP 121",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -299,6 +316,7 @@ ME_COURSES = [
     # Second Year - First Semester
     {
         "code": "GE 115",
+        "year_level": "First Year",
         "title": "The Life and Works of Jose Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -316,6 +334,7 @@ ME_COURSES = [
     },
     {
         "code": "GE 114",
+        "year_level": "First Year",
         "title": "Readings in Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -333,6 +352,7 @@ ME_COURSES = [
     },
     {
         "code": "Math 211",
+        "year_level": "Second Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -350,6 +370,7 @@ ME_COURSES = [
     },
     {
         "code": "Math 212",
+        "year_level": "Second Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -367,6 +388,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 211",
+        "year_level": "Second Year",
         "title": "Thermodynamics 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -384,6 +406,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 212",
+        "year_level": "Second Year",
         "title": "Workshop Theory and Practice",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -401,6 +424,7 @@ ME_COURSES = [
     },
     {
         "code": "EE 201",
+        "year_level": "Second Year",
         "title": "Basic Electrical Engineering",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -418,6 +442,7 @@ ME_COURSES = [
     },
     {
         "code": "EE 201L",
+        "year_level": "Second Year",
         "title": "Basic Electrical Engineering Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -435,6 +460,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 211",
+        "year_level": "Second Year",
         "title": "Mechanics of Rigid Bodies",
         "credit_units": "5.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -453,6 +479,7 @@ ME_COURSES = [
     },
     {
         "code": "PE 211",
+        "year_level": "Second Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -471,6 +498,7 @@ ME_COURSES = [
     # Second Year - Second Semester
     {
         "code": "ME 221",
+        "year_level": "Second Year",
         "title": "Advanced Mathematics for Mechanical Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -488,6 +516,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 222",
+        "year_level": "Second Year",
         "title": "Thermodynamics 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -505,6 +534,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 223",
+        "year_level": "Second Year",
         "title": "Machine Elements",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -522,6 +552,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 223L",
+        "year_level": "Second Year",
         "title": "Machine Elements Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -539,6 +570,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 224",
+        "year_level": "Second Year",
         "title": "Machine Shop Theory",
         "credit_units": "2.0 Units – Lecture & Practice",
         "lec_lab": "Lecture & Lab",
@@ -556,6 +588,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 225",
+        "year_level": "Second Year",
         "title": "Heat Transfer",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -573,6 +606,7 @@ ME_COURSES = [
     },
     {
         "code": "ECE 201",
+        "year_level": "Second Year",
         "title": "Basic Electronics",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -590,6 +624,7 @@ ME_COURSES = [
     },
     {
         "code": "ECE 201L",
+        "year_level": "Second Year",
         "title": "Basic Electronics Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -607,6 +642,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 121",
+        "year_level": "First Year",
         "title": "Computer-aided Drafting",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -624,6 +660,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 221",
+        "year_level": "Second Year",
         "title": "Mechanics of Deformable Bodies",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -641,6 +678,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 212",
+        "year_level": "Second Year",
         "title": "Fluid Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -658,6 +696,7 @@ ME_COURSES = [
     },
     {
         "code": "PE 221",
+        "year_level": "Second Year",
         "title": "Physical Activities Towards Health & Fitness II",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -676,6 +715,7 @@ ME_COURSES = [
     # Third Year - First Semester
     {
         "code": "GE 119",
+        "year_level": "First Year",
         "title": "The Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -693,6 +733,7 @@ ME_COURSES = [
     },
     {
         "code": "GE EL 1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -710,6 +751,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 311",
+        "year_level": "Third Year",
         "title": "Fluid Machineries",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -727,6 +769,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 312L",
+        "year_level": "Third Year",
         "title": "Mechanical Engineering Laboratory 1",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -744,6 +787,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 313",
+        "year_level": "Third Year",
         "title": "Refrigeration Systems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -761,6 +805,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 314",
+        "year_level": "Third Year",
         "title": "Combustion Engineering",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -778,6 +823,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 315",
+        "year_level": "Third Year",
         "title": "Computer Applications for ME",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -795,6 +841,7 @@ ME_COURSES = [
     },
     {
         "code": "EE 301",
+        "year_level": "Third Year",
         "title": "DC & AC Machinery",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -812,6 +859,7 @@ ME_COURSES = [
     },
     {
         "code": "EE 301L",
+        "year_level": "Third Year",
         "title": "DC & AC Machinery Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -829,6 +877,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 122",
+        "year_level": "First Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -846,6 +895,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 316",
+        "year_level": "Third Year",
         "title": "Material Science and Engineering for ME",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -863,6 +913,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 316L",
+        "year_level": "Third Year",
         "title": "Material Science and Engineering for ME Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -881,6 +932,7 @@ ME_COURSES = [
     # Third Year - Second Semester
     {
         "code": "GE EL 2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -898,6 +950,7 @@ ME_COURSES = [
     },
     {
         "code": "GE EL 3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -915,6 +968,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 321",
+        "year_level": "Third Year",
         "title": "Power Plant Design with Renewable Energy",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -932,6 +986,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 321L",
+        "year_level": "Third Year",
         "title": "Power Plant Design with Renewable Energy Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -949,6 +1004,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 322",
+        "year_level": "Third Year",
         "title": "Machine Design 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -966,6 +1022,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 323",
+        "year_level": "Third Year",
         "title": "Control Engineering",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -983,6 +1040,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 323L",
+        "year_level": "Third Year",
         "title": "Control Engineering Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1000,6 +1058,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 324L",
+        "year_level": "Third Year",
         "title": "Mechanical Engineering Laboratory 2",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -1017,6 +1076,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 325",
+        "year_level": "Third Year",
         "title": "Air-conditioning and Ventilation Systems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1034,6 +1094,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 323",
+        "year_level": "Third Year",
         "title": "Methods of Research",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1051,6 +1112,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 215",
+        "year_level": "Second Year",
         "title": "Basic Occupational Safety and Health",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1069,6 +1131,7 @@ ME_COURSES = [
     # Fourth Year - First Semester
     {
         "code": "ME 411",
+        "year_level": "Fourth Year",
         "title": "ME Project Study (Thesis)*",
         "credit_units": "3.0 Units – Research & Defense",
         "lec_lab": "Lecture",
@@ -1086,6 +1149,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 412",
+        "year_level": "Fourth Year",
         "title": "Machine Design 2",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1103,6 +1167,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 412L",
+        "year_level": "Fourth Year",
         "title": "Machine Design 2 Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1120,6 +1185,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 413",
+        "year_level": "Fourth Year",
         "title": "Industrial Plant Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1137,6 +1203,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 413L",
+        "year_level": "Fourth Year",
         "title": "Industrial Plant Engineering Laboratory",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1154,6 +1221,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 414L",
+        "year_level": "Fourth Year",
         "title": "Mechanical Engineering Laboratory 3",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -1171,6 +1239,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 415",
+        "year_level": "Fourth Year",
         "title": "Industrial Processes w/ Plant Visits & Seminars",
         "credit_units": "2.0 Units – Fieldwork & Seminars",
         "lec_lab": "Laboratory",
@@ -1188,6 +1257,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 416",
+        "year_level": "Fourth Year",
         "title": "ME Laws, Ethics, Contracts, Codes and Standards",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1205,6 +1275,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 417",
+        "year_level": "Fourth Year",
         "title": "Vibration Engineering",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1222,6 +1293,7 @@ ME_COURSES = [
     },
     {
         "code": "ME EL 1",
+        "year_level": "First Year",
         "title": "Mechanical Engineering Elective 1 (Correlation Course 1)",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1239,6 +1311,7 @@ ME_COURSES = [
     },
     {
         "code": "ES 321",
+        "year_level": "Third Year",
         "title": "Engineering Management",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1257,6 +1330,7 @@ ME_COURSES = [
     # Fourth Year - Second Semester
     {
         "code": "ES 322",
+        "year_level": "Third Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1274,6 +1348,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 421",
+        "year_level": "Fourth Year",
         "title": "ME Project Study (Thesis)",
         "credit_units": "3.0 Units – Prototyping & Defense",
         "lec_lab": "Lecture",
@@ -1291,6 +1366,7 @@ ME_COURSES = [
     },
     {
         "code": "ME 422",
+        "year_level": "Fourth Year",
         "title": "OJT (320 hours)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Laboratory",
@@ -1308,6 +1384,7 @@ ME_COURSES = [
     },
     {
         "code": "ME EL 2",
+        "year_level": "First Year",
         "title": "Mechanical Engineering Elective 2 (Correlation Course 2)",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1325,6 +1402,7 @@ ME_COURSES = [
     },
     {
         "code": "ME EL 3",
+        "year_level": "First Year",
         "title": "Mechanical Engineering Elective 3",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",

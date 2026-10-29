@@ -11,6 +11,7 @@ ABE_COURSES = [
     # FIRST YEAR - FIRST SEMESTER
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -24,6 +25,7 @@ ABE_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -37,6 +39,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 111",
+        "year_level": "First Year",
         "title": "Introduction to AB Engineering",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -50,6 +53,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 112",
+        "year_level": "First Year",
         "title": "Principles of Crop Science",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -63,6 +67,7 @@ ABE_COURSES = [
     },
     {
         "code": "BES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -76,6 +81,7 @@ ABE_COURSES = [
     },
     {
         "code": "CHEM 111",
+        "year_level": "First Year",
         "title": "Chemistry for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -89,6 +95,7 @@ ABE_COURSES = [
     },
     {
         "code": "MATH 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -102,6 +109,7 @@ ABE_COURSES = [
     },
     {
         "code": "PE 1",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -115,6 +123,7 @@ ABE_COURSES = [
     },
     {
         "code": "NSTP 1",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -130,6 +139,7 @@ ABE_COURSES = [
     # FIRST YEAR - SECOND SEMESTER
     {
         "code": "GE 121",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -143,6 +153,7 @@ ABE_COURSES = [
     },
     {
         "code": "GE 122",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -156,6 +167,7 @@ ABE_COURSES = [
     },
     {
         "code": "PHYS 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -169,6 +181,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 121",
+        "year_level": "First Year",
         "title": "Principles of Soil Science",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -182,6 +195,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 122",
+        "year_level": "First Year",
         "title": "Principles of Animal Science",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -195,6 +209,7 @@ ABE_COURSES = [
     },
     {
         "code": "BES 121",
+        "year_level": "First Year",
         "title": "Computer Aided Drafting",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -208,6 +223,7 @@ ABE_COURSES = [
     },
     {
         "code": "MATH 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -221,6 +237,7 @@ ABE_COURSES = [
     },
     {
         "code": "PE 2",
+        "year_level": "First Year",
         "title": "Fitness Exercise",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -234,6 +251,7 @@ ABE_COURSES = [
     },
     {
         "code": "NSTP 2",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -249,6 +267,7 @@ ABE_COURSES = [
     # SECOND YEAR - FIRST SEMESTER
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "The Life and Works of Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -262,6 +281,7 @@ ABE_COURSES = [
     },
     {
         "code": "GE 211",
+        "year_level": "Second Year",
         "title": "Readings in Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -275,6 +295,7 @@ ABE_COURSES = [
     },
     {
         "code": "MATH 211",
+        "year_level": "Second Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -288,6 +309,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 211",
+        "year_level": "Second Year",
         "title": "Fluid Mechanics",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -301,6 +323,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 212",
+        "year_level": "Second Year",
         "title": "Materials and Processes for ABE",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -314,6 +337,7 @@ ABE_COURSES = [
     },
     {
         "code": "CE 211",
+        "year_level": "Second Year",
         "title": "Engineering Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -327,6 +351,7 @@ ABE_COURSES = [
     },
     {
         "code": "MATH 212",
+        "year_level": "Second Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -340,6 +365,7 @@ ABE_COURSES = [
     },
     {
         "code": "BES 211",
+        "year_level": "Second Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -353,6 +379,7 @@ ABE_COURSES = [
     },
     {
         "code": "PE 3",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -368,6 +395,7 @@ ABE_COURSES = [
     # SECOND YEAR - SECOND SEMESTER
     {
         "code": "GE 123",
+        "year_level": "First Year",
         "title": "Science, Technology, and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -381,6 +409,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 221",
+        "year_level": "Second Year",
         "title": "Thermodynamics & Heat Transfer",
         "credit_units": "5.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -394,6 +423,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 222",
+        "year_level": "Second Year",
         "title": "AB Power Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -407,6 +437,7 @@ ABE_COURSES = [
     },
     {
         "code": "CE 222",
+        "year_level": "Second Year",
         "title": "Engineering Mechanics 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -420,6 +451,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 223",
+        "year_level": "Second Year",
         "title": "Surveying",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -433,6 +465,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 224",
+        "year_level": "Second Year",
         "title": "Computer Applications in AB Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -446,6 +479,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 225",
+        "year_level": "Second Year",
         "title": "Properties of AB Materials",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -459,6 +493,7 @@ ABE_COURSES = [
     },
     {
         "code": "CHEM 221",
+        "year_level": "Second Year",
         "title": "Biochemistry",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -472,6 +507,7 @@ ABE_COURSES = [
     },
     {
         "code": "PE 4",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health and Fitness 2",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -487,6 +523,7 @@ ABE_COURSES = [
     # THIRD YEAR - FIRST SEMESTER
     {
         "code": "GE-E1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -500,6 +537,7 @@ ABE_COURSES = [
     },
     {
         "code": "GE-E2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -513,6 +551,7 @@ ABE_COURSES = [
     },
     {
         "code": "GE 221",
+        "year_level": "Second Year",
         "title": "Arts Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -526,6 +565,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 311",
+        "year_level": "Third Year",
         "title": "Methods of Research",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -539,6 +579,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 312",
+        "year_level": "Third Year",
         "title": "AB Machinery and Mechanization",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -552,6 +593,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 313",
+        "year_level": "Third Year",
         "title": "Hydrometeorology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -565,6 +607,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 314",
+        "year_level": "Third Year",
         "title": "AB Electrification and Control Systems",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -578,6 +621,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 315",
+        "year_level": "Third Year",
         "title": "Strength of Materials",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -591,6 +635,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 316",
+        "year_level": "Third Year",
         "title": "ABE and Related Laws, Specifications, Contracts, and Professional Ethics",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -606,6 +651,7 @@ ABE_COURSES = [
     # THIRD YEAR - SECOND SEMESTER
     {
         "code": "GE-E3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -619,6 +665,7 @@ ABE_COURSES = [
     },
     {
         "code": "GE 212",
+        "year_level": "Second Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -632,6 +679,7 @@ ABE_COURSES = [
     },
     {
         "code": "BES 332",
+        "year_level": "Third Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -645,6 +693,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 321",
+        "year_level": "Third Year",
         "title": "Machine Design for AB Production",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -658,6 +707,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 322",
+        "year_level": "Third Year",
         "title": "AB Products Processing and Storage",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -671,6 +721,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 323",
+        "year_level": "Third Year",
         "title": "AB Structures Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -684,6 +735,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 324",
+        "year_level": "Third Year",
         "title": "Irrigation and Drainage Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -697,6 +749,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 325",
+        "year_level": "Third Year",
         "title": "Structural Design (Timber, Steel & Reinforced Concrete Designs)",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -710,6 +763,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 326",
+        "year_level": "Third Year",
         "title": "Thesis (Thesis Outlining and Outline Defense/Preliminary Conduct)",
         "credit_units": "2.0 Units – Undergraduate Thesis",
         "lec_lab": "Laboratory",
@@ -725,6 +779,7 @@ ABE_COURSES = [
     # THIRD YEAR - OFF-SEMESTER
     {
         "code": "ABE 331",
+        "year_level": "Third Year",
         "title": "Industry Immersion Program (240 hours)",
         "credit_units": "3.0 Units – Practicum",
         "lec_lab": "Laboratory",
@@ -740,6 +795,7 @@ ABE_COURSES = [
     # FOURTH YEAR - FIRST SEMESTER
     {
         "code": "ABE 411",
+        "year_level": "Fourth Year",
         "title": "Renewable Energy for AB Applications",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -753,6 +809,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 412",
+        "year_level": "Fourth Year",
         "title": "Food Process Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -766,6 +823,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 413",
+        "year_level": "Fourth Year",
         "title": "Plant and Livestock Systems and Environmental Control Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -779,6 +837,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 414",
+        "year_level": "Fourth Year",
         "title": "Land & Water Conservation Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -792,6 +851,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 415",
+        "year_level": "Fourth Year",
         "title": "Design and Management of AB Processing Systems",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -805,6 +865,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE-E1",
+        "year_level": "First Year",
         "title": "Specialized Professional Course 1",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -818,6 +879,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE-E2",
+        "year_level": "First Year",
         "title": "Specialized Professional Course 2",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -831,6 +893,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 416",
+        "year_level": "Fourth Year",
         "title": "Undergraduate Seminar",
         "credit_units": "1.0 Unit – Seminar",
         "lec_lab": "Lecture",
@@ -844,6 +907,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 417",
+        "year_level": "Fourth Year",
         "title": "Thesis (Conduct of Thesis)",
         "credit_units": "2.0 Units – Undergraduate Thesis",
         "lec_lab": "Laboratory",
@@ -859,6 +923,7 @@ ABE_COURSES = [
     # FOURTH YEAR - SECOND SEMESTER
     {
         "code": "ABE 421",
+        "year_level": "Fourth Year",
         "title": "AB Waste Management Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -872,6 +937,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 422",
+        "year_level": "Fourth Year",
         "title": "Aquaculture Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -885,6 +951,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE-E3",
+        "year_level": "First Year",
         "title": "Specialized Professional Course 3",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -898,6 +965,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 423",
+        "year_level": "Fourth Year",
         "title": "Correlation Course",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -911,6 +979,7 @@ ABE_COURSES = [
     },
     {
         "code": "ABE 424",
+        "year_level": "Fourth Year",
         "title": "Thesis (Thesis Writing & Final Defense)",
         "credit_units": "2.0 Units – Undergraduate Thesis",
         "lec_lab": "Laboratory",

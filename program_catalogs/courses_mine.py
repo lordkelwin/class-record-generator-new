@@ -11,6 +11,7 @@ MINE_COURSES = [
     # FIRST YEAR - FIRST SEMESTER
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -24,6 +25,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -37,6 +39,7 @@ MINE_COURSES = [
     },
     {
         "code": "MATH 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -50,6 +53,7 @@ MINE_COURSES = [
     },
     {
         "code": "CHEM 111",
+        "year_level": "First Year",
         "title": "Chemistry for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -63,6 +67,7 @@ MINE_COURSES = [
     },
     {
         "code": "BES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -76,6 +81,7 @@ MINE_COURSES = [
     },
     {
         "code": "GEOL 111",
+        "year_level": "First Year",
         "title": "Principles of Geology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -89,6 +95,7 @@ MINE_COURSES = [
     },
     {
         "code": "PE 1",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -102,6 +109,7 @@ MINE_COURSES = [
     },
     {
         "code": "NSTP 1",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -117,6 +125,7 @@ MINE_COURSES = [
     # FIRST YEAR - SECOND SEMESTER
     {
         "code": "GE 121",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -130,6 +139,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE 122",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -143,6 +153,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE 123",
+        "year_level": "First Year",
         "title": "Science, Technology and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -156,6 +167,7 @@ MINE_COURSES = [
     },
     {
         "code": "MATH 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -169,6 +181,7 @@ MINE_COURSES = [
     },
     {
         "code": "PHYS 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -182,6 +195,7 @@ MINE_COURSES = [
     },
     {
         "code": "BES 121",
+        "year_level": "First Year",
         "title": "Computer Aided Drafting",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -195,6 +209,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 121",
+        "year_level": "First Year",
         "title": "Elementary Mineralogy",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -208,6 +223,7 @@ MINE_COURSES = [
     },
     {
         "code": "PE 2",
+        "year_level": "First Year",
         "title": "Fitness Exercise",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -221,6 +237,7 @@ MINE_COURSES = [
     },
     {
         "code": "NSTP 2",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -236,6 +253,7 @@ MINE_COURSES = [
     # FIRST YEAR - OFF-SEMESTER 1
     {
         "code": "MATH 131",
+        "year_level": "First Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -249,6 +267,7 @@ MINE_COURSES = [
     },
     {
         "code": "GEOL 131",
+        "year_level": "First Year",
         "title": "Petrology",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -262,6 +281,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 131",
+        "year_level": "First Year",
         "title": "Principles of Mining",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -277,6 +297,7 @@ MINE_COURSES = [
     # SECOND YEAR - FIRST SEMESTER
     {
         "code": "GE 211",
+        "year_level": "Second Year",
         "title": "Readings in the Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -290,6 +311,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE-E1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -303,6 +325,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE 212",
+        "year_level": "Second Year",
         "title": "The Life and Works of Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -316,6 +339,7 @@ MINE_COURSES = [
     },
     {
         "code": "MATH 211",
+        "year_level": "Second Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -329,6 +353,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 211",
+        "year_level": "Second Year",
         "title": "Underground Mining",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -342,6 +367,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 212",
+        "year_level": "Second Year",
         "title": "Principles of Metallurgy",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -355,6 +381,7 @@ MINE_COURSES = [
     },
     {
         "code": "GEOL 211",
+        "year_level": "Second Year",
         "title": "Structural Geology",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -368,6 +395,7 @@ MINE_COURSES = [
     },
     {
         "code": "PE 3",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -383,6 +411,7 @@ MINE_COURSES = [
     # SECOND YEAR - SECOND SEMESTER
     {
         "code": "GE 221",
+        "year_level": "Second Year",
         "title": "Arts Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -396,6 +425,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 221",
+        "year_level": "Second Year",
         "title": "Surface Mining",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -409,6 +439,7 @@ MINE_COURSES = [
     },
     {
         "code": "GEOL 221",
+        "year_level": "Second Year",
         "title": "Mineral Deposits",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -422,6 +453,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 222",
+        "year_level": "Second Year",
         "title": "Mineral Processing",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -435,6 +467,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 223",
+        "year_level": "Second Year",
         "title": "Techniques of Metallurgical Analysis",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -448,6 +481,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE 222",
+        "year_level": "Second Year",
         "title": "General Surveying 1",
         "credit_units": "3.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -461,6 +495,7 @@ MINE_COURSES = [
     },
     {
         "code": "PE 4",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness II",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -476,6 +511,7 @@ MINE_COURSES = [
     # THIRD YEAR - FIRST SEMESTER
     {
         "code": "EM 311",
+        "year_level": "Third Year",
         "title": "Techniques of Mining Analysis",
         "credit_units": "2.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -489,6 +525,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 312",
+        "year_level": "Third Year",
         "title": "Mine Safety",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -502,6 +539,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 313",
+        "year_level": "Third Year",
         "title": "Mine Surveying",
         "credit_units": "3.0 Units – Lecture & Fieldwork",
         "lec_lab": "Lecture & Lab",
@@ -515,6 +553,7 @@ MINE_COURSES = [
     },
     {
         "code": "CE 311",
+        "year_level": "Third Year",
         "title": "Engineering Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -528,6 +567,7 @@ MINE_COURSES = [
     },
     {
         "code": "ME 311",
+        "year_level": "Third Year",
         "title": "Fluid Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -541,6 +581,7 @@ MINE_COURSES = [
     },
     {
         "code": "SE 311",
+        "year_level": "Third Year",
         "title": "Environmental Science and Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -554,6 +595,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE 311",
+        "year_level": "Third Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -567,6 +609,7 @@ MINE_COURSES = [
     },
     {
         "code": "GE-E2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -582,6 +625,7 @@ MINE_COURSES = [
     # THIRD YEAR - SECOND SEMESTER
     {
         "code": "GE-E3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -595,6 +639,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 321",
+        "year_level": "Third Year",
         "title": "Mine Ventilation",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -608,6 +653,7 @@ MINE_COURSES = [
     },
     {
         "code": "ME 321",
+        "year_level": "Third Year",
         "title": "Basic Mechanical Equipment",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -621,6 +667,7 @@ MINE_COURSES = [
     },
     {
         "code": "EE 321",
+        "year_level": "Third Year",
         "title": "Basic Electrical Engineering",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -634,6 +681,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM-TS1",
+        "year_level": "First Year",
         "title": "Track Specialization 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -647,6 +695,7 @@ MINE_COURSES = [
     },
     {
         "code": "CE 321",
+        "year_level": "Third Year",
         "title": "Mechanics of Deformable Bodies",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -660,6 +709,7 @@ MINE_COURSES = [
     },
     {
         "code": "BES 321",
+        "year_level": "Third Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -673,6 +723,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 322",
+        "year_level": "Third Year",
         "title": "Methods of Research",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -688,6 +739,7 @@ MINE_COURSES = [
     # THIRD YEAR - OFF-SEMESTER 2
     {
         "code": "EM 331",
+        "year_level": "Third Year",
         "title": "Mine and Plant Practice (320 Hrs)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Laboratory",
@@ -703,6 +755,7 @@ MINE_COURSES = [
     # FOURTH YEAR - FIRST SEMESTER
     {
         "code": "EM 411",
+        "year_level": "Fourth Year",
         "title": "Mine Research and Study/Thesis",
         "credit_units": "3.0 Units – Capstone Research",
         "lec_lab": "Laboratory",
@@ -716,6 +769,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 412",
+        "year_level": "Fourth Year",
         "title": "Mine Design",
         "credit_units": "3.0 Units – Design Studio",
         "lec_lab": "Laboratory",
@@ -729,6 +783,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 413",
+        "year_level": "Fourth Year",
         "title": "Mine Environmental Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -742,6 +797,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 414",
+        "year_level": "Fourth Year",
         "title": "Mining and Environmental Laws and Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -755,6 +811,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM-TS2",
+        "year_level": "First Year",
         "title": "Track Specialization 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -768,6 +825,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 415",
+        "year_level": "Fourth Year",
         "title": "Rock Mechanics",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -781,6 +839,7 @@ MINE_COURSES = [
     },
     {
         "code": "BES 411",
+        "year_level": "Fourth Year",
         "title": "Engineering Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -794,6 +853,7 @@ MINE_COURSES = [
     },
     {
         "code": "BES 412",
+        "year_level": "Fourth Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -809,6 +869,7 @@ MINE_COURSES = [
     # FOURTH YEAR - SECOND SEMESTER
     {
         "code": "EM 421",
+        "year_level": "Fourth Year",
         "title": "Mine Research and Study",
         "credit_units": "3.0 Units – Capstone Research & Defense",
         "lec_lab": "Laboratory",
@@ -822,6 +883,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 422",
+        "year_level": "Fourth Year",
         "title": "Mining Seminar",
         "credit_units": "1.0 Unit – Seminar",
         "lec_lab": "Lecture",
@@ -835,6 +897,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 423",
+        "year_level": "Fourth Year",
         "title": "Correlation Course",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -848,6 +911,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 424",
+        "year_level": "Fourth Year",
         "title": "Mine Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -861,6 +925,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 425",
+        "year_level": "Fourth Year",
         "title": "Mine Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -874,6 +939,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM-TS3",
+        "year_level": "First Year",
         "title": "Track Specialization 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -887,6 +953,7 @@ MINE_COURSES = [
     },
     {
         "code": "EM 426",
+        "year_level": "Fourth Year",
         "title": "Energy Resources",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -900,6 +967,7 @@ MINE_COURSES = [
     },
     {
         "code": "FREE-E1",
+        "year_level": "First Year",
         "title": "Free Elective",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",

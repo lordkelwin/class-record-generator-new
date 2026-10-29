@@ -1283,6 +1283,17 @@ def api_submit_syllabus(course_id):
     committee_members = data.get("committee_members")
 
     submission_notes = data.get("submission_notes")
+    sig_data = data.get("signature_data") or ""
+    if sig_data:
+        from auth import _load_users, _save_users, _lock
+        with _lock:
+            all_users = _load_users()
+            if user["username"] in all_users:
+                all_users[user["username"]]["signature_data"] = sig_data
+                all_users[user["username"]]["has_signature"] = True
+                _save_users(all_users)
+        user["has_signature"] = True
+        user["signature_data"] = sig_data
 
     try:
 
@@ -1506,42 +1517,16 @@ def api_sign_workflow_step(course_id):
 
 
     # If signature image provided in request, save to user profile
-
-    if sig_data and not user.get("has_signature"):
-
-        from auth import _load_users, _save_users, _lock
-
-        with _lock:
-
-            all_users = _load_users()
-
-            if user["username"] in all_users:
-
-                all_users[user["username"]]["signature_data"] = sig_data
-
-                _save_users(all_users)
-
-        user["has_signature"] = True
-
-        user["signature_data"] = sig_data
-
-
-
-
-
-
-
-    # Temporary allow signing if signature_data is supplied in the request body
-
     if sig_data:
-
+        from auth import _load_users, _save_users, _lock
+        with _lock:
+            all_users = _load_users()
+            if user["username"] in all_users:
+                all_users[user["username"]]["signature_data"] = sig_data
+                all_users[user["username"]]["has_signature"] = True
+                _save_users(all_users)
         user["has_signature"] = True
-
-
-
-
-
-
+        user["signature_data"] = sig_data
 
     overall_rec = (data.get("overall_recommendation") or "").strip()
 
@@ -1669,6 +1654,96 @@ def api_export_course_syllabus_pdf(course_id):
         mimetype="application/pdf",
 
     )
+
+
+@app.route("/api/courses/<course_id>/student-acknowledgment", methods=["GET", "POST"])
+def api_course_student_acknowledgment(course_id):
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    bp_dict = doc.get("blueprint") or {}
+    students = bp_dict.get("students") or []
+    acks = doc.get("student_acknowledgments") or (doc.get("workflow") or {}).get("student_acknowledgments") or []
+
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        student_id = (data.get("student_id") or "").strip()
+        student_name = (data.get("student_name") or data.get("name") or "").strip()
+        sig_data = (data.get("signature_data") or "").strip()
+        email = (data.get("email") or "").strip()
+        now_ts = datetime.now().isoformat(timespec="seconds")
+
+        if not student_name:
+            return jsonify({"error": "Student name is required."}), 400
+
+        new_ack = {
+            "student_id": student_id,
+            "student_name": student_name,
+            "email": email,
+            "signature_data": sig_data,
+            "acknowledged_at": now_ts,
+            "date": now_ts[:10],
+            "ip_address": request.remote_addr or "",
+        }
+
+        updated = False
+        for idx, a in enumerate(acks):
+            if (student_id and a.get("student_id") == student_id) or (student_name.lower() == (a.get("student_name") or "").lower()):
+                acks[idx] = new_ack
+                updated = True
+                break
+        if not updated:
+            acks.append(new_ack)
+
+        doc["student_acknowledgments"] = acks
+        if "workflow" in doc and isinstance(doc["workflow"], dict):
+            doc["workflow"]["student_acknowledgments"] = acks
+
+        courses_store.save_course_doc(doc)
+        return jsonify({
+            "success": True,
+            "message": f"Syllabus acknowledgment recorded for {student_name}.",
+            "acknowledgments": acks,
+            "total_acknowledged": len(acks),
+        })
+
+    return jsonify({
+        "course_id": course_id,
+        "course_code": doc.get("course_code"),
+        "course_title": doc.get("course_title"),
+        "section": doc.get("section"),
+        "semester_ay": doc.get("semester_ay"),
+        "is_approved": (doc.get("workflow") or {}).get("status") == "approved",
+        "students": students,
+        "acknowledgments": acks,
+        "total_students": len(students),
+        "total_acknowledged": len(acks),
+    })
+
+
+@app.route("/api/courses/<course_id>/export-acknowledgment-pdf", methods=["GET"])
+def api_export_course_acknowledgment_pdf(course_id):
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    import syllabus_acknowledgment_form
+    bp_dict = doc.get("blueprint") or {}
+    bp = SyllabusBlueprint.from_dict(bp_dict)
+    pdf_bytes = syllabus_acknowledgment_form.generate_syllabus_acknowledgment_pdf(bp, doc)
+
+    c_code = (doc.get("course_code") or "Course").replace(" ", "_")
+    sec = (doc.get("section") or "1A").replace(" ", "_")
+    filename = f"{c_code}_{sec}_FM-USeP-MID-07_Syllabus_Acknowledgment.pdf"
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/pdf",
+    )
+
 
 
 

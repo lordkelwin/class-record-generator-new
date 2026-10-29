@@ -8,6 +8,7 @@ ECE_COURSES = [
     # First Year - First Semester
     {
         "code": "Math 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -25,6 +26,7 @@ ECE_COURSES = [
     },
     {
         "code": "Chem 111",
+        "year_level": "First Year",
         "title": "Chemistry for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -42,6 +44,7 @@ ECE_COURSES = [
     },
     {
         "code": "ES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -59,6 +62,7 @@ ECE_COURSES = [
     },
     {
         "code": "CpE 111",
+        "year_level": "First Year",
         "title": "Computer Programming (Object Oriented Programming)",
         "credit_units": "2.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -76,6 +80,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 111",
+        "year_level": "First Year",
         "title": "Integration Course for ECE 1",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -93,6 +98,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -110,6 +116,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -127,6 +134,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "Science, Technology, and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -144,6 +152,7 @@ ECE_COURSES = [
     },
     {
         "code": "PE 111",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -161,6 +170,7 @@ ECE_COURSES = [
     },
     {
         "code": "NSTP 111",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -179,6 +189,7 @@ ECE_COURSES = [
     # First Year - Second Semester
     {
         "code": "Math 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -196,6 +207,7 @@ ECE_COURSES = [
     },
     {
         "code": "Phys 121",
+        "year_level": "First Year",
         "title": "Physics for Engineers",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -213,6 +225,7 @@ ECE_COURSES = [
     },
     {
         "code": "Phys 122",
+        "year_level": "First Year",
         "title": "College Physics 2",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -230,6 +243,7 @@ ECE_COURSES = [
     },
     {
         "code": "ES 121",
+        "year_level": "First Year",
         "title": "Computer Aided Drafting",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -247,6 +261,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 121",
+        "year_level": "First Year",
         "title": "Integration Course for ECE 2",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -264,6 +279,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 116",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -281,6 +297,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 117",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -298,6 +315,7 @@ ECE_COURSES = [
     },
     {
         "code": "PE 121",
+        "year_level": "First Year",
         "title": "Fitness Exercises",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -315,6 +333,7 @@ ECE_COURSES = [
     },
     {
         "code": "NSTP 121",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -333,6 +352,7 @@ ECE_COURSES = [
     # Second Year - First Semester
     {
         "code": "Math 211",
+        "year_level": "Second Year",
         "title": "Differential Equations",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -350,6 +370,7 @@ ECE_COURSES = [
     },
     {
         "code": "Math 212",
+        "year_level": "Second Year",
         "title": "Engineering Data Analysis",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -367,6 +388,7 @@ ECE_COURSES = [
     },
     {
         "code": "EE 211",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -384,6 +406,7 @@ ECE_COURSES = [
     },
     {
         "code": "EE 211L",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 1 Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -401,6 +424,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 211",
+        "year_level": "Second Year",
         "title": "Electronic Devices and Circuits",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -418,6 +442,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 211L",
+        "year_level": "Second Year",
         "title": "Electronic Devices and Circuits Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -435,6 +460,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 212",
+        "year_level": "Second Year",
         "title": "Fundamentals of Scientific Computing",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -452,6 +478,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 213",
+        "year_level": "Second Year",
         "title": "Integration Course for ECE 3",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -469,6 +496,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 115",
+        "year_level": "First Year",
         "title": "The Life & Works of Jose Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -486,6 +514,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 114",
+        "year_level": "First Year",
         "title": "Readings in Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -503,6 +532,7 @@ ECE_COURSES = [
     },
     {
         "code": "PE 211",
+        "year_level": "Second Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -521,6 +551,7 @@ ECE_COURSES = [
     # Second Year - Second Semester
     {
         "code": "EE 221",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -538,6 +569,7 @@ ECE_COURSES = [
     },
     {
         "code": "EE 221L",
+        "year_level": "Second Year",
         "title": "Electrical Circuits 2 Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -555,6 +587,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 221",
+        "year_level": "Second Year",
         "title": "Electronic Circuit Analysis & Design",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -572,6 +605,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 221L",
+        "year_level": "Second Year",
         "title": "Electronic Circuit Analysis & Design Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -589,6 +623,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 222",
+        "year_level": "Second Year",
         "title": "Principles of Communication Systems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -606,6 +641,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 222L",
+        "year_level": "Second Year",
         "title": "Principles of Communication Systems Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -623,6 +659,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 223",
+        "year_level": "Second Year",
         "title": "Advanced Eng'g Mathematics for ECE",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -640,6 +677,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 223L",
+        "year_level": "Second Year",
         "title": "Advanced Eng'g Mathematics for ECE Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -657,6 +695,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 224",
+        "year_level": "Second Year",
         "title": "Integration Course for ECE 4",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -674,6 +713,7 @@ ECE_COURSES = [
     },
     {
         "code": "ES 122",
+        "year_level": "First Year",
         "title": "Engineering Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -691,6 +731,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 118",
+        "year_level": "First Year",
         "title": "Art Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -708,6 +749,7 @@ ECE_COURSES = [
     },
     {
         "code": "PE 221",
+        "year_level": "Second Year",
         "title": "Physical Activities Towards Health & Fitness II",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -726,6 +768,7 @@ ECE_COURSES = [
     # Third Year - First Semester
     {
         "code": "ECE 311",
+        "year_level": "Third Year",
         "title": "Electronic Systems and Designs",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -743,6 +786,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 311L",
+        "year_level": "Third Year",
         "title": "Electronic Systems and Designs Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -760,6 +804,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 312",
+        "year_level": "Third Year",
         "title": "Signals, Spectra, Signal Processing",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -777,6 +822,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 312L",
+        "year_level": "Third Year",
         "title": "Signals, Spectra, Signal Processing Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -794,6 +840,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 313",
+        "year_level": "Third Year",
         "title": "Modulation & Coding Techniques",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -811,6 +858,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 313L",
+        "year_level": "Third Year",
         "title": "Modulation & Coding Techniques Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -828,6 +876,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 314",
+        "year_level": "Third Year",
         "title": "Logic Circuits Design & Switching Theory",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -845,6 +894,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 314L",
+        "year_level": "Third Year",
         "title": "Logic Circuits Design & Switching Theory Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -862,6 +912,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 315",
+        "year_level": "Third Year",
         "title": "Electromagnetics for ECE",
         "credit_units": "4.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -879,6 +930,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE 119",
+        "year_level": "First Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -896,6 +948,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE EL 1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -914,6 +967,7 @@ ECE_COURSES = [
     # Third Year - Second Semester
     {
         "code": "ECE 321",
+        "year_level": "Third Year",
         "title": "Data Communications",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -931,6 +985,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 321L",
+        "year_level": "Third Year",
         "title": "Data Communications Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -948,6 +1003,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 322",
+        "year_level": "Third Year",
         "title": "Transmission Media, Antenna System & Design",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -965,6 +1021,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 322L",
+        "year_level": "Third Year",
         "title": "Transmission Media, Antenna System & Design Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -982,6 +1039,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 323",
+        "year_level": "Third Year",
         "title": "Feedback and Control Systems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -999,6 +1057,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 323L",
+        "year_level": "Third Year",
         "title": "Feedback and Control Systems Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1016,6 +1075,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 324",
+        "year_level": "Third Year",
         "title": "Microprocessor & Microcontroller Systems",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1033,6 +1093,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 324L",
+        "year_level": "Third Year",
         "title": "Microprocessor & Microcontroller Systems Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1050,6 +1111,7 @@ ECE_COURSES = [
     },
     {
         "code": "ES 323",
+        "year_level": "Third Year",
         "title": "Methods of Research",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1067,6 +1129,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE EL 1",
+        "year_level": "First Year",
         "title": "Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1084,6 +1147,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE EL 1L",
+        "year_level": "First Year",
         "title": "Elective 1L",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1101,6 +1165,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE EL 2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1119,6 +1184,7 @@ ECE_COURSES = [
     # Fourth Year - First Semester
     {
         "code": "ES 311",
+        "year_level": "Third Year",
         "title": "Material Science and Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1136,6 +1202,7 @@ ECE_COURSES = [
     },
     {
         "code": "ES 123",
+        "year_level": "First Year",
         "title": "Environmental Science and Engineering",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1153,6 +1220,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 411",
+        "year_level": "Fourth Year",
         "title": "Capstone Project",
         "credit_units": "3.0 Units – Lecture & Research",
         "lec_lab": "Lecture",
@@ -1170,6 +1238,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 412",
+        "year_level": "Fourth Year",
         "title": "ECE Laws, Contracts, Ethics Standards & Safety",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1187,6 +1256,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 413",
+        "year_level": "Fourth Year",
         "title": "Industrial Plant Visits and Seminars",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1204,6 +1274,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 414",
+        "year_level": "Fourth Year",
         "title": "Free Elective",
         "credit_units": "1.0 Unit – Lecture",
         "lec_lab": "Lecture",
@@ -1221,6 +1292,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE EL 2",
+        "year_level": "First Year",
         "title": "Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1238,6 +1310,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE EL 2L",
+        "year_level": "First Year",
         "title": "Elective 2L",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -1255,6 +1328,7 @@ ECE_COURSES = [
     },
     {
         "code": "ES 321",
+        "year_level": "Third Year",
         "title": "Engineering Management",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1272,6 +1346,7 @@ ECE_COURSES = [
     },
     {
         "code": "ES 322",
+        "year_level": "Third Year",
         "title": "Technopreneurship",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1289,6 +1364,7 @@ ECE_COURSES = [
     },
     {
         "code": "GE EL 3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1307,6 +1383,7 @@ ECE_COURSES = [
     # Fourth Year - Second Semester
     {
         "code": "ECE 421",
+        "year_level": "Fourth Year",
         "title": "Thesis/Capstone Project",
         "credit_units": "3.0 Units – Research & Defense",
         "lec_lab": "Lecture",
@@ -1324,6 +1401,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 422",
+        "year_level": "Fourth Year",
         "title": "Correlation Course for ECE",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -1341,6 +1419,7 @@ ECE_COURSES = [
     },
     {
         "code": "ECE 423",
+        "year_level": "Fourth Year",
         "title": "On-the-Job Training (480 HOURS)",
         "credit_units": "2.0 Units – Practicum",
         "lec_lab": "Laboratory",

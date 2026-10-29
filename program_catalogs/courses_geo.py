@@ -11,6 +11,7 @@ BSGEO_COURSES = [
     # FIRST YEAR - FIRST SEMESTER
     {
         "code": "GE 111",
+        "year_level": "First Year",
         "title": "Purposive Communication",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -24,6 +25,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GE 112",
+        "year_level": "First Year",
         "title": "Mathematics in the Modern World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -37,6 +39,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GE 113",
+        "year_level": "First Year",
         "title": "The Life and Works of Rizal",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -50,6 +53,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "MATH 111",
+        "year_level": "First Year",
         "title": "Engineering Calculus 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -63,6 +67,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "CHEM 112",
+        "year_level": "First Year",
         "title": "Qualitative/Quantitative Inorganic Chemistry",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -76,6 +81,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 111",
+        "year_level": "First Year",
         "title": "Principles of Geology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -89,6 +95,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "PE 1",
+        "year_level": "First Year",
         "title": "Movement Enhancement",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -102,6 +109,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "NSTP 1",
+        "year_level": "First Year",
         "title": "National Service Training Program 1",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -117,6 +125,7 @@ BSGEO_COURSES = [
     # FIRST YEAR - SECOND SEMESTER
     {
         "code": "GE 121",
+        "year_level": "First Year",
         "title": "Understanding the Self",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -130,6 +139,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GE 122S",
+        "year_level": "First Year",
         "title": "General Surveying 1",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -143,6 +153,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "BES 111",
+        "year_level": "First Year",
         "title": "Engineering Drawing and Plans",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -156,6 +167,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "MATH 121",
+        "year_level": "First Year",
         "title": "Engineering Calculus 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -169,6 +181,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "PHYS 121",
+        "year_level": "First Year",
         "title": "Physics 1",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -182,6 +195,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 121",
+        "year_level": "First Year",
         "title": "Mineralogy",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -195,6 +209,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 121L",
+        "year_level": "First Year",
         "title": "Mineralogy Lab",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -208,6 +223,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "PE 2",
+        "year_level": "First Year",
         "title": "Fitness Exercise",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -221,6 +237,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "NSTP 2",
+        "year_level": "First Year",
         "title": "National Service Training Program 2",
         "credit_units": "3.0 Units – Civic Welfare",
         "lec_lab": "Lecture",
@@ -236,6 +253,7 @@ BSGEO_COURSES = [
     # FIRST YEAR - OFF-SEMESTER
     {
         "code": "PHYS 131",
+        "year_level": "First Year",
         "title": "Physics 2",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -251,6 +269,7 @@ BSGEO_COURSES = [
     # SECOND YEAR - FIRST SEMESTER
     {
         "code": "GE 211",
+        "year_level": "Second Year",
         "title": "Readings in Philippine History",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -264,6 +283,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "CHEM 211",
+        "year_level": "Second Year",
         "title": "Analytical Chemistry",
         "credit_units": "5.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -277,6 +297,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 211",
+        "year_level": "Second Year",
         "title": "Structural Geology and Tectonics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -290,6 +311,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 211L",
+        "year_level": "Second Year",
         "title": "Structural Geology and Tectonics and Fieldwork",
         "credit_units": "1.0 Unit – Laboratory & Fieldwork",
         "lec_lab": "Laboratory",
@@ -303,6 +325,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 212",
+        "year_level": "Second Year",
         "title": "Petrology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -316,6 +339,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 212L",
+        "year_level": "Second Year",
         "title": "Petrology Lab",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -329,6 +353,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 213",
+        "year_level": "Second Year",
         "title": "Optical Mineralogy",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -342,6 +367,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 213L",
+        "year_level": "Second Year",
         "title": "Optical Mineralogy Lab",
         "credit_units": "2.0 Units – Laboratory",
         "lec_lab": "Laboratory",
@@ -355,6 +381,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "PE 3",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness I",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -370,6 +397,7 @@ BSGEO_COURSES = [
     # SECOND YEAR - SECOND SEMESTER
     {
         "code": "GE 122",
+        "year_level": "First Year",
         "title": "Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -383,6 +411,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GE 123",
+        "year_level": "First Year",
         "title": "Science, Technology, and Society",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -396,6 +425,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "MATH 221",
+        "year_level": "Second Year",
         "title": "Elementary Statistics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -409,6 +439,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 221",
+        "year_level": "Second Year",
         "title": "Geomorphology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -422,6 +453,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 221L",
+        "year_level": "Second Year",
         "title": "Geomorphology Lab",
         "credit_units": "1.0 Unit – Laboratory & Fieldwork",
         "lec_lab": "Laboratory",
@@ -435,6 +467,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 222",
+        "year_level": "Second Year",
         "title": "Stratigraphy and Historical Geology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -448,6 +481,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 222L",
+        "year_level": "Second Year",
         "title": "Stratigraphy and Historical Geology Lab",
         "credit_units": "1.0 Unit – Laboratory",
         "lec_lab": "Laboratory",
@@ -461,6 +495,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 223",
+        "year_level": "Second Year",
         "title": "Paleontology",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -474,6 +509,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "PE 4",
+        "year_level": "First Year",
         "title": "Physical Activities Towards Health & Fitness II",
         "credit_units": "2.0 Units – Physical Education",
         "lec_lab": "Lecture",
@@ -489,6 +525,7 @@ BSGEO_COURSES = [
     # THIRD YEAR - FIRST SEMESTER
     {
         "code": "GE-E1",
+        "year_level": "First Year",
         "title": "General Education Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -502,6 +539,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GE 212",
+        "year_level": "Second Year",
         "title": "Contemporary World",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -515,6 +553,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 311",
+        "year_level": "Third Year",
         "title": "Geophysics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -528,6 +567,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 311L",
+        "year_level": "Third Year",
         "title": "Geophysics Lab",
         "credit_units": "1.0 Unit – Laboratory & Fieldwork",
         "lec_lab": "Laboratory",
@@ -541,6 +581,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 312",
+        "year_level": "Third Year",
         "title": "Computer Application in Geology",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -554,6 +595,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 313",
+        "year_level": "Third Year",
         "title": "Geochemistry",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -567,6 +609,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "BIO 311",
+        "year_level": "Third Year",
         "title": "Principles of Biology",
         "credit_units": "4.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -580,6 +623,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "ECON 311",
+        "year_level": "Third Year",
         "title": "Introductory Economics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -595,6 +639,7 @@ BSGEO_COURSES = [
     # THIRD YEAR - SECOND SEMESTER
     {
         "code": "GE 221",
+        "year_level": "Second Year",
         "title": "Arts Appreciation",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -608,6 +653,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL-E1",
+        "year_level": "First Year",
         "title": "Geology Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -621,6 +667,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GE-E2",
+        "year_level": "First Year",
         "title": "General Education Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -634,6 +681,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 321",
+        "year_level": "Third Year",
         "title": "Geostatistics",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -647,6 +695,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 322",
+        "year_level": "Third Year",
         "title": "Geology of the Philippines and SE Asia",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -660,6 +709,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 323",
+        "year_level": "Third Year",
         "title": "Resource Geology",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -673,6 +723,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 324",
+        "year_level": "Third Year",
         "title": "Research Methodologies in Geology",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -686,6 +737,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "FREE-E1",
+        "year_level": "First Year",
         "title": "Free Elective 1",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -701,6 +753,7 @@ BSGEO_COURSES = [
     # THIRD YEAR - OFF-SEMESTER
     {
         "code": "GEOL 331",
+        "year_level": "Third Year",
         "title": "Field Geology/OJT (320 hrs)",
         "credit_units": "6.0 Units – Field Camp / Practicum",
         "lec_lab": "Laboratory",
@@ -716,6 +769,7 @@ BSGEO_COURSES = [
     # FOURTH YEAR - FIRST SEMESTER
     {
         "code": "GEOL 411",
+        "year_level": "Fourth Year",
         "title": "Seminar in Geology",
         "credit_units": "3.0 Units – Seminar",
         "lec_lab": "Lecture",
@@ -729,6 +783,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 412",
+        "year_level": "Fourth Year",
         "title": "Geohazard",
         "credit_units": "3.0 Units – Lecture & Lab",
         "lec_lab": "Lecture & Lab",
@@ -742,6 +797,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 413",
+        "year_level": "Fourth Year",
         "title": "Geology, Mining and Environmental Laws, Energy Policies and Ethics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -755,6 +811,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL-E2",
+        "year_level": "First Year",
         "title": "Geology Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -768,6 +825,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL-E3",
+        "year_level": "First Year",
         "title": "Geology Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -781,6 +839,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GE-E3",
+        "year_level": "First Year",
         "title": "General Education Elective 3",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -794,6 +853,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL 414",
+        "year_level": "Fourth Year",
         "title": "Thesis",
         "credit_units": "6.0 Units – Undergraduate Thesis",
         "lec_lab": "Laboratory",
@@ -809,6 +869,7 @@ BSGEO_COURSES = [
     # FOURTH YEAR - SECOND SEMESTER
     {
         "code": "GEOL 421",
+        "year_level": "Fourth Year",
         "title": "Correlation Course",
         "credit_units": "2.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -822,6 +883,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "ME 421",
+        "year_level": "Fourth Year",
         "title": "Fluid Mechanics",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -835,6 +897,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "FREE-E2",
+        "year_level": "First Year",
         "title": "Free Elective 2",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",
@@ -848,6 +911,7 @@ BSGEO_COURSES = [
     },
     {
         "code": "GEOL-E4",
+        "year_level": "First Year",
         "title": "Geology Elective 4",
         "credit_units": "3.0 Units – Lecture",
         "lec_lab": "Lecture",

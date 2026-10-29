@@ -1218,8 +1218,8 @@
       </div>
 
       <!-- 5-Step Visual Stepper -->
-      <div style="padding:14px 16px 8px;">
-        <div class="workflow-stepper-track" style="display:flex; align-items:center; justify-content:space-between; position:relative; margin-bottom:14px;">
+      <div style="padding:14px 16px 8px; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+        <div class="workflow-stepper-track" style="display:flex; align-items:flex-start; justify-content:space-between; position:relative; margin-bottom:14px; min-width:680px;">
           <!-- Progress Line -->
           <div style="position:absolute; top:18px; left:40px; right:40px; height:3px; background:#e2e8f0; z-index:1;">
             <div id="wfProgressBar" style="height:100%; width:0%; background:#2563eb; transition:width 0.3s ease;"></div>
@@ -1288,6 +1288,40 @@
       </div>
     </div>
 
+    <!-- FM-USeP-MID-07 Course Syllabus Student Acknowledgment Section -->
+    <div class="card" id="studentAcknowledgmentCard" style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:10px; padding:14px 18px; margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.4rem;">📜</span>
+          <div>
+            <h3 style="margin:0; font-size:1.02rem; color:#0f172a;">Course Syllabus Student Acknowledgment (FM-USeP-MID-07)</h3>
+            <div style="font-size:0.75rem; color:#64748b;">
+              Official student acknowledgment and electronic signatures confirming orientation and acceptance of syllabus policies.
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportAcknowledgmentPdf()">
+            📄 Download FM-USeP-MID-07 (.pdf)
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openStudentAckModal()">
+            ✍️ Sign Student Acknowledgment
+          </button>
+        </div>
+      </div>
+      <div style="padding-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div id="studentAckProgressText" style="font-size:0.8rem; font-weight:700; color:#1e293b;">
+          Loading acknowledgment records...
+        </div>
+        <div style="font-size:0.75rem; color:#64748b;">
+          Form Control: <strong>FM-USeP-MID-07</strong> (Rev. 00, Eff. 18 Aug 2026)
+        </div>
+      </div>
+      <div id="studentAckListContainer" style="margin-top:10px; max-height:220px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px; background:#f8fafc;">
+        <!-- Filled by renderStudentAcknowledgments -->
+      </div>
+    </div>
+
         {% if current_user and (current_user.role == 'admin' or current_user.is_admin_session) %}
         <!-- Testing Account / Role Quick Switcher (Admin Only) -->
         <div id="roleTestSwitcherBar" style="margin-top:10px; padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:0.73rem; color:#475569; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
@@ -1316,9 +1350,7 @@
         <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part1CourseInfoCard')">Parts I–IV: Course Info &amp; CLOs</button>
         <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part5PreReqCard')">Part V: Prerequisites &amp; SDGs</button>
         <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part6AssessmentActivitiesCard')">Part VI: Assessment Activities</button>
-        <button type="button" class="btn btn-sm btn-primary" style="font-size:0.76rem; font-weight:800; padding:5px 14px; background:linear-gradient(135deg, #1d4ed8, #2563eb); border:none; box-shadow:0 2px 5px rgba(37,99,235,0.35); color:#fff;" onclick="scrollToSyllabusSection('part7RubricsCard')">
-          📐 Part VII: Measurement System (Rubrics) <span id="quickRubricsCountBadge" class="badge" style="background:#ffffff; color:#1d4ed8; font-weight:800; margin-left:5px; padding:2px 7px; font-size:0.72rem; border-radius:10px;">0</span>
-        </button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part7RubricsCard')">Part VII: Measurement System (Rubrics) <span id="quickRubricsCountBadge" class="badge" style="background:#e2e8f0; color:#1e293b; font-weight:700; margin-left:4px; padding:2px 6px; font-size:0.7rem; border-radius:10px;">0</span></button>
         <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part8GradingPlanCard')">Part VIII: Grading Plan</button>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
@@ -1343,7 +1375,7 @@
           <select id="meta_college" onchange="onCollegeChange()"></select>
         </div>
         <div class="form-group">
-          <label>Department (Dropdown)</label>
+          <label>Program (Dropdown)</label>
           <select id="meta_department" onchange="onDepartmentChange()"></select>
         </div>
         <div class="form-group">
@@ -1406,9 +1438,30 @@
             <input type="text" id="meta_section" placeholder="e.g. EE 2A, CE 2A" oninput="onSectionManualInput()" style="font-size:0.78rem; padding:4px 8px; flex:1;" title="Comma-separated sections" />
           </div>
         </div>
-        <div class="form-group">
-          <label>Class Schedule</label>
-          <input type="text" id="meta_schedule" oninput="syncMetaFromInputs()" />
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Class Schedule (Day &amp; Time Picker)</span>
+            <button type="button" class="btn btn-link btn-sm" style="font-size:0.72rem; padding:0; text-decoration:none; color:#2563eb;" onclick="toggleSchedulePicker()">🗓️ Schedule Picker</button>
+          </label>
+          <div id="schedulePickerContainer" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:8px 10px; margin-bottom:6px;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px;">
+              <span style="font-size:0.75rem; font-weight:700; color:#475569;">Days:</span>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="M" onchange="buildScheduleString()"> Mon</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="T" onchange="buildScheduleString()"> Tue</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="W" onchange="buildScheduleString()"> Wed</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="Th" onchange="buildScheduleString()"> Thu</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="F" onchange="buildScheduleString()"> Fri</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="Sa" onchange="buildScheduleString()"> Sat</label>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <span style="font-size:0.75rem; font-weight:700; color:#475569;">Time:</span>
+              <input type="time" id="sched_time_start" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="buildScheduleString()" />
+              <span style="font-size:0.75rem; color:#64748b;">to</span>
+              <input type="time" id="sched_time_end" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="buildScheduleString()" />
+              <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="clearSchedulePicker()">Clear</button>
+            </div>
+          </div>
+          <input type="text" id="meta_schedule" placeholder="e.g. TTh 08:30 AM - 10:00 AM" oninput="syncMetaFromInputs()" />
         </div>
         <div class="form-group">
           <label>Room</label>
@@ -3893,12 +3946,13 @@
       m.contact_hours = courseObj.hours || "3 Hours/Week";
       m.course_description = courseObj.description || "";
       m.sdg_alignments = courseObj.sdgs || "";
+      m.year_level = courseObj.year_level || m.year_level || "First Year";
+      if (document.getElementById("meta_year_level")) document.getElementById("meta_year_level").value = m.year_level;
 
       m.prereq_coreq_table = _parseReqStringsToTable(m.prerequisites, m.corequisites);
       m.sdg_table = _parseSdgStringToTable(m.sdg_alignments);
-      if (courseObj.topics && courseObj.topics.length && selectedCode !== "EE 211") {
-        m.learning_plan_table = _buildLearningPlanFromTopics(courseObj.topics, blueprint.course_outcomes);
-      }
+      // Item 12: Do not autogenerate dummy learning plan table to prevent mishaps
+      if (!m.learning_plan_table) m.learning_plan_table = [];
 
       document.getElementById("meta_course_title").value = m.course_title;
       document.getElementById("meta_credit_units").value = m.credit_units;
@@ -3955,6 +4009,9 @@
     renderCoauthorsList();
     populateCoauthorDropdown();
     document.getElementById("meta_semester_ay").value = m.semester_ay || "";
+    if (!m.faculty_name && (window.CURRENT_USER?.full_name || window.CURRENT_USER?.username || currentUser?.full_name || currentUser?.username)) {
+      m.faculty_name = (window.CURRENT_USER?.full_name || window.CURRENT_USER?.username || currentUser?.full_name || currentUser?.username);
+    }
     document.getElementById("meta_faculty_name").value = m.faculty_name || "";
     document.getElementById("meta_program_head").value = m.program_head || "";
     document.getElementById("meta_dean_name").value = m.dean_name || "";
@@ -5451,14 +5508,21 @@
     const tbody = document.getElementById("referencesTableBody");
     tbody.innerHTML = m.references_table.map((ref, idx) => `
       <tr>
-        <td>
+        <td style="width:110px;">
           <input type="text" value="${escapeHtml(ref.code)}" style="font-weight:700;"
             onchange="blueprint.metadata.references_table[${idx}].code=this.value" />
         </td>
         <td>
-          <textarea rows="2" onchange="blueprint.metadata.references_table[${idx}].reference=this.value">${escapeHtml(ref.reference)}</textarea>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <textarea rows="2" style="width:100%;" onchange="blueprint.metadata.references_table[${idx}].reference=this.value">${escapeHtml(ref.reference)}</textarea>
+            <div>
+              <button type="button" class="btn btn-outline-primary btn-xs" style="font-size:0.72rem; padding:2px 8px;" onclick="openApaCitationModal(${idx})">
+                📚 APA Citation Generator
+              </button>
+            </div>
+          </div>
         </td>
-        <td>
+        <td style="width:50px; text-align:center;">
           <button class="btn btn-danger btn-sm" onclick="removeReferenceRow(${idx})">&times;</button>
         </td>
       </tr>
@@ -5482,9 +5546,21 @@
     renderReferencesTable();
   }
 
+  function getDefaultPoliciesTable() {
+    return [
+      { number: "1", title: "Attendance and Punctuality", description: "Regular attendance is expected. A student who incurs unexcused absences of more than 20 percent of the prescribed number of class hours shall be automatically dropped from the roll or given a grade of 5.0 (Failed)." },
+      { number: "2", title: "Academic Integrity and Honesty", description: "All submitted works must be original. Plagiarism, cheating in examinations, unauthorized collaboration, or copying assignments will result in disciplinary action in accordance with the USeP Student Handbook." },
+      { number: "3", title: "Submission of Requirements", description: "All outputs, problem sets, laboratory reports, and course requirements must be submitted on or before specified deadlines. Late submissions may incur grade penalties unless supported by valid excused reasons." },
+      { number: "4", title: "Grading and Minimum Passing Mark", description: "A final grade of at least 75% (or 3.0) is required to pass the course. Removal examinations or special assessments are subject to university guidelines." },
+      { number: "5", title: "Classroom Decorum & Inclusivity", description: "Mutual respect, active participation, and professional decorum are required at all times whether in face-to-face sessions or digital learning platforms." }
+    ];
+  }
+
   function renderPoliciesTable() {
     const m = blueprint.metadata;
-    if (!m.policies_table) m.policies_table = [];
+    if (!m.policies_table || !m.policies_table.length) {
+      m.policies_table = getDefaultPoliciesTable();
+    }
     const tbody = document.getElementById("policiesTableBody");
     tbody.innerHTML = m.policies_table.map((pol, idx) => `
       <tr>
@@ -6865,12 +6941,21 @@
     const rubrics = (blueprint && blueprint.rubrics) || [];
     const defRubricText = "Objective / Concept-type Items Score / Problem Solving Items Score (with Rubric in Problem Solving) / Short Essay Items Score (with Rubric in Short Essay)";
 
+    const existingMap = new Map();
+    if (m.course_assessment_plan && Array.isArray(m.course_assessment_plan)) {
+      m.course_assessment_plan.forEach(r => {
+        if (r && r.code) existingMap.set(String(r.code).trim().toUpperCase(), r);
+      });
+    }
+
     const plan = acts.map(act => {
       const code = (act.code || "SA1").trim().toUpperCase();
       const actName = act.activity || act.description || code;
       const wt = parseFloat(act.weight_pct) || 0;
       const label = `${actName} (${wt.toFixed(0)}%)`;
       const alignedClos = parseCloList(act.clo_aligned);
+
+      const existingRow = existingMap.get(code);
 
       let rubricDesc = defRubricText;
       const matchedRubric = rubrics.find(r => (r.assessment_codes || []).some(c => c.toUpperCase() === code));
@@ -6882,15 +6967,19 @@
 
       const cloPlans = {};
       outcomes.forEach(co => {
-        const isAligned = alignedClos.length === 0 || alignedClos.some(c => c.toUpperCase() === co.co_id.toUpperCase());
-        cloPlans[co.co_id] = isAligned ? rubricDesc : "N/A";
+        if (existingRow && existingRow.clo_plans && existingRow.clo_plans[co.co_id] !== undefined) {
+          cloPlans[co.co_id] = existingRow.clo_plans[co.co_id];
+        } else {
+          const isAligned = alignedClos.length === 0 || alignedClos.some(c => c.toUpperCase() === co.co_id.toUpperCase());
+          cloPlans[co.co_id] = isAligned ? rubricDesc : "N/A";
+        }
       });
 
       return {
         code: code,
-        component_name: label,
-        weight_pct: wt,
-        block_height: 70,
+        component_name: (existingRow && existingRow.component_name) ? existingRow.component_name : label,
+        weight_pct: wt > 0 ? wt : (existingRow ? existingRow.weight_pct : 0),
+        block_height: (existingRow && existingRow.block_height) ? existingRow.block_height : 70,
         clo_plans: cloPlans
       };
     });
@@ -8292,6 +8381,8 @@
         if (stageEl) stageEl.textContent = currentClassRecordWorkflow.status_label || currentClassRecordWorkflow.status;
       }
     }
+    // Refresh student acknowledgment records
+    loadStudentAcknowledgments();
   }
 
   // Enforce Syllabus Lock on Tab 1 when approved
@@ -10440,23 +10531,22 @@
         { level: 3, label: "Satisfactory (3)" },
         { level: 2, label: "Needs Improvement (2)" },
         { level: 1, label: "Unsatisfactory (1)" },
-        { level: 0, label: "Unacceptable (0)" },
       ],
       criteria: [
         {
           name: "Criterion 1",
           weight_pct: 50.0,
           clo_id: "CLO1",
-          descriptors: ["", "", "", "", "", ""],
+          descriptors: ["", "", "", "", ""],
         },
         {
           name: "Criterion 2",
           weight_pct: 50.0,
           clo_id: "CLO1",
-          descriptors: ["", "", "", "", "", ""],
+          descriptors: ["", "", "", "", ""],
         },
       ],
-      notes: "Custom rubric configured by faculty.",
+      notes: "Custom rubric configured by faculty (Score of 0 is automatically given for missing/unsubmitted work).",
     });
     renderRubrics();
     renderSyllabusAssessmentActivitiesTable();
@@ -12127,6 +12217,397 @@
     }, 250);
   }
 
+
+  // -------------------------------------------------------------------------
+  // CLASS SCHEDULE PICKER HELPERS (Item 4)
+  // -------------------------------------------------------------------------
+  function toggleSchedulePicker() {
+    const c = document.getElementById("schedulePickerContainer");
+    if (c) c.style.display = (c.style.display === "none") ? "block" : "none";
+  }
+
+  function buildScheduleString() {
+    const days = [];
+    document.querySelectorAll(".sched-day:checked").forEach(cb => days.push(cb.value));
+    const dayStr = days.join("");
+    const tStart = document.getElementById("sched_time_start")?.value || "";
+    const tEnd = document.getElementById("sched_time_end")?.value || "";
+
+    function formatTime12(t24) {
+      if (!t24) return "";
+      const parts = t24.split(":");
+      let h = parseInt(parts[0], 10);
+      const m = parts[1] || "00";
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12;
+      if (h === 0) h = 12;
+      return `${String(h).padStart(2, "0")}:${m} ${ampm}`;
+    }
+
+    let schedStr = "";
+    if (dayStr && tStart && tEnd) {
+      schedStr = `${dayStr} ${formatTime12(tStart)} - ${formatTime12(tEnd)}`;
+    } else if (dayStr && tStart) {
+      schedStr = `${dayStr} ${formatTime12(tStart)}`;
+    } else if (dayStr) {
+      schedStr = dayStr;
+    }
+
+    if (schedStr) {
+      const inp = document.getElementById("meta_schedule");
+      if (inp) {
+        inp.value = schedStr;
+        syncMetaFromInputs();
+      }
+    }
+  }
+
+  function clearSchedulePicker() {
+    document.querySelectorAll(".sched-day").forEach(cb => cb.checked = false);
+    const s = document.getElementById("sched_time_start");
+    const e = document.getElementById("sched_time_end");
+    if (s) s.value = "";
+    if (e) e.value = "";
+    const inp = document.getElementById("meta_schedule");
+    if (inp) {
+      inp.value = "";
+      syncMetaFromInputs();
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // APA 7TH EDITION CITATION GENERATOR (Item 13)
+  // -------------------------------------------------------------------------
+  let activeApaRefIdx = null;
+
+  function openApaCitationModal(refIdx) {
+    activeApaRefIdx = refIdx;
+    const modal = document.getElementById("apaCitationModal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    document.getElementById("apaAuthor").value = "";
+    document.getElementById("apaYear").value = "";
+    document.getElementById("apaTitle").value = "";
+    document.getElementById("apaEdition").value = "";
+    document.getElementById("apaPublisher").value = "";
+    document.getElementById("apaVolIssue").value = "";
+    document.getElementById("apaPages").value = "";
+    document.getElementById("apaUrl").value = "";
+    document.getElementById("apaSourceType").value = "book";
+    updateApaModalFields();
+    previewApaCitation();
+  }
+
+  function closeApaCitationModal() {
+    const modal = document.getElementById("apaCitationModal");
+    if (modal) modal.style.display = "none";
+    activeApaRefIdx = null;
+  }
+
+  function updateApaModalFields() {
+    const st = document.getElementById("apaSourceType")?.value || "book";
+    const edGroup = document.getElementById("apaEditionGroup");
+    const pubLabel = document.getElementById("apaPublisherLabel");
+    const titleLabel = document.getElementById("apaTitleLabel");
+    const jGroup = document.getElementById("apaJournalDetailsGroup");
+
+    if (st === "book") {
+      if (edGroup) edGroup.style.display = "block";
+      if (titleLabel) titleLabel.textContent = "Book Title:";
+      if (pubLabel) pubLabel.textContent = "Publisher:";
+      if (jGroup) jGroup.style.display = "none";
+    } else if (st === "journal") {
+      if (edGroup) edGroup.style.display = "none";
+      if (titleLabel) titleLabel.textContent = "Article Title:";
+      if (pubLabel) pubLabel.textContent = "Journal Name:";
+      if (jGroup) jGroup.style.display = "block";
+    } else if (st === "website") {
+      if (edGroup) edGroup.style.display = "none";
+      if (titleLabel) titleLabel.textContent = "Webpage / Document Title:";
+      if (pubLabel) pubLabel.textContent = "Website / Organization Name:";
+      if (jGroup) jGroup.style.display = "none";
+    } else {
+      if (edGroup) edGroup.style.display = "none";
+      if (titleLabel) titleLabel.textContent = "Standard / Document Title:";
+      if (pubLabel) pubLabel.textContent = "Publishing Body / Standard Organization:";
+      if (jGroup) jGroup.style.display = "none";
+    }
+    previewApaCitation();
+  }
+
+  function generateApaCitationString() {
+    const st = document.getElementById("apaSourceType")?.value || "book";
+    let author = document.getElementById("apaAuthor")?.value.trim() || "";
+    let year = document.getElementById("apaYear")?.value.trim() || "";
+    let title = document.getElementById("apaTitle")?.value.trim() || "";
+    let edition = document.getElementById("apaEdition")?.value.trim() || "";
+    let publisher = document.getElementById("apaPublisher")?.value.trim() || "";
+    let volIssue = document.getElementById("apaVolIssue")?.value.trim() || "";
+    let pages = document.getElementById("apaPages")?.value.trim() || "";
+    let url = document.getElementById("apaUrl")?.value.trim() || "";
+
+    if (!author && !title) return "";
+
+    let cit = "";
+    if (author) cit += author;
+    else cit += title;
+
+    if (year) {
+      cit += ` (${year}).`;
+    } else {
+      cit += " (n.d.).";
+    }
+
+    if (st === "book") {
+      cit += ` ${title}`;
+      if (edition) cit += ` (${edition})`;
+      cit += ".";
+      if (publisher) cit += ` ${publisher}.`;
+    } else if (st === "journal") {
+      cit += ` ${title}.`;
+      if (publisher) cit += ` ${publisher}`;
+      if (volIssue) cit += `, ${volIssue}`;
+      if (pages) cit += `, ${pages}`;
+      cit += ".";
+    } else if (st === "website") {
+      cit += ` ${title}.`;
+      if (publisher) cit += ` ${publisher}.`;
+    } else {
+      cit += ` ${title}.`;
+      if (publisher) cit += ` ${publisher}.`;
+    }
+
+    if (url) {
+      cit += ` ${url}`;
+    }
+
+    return cit.trim();
+  }
+
+  function previewApaCitation() {
+    const box = document.getElementById("apaPreviewBox");
+    if (!box) return;
+    const cit = generateApaCitationString();
+    box.textContent = cit || "Fill in details above to generate citation...";
+  }
+
+  function applyGeneratedApaCitation() {
+    if (activeApaRefIdx === null) return;
+    const cit = generateApaCitationString();
+    if (!cit) {
+      alert("Please provide at least the Author and Title to generate an APA citation.");
+      return;
+    }
+    if (!blueprint.metadata.references_table) blueprint.metadata.references_table = [];
+    if (blueprint.metadata.references_table[activeApaRefIdx]) {
+      blueprint.metadata.references_table[activeApaRefIdx].reference = cit;
+      renderReferencesTable();
+      queueAutoSave();
+    }
+    closeApaCitationModal();
+  }
+
+  // -------------------------------------------------------------------------
+  // STUDENT SYLLABUS ACKNOWLEDGMENT (FM-USeP-MID-07) (Item 15)
+  // -------------------------------------------------------------------------
+  let studentAckPadState = { canvas: null, ctx: null, drawing: false, hasDrawn: false };
+
+  async function loadStudentAcknowledgments() {
+    if (!currentCourseId) return;
+    const container = document.getElementById("studentAckListContainer");
+    const progressEl = document.getElementById("studentAckProgressText");
+    try {
+      const res = await fetch(`/api/courses/${currentCourseId}/student-acknowledgment`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const acks = data.acknowledgments || [];
+      const totalStud = data.total_students || 0;
+      const count = acks.length;
+
+      if (progressEl) {
+        if (totalStud > 0) {
+          const pct = Math.round((count / totalStud) * 100);
+          progressEl.innerHTML = `Student Acknowledgment Status: <strong>${count} of ${totalStud} students acknowledged (${pct}%)</strong>`;
+        } else {
+          progressEl.innerHTML = `Student Acknowledgment Status: <strong>${count} student signature(s) recorded</strong>`;
+        }
+      }
+
+      if (container) {
+        if (!acks.length) {
+          container.innerHTML = '<div style="padding:14px; text-align:center; color:#94a3b8; font-size:0.78rem; font-style:italic;">No student acknowledgment signatures recorded yet. Students can sign above or via Student Portal.</div>';
+        } else {
+          container.innerHTML = `
+            <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+              <thead>
+                <tr style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; text-align:left; color:#334155;">
+                  <th style="padding:6px 10px;">#</th>
+                  <th style="padding:6px 10px;">Student ID</th>
+                  <th style="padding:6px 10px;">Student Name</th>
+                  <th style="padding:6px 10px;">Timestamp</th>
+                  <th style="padding:6px 10px;">Digital Signature</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${acks.map((a, idx) => `
+                  <tr style="border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:6px 10px; color:#64748b;">${idx + 1}</td>
+                    <td style="padding:6px 10px; font-weight:700;">${escapeHtml(a.student_id || '—')}</td>
+                    <td style="padding:6px 10px; font-weight:600; color:#0f172a;">${escapeHtml(a.student_name || '')}</td>
+                    <td style="padding:6px 10px; color:#475569;">${formatWorkflowTimestamp(a.acknowledged_at || a.date)}</td>
+                    <td style="padding:6px 10px;">
+                      ${a.signature_data ? `<img src="${a.signature_data}" alt="Signature" style="max-height:28px; max-width:90px; object-fit:contain; border:1px solid #cbd5e1; border-radius:3px; background:#fff; padding:2px;" />` : '<span style="color:#16a34a; font-weight:700;">✓ Verified Electronic Signature</span>'}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load student acknowledgments:", e);
+    }
+  }
+
+  function initStudentAckCanvas() {
+    const canvas = document.getElementById("studentAckCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    studentAckPadState.canvas = canvas;
+    studentAckPadState.ctx = ctx;
+
+    ctx.strokeStyle = "#1e3a8a";
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY,
+      };
+    }
+
+    function startDraw(e) {
+      e.preventDefault();
+      studentAckPadState.drawing = true;
+      const p = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+
+    function draw(e) {
+      if (!studentAckPadState.drawing) return;
+      e.preventDefault();
+      const p = getPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      studentAckPadState.hasDrawn = true;
+    }
+
+    function stopDraw(e) {
+      if (!studentAckPadState.drawing) return;
+      studentAckPadState.drawing = false;
+    }
+
+    canvas.onmousedown = startDraw;
+    canvas.onmousemove = draw;
+    canvas.onmouseup = stopDraw;
+    canvas.onmouseleave = stopDraw;
+
+    canvas.ontouchstart = startDraw;
+    canvas.ontouchmove = draw;
+    canvas.ontouchend = stopDraw;
+  }
+
+  function clearStudentAckCanvas() {
+    if (!studentAckPadState.ctx || !studentAckPadState.canvas) return;
+    studentAckPadState.ctx.clearRect(0, 0, studentAckPadState.canvas.width, studentAckPadState.canvas.height);
+    studentAckPadState.hasDrawn = false;
+  }
+
+  function openStudentAckModal() {
+    const modal = document.getElementById("studentAckModal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    setTimeout(() => {
+      initStudentAckCanvas();
+      clearStudentAckCanvas();
+    }, 150);
+  }
+
+  function closeStudentAckModal() {
+    const modal = document.getElementById("studentAckModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function submitStudentAcknowledgment() {
+    if (!currentCourseId) return;
+    const sId = document.getElementById("studAckId")?.value.trim() || "";
+    const sName = document.getElementById("studAckName")?.value.trim() || "";
+    const sEmail = document.getElementById("studAckEmail")?.value.trim() || "";
+
+    if (!sName) {
+      alert("Please enter the student full name.");
+      document.getElementById("studAckName")?.focus();
+      return;
+    }
+
+    if (!studentAckPadState.hasDrawn) {
+      alert("Please provide the student electronic signature on the pad.");
+      return;
+    }
+
+    const sigData = studentAckPadState.canvas.toDataURL("image/png");
+    const btn = document.getElementById("btnSubmitStudentAck");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Recording Acknowledgment...";
+    }
+
+    try {
+      const res = await fetch(`/api/courses/${currentCourseId}/student-acknowledgment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          student_id: sId,
+          student_name: sName,
+          email: sEmail,
+          signature_data: sigData
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert("Acknowledgment failed: " + (data.error || ""));
+        return;
+      }
+      closeStudentAckModal();
+      await loadStudentAcknowledgments();
+      alert(`✔ Acknowledgment confirmed for ${sName} and recorded in FM-USeP-MID-07.`);
+    } catch (e) {
+      alert("Error submitting acknowledgment: " + e.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Confirm & Seal Acknowledgment";
+      }
+    }
+  }
+
+  function exportAcknowledgmentPdf() {
+    if (!currentCourseId) {
+      alert("Please select or load an active course first.");
+      return;
+    }
+    window.open(`/api/courses/${encodeURIComponent(currentCourseId)}/export-acknowledgment-pdf`, "_blank");
+  }
+
 </script>
 
 <!-- Modal: Admin Role & Designation Assignment (Supports Multiple Roles Simultaneously) -->
@@ -12211,6 +12692,119 @@
           💾 Save &amp; Apply Role(s)
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: APA 7th Edition Citation Generator (Part X) -->
+<div class="modal-overlay" id="apaCitationModal" style="display:none;" onclick="if(event.target===this) closeApaCitationModal();">
+  <div class="modal-box" style="max-width:580px; width:92%;">
+    <div class="modal-header">
+      <h3 style="margin:0; font-size:1.05rem;">📚 APA 7th Edition Citation Generator</h3>
+      <button class="modal-close-btn" onclick="closeApaCitationModal()">&times;</button>
+    </div>
+    <div style="font-size:0.75rem; color:#475569; margin-bottom:12px;">
+      Enter the bibliographic details below. The citation will automatically format into official APA 7th Edition standards.
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="form-group">
+        <label style="font-weight:700; font-size:0.78rem;">Source Type:</label>
+        <select id="apaSourceType" onchange="updateApaModalFields()" style="width:100%; padding:5px 8px; font-size:0.8rem; border-radius:4px; border:1px solid #cbd5e1;">
+          <option value="book">Book / Textbook</option>
+          <option value="journal">Academic Journal Article</option>
+          <option value="website">Website / Online Technical Document</option>
+          <option value="standard">Engineering Standard / Manual</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label style="font-weight:700; font-size:0.78rem;">Author(s) (e.g. Hayt, W. H., Kemmerly, J. E., &amp; Durbin, S. M. or IEEE):</label>
+        <input type="text" id="apaAuthor" placeholder="e.g. Alexander, C. K., &amp; Sadiku, M. N." style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+      </div>
+      <div style="display:flex; gap:10px;">
+        <div class="form-group" style="flex:1;">
+          <label style="font-weight:700; font-size:0.78rem;">Year of Publication:</label>
+          <input type="text" id="apaYear" placeholder="e.g. 2021" style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+        </div>
+        <div class="form-group" id="apaEditionGroup" style="flex:1;">
+          <label style="font-weight:700; font-size:0.78rem;">Edition (if applicable):</label>
+          <input type="text" id="apaEdition" placeholder="e.g. 7th ed." style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="font-weight:700; font-size:0.78rem;" id="apaTitleLabel">Title of Book / Document:</label>
+        <input type="text" id="apaTitle" placeholder="e.g. Fundamentals of Electric Circuits" style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+      </div>
+      <div class="form-group" id="apaPublisherGroup">
+        <label style="font-weight:700; font-size:0.78rem;" id="apaPublisherLabel">Publisher / Organization:</label>
+        <input type="text" id="apaPublisher" placeholder="e.g. McGraw-Hill Education" style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+      </div>
+      <div class="form-group" id="apaJournalDetailsGroup" style="display:none;">
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-weight:700; font-size:0.78rem;">Volume &amp; Issue:</label>
+            <input type="text" id="apaVolIssue" placeholder="e.g. 15(2)" style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+          </div>
+          <div style="flex:1;">
+            <label style="font-weight:700; font-size:0.78rem;">Page Range:</label>
+            <input type="text" id="apaPages" placeholder="e.g. 112–125" style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="font-weight:700; font-size:0.78rem;">DOI or URL (Optional):</label>
+        <input type="text" id="apaUrl" placeholder="e.g. https://doi.org/10.1016/... or https://..." style="width:100%; padding:5px 8px; font-size:0.8rem;" oninput="previewApaCitation()" />
+      </div>
+
+      <!-- Live APA Preview -->
+      <div style="background:#f1f5f9; border-left:3px solid #2563eb; padding:10px 12px; border-radius:4px; margin-top:4px;">
+        <div style="font-size:0.7rem; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:3px;">Formatted APA 7th Edition Citation Preview:</div>
+        <div id="apaPreviewBox" style="font-size:0.82rem; color:#0f172a; font-style:normal; line-height:1.4;">Fill in details above to generate citation...</div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeApaCitationModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="applyGeneratedApaCitation()">✔ Insert APA Citation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Student Syllabus Acknowledgment Pad (FM-USeP-MID-07) -->
+<div class="modal-overlay" id="studentAckModal" style="display:none;" onclick="if(event.target===this) closeStudentAckModal();">
+  <div class="modal-box" style="max-width:540px; width:92%;">
+    <div class="modal-header">
+      <h3 style="margin:0; font-size:1.05rem;">✍️ Student Syllabus Acknowledgment</h3>
+      <button class="modal-close-btn" onclick="closeStudentAckModal()">&times;</button>
+    </div>
+    <div style="font-size:0.78rem; color:#334155; background:#f1f5f9; padding:10px 12px; border-radius:6px; margin-bottom:12px; line-height:1.45; border-left:3px solid #2563eb;">
+      <strong>Declaration:</strong> "I acknowledge that I have received, read, and understood the Course Syllabus for this subject. The syllabus includes important information about the course outcomes, requirements, grading system, assessment methods, consultation hours, and classroom policies. I understand that it is my responsibility to comply with the expectations outlined in the syllabus."
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; gap:10px;">
+        <div class="form-group" style="flex:1;">
+          <label style="font-weight:700; font-size:0.78rem;">Student ID Number:</label>
+          <input type="text" id="studAckId" placeholder="e.g. 2023-00123" style="width:100%; padding:5px 8px; font-size:0.8rem;" />
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label style="font-weight:700; font-size:0.78rem;">Email Address (Optional):</label>
+          <input type="email" id="studAckEmail" placeholder="e.g. j.delacruz@usep.edu.ph" style="width:100%; padding:5px 8px; font-size:0.8rem;" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="font-weight:700; font-size:0.78rem;">Full Name (Last Name, First Name M.I.):</label>
+        <input type="text" id="studAckName" placeholder="e.g. DELA CRUZ, JUAN A." style="width:100%; padding:5px 8px; font-size:0.8rem;" />
+      </div>
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="font-weight:700; font-size:0.78rem;">Student E-Signature (Draw with Mouse / Stylus):</label>
+          <button type="button" class="btn btn-outline-secondary btn-xs" style="padding:2px 7px; font-size:0.7rem;" onclick="clearStudentAckCanvas()">Clear</button>
+        </div>
+        <canvas id="studentAckCanvas" width="480" height="130" style="width:100%; height:130px; border:1px dashed #94a3b8; border-radius:6px; background:#fafafa; touch-action:none;"></canvas>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+      <button class="btn btn-secondary btn-sm" onclick="closeStudentAckModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="btnSubmitStudentAck" onclick="submitStudentAcknowledgment()">Confirm &amp; Seal Acknowledgment</button>
     </div>
   </div>
 </div>

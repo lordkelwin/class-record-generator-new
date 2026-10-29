@@ -11,7 +11,8 @@ matching the exact structure, tables, rubrics, colors, and layout of EE 211.pdf.
 
 
 import os
-
+import base64
+import tempfile
 from typing import List, Dict, Any, Optional
 
 from fpdf import FPDF
@@ -39,6 +40,26 @@ from models import (
 
 
 
+
+
+def _save_data_url_image(data_url: str) -> Optional[str]:
+    """Helper to write data URL PNG/JPEG into a temp file for FPDF."""
+    if not data_url or not isinstance(data_url, str):
+        return None
+    if not data_url.startswith("data:image"):
+        if os.path.exists(data_url):
+            return data_url
+        return None
+    try:
+        header, b64_data = data_url.split(",", 1)
+        ext = ".png" if "png" in header else ".jpg"
+        raw_bytes = base64.b64decode(b64_data)
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+        tmp.write(raw_bytes)
+        tmp.close()
+        return tmp.name
+    except Exception:
+        return None
 
 def _clean_text(val: str, has_ttf: bool = True) -> str:
     """Sanitizes text for PDF rendering, supporting rich typographic characters."""
@@ -120,6 +141,16 @@ class USePSyllabusPDF(FPDF):
         else:
             self.font_times = "Times"
 
+        # Official Cinzel Bold font for University Header
+        if os.path.exists(os.path.join(win_fonts, "Cinzel-Bold.otf")):
+            try:
+                self.add_font("Cinzel", "B", os.path.join(win_fonts, "Cinzel-Bold.otf"))
+                self.font_cinzel = "Cinzel"
+            except Exception:
+                self.font_cinzel = self.font_main
+        else:
+            self.font_cinzel = self.font_main
+
     def footer(self):
         # Match FM-USeP-MID-01 Rev 01 footer box at bottom of every page
         self.set_y(-16.5)
@@ -169,7 +200,7 @@ def _draw_page1_header_block(pdf: USePSyllabusPDF, meta):
     pdf.set_font(pdf.font_main, "", 8.5)
     pdf.cell(left_w - 35.0, 4.2, "Republic of the Philippines", align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.set_x(x0 + 33.0)
-    pdf.set_font(pdf.font_times, "B", 13.5)
+    pdf.set_font(pdf.font_cinzel, "B", 13.5)
     pdf.cell(left_w - 35.0, 5.5, _clean_text(meta.university, pdf.has_ttf), align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.set_x(x0 + 33.0)
     pdf.set_font(pdf.font_main, "", 8)
@@ -338,8 +369,9 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         rh2.cell(_clean_text(meta.college, has_ttf))
 
         rh3 = tp_head.row()
-        rh3.cell("Department", style=gray_hdr)
-        rh3.cell(_clean_text(meta.department, has_ttf))
+        rh3.cell("Program Name", style=gray_hdr)
+        prog_display = getattr(meta, "program_name", "") or meta.department.replace("Department of ", "Bachelor of Science in ")
+        rh3.cell(_clean_text(prog_display, has_ttf))
 
     pdf.set_xy(210.5, pdf.get_y() + 1.5)
     pdf.set_font(fn_narrow, "B", 8)
@@ -848,7 +880,9 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         pdf.multi_cell(305.2, 4.0, _clean_text(line_prefix + desc, has_ttf), new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.8)
 
-    # SIGNATORIES BLOCK (Official Chain conforming strictly to FM-USeP-MID-01 Guide)
+    # SIGNATORIES BLOCK (Conforming to USeP Standards & Item 16 Signatory Layout)
+    # Only Faculty, Program Head/Associate Dean, and Dean are in the footer,
+    # with College QA signature placed alongside the Dean as a small countersignature at the bottom right.
     if pdf.get_y() > 140.0:
         pdf.add_page()
     pdf.ln(4.0)
@@ -859,128 +893,180 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         for s in (doc.get("workflow", {}).get("signatures", [])):
             wf_sigs[s.get("role")] = s
 
-    dept_short = meta.department.replace("Department of ", "").strip()
+    import auth
+    users = auth._load_users()
 
-    comm_sig = wf_sigs.get("review_committee")
-    comm_name = comm_sig.get("full_name") if comm_sig else "SYLLABUS REVIEW COMMITTEE"
-    comm_title = comm_sig.get("title") if comm_sig else "Course Evaluation Committee"
-    comm_time = f"Signed: {comm_sig.get('signed_at')[:16].replace('T', ' ')}" if comm_sig else ""
+    # Determine if course owner is a Program Head -> Recommending Approval goes to Associate Dean
+    owner = doc.get("owner") if (doc and isinstance(doc, dict)) else ""
+    is_owner_ph = False
+    if owner:
+        owner_roles = users.get(owner, {}).get("workflow_roles") or []
+        is_owner_ph = ("program_head" in owner_roles)
+    if doc and isinstance(doc, dict):
+        rev_req = doc.get("workflow", {}).get("revision_request") or {}
+        if rev_req.get("owner_is_program_head"):
+            is_owner_ph = True
 
-    ph_sig = wf_sigs.get("program_head")
-    ph_name = ph_sig.get("full_name") if ph_sig else meta.program_head
-    ph_title = ph_sig.get("title") if ph_sig else f"Program Head - {dept_short}"
-    ph_time = f"Signed: {ph_sig.get('signed_at')[:16].replace('T', ' ')}" if ph_sig else ""
+    # 1. Faculty Information & E-Signature
+    import courses_store
+    doc_authors = courses_store.get_doc_authors(doc) if doc else (meta.authors if hasattr(meta, "authors") and meta.authors else [])
+    if doc_authors and len(doc_authors) > 1:
+        prepared_by_names = ", ".join(a.get("name", "") for a in doc_authors)
+        prepared_by_title = "Faculty Writers"
+    else:
+        prepared_by_names = meta.faculty_name
+        prepared_by_title = "Faculty in Charge"
 
-    qa_sig = wf_sigs.get("qa_head")
-    qa_name = qa_sig.get("full_name") if qa_sig else "COLLEGE QUALITY ASSURANCE HEAD"
-    qa_title = qa_sig.get("title") if qa_sig else "College Quality Assurance Head"
-    qa_time = f"Countersigned: {qa_sig.get('signed_at')[:16].replace('T', ' ')}" if qa_sig else ""
+    fac_sig_data = ""
+    fac_time = ""
+    if owner and owner in users:
+        fac_sig_data = users[owner].get("signature_data") or ""
+    if not fac_sig_data and doc and isinstance(doc, dict):
+        author_subs = doc.get("workflow", {}).get("author_submissions") or {}
+        if owner in author_subs:
+            fac_time = f"Signed: {author_subs[owner].get('submitted_at', '')[:16].replace('T', ' ')}"
+        elif doc.get("workflow", {}).get("submitted_at"):
+            fac_time = f"Signed: {doc['workflow']['submitted_at'][:16].replace('T', ' ')}"
+    tmp_fac_sig = _save_data_url_image(fac_sig_data) if fac_sig_data else None
 
+    # 2. Recommending Approval (Program Head or Associate Dean)
+    if is_owner_ph:
+        # Recommending Approval: Associate Dean
+        assoc_sig = wf_sigs.get("associate_dean")
+        ph_display_name = assoc_sig.get("full_name") if assoc_sig else "Engr. Delan Zoe H. Arenga"
+        ph_display_title = assoc_sig.get("title") if assoc_sig else "Associate Dean, College of Engineering"
+        ph_time = f"Signed: {assoc_sig.get('signed_at')[:16].replace('T', ' ')}" if assoc_sig else ""
+        ph_sig_data = assoc_sig.get("signature_data") if assoc_sig else (users.get("faculty_arenga", {}).get("signature_data") or "")
+    else:
+        # Recommending Approval: Program Head
+        prog_clean = (meta.department or "").replace("Department of ", "").replace("Bachelor of Science in ", "").strip()
+        ph_sig = wf_sigs.get("program_head")
+        ph_display_name = ph_sig.get("full_name") if ph_sig else (meta.program_head or "Engr. Charito O. Claro")
+        ph_display_title = ph_sig.get("title") if ph_sig else f"Program Head - {prog_clean}"
+        ph_time = f"Signed: {ph_sig.get('signed_at')[:16].replace('T', ' ')}" if ph_sig else ""
+        ph_sig_data = ph_sig.get("signature_data") if ph_sig else (users.get("faculty_claro", {}).get("signature_data") or "")
+    tmp_ph_sig = _save_data_url_image(ph_sig_data) if ph_sig_data else None
+
+    # 3. Approved by (Dean)
     dean_sig = wf_sigs.get("dean")
-    dean_name = dean_sig.get("full_name") if dean_sig else meta.dean_name
+    dean_name = dean_sig.get("full_name") if dean_sig else (meta.dean_name or "Engr. Joie D. Cataytay, Ph.D.")
     dean_title = dean_sig.get("title") if dean_sig else "Dean, College of Engineering"
     dean_time = f"Approved & Locked: {dean_sig.get('signed_at')[:16].replace('T', ' ')}" if dean_sig else ""
+    dean_sig_data = dean_sig.get("signature_data") if dean_sig else (users.get("dean_cataytay", {}).get("signature_data") or "")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    dean_static_png = os.path.join(base_dir, "static", "signatures", "dean_cataytay.png")
+    if not dean_sig_data and os.path.exists(dean_static_png):
+        dean_sig_data = dean_static_png
+    tmp_dean_sig = _save_data_url_image(dean_sig_data) if dean_sig_data else None
 
-    # Check if syllabus is revised per guide:
-    # "If minor/major revisions are made... both the original writer and the revising faculty should be listed."
-    is_revised = (cycle > 1) or bool(rev_reason) or (v_note in ["Minor Revision", "Major Revision"])
+    # 4. Countersigned by (College QA Head) - alongside Dean at bottom right
+    qa_sig = wf_sigs.get("qa_head")
+    qa_name = qa_sig.get("full_name") if qa_sig else "Engr. Sheena S. Arcega"
+    qa_title = qa_sig.get("title") if qa_sig else "College Quality Assurance Head"
+    qa_time = f"Countersigned: {qa_sig.get('signed_at')[:16].replace('T', ' ')}" if qa_sig else ""
+    qa_sig_data = qa_sig.get("signature_data") if qa_sig else (users.get("qa_arcega", {}).get("signature_data") or "")
+    qa_static_png = os.path.join(base_dir, "static", "signatures", "sheena_arcega.png")
+    if not qa_sig_data and os.path.exists(qa_static_png):
+        qa_sig_data = qa_static_png
+    tmp_qa_sig = _save_data_url_image(qa_sig_data) if qa_sig_data else None
 
-    if is_revised:
-        # 4 Columns in Row 1: Prepared by | Revised by | Reviewed by | Recommending Approval
-        col_w = 76.3
-        pdf.set_font(fn_main, "", 7.8)
-        pdf.cell(col_w, 4.5, "Prepared by (Original Writer):", border=0)
-        pdf.cell(col_w, 4.5, "Revised by:", border=0)
-        pdf.cell(col_w, 4.5, "Reviewed by (Committee):", border=0)
-        pdf.cell(col_w, 4.5, "Recommending Approval:", border=0, new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(5.0)
+    # Render ROW 1: Prepared by (Faculty) | Recommending Approval (Program Head / Associate Dean)
+    y_row1 = pdf.get_y()
+    col1_w = 152.6
+    col2_w = 152.6
 
-        pdf.set_font(fn_narrow, "B", 8.5)
-        import courses_store
-        doc_authors = courses_store.get_doc_authors(doc) if doc else (meta.authors if hasattr(meta, "authors") and meta.authors else [])
-        if doc_authors and len(doc_authors) > 1:
-            prepared_by_names = ", ".join(a.get("name", "") for a in doc_authors)
-            prepared_by_title = "Faculty Writers"
-        else:
-            prepared_by_names = meta.faculty_name
-            prepared_by_title = "Faculty in Charge"
-
-        orig_author = (doc.get("author_name") if doc else "") or prepared_by_names
-        rev_author = prepared_by_names
-        pdf.cell(col_w, 4.2, _clean_text(orig_author.upper(), has_ttf), border=0)
-        pdf.cell(col_w, 4.2, _clean_text(rev_author.upper(), has_ttf), border=0)
-        pdf.cell(col_w, 4.2, _clean_text(comm_name.upper(), has_ttf), border=0)
-        pdf.cell(col_w, 4.2, _clean_text(ph_name.upper(), has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
-
-        pdf.set_font(fn_main, "", 7.5)
-        pdf.cell(col_w, 3.8, "(SGD) Faculty Member", border=0)
-        pdf.cell(col_w, 3.8, "Faculty in Charge", border=0)
-        pdf.cell(col_w, 3.8, _clean_text(comm_title, has_ttf), border=0)
-        pdf.cell(col_w, 3.8, _clean_text(ph_title, has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
-
-        pdf.set_font(fn_main, "I", 6.8)
-        pdf.set_text_color(70, 70, 70)
-        pdf.cell(col_w, 3.6, "", border=0)
-        pdf.cell(col_w, 3.6, "", border=0)
-        pdf.cell(col_w, 3.6, _clean_text(comm_time, has_ttf), border=0)
-        pdf.cell(col_w, 3.6, _clean_text(ph_time, has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0, 0, 0)
-    else:
-        # Standard 3 Columns in Row 1: Prepared by | Reviewed by | Recommending Approval
-        col_w = 101.7
-        pdf.set_font(fn_main, "", 8.0)
-        pdf.cell(col_w, 4.5, "Prepared by:", border=0)
-        pdf.cell(col_w, 4.5, "Reviewed by (Syllabus Review Committee):", border=0)
-        pdf.cell(101.8, 4.5, "Recommending Approval:", border=0, new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(5.0)
-
-        import courses_store
-        doc_authors = courses_store.get_doc_authors(doc) if doc else (meta.authors if hasattr(meta, "authors") and meta.authors else [])
-        if doc_authors and len(doc_authors) > 1:
-            prepared_by_names = ", ".join(a.get("name", "") for a in doc_authors)
-            prepared_by_title = "Faculty Writers"
-        else:
-            prepared_by_names = meta.faculty_name
-            prepared_by_title = "Faculty in Charge"
-
-        pdf.set_font(fn_narrow, "B", 8.8)
-        pdf.cell(col_w, 4.2, _clean_text(prepared_by_names.upper(), has_ttf), border=0)
-        pdf.cell(col_w, 4.2, _clean_text(comm_name.upper(), has_ttf), border=0)
-        pdf.cell(101.8, 4.2, _clean_text(ph_name.upper(), has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
-
-        pdf.set_font(fn_main, "", 7.8)
-        pdf.cell(col_w, 3.8, prepared_by_title, border=0)
-        pdf.cell(col_w, 3.8, _clean_text(comm_title, has_ttf), border=0)
-        pdf.cell(101.8, 3.8, _clean_text(ph_title, has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
-
-        pdf.set_font(fn_main, "I", 7.0)
-        pdf.set_text_color(70, 70, 70)
-        pdf.cell(col_w, 3.6, "", border=0)
-        pdf.cell(col_w, 3.6, _clean_text(comm_time, has_ttf), border=0)
-        pdf.cell(101.8, 3.6, _clean_text(ph_time, has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0, 0, 0)
-
-    pdf.ln(5.0)
-
-    # ROW 2: Countersigned by (College QA Head) | Approved by (Dean)
     pdf.set_font(fn_main, "", 8.0)
-    pdf.cell(152.6, 4.5, "Countersigned by (Quality Assurance):", border=0)
-    pdf.cell(152.6, 4.5, "Approved by:", border=0, new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(5.0)
+    pdf.set_xy(12.5, y_row1)
+    pdf.cell(col1_w, 4.5, "Prepared by:", border=0)
+    pdf.set_xy(12.5 + col1_w, y_row1)
+    pdf.cell(col2_w, 4.5, "Recommending Approval:", border=0)
 
+    # Signature Images in Row 1
+    sig_img_h = 11.0
+    if tmp_fac_sig:
+        try:
+            pdf.image(tmp_fac_sig, x=12.5 + 8.0, y=y_row1 + 4.5, w=34.0, h=sig_img_h)
+        except Exception:
+            pass
+    if tmp_ph_sig:
+        try:
+            pdf.image(tmp_ph_sig, x=12.5 + col1_w + 8.0, y=y_row1 + 4.5, w=34.0, h=sig_img_h)
+        except Exception:
+            pass
+
+    y_names1 = y_row1 + 16.0
+    pdf.set_xy(12.5, y_names1)
     pdf.set_font(fn_narrow, "B", 8.8)
-    pdf.cell(152.6, 4.2, _clean_text(qa_name.upper(), has_ttf), border=0)
-    pdf.cell(152.6, 4.2, _clean_text(dean_name.upper(), has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(col1_w, 4.0, _clean_text(prepared_by_names.upper(), has_ttf), border=0)
+    pdf.set_xy(12.5 + col1_w, y_names1)
+    pdf.cell(col2_w, 4.0, _clean_text(ph_display_name.upper(), has_ttf), border=0)
 
+    pdf.set_xy(12.5, y_names1 + 4.0)
     pdf.set_font(fn_main, "", 7.8)
-    pdf.cell(152.6, 3.8, _clean_text(qa_title, has_ttf), border=0)
-    pdf.cell(152.6, 3.8, _clean_text(dean_title, has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(col1_w, 3.8, prepared_by_title, border=0)
+    pdf.set_xy(12.5 + col1_w, y_names1 + 4.0)
+    pdf.cell(col2_w, 3.8, _clean_text(ph_display_title, has_ttf), border=0)
 
+    pdf.set_xy(12.5, y_names1 + 7.8)
     pdf.set_font(fn_main, "I", 7.0)
-    pdf.set_text_color(70, 70, 70)
-    pdf.cell(152.6, 3.6, _clean_text(qa_time, has_ttf), border=0)
-    pdf.cell(152.6, 3.6, _clean_text(dean_time, has_ttf), border=0, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(80, 80, 80)
+    pdf.cell(col1_w, 3.4, _clean_text(fac_time, has_ttf), border=0)
+    pdf.set_xy(12.5 + col1_w, y_names1 + 7.8)
+    pdf.cell(col2_w, 3.4, _clean_text(ph_time, has_ttf), border=0)
+    pdf.set_text_color(0, 0, 0)
+
+    # Render ROW 2: Approved by (Dean) | alongside Dean, small QA signature on bottom right
+    y_row2 = y_names1 + 15.0
+    dean_w = 175.0
+    qa_w = 130.2
+
+    pdf.set_font(fn_main, "", 8.0)
+    pdf.set_xy(12.5, y_row2)
+    pdf.cell(dean_w, 4.5, "Approved by:", border=0)
+
+    # Small QA countersignature label alongside Dean
+    pdf.set_xy(12.5 + dean_w, y_row2 + 1.0)
+    pdf.set_font(fn_main, "I", 7.2)
+    pdf.cell(qa_w, 3.8, "Countersigned by (Quality Assurance):", border=0)
+
+    # Signature Images in Row 2
+    if tmp_dean_sig:
+        try:
+            pdf.image(tmp_dean_sig, x=12.5 + 8.0, y=y_row2 + 4.5, w=38.0, h=12.0)
+        except Exception:
+            pass
+    if tmp_qa_sig:
+        try:
+            pdf.image(tmp_qa_sig, x=12.5 + dean_w + 6.0, y=y_row2 + 4.5, w=24.0, h=8.5)
+        except Exception:
+            pass
+
+    y_names2 = y_row2 + 16.5
+    pdf.set_xy(12.5, y_names2)
+    pdf.set_font(fn_narrow, "B", 9.0)
+    pdf.cell(dean_w, 4.0, _clean_text(dean_name.upper(), has_ttf), border=0)
+
+    # Small QA name
+    pdf.set_xy(12.5 + dean_w, y_names2)
+    pdf.set_font(fn_narrow, "B", 7.8)
+    pdf.cell(qa_w, 3.6, _clean_text(qa_name.upper(), has_ttf), border=0)
+
+    pdf.set_xy(12.5, y_names2 + 4.0)
+    pdf.set_font(fn_main, "", 7.8)
+    pdf.cell(dean_w, 3.8, _clean_text(dean_title, has_ttf), border=0)
+
+    pdf.set_xy(12.5 + dean_w, y_names2 + 3.6)
+    pdf.set_font(fn_main, "", 7.0)
+    pdf.cell(qa_w, 3.4, _clean_text(qa_title, has_ttf), border=0)
+
+    pdf.set_xy(12.5, y_names2 + 7.8)
+    pdf.set_font(fn_main, "I", 7.0)
+    pdf.set_text_color(80, 80, 80)
+    pdf.cell(dean_w, 3.4, _clean_text(dean_time, has_ttf), border=0)
+
+    pdf.set_xy(12.5 + dean_w, y_names2 + 7.0)
+    pdf.set_font(fn_main, "I", 6.5)
+    pdf.cell(qa_w, 3.0, _clean_text(qa_time, has_ttf), border=0)
     pdf.set_text_color(0, 0, 0)
 
     return bytes(pdf.output())
-

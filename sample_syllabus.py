@@ -418,6 +418,12 @@ def get_blank_blueprint(
     program_name: str = "",
 ) -> SyllabusBlueprint:
     """Returns a completely clean starter blueprint for creating a syllabus from scratch."""
+    if course_code and (" - " in course_code or " – " in course_code):
+        delim = " - " if " - " in course_code else " – "
+        parts = course_code.split(delim, 1)
+        course_code = parts[0].strip()
+        if not course_title or course_title == "Untitled Subject":
+            course_title = parts[1].strip()
     init_programs = programs or ([p.strip() for p in program_code.split(",") if p.strip()] if program_code else ["EE"])
     init_sections = sections or ([s.strip() for s in section.split(",") if s.strip()] if section else ["EE 2A"])
     metadata = CourseMetadata(
