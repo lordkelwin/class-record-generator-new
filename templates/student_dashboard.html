@@ -386,11 +386,11 @@
                   <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;" onclick="openReviewSyllabusModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}')">
                     🔍 Review Syllabus
                   </button>
-                  <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:0.85; justify-content:center; font-size:0.76rem;" title="Download complete official syllabus PDF">
+                  <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" onclick="markSyllabusReviewed('{{ c.course_id }}')" class="btn-sp btn-sp-outline" style="flex:0.85; justify-content:center; font-size:0.76rem;" title="Download complete official syllabus PDF">
                     📄 View PDF
                   </a>
-                  <button class="btn-sp btn-sp-primary" style="flex:1.15; justify-content:center; font-size:0.78rem;" onclick="openSignModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}', '{{ c.schedule }}')">
-                    ✍️ Sign Ack
+                  <button type="button" id="btnSignAck_{{ c.course_id }}" class="btn-sp btn-sp-primary btn-sign-ack" style="flex:1.15; justify-content:center; font-size:0.78rem; background:#94a3b8; border-color:#94a3b8; cursor:not-allowed;" onclick="attemptOpenSignModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}', '{{ c.schedule }}')" title="You must review the syllabus first before signing.">
+                    🔒 Review First
                   </button>
                 </div>
               </div>
@@ -440,13 +440,18 @@
                   {% endif %}
                 </div>
 
-                <div style="display:flex; gap:8px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
-                  <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.78rem;">
-                    📄 Syllabus PDF
-                  </a>
-                  <a href="/api/courses/{{ c.course_id }}/export-acknowledgment-pdf" target="_blank" class="btn-sp btn-sp-success" style="flex:1.2; justify-content:center; font-size:0.78rem;">
-                    📥 Form MID-07 (.pdf)
-                  </a>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
+                  <button type="button" class="btn-sp btn-sp-primary" style="width:100%; justify-content:center; font-size:0.82rem; font-weight:700; background:#0f766e; border-color:#0f766e;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
+                    📊 View Performance Dashboard
+                  </button>
+                  <div style="display:flex; gap:8px;">
+                    <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;">
+                      📄 Syllabus PDF
+                    </a>
+                    <a href="/api/courses/{{ c.course_id }}/export-acknowledgment-pdf" target="_blank" class="btn-sp btn-sp-success" style="flex:1.2; justify-content:center; font-size:0.76rem;">
+                      📥 Form MID-07 (.pdf)
+                    </a>
+                  </div>
                 </div>
               </div>
             {% endfor %}
@@ -859,6 +864,185 @@
   
     let activeReviewCourseData = null;
 
+    
+    function markSyllabusReviewed(courseId) {
+      if (!courseId) return;
+      sessionStorage.setItem("reviewed_" + courseId, "true");
+      unlockReviewedButtons();
+    }
+
+    function unlockReviewedButtons() {
+      document.querySelectorAll(".btn-sign-ack").forEach(btn => {
+        const cid = btn.id.replace("btnSignAck_", "");
+        if (sessionStorage.getItem("reviewed_" + cid) === "true") {
+          btn.disabled = false;
+          btn.style.background = "var(--primary-maroon)";
+          btn.style.borderColor = "var(--primary-maroon)";
+          btn.style.cursor = "pointer";
+          btn.innerHTML = "✍️ Sign Ack";
+          btn.title = "Click to sign syllabus acknowledgment";
+        }
+      });
+    }
+
+    function attemptOpenSignModal(courseId, code, title, faculty, schedule) {
+      if (sessionStorage.getItem("reviewed_" + courseId) !== "true") {
+        alert("⚠️ You must review the syllabus first before signing.\n\nPlease click '🔍 Review Syllabus' or '📄 View PDF' to read the syllabus requirements.");
+        openReviewSyllabusModal(courseId, code, title, faculty);
+        return;
+      }
+      openSignModal(courseId, code, title, faculty, schedule);
+    }
+
+    // Call unlockReviewedButtons on document ready
+    document.addEventListener("DOMContentLoaded", function() {
+      unlockReviewedButtons();
+    });
+
+    async function openPerformanceDashboardModal(courseId) {
+      const modal = document.getElementById("performanceModalBackdrop");
+      const body = document.getElementById("perfModalBody");
+      modal.style.display = "flex";
+      body.innerHTML = '<div style="text-align:center; padding:35px; color:#64748b;"><div style="font-size:1.8rem; margin-bottom:8px;">⏳</div>Loading your performance records...</div>';
+
+      try {
+        const res = await fetch(`/api/student/courses/${courseId}/performance`);
+        if (!res.ok) throw new Error("Could not retrieve performance record");
+        const data = await res.json();
+        renderPerformanceDashboard(data);
+      } catch (e) {
+        body.innerHTML = `<div style="text-align:center; padding:30px; color:#b91c1c;">Failed to load performance data: ${e.message}</div>`;
+      }
+    }
+
+    function closePerformanceDashboardModal() {
+      document.getElementById("performanceModalBackdrop").style.display = "none";
+    }
+
+    function renderPerformanceDashboard(data) {
+      const c = data.course || {};
+      const g = data.grades || {};
+      const st = data.student || {};
+      const clos = data.clo_attainment || [];
+      const cats = data.categories || [];
+
+      document.getElementById("perfModalTitle").textContent = `${c.course_code || 'Course'} - Academic Performance Dashboard`;
+      document.getElementById("perfModalSubtitle").textContent = `${c.course_title || ''} • Instructor: ${c.faculty_name || 'Faculty'}`;
+
+      let html = `
+        <!-- Course & Standing Summary -->
+        <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:14px; margin-bottom:16px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px; font-size:0.82rem;">
+            <div><strong>Student:</strong> ${escapeHtml(st.name || '')} (${escapeHtml(st.student_id || '')})</div>
+            <div><strong>Class Section:</strong> ${escapeHtml(c.section || '')}</div>
+            <div><strong>Semester / AY:</strong> ${escapeHtml(c.semester_ay || '')}</div>
+            <div><strong>Consultation:</strong> ${escapeHtml(c.consultation_hours || 'TBA')}</div>
+          </div>
+        </div>
+
+        <!-- Grade Metric Cards -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-bottom:18px;">
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
+            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">MIDTERM GRADE</div>
+            <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) : '—'}%</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
+            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">FINALS GRADE</div>
+            <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.finals_grade !== undefined ? g.finals_grade.toFixed(1) : '—'}%</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
+            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">AVERAGE FINAL (AFG)</div>
+            <div style="font-size:1.45rem; font-weight:800; color:#1e293b; margin-top:2px;">${g.average_final_grade !== undefined ? g.average_final_grade.toFixed(1) : '—'}%</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
+            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">TRANSMUTED GRADE</div>
+            <div style="font-size:1.45rem; font-weight:800; color:${g.passed ? '#15803d' : '#dc2626'}; margin-top:2px;">${g.transmuted_grade || '—'}</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
+            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">STANDING</div>
+            <span style="display:inline-block; margin-top:5px; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; background:${g.passed ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;'}">${g.status_label || 'ENROLLED'}</span>
+          </div>
+        </div>
+
+        <!-- CLO Competency Attainment Tracker -->
+        <div style="margin-bottom:20px;">
+          <h4 style="margin:0 0 8px; font-size:0.92rem; color:#0f766e; border-bottom:2px solid #0f766e; padding-bottom:4px;">
+            🎯 Course Learning Outcome (CLO) Competency Attainment
+          </h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:#fff; border:1px solid #e2e8f0;">
+            <thead>
+              <tr style="background:#f1f5f9; text-align:left;">
+                <th style="padding:6px 10px; width:80px;">CLO ID</th>
+                <th style="padding:6px 10px;">Outcome Statement / Description</th>
+                <th style="padding:6px 10px; width:90px; text-align:center;">Points</th>
+                <th style="padding:6px 10px; width:110px; text-align:center;">Attainment</th>
+                <th style="padding:6px 10px; width:95px; text-align:center;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${clos.length ? clos.map(co => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:6px 10px; font-weight:700; color:#0f766e;">${escapeHtml(co.co_id)}</td>
+                  <td style="padding:6px 10px; font-size:0.76rem; color:#334155;">${escapeHtml(co.description || '')}</td>
+                  <td style="padding:6px 10px; text-align:center;">${co.points_earned || 0} / ${co.points_possible || 0}</td>
+                  <td style="padding:6px 10px; text-align:center;">
+                    <div style="font-weight:700; color:${co.is_competent ? '#15803d' : '#b91c1c'};">${co.attainment_pct}%</div>
+                    <div style="font-size:0.68rem; color:#64748b;">Target: ${co.target_score_pct}%</div>
+                  </td>
+                  <td style="padding:6px 10px; text-align:center;">
+                    <span style="padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; background:${co.is_competent ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;'}">
+                      ${co.is_competent ? '✓ Competent' : '⚠️ Developing'}
+                    </span>
+                  </td>
+                </tr>
+              `).join('') : '<tr><td colspan="5" style="text-align:center; padding:12px; color:#94a3b8;">No CLOs recorded.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Assessment Breakdown by Term & Category -->
+        <div>
+          <h4 style="margin:0 0 8px; font-size:0.92rem; color:#0f766e; border-bottom:2px solid #0f766e; padding-bottom:4px;">
+            📝 Assessment Activities Breakdown
+          </h4>
+          ${cats.length ? cats.map(cat => `
+            <div style="margin-bottom:12px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
+              <div style="background:#f8fafc; padding:6px 12px; font-size:0.8rem; font-weight:700; color:#334155; display:flex; justify-content:space-between;">
+                <span>${escapeHtml(cat.term)} &bull; ${escapeHtml(cat.category_name)} (${escapeHtml(cat.assessment_type)})</span>
+                <span style="color:#0f766e;">Category Weight: ${cat.weight_pct}%</span>
+              </div>
+              <table style="width:100%; border-collapse:collapse; font-size:0.77rem;">
+                <thead>
+                  <tr style="background:#f1f5f9; text-align:left; color:#64748b;">
+                    <th style="padding:4px 8px; width:70px;">Item</th>
+                    <th style="padding:4px 8px;">Activity Name</th>
+                    <th style="padding:4px 8px; width:80px; text-align:center;">Score</th>
+                    <th style="padding:4px 8px; width:70px; text-align:center;">%</th>
+                    <th style="padding:4px 8px; width:80px; text-align:center;">Weight</th>
+                    <th style="padding:4px 8px; width:90px;">Aligned CLOs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(cat.items || []).map(it => `
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                      <td style="padding:4px 8px; font-weight:700;">${escapeHtml(it.item_id)}</td>
+                      <td style="padding:4px 8px;">${escapeHtml(it.name)}</td>
+                      <td style="padding:4px 8px; text-align:center; font-weight:600;">${it.student_score} / ${it.max_score}</td>
+                      <td style="padding:4px 8px; text-align:center;">${it.percentage}%</td>
+                      <td style="padding:4px 8px; text-align:center; color:#0f766e; font-weight:600;">${it.weight_pct > 0 ? it.weight_pct + '%' : '—'}</td>
+                      <td style="padding:4px 8px;"><span class="badge-pill" style="background:#e0f2fe; color:#0369a1; font-size:0.7rem;">${escapeHtml((it.aligned_clos || []).join(', '))}</span></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `).join('') : '<div style="font-size:0.8rem; color:#94a3b8; font-style:italic;">No assessment tasks recorded.</div>'}
+        </div>
+      `;
+
+      document.getElementById("perfModalBody").innerHTML = html;
+    }
+
     async function openReviewSyllabusModal(courseId, code, title, faculty) {
       document.getElementById("reviewModalTitle").textContent = `${code} - ${title}`;
       document.getElementById("reviewModalSubtitle").textContent = `Faculty: ${faculty || 'Instructor'}`;
@@ -892,9 +1076,11 @@
     function renderReviewSyllabusContent(doc) {
       const bp = doc.blueprint || {};
       const meta = bp.metadata || {};
-      const clos = bp.clos || [];
-      const assess = bp.assessment_tasks || bp.tasks || [];
-      const policies = bp.classroom_policies || [];
+      const clos = bp.course_outcomes || bp.clos || [];
+      const assess = meta.syllabus_assessment_activities || bp.assessment_tasks || bp.tasks || [];
+      const learningPlan = meta.learning_plan_table || [];
+      const references = meta.references_table || [];
+      const policies = meta.policies_table || bp.classroom_policies || [];
 
       let html = `
         <div style="margin-bottom:16px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; font-size:0.83rem;">
@@ -903,6 +1089,8 @@
             <div><strong>Credit Units:</strong> ${escapeHtml(doc.credit_units || meta.credit_units || '3 Units')}</div>
             <div><strong>Prerequisite(s):</strong> ${escapeHtml(doc.prerequisites || meta.prerequisites || 'None')}</div>
             <div><strong>Term / AY:</strong> ${escapeHtml(doc.semester_ay || meta.semester_ay || 'First Semester, AY 2026-2027')}</div>
+            <div><strong>Instructor:</strong> ${escapeHtml(doc.faculty_name || meta.faculty_name || 'Faculty')}</div>
+            <div><strong>Schedule:</strong> ${escapeHtml(meta.schedule || 'TBA')}</div>
           </div>
         </div>
 
@@ -916,7 +1104,7 @@
           <div style="display:flex; flex-direction:column; gap:6px;">
             ${clos.length ? clos.map((c, i) => `
               <div style="padding:6px 10px; background:#f1f5f9; border-radius:4px; font-size:0.8rem;">
-                <strong style="color:#7f1d1d;">${escapeHtml(c.code || `CLO ${i+1}`)}:</strong> ${escapeHtml(c.statement || c.description || '')}
+                <strong style="color:#7f1d1d;">${escapeHtml(c.co_id || c.code || `CLO ${i+1}`)}:</strong> ${escapeHtml(c.statement || c.description || '')}
               </div>
             `).join('') : '<div style="font-size:0.8rem; color:#94a3b8; font-style:italic;">No CLOs defined.</div>'}
           </div>
@@ -929,10 +1117,51 @@
           </div>
           ${assess.length ? `
             <table style="width:100%; border-collapse:collapse; font-size:0.78rem;">
-              <thead><tr style="background:#f1f5f9; text-align:left;"><th style="padding:4px 8px;">Activity</th><th style="padding:4px 8px;">CLO Mapping</th><th style="padding:4px 8px;">Weight</th></tr></thead>
-              <tbody>${assess.map(a => `<tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:4px 8px;">${escapeHtml(a.name || a.label || '')}</td><td style="padding:4px 8px;">${escapeHtml(a.clo_code || a.clo || '')}</td><td style="padding:4px 8px;">${escapeHtml(String(a.weight_percent || a.weight || ''))}%</td></tr>`).join('')}</tbody>
+              <thead><tr style="background:#f1f5f9; text-align:left;"><th style="padding:4px 8px;">Activity</th><th style="padding:4px 8px;">Type</th><th style="padding:4px 8px;">Aligned CLO</th><th style="padding:4px 8px;">Weight</th></tr></thead>
+              <tbody>${assess.map(a => `<tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:4px 8px; font-weight:700;">${escapeHtml(a.activity || a.name || '')}</td><td style="padding:4px 8px;">${escapeHtml(a.type || '')}</td><td style="padding:4px 8px;">${escapeHtml(a.clo_aligned || a.clo || '')}</td><td style="padding:4px 8px;">${escapeHtml(String(a.weight_pct !== undefined ? a.weight_pct : (a.weight || '')))}%</td></tr>`).join('')}</tbody>
             </table>
           ` : ''}
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <h4 style="margin:0 0 6px; font-size:0.9rem; color:#1e293b; border-bottom:1.5px solid #cbd5e1; padding-bottom:4px;">IX. Course Learning Plan</h4>
+          ${learningPlan.length ? `
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.76rem;">
+                <thead>
+                  <tr style="background:#f1f5f9; text-align:left;">
+                    <th style="padding:4px 6px; width:70px;">Time</th>
+                    <th style="padding:4px 6px;">Intended Learning Outcomes (ILOs)</th>
+                    <th style="padding:4px 6px;">Topics</th>
+                    <th style="padding:4px 6px;">Teaching-Learning Activities</th>
+                    <th style="padding:4px 6px; width:80px;">Assessments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${learningPlan.map(lp => `
+                    <tr style="border-bottom:1px solid #e2e8f0; vertical-align:top;">
+                      <td style="padding:4px 6px; font-weight:700;">${escapeHtml(lp.time_frame || '')}</td>
+                      <td style="padding:4px 6px; white-space:pre-line;">${escapeHtml(lp.ilo || '')}</td>
+                      <td style="padding:4px 6px; font-weight:600; white-space:pre-line;">${escapeHtml(lp.topics || '')}</td>
+                      <td style="padding:4px 6px; white-space:pre-line;">${escapeHtml(lp.tla || '')}</td>
+                      <td style="padding:4px 6px;">${escapeHtml(lp.assessment_activities || lp.clo || '')}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : '<div style="font-size:0.8rem; color:#64748b;">Orientation and Course Outline configured.</div>'}
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <h4 style="margin:0 0 6px; font-size:0.9rem; color:#1e293b; border-bottom:1.5px solid #cbd5e1; padding-bottom:4px;">X. References &amp; Reading Materials</h4>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            ${references.length ? references.map((ref, idx) => `
+              <div style="font-size:0.78rem; color:#334155; padding:3px 6px; background:#f8fafc; border-radius:3px;">
+                <strong>[${escapeHtml(ref.code || `Ref${idx+1}`)}]</strong> ${escapeHtml(ref.reference || '')}
+              </div>
+            `).join('') : '<div style="font-size:0.78rem; color:#64748b; font-style:italic;">No additional textbooks specified.</div>'}
+          </div>
         </div>
 
         <div>
@@ -940,7 +1169,7 @@
           <div style="display:flex; flex-direction:column; gap:6px;">
             ${policies.length ? policies.map(p => `
               <div style="padding:6px 10px; background:#fffdf5; border-left:3px solid #f59e0b; border-radius:3px; font-size:0.79rem; color:#334155;">
-                <strong>${escapeHtml(p.title || p.category || 'Policy')}:</strong> ${escapeHtml(p.content || p.description || '')}
+                <strong>${escapeHtml(p.number ? p.number + '. ' : '')}${escapeHtml(p.title || p.category || 'Policy')}:</strong> ${escapeHtml(p.description || p.content || '')}
               </div>
             `).join('') : '<div style="font-size:0.8rem; color:#64748b;">Standard University academic integrity, attendance, and grading policies apply.</div>'}
           </div>
@@ -948,6 +1177,10 @@
       `;
 
       document.getElementById("reviewModalBody").innerHTML = html;
+      // Mark as reviewed since the modal content is rendered and visible to the student
+      if (activeReviewCourseData && activeReviewCourseData.courseId) {
+        markSyllabusReviewed(activeReviewCourseData.courseId);
+      }
     }
 
     function escapeHtml(str) {
@@ -956,5 +1189,27 @@
     }
 
 </script>
+
+  <!-- Student Performance Monitoring Dashboard Modal -->
+  <div class="sp-modal-backdrop" id="performanceModalBackdrop" style="display:none;">
+    <div class="sp-modal" style="max-width:880px; max-height:92vh; display:flex; flex-direction:column;">
+      <div style="padding:14px 18px; background:#0f766e; color:#ffffff; border-radius:9px 9px 0 0; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h3 style="margin:0; font-size:1.05rem; font-weight:700;" id="perfModalTitle">Academic Performance Dashboard</h3>
+          <div style="font-size:0.76rem; opacity:0.9;" id="perfModalSubtitle">Course Academic Standing &amp; CLO Competency Attainment</div>
+        </div>
+        <button onclick="closePerformanceDashboardModal()" style="background:none; border:none; color:#ffffff; font-size:1.3rem; cursor:pointer; line-height:1;">&times;</button>
+      </div>
+
+      <div style="padding:18px; overflow-y:auto; flex:1;" id="perfModalBody">
+        <div style="text-align:center; padding:30px; color:#64748b;">Loading performance data...</div>
+      </div>
+
+      <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn-sp btn-sp-outline" onclick="closePerformanceDashboardModal()">Close Dashboard</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

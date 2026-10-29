@@ -393,14 +393,12 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
     temp_doc = {"blueprint": existing.get("blueprint"), "workflow": wf, "owner": username}
     bp_dict = syllabus_workflow.enforce_locks(temp_doc, bp_dict)
 
-    # Enforce syllabus approval barrier for Class Record Setup (categories) and Grades (students)
+    # Enforce syllabus approval barrier for Grades (students scores)
     is_syllabus_approved = (wf or {}).get("status") == "approved"
     if existing and not is_syllabus_approved:
         old_bp = existing.get("blueprint") or {}
         if "students" in old_bp:
             bp_dict["students"] = old_bp["students"]
-        if "categories" in old_bp:
-            bp_dict["categories"] = old_bp["categories"]
 
     # Enforce class record grade locks (freeze student scores when under sign-off or finalized)
     cr_wf = existing.get("class_record_workflow") or payload.get("class_record_workflow") or class_record_workflow.default_class_record_workflow(username)
@@ -506,7 +504,7 @@ def create_course(
     if not faculty_name:
         faculty_name = "Elwin Jay J. Tano"
 
-    from sample_syllabus import get_designated_program_heads, DEFAULT_ORIENTATION_ROW, parse_sdg_string_to_table
+    from sample_syllabus import get_designated_program_heads, DEFAULT_ORIENTATION_ROW, parse_sdg_string_to_table, parse_prereqs_coreqs_to_table
     from models import get_default_policies_table
     import academic_db
 
@@ -559,6 +557,7 @@ def create_course(
         bp.metadata.sdg_alignments = cat_sdgs
         bp.metadata.sdg_table = parse_sdg_string_to_table(cat_sdgs)
         bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
+        bp.metadata.references_table = []
         bp.metadata.policies_table = get_default_policies_table()
         bp_dict = bp.to_dict()
     else:
@@ -609,6 +608,7 @@ def create_course(
         bp.metadata.sdg_alignments = cust_sdgs
         bp.metadata.sdg_table = parse_sdg_string_to_table(cust_sdgs)
         bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
+        bp.metadata.references_table = []
         bp.metadata.policies_table = get_default_policies_table()
         bp_dict = bp.to_dict()
 

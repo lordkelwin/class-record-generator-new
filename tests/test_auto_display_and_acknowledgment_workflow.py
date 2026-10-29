@@ -110,6 +110,16 @@ class TestAutoDisplayAndAcknowledgmentWorkflow(unittest.TestCase):
         # After QA countersigns, next step is for_student_acknowledgment
         self.assertEqual(wf["status"], "for_student_acknowledgment")
 
+        # Populate enrolled students and acknowledgments (>=80% threshold required by policy)
+        doc["blueprint"]["students"] = [
+            {"student_id": "2024-00101", "name": "Student A"},
+            {"student_id": "2024-00102", "name": "Student B"},
+        ]
+        doc["student_acknowledgments"] = [
+            {"student_id": "2024-00101", "student_name": "Student A"},
+            {"student_id": "2024-00102", "student_name": "Student B"},
+        ]
+
         # Now test forwarding from student_ack to Dean
         owner_user = {
             "username": "faculty_tano",

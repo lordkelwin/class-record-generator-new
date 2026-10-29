@@ -649,6 +649,35 @@ def save_checklist(doc: Dict[str, Any], user: Dict[str, Any], data: Dict[str, An
     return wf
 
 
+
+def get_student_acknowledgment_stats(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Computes FM-USeP-MID-07 student acknowledgment metrics and 80% threshold status.
+    Under university policy, at least 80% of enrolled students must sign the
+    acknowledgment form before the syllabus can be endorsed to the Dean or approved.
+    """
+    import math
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+    acks = doc.get("student_acknowledgments") or (doc.get("workflow") or {}).get("student_acknowledgments") or []
+    
+    total = len(students)
+    if total == 0:
+        total = len(acks)
+    
+    total_acks = len(acks)
+    pct = round((total_acks / total * 100.0), 1) if total > 0 else 0.0
+    min_required = max(1, math.ceil(total * 0.80)) if total > 0 else 0
+    meets_threshold = (total_acks >= min_required) if total > 0 else False
+    
+    return {
+        "total_students": total,
+        "total_acknowledged": total_acks,
+        "percentage": pct,
+        "min_required": min_required,
+        "meets_threshold": meets_threshold,
+    }
+
 def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
          required_item_ids: Optional[List[str]] = None,
          overall_recommendation: Optional[str] = None) -> Dict[str, Any]:
@@ -681,6 +710,26 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
 
     if decision != "approve":
         raise WorkflowError("Unknown decision.")
+
+    # 80% Student Acknowledgment Threshold Enforcement
+    if step["key"] == "student_ack" and decision == "approve":
+        stats = get_student_acknowledgment_stats(doc)
+        if not stats["meets_threshold"]:
+            raise WorkflowError(
+                f"Cannot endorse syllabus to Dean: Student acknowledgment has not reached the required 80% threshold "
+                f"({stats['total_acknowledged']}/{stats['total_students']} signed, {stats['percentage']}%. "
+                f"Minimum required: {stats['min_required']} students)."
+            )
+
+    if step["key"] == "dean" and decision == "approve":
+        stats = get_student_acknowledgment_stats(doc)
+        if not stats["meets_threshold"]:
+            raise WorkflowError(
+                f"Cannot sign/approve syllabus: Student acknowledgment has not reached the required 80% threshold "
+                f"({stats['total_acknowledged']}/{stats['total_students']} signed, {stats['percentage']}%. "
+                f"Minimum required: {stats['min_required']} students)."
+            )
+
 
     if step.get("requires_checklist"):
         cl = wf.get("checklist")
@@ -846,6 +895,7 @@ def public_view(doc: Dict[str, Any]) -> Dict[str, Any]:
         "committee_members": wf.get("committee_members") or [],
         "history": wf.get("history", [])[-30:],
         "revision_reason": wf.get("revision_reason", ""),
+        "student_ack_stats": get_student_acknowledgment_stats(doc),
         "revision_request": wf.get("revision_request"),
         "is_revision_pending": wf.get("status") in REVISION_STATUSES,
         "steps": [{"key": s["key"], "label": s["label"], "action_label": s["action_label"], "role": s["role"]} for s in WORKFLOW_STEPS],

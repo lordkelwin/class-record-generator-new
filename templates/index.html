@@ -5432,6 +5432,17 @@
     }
     const progCourses = getProgramCoursesForPartV();
     const tbody = document.getElementById("prereqCoreqTableBody");
+    if (!tbody) return;
+    if (!m.prereq_coreq_table.length || (m.prereq_coreq_table.length === 1 && m.prereq_coreq_table[0].course_code === "None")) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align:center; padding:14px; color:#64748b; font-style:italic;">
+            No pre-requisites or co-requisites required. Click <strong>+ Add Requirement</strong> to add one.
+          </td>
+        </tr>
+      `;
+      return;
+    }
     tbody.innerHTML = m.prereq_coreq_table.map((row, idx) => {
       const curCode = (row.course_code || "").trim();
       const inCatalog = progCourses.some(c => c.code.toLowerCase() === curCode.toLowerCase());
@@ -5482,7 +5493,7 @@
   }
 
   function removePrereqCoreqRow(idx) {
-    if ((blueprint.metadata.prereq_coreq_table || []).length <= 1) return;
+    if (!blueprint.metadata.prereq_coreq_table || !blueprint.metadata.prereq_coreq_table.length) return;
     blueprint.metadata.prereq_coreq_table.splice(idx, 1);
     renderPrereqCoreqTable();
     syncPrereqCoreqMetaStrings();
@@ -5618,14 +5629,6 @@
 
   function syncClassRecordSetupFromSyllabus(switchToSetupTab) {
     if (!blueprint) return;
-    const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
-    if (!isSyllabusApproved) {
-      if (switchToSetupTab) {
-        alert("Class Record Setup & Grades are locked until the syllabus is approved by the Review Committee, Program Head, College QA Head, and Dean.");
-        switchTab("tab-assessments", null);
-      }
-      return;
-    }
     const m = blueprint.metadata;
     const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     if (!coOptions.length) coOptions.push("CLO1");
@@ -5753,10 +5756,12 @@
       blueprint.categories = newCategories;
       renderCategories();
       renderLiveGradebookAndReports();
+      queueAutoSave();
     }
 
     if (switchToSetupTab) {
-      switchTab("tab-assessments", null);
+      switchRibbon("ribbon-classrecord", "tab-assessments");
+      showLiveToast("✔ Class record setup synced from syllabus assessment activities!", "success");
     }
   }
 
@@ -6337,15 +6342,26 @@
     const m = blueprint.metadata;
     if (!m.references_table) m.references_table = [];
     const tbody = document.getElementById("referencesTableBody");
+    if (!tbody) return;
+    if (m.references_table.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="3" style="text-align:center; padding:16px; color:#64748b; font-style:italic;">
+            No references added yet. Click <strong>+ Add Reference</strong> or use the <strong>APA Citation Generator</strong> to add textbooks and reading materials.
+          </td>
+        </tr>
+      `;
+      return;
+    }
     tbody.innerHTML = m.references_table.map((ref, idx) => `
       <tr>
         <td style="width:110px;">
           <input type="text" value="${escapeHtml(ref.code)}" style="font-weight:700;"
-            onchange="blueprint.metadata.references_table[${idx}].code=this.value" />
+            onchange="blueprint.metadata.references_table[${idx}].code=this.value; queueAutoSave();" />
         </td>
         <td>
           <div style="display:flex; flex-direction:column; gap:4px;">
-            <textarea rows="2" style="width:100%;" onchange="blueprint.metadata.references_table[${idx}].reference=this.value">${escapeHtml(ref.reference)}</textarea>
+            <textarea rows="2" style="width:100%;" onchange="blueprint.metadata.references_table[${idx}].reference=this.value; queueAutoSave();">${escapeHtml(ref.reference)}</textarea>
             <div>
               <button type="button" class="btn btn-outline-primary btn-xs" style="font-size:0.72rem; padding:2px 8px;" onclick="openApaCitationModal(${idx})">
                 📚 APA Citation Generator
@@ -6354,7 +6370,7 @@
           </div>
         </td>
         <td style="width:50px; text-align:center;">
-          <button class="btn btn-danger btn-sm" onclick="removeReferenceRow(${idx})">&times;</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeReferenceRow(${idx})">&times;</button>
         </td>
       </tr>
     `).join("");
@@ -6372,9 +6388,10 @@
   }
 
   function removeReferenceRow(idx) {
-    if ((blueprint.metadata.references_table || []).length <= 1) return;
+    if (!blueprint.metadata.references_table || !blueprint.metadata.references_table.length) return;
     blueprint.metadata.references_table.splice(idx, 1);
     renderReferencesTable();
+    queueAutoSave();
   }
 
   function getDefaultPoliciesTable() {
@@ -7355,7 +7372,9 @@
 
         clos.forEach(cloId => {
           const cloMaxPts = parseFloat(ptsMap[cloId.toUpperCase()]) || (totalItPts / Math.max(1, clos.length));
-          const colWt = totalItPts > 0
+          // Consolidated assessment weight: Even if separated into CLO columns,
+          // the assessment weight is recognized as the full consolidated activity weight (e.g. 20%)
+          const fractionalCloWt = totalItPts > 0
             ? Math.round((itEffWt * (cloMaxPts / totalItPts)) * 100) / 100
             : Math.round((itEffWt / Math.max(1, clos.length)) * 100) / 100;
 
@@ -7372,7 +7391,8 @@
             term: cat.term,
             assessment_type: aType,
             assessment_code: aCode,
-            eff_weight: colWt
+            eff_weight: itEffWt, // consolidated activity weight
+            fractional_weight: fractionalCloWt
           });
         });
       });
@@ -7423,8 +7443,8 @@
           ${allCloCols.map(col => `
             <th style="text-align:center; min-width:78px; background:${col.assessment_type === 'FA' ? '#f8fafc' : '#eff6ff'};">
               <span class="badge badge-co" style="margin-bottom:2px;">${escapeHtml(col.clo_id)}</span>
-              <div style="font-size:0.69rem; color:#1e3a8a; font-weight:700;">Max: ${col.max_score}</div>
-              <div style="font-size:0.65rem; color:#475569;">Wt: ${col.eff_weight}%</div>
+              <div style="font-size:0.69rem; color:#1e3a8a; font-weight:700;">Max: ${col.max_score} pts</div>
+              <div style="font-size:0.65rem; color:#166534; font-weight:700;" title="Consolidated assessment activity weight">Item Wt: ${col.eff_weight}%</div>
             </th>
           `).join("")}
         </tr>
@@ -7446,13 +7466,23 @@
         const saCats = blueprint.categories.filter(c => c.term === tName && (c.assessment_type || "SA").toUpperCase() === "SA");
         let tTotal = 0;
         saCats.forEach(cat => {
-          const catCols = allCloCols.filter(col => col.term === tName && col.assessment_code === cat.assessment_code.toUpperCase() && col.assessment_type === "SA");
-          const sumWt = catCols.reduce((a, col) => a + col.eff_weight, 0);
-          const num = catCols.reduce((a, col) => {
-            const sc = parseFloat(getStudentCloScore(st, col)) || 0;
-            return a + (sc * col.eff_weight / (parseFloat(col.max_score) || 1));
-          }, 0);
-          const catBase50 = sumWt > 0 ? (num / sumWt) * 50.0 + 50.0 : 50.0;
+          // Group by item_id to calculate consolidated item score percentage
+          const itemsInCat = cat.items || [];
+          const catWt = parseFloat(cat.weight_pct) || 0;
+          let catEarnedNumerator = 0;
+          let catTotalWeight = 0;
+
+          itemsInCat.forEach(it => {
+            const itemCols = allCloCols.filter(col => col.term === tName && col.item_id === it.item_id && col.assessment_type === "SA");
+            const itemTotalMax = itemCols.reduce((sum, col) => sum + (parseFloat(col.max_score) || 0), 0) || (parseFloat(it.max_score) || 30.0);
+            const itemStudentScore = itemCols.reduce((sum, col) => sum + (parseFloat(getStudentCloScore(st, col)) || 0), 0);
+            const itemEffWt = parseFloat(it.weight_pct) || (catWt / Math.max(1, itemsInCat.length));
+            const itemFraction = itemTotalMax > 0 ? (itemStudentScore / itemTotalMax) : 0;
+            catEarnedNumerator += (itemFraction * itemEffWt);
+            catTotalWeight += itemEffWt;
+          });
+
+          const catBase50 = catTotalWeight > 0 ? (catEarnedNumerator / catTotalWeight) * 50.0 + 50.0 : 50.0;
           tTotal += (catBase50 * sumWt) / 100.0;
         });
         termGrades[tName] = tTotal;
@@ -9202,16 +9232,63 @@
       if (wf.can_sign) {
         const btnSign = document.createElement("button");
         btnSign.className = "btn btn-success btn-sm";
-        let signBtnText = "✍️ Sign & Approve";
-        if (wf.status === "for_committee_review") signBtnText = "✍️ Sign & Approve Checklist (Member)";
-        else if (wf.status === "for_committee_chair") signBtnText = "✍️ Endorse Committee Review (Chair)";
-        else if (wf.status === "for_program_head") signBtnText = "✍️ Sign & Endorse (Program Head)";
-        else if (wf.status === "for_qa_countersign") signBtnText = "✍️ Countersign Syllabus (QA Head)";
-        else if (wf.status === "for_student_acknowledgment") signBtnText = "▶ Forward to Dean for Final Approval";
-        else if (wf.status === "for_dean_approval") signBtnText = "✍️ Final Approval & Lock-in (Dean)";
-        btnSign.innerHTML = signBtnText;
-        btnSign.onclick = () => openSignatureModal("approve");
-        btnContainer.appendChild(btnSign);
+        const ackStats = wf.student_ack_stats || { total_students: 0, total_acknowledged: 0, percentage: 0, min_required: 0, meets_threshold: false };
+
+        if (wf.status === "for_student_acknowledgment") {
+          const ackNotice = document.createElement("div");
+          ackNotice.style.cssText = `padding:8px 12px; border-radius:6px; font-size:0.79rem; margin-bottom:8px; border:1px solid ${ackStats.meets_threshold ? '#86efac; background:#f0fdf4; color:#166534;' : '#fde68a; background:#fffbeb; color:#92400e;'}`;
+          ackNotice.innerHTML = `
+            <div style="font-weight:700;">${ackStats.meets_threshold ? '✅ 80% Student Acknowledgment Threshold Reached!' : '⏳ Student Acknowledgment in Progress (FM-USeP-MID-07)'}</div>
+            <div style="font-size:0.74rem; margin-top:2px;">
+              <strong>${ackStats.total_acknowledged}</strong> of <strong>${ackStats.total_students}</strong> enrolled students have signed (<strong>${ackStats.percentage}%</strong>).
+              ${ackStats.meets_threshold ? 'The syllabus is ready to be officially endorsed to the Dean.' : `At least <strong>${ackStats.min_required}</strong> student signatures (80%) are required before endorsing to the Dean.`}
+            </div>
+          `;
+          btnContainer.appendChild(ackNotice);
+
+          if (!ackStats.meets_threshold) {
+            btnSign.disabled = true;
+            btnSign.className = "btn btn-secondary btn-sm";
+            btnSign.style.cssText = "cursor:not-allowed; opacity:0.7; font-weight:700;";
+            btnSign.innerHTML = "⏳ Endorsement Locked (Awaiting 80% Student Signatures)";
+            btnSign.title = `Need at least ${ackStats.min_required} student signatures (80%) before endorsing to Dean. Currently ${ackStats.total_acknowledged}/${ackStats.total_students} (${ackStats.percentage}%).`;
+          } else {
+            btnSign.innerHTML = "✍️ Endorse to Dean for Signature";
+            btnSign.onclick = () => openSignatureModal("approve");
+          }
+          btnContainer.appendChild(btnSign);
+        } else if (wf.status === "for_dean_approval") {
+          if (!ackStats.meets_threshold) {
+            const deanBlockNotice = document.createElement("div");
+            deanBlockNotice.style.cssText = "padding:8px 12px; border-radius:6px; font-size:0.79rem; margin-bottom:8px; border:1px solid #fca5a5; background:#fef2f2; color:#991b1b;";
+            deanBlockNotice.innerHTML = `
+              <div style="font-weight:700;">⚠️ Approval Locked: Student Acknowledgment Incomplete</div>
+              <div style="font-size:0.74rem; margin-top:2px;">
+                Only <strong>${ackStats.total_acknowledged}/${ackStats.total_students}</strong> (${ackStats.percentage}%) students have signed. The Dean cannot approve until at least <strong>80% (${ackStats.min_required} students)</strong> have signed FM-USeP-MID-07.
+              </div>
+            `;
+            btnContainer.appendChild(deanBlockNotice);
+
+            btnSign.disabled = true;
+            btnSign.className = "btn btn-secondary btn-sm";
+            btnSign.style.cssText = "cursor:not-allowed; opacity:0.7; font-weight:700;";
+            btnSign.innerHTML = "🔒 Dean Approval Blocked (Student Ack < 80%)";
+            btnSign.title = `Dean cannot approve until student acknowledgment reaches at least 80% (currently ${ackStats.percentage}%).`;
+          } else {
+            btnSign.innerHTML = "✍️ Final Approval & Lock-in (Dean)";
+            btnSign.onclick = () => openSignatureModal("approve");
+          }
+          btnContainer.appendChild(btnSign);
+        } else {
+          let signBtnText = "✍️ Sign & Approve";
+          if (wf.status === "for_committee_review") signBtnText = "✍️ Sign & Approve Checklist (Member)";
+          else if (wf.status === "for_committee_chair") signBtnText = "✍️ Endorse Committee Review (Chair)";
+          else if (wf.status === "for_program_head") signBtnText = "✍️ Sign & Endorse (Program Head)";
+          else if (wf.status === "for_qa_countersign") signBtnText = "✍️ Countersign Syllabus (QA Head)";
+          btnSign.innerHTML = signBtnText;
+          btnSign.onclick = () => openSignatureModal("approve");
+          btnContainer.appendChild(btnSign);
+        }
 
         const btnReturn = document.createElement("button");
         btnReturn.className = "btn btn-danger btn-sm";
@@ -10099,9 +10176,20 @@
               <div>
                 <span style="font-weight:700; color:#334155;">Current Stage:</span>
                 <span style="font-weight:800; color:#1e40af; margin-left:4px;">
-                  ${wf.current_step_label ? `Step: ${escapeHtml(wf.current_step_label)}` : (isApproved ? 'All 4 Steps Approved & Locked 🔒' : 'Draft / Resubmission')}
+                  ${wf.current_step_label ? `Step: ${escapeHtml(wf.current_step_label)}` : (isApproved ? 'All Steps Approved & Locked 🔒' : 'Draft / Resubmission')}
                 </span>
               </div>
+              ${c.student_ack_stats ? `
+                <div style="font-size:0.76rem; color:#334155;">
+                  <strong>Student Acknowledgment:</strong>
+                  <span style="font-weight:700; color:${c.student_ack_stats.meets_threshold ? '#15803d' : '#b45309'};">
+                    ${c.student_ack_stats.total_acknowledged}/${c.student_ack_stats.total_students} (${c.student_ack_stats.percentage}%)
+                  </span>
+                  <span class="badge" style="font-size:0.68rem; padding:2px 6px; background:${c.student_ack_stats.meets_threshold ? '#dcfce7; color:#15803d;' : '#fef3c7; color:#92400e;'}">
+                    ${c.student_ack_stats.meets_threshold ? '✓ 80% Threshold Met' : '⏳ Below 80% Threshold'}
+                  </span>
+                </div>
+              ` : ''}
               ${wf.assigned_committee_name ? `
                 <div style="font-size:0.76rem; color:#475569;">
                   <strong>Assigned Committee:</strong> <span style="color:#0f172a; font-weight:700;">${escapeHtml(wf.assigned_committee_name)}</span>
@@ -10172,9 +10260,19 @@
                     <button class="btn btn-sm btn-outline-primary" onclick="openCourseFromRequest('${c.id}', 'checklist')" style="font-weight:700;">
                       📝 ${(status === 'for_committee_review' || status === 'for_committee_chair') ? 'Fill Review Checklist (FM-USeP-MID-02)' : 'Review Checklist (FM-USeP-MID-02)'}
                     </button>
-                    <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
-                      ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : 'Sign & Endorse')))}
-                    </button>
+                    ${(status === 'for_dean_approval' && c.student_ack_stats && !c.student_ack_stats.meets_threshold) ? `
+                      <button class="btn btn-sm btn-secondary" disabled style="font-weight:700; cursor:not-allowed; opacity:0.65;" title="Cannot approve: Student acknowledgment is currently at ${c.student_ack_stats.percentage}% (minimum 80% required).">
+                        🔒 Dean Approval Blocked (Ack &lt; 80%)
+                      </button>
+                    ` : (status === 'for_student_acknowledgment' && c.student_ack_stats && !c.student_ack_stats.meets_threshold) ? `
+                      <button class="btn btn-sm btn-secondary" disabled style="font-weight:700; cursor:not-allowed; opacity:0.65;" title="Awaiting at least 80% student acknowledgment signatures before faculty can endorse to Dean.">
+                        ⏳ Awaiting 80% Student Signatures
+                      </button>
+                    ` : `
+                      <button class="btn btn-sm btn-success" onclick="quickSignRequest('${c.id}', 'approve')" style="font-weight:700;">
+                        ✍️ ${status === 'for_committee_review' ? 'Sign & Approve Checklist' : (status === 'for_committee_chair' ? 'Endorse Review to Program Head' : (status === 'for_dean_approval' ? 'Approve & Lock Syllabus' : (status === 'for_qa_countersign' ? 'Countersign Syllabus' : (status === 'for_student_acknowledgment' ? 'Endorse to Dean for Signature' : 'Sign & Endorse'))))}
+                      </button>
+                    `}`}
                     <button class="btn btn-sm btn-danger" onclick="quickSignRequest('${c.id}', 'return')" style="font-weight:700;">
                       ↩️ Return for Revision
                     </button>
@@ -10492,7 +10590,7 @@
               </div>
 
               <!-- Weight sum badge -->
-              <span style="font-size:0.75rem; font-weight:700; color:${weightColor}; background:#fff; padding:4px 8px; border-radius:4px; border:1px solid #e2e8f0;" title="Sum of criteria weights">
+              <span id="rubric_header_weight_${rIdx}" class="rubric-weight-badge" style="font-size:0.75rem; font-weight:700; color:${weightColor}; background:#fff; padding:4px 8px; border-radius:4px; border:1px solid #e2e8f0;" title="Sum of criteria weights">
                 Weight: ${weightSum.toFixed(0)}% ${isWeight100 ? '✓' : '⚠️'}
               </span>
 
@@ -10641,12 +10739,17 @@
             </div>
 
             <!-- Table Footer: Add Criterion Row Button & Criteria Info -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:6px; border-top:1px solid #f1f5f9;">
-              <button type="button" class="btn btn-outline-primary btn-xs" onclick="addCriterionRow(${rIdx})" style="font-weight:700;">
-                ➕ Add Criterion (Row)
-              </button>
-              <div style="font-size:0.72rem; color:#64748b;">
-                ${critCount} criteria rows &bull; ${numLevels} performance columns &bull; Weight: ${weightSum.toFixed(0)}%
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:6px; border-top:1px solid #f1f5f9; flex-wrap:wrap; gap:8px;">
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn btn-outline-primary btn-xs" onclick="addCriterionRow(${rIdx})" style="font-weight:700;">
+                  ➕ Add Criterion (Row)
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-xs" onclick="autoBalanceRubricWeights(${rIdx})" title="Evenly distribute 100% across all criteria rows">
+                  ⚖️ Auto-Balance to 100%
+                </button>
+              </div>
+              <div id="rubric_footer_info_${rIdx}" style="font-size:0.72rem; color:#64748b;">
+                <span id="rubric_footer_count_${rIdx}">${critCount}</span> criteria rows &bull; ${numLevels} performance columns &bull; Weight: <span id="rubric_footer_weight_${rIdx}" style="font-weight:700; color:${weightColor};">${weightSum.toFixed(0)}%</span>
               </div>
             </div>
           </div>
@@ -10797,9 +10900,11 @@
     if (!blueprint || !blueprint.rubrics || !blueprint.rubrics[rIdx]) return;
     const rub = blueprint.rubrics[rIdx];
     const numLevels = (rub.levels || []).length || 6;
+    const curWeightSum = (rub.criteria || []).reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+    const remaining = Math.max(0, 100 - curWeightSum);
     rub.criteria.push({
       name: "New Area to Assess",
-      weight_pct: 10.0,
+      weight_pct: remaining > 0 ? remaining : 10.0,
       clo_id: "CLO1",
       descriptors: Array(numLevels).fill(""),
     });
@@ -11557,12 +11662,46 @@
     queueAutoSave();
   }
 
+
+  function updateRubricWeightDisplays(rIdx) {
+    if (!blueprint || !blueprint.rubrics || !blueprint.rubrics[rIdx]) return;
+    const rub = blueprint.rubrics[rIdx];
+    const weightSum = (rub.criteria || []).reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+    const isWeight100 = Math.abs(weightSum - 100) < 0.1;
+    const weightColor = isWeight100 ? "#16a34a" : (weightSum > 100 ? "#dc2626" : "#d97706");
+    const hBadge = document.getElementById(`rubric_header_weight_${rIdx}`);
+    if (hBadge) {
+      hBadge.style.color = weightColor;
+      hBadge.innerHTML = `Weight: ${weightSum.toFixed(0)}% ${isWeight100 ? '✓' : '⚠️'}`;
+    }
+    const fWeight = document.getElementById(`rubric_footer_weight_${rIdx}`);
+    if (fWeight) {
+      fWeight.style.color = weightColor;
+      fWeight.textContent = `${weightSum.toFixed(0)}%`;
+    }
+  }
+
+  function autoBalanceRubricWeights(rIdx) {
+    if (!blueprint || !blueprint.rubrics || !blueprint.rubrics[rIdx]) return;
+    const rub = blueprint.rubrics[rIdx];
+    const criteria = rub.criteria || [];
+    if (!criteria.length) return;
+    const n = criteria.length;
+    const base = Math.floor(100 / n);
+    const remainder = 100 - (base * n);
+    criteria.forEach((c, i) => {
+      c.weight_pct = base + (i === 0 ? remainder : 0);
+    });
+    renderRubrics();
+    queueAutoSave();
+  }
   function updateCriterionField(rIdx, cIdx, field, val) {
     if (!blueprint || !blueprint.rubrics || !blueprint.rubrics[rIdx]) return;
     const crit = blueprint.rubrics[rIdx].criteria[cIdx];
     if (!crit) return;
     if (field === "weight_pct") {
       crit.weight_pct = parseFloat(val) || 0;
+      updateRubricWeightDisplays(rIdx);
     } else {
       crit[field] = val;
     }

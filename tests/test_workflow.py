@@ -145,6 +145,13 @@ class SyllabusWorkflowSequentialTestCase(unittest.TestCase):
         wf = res.get_json()
         self.assertEqual(wf["status"], "for_student_acknowledgment")
 
+        # Record student acknowledgment to reach the mandatory 80% threshold
+        self.client.post(f"/api/courses/{c_id}/student-acknowledgment", json={
+            "student_id": "2024-00101",
+            "student_name": "Juan Dela Cruz",
+            "signature_data": "data:image/png;base64,mock",
+        })
+
         # Forward past student acknowledgment stage to dean approval
         with self.client.session_transaction() as sess:
             sess["username"] = "faculty_tano"

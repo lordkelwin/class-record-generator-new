@@ -511,7 +511,7 @@ def get_blank_blueprint(
         sdg_table=parse_sdg_string_to_table(sdg_alignments),
         syllabus_assessment_activities=get_default_syllabus_assessment_activities(),
         learning_plan_table=[dict(DEFAULT_ORIENTATION_ROW)],
-        references_table=get_default_references_table(),
+        references_table=[],
         policies_table=get_default_policies_table(),
     )
 

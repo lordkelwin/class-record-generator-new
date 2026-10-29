@@ -404,16 +404,8 @@ def get_default_learning_plan_table() -> List[Dict[str, Any]]:
 
 
 def get_default_references_table() -> List[Dict[str, str]]:
-    return [
-        {"code": "Ref01", "reference": "Alexander, C.K. & Sadiku, M.N.O. (2020). Fundamentals of Electric Circuits (7th ed.). McGraw Hill"},
-        {"code": "Ref02", "reference": "Grob, M. (2021). Grob's Basic Electronics (13th ed.). McGraw Hill"},
-        {"code": "Ref03", "reference": "Hayt, W.H., Kemmerly, J.E., & Durbin, S.M. (2019). Engineering Circuit Analysis. Ninth edition. McGraw-Hill Education, New York, NY"},
-        {"code": "Ref04", "reference": "Tan, J.C. (2004). Electric Circuit Analysis. National Bookstore"},
-        {"code": "Ref05", "reference": "Nahvi, M. & Edminister, J.A. (2003). Schaum's Outline of Theory and Problems of Electric Circuits. Fourth edition. McGraw-Hill"},
-        {"code": "Ref06", "reference": "Gussow, M. (2007). Schaum's Outline of Basic Electricity. Second edition. McGraw-Hill"},
-        {"code": "Ref07", "reference": "Nahvi, M. & Edminister, J.A. (2018). Schaum's Outline of Theory and Problems of Electric Circuits. Seventh edition. McGraw-Hill"},
-        {"code": "Ref08", "reference": "Siskind, C. (1965). Electrical Circuits: Direct and Alternating Current. Second edition. McGraw-Hill"},
-    ]
+    """Clean slate: newly created subjects start with an empty references list."""
+    return []
 
 
 def get_default_policies_table() -> List[Dict[str, str]]:
