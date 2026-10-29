@@ -143,6 +143,19 @@ class SyllabusWorkflowSequentialTestCase(unittest.TestCase):
 
         res = self.client.get(f"/api/courses/{c_id}/workflow")
         wf = res.get_json()
+        self.assertEqual(wf["status"], "for_student_acknowledgment")
+
+        # Forward past student acknowledgment stage to dean approval
+        with self.client.session_transaction() as sess:
+            sess["username"] = "faculty_tano"
+        res = self.client.post(f"/api/courses/{c_id}/workflow/sign", json={
+            "decision": "approve",
+            "remarks": "Student acknowledgments processed.",
+        })
+        self.assertEqual(res.status_code, 200)
+
+        res = self.client.get(f"/api/courses/{c_id}/workflow")
+        wf = res.get_json()
         self.assertEqual(wf["status"], "for_dean_approval")
 
         # Dean approves

@@ -969,6 +969,158 @@
     grid-template-columns: 1fr !important;
   }
   {% endif %}
+
+    /* ==================== USeP OBE RIBBON SYSTEM STYLES ==================== */
+    .ribbon-system {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+    .ribbon-tabs-bar {
+      background: #f1f5f9;
+      border-bottom: 1.5px solid #cbd5e1;
+      padding: 6px 14px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .ribbon-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ribbon-tab {
+      background: transparent;
+      color: #475569;
+      border: none;
+      border-top: 3px solid transparent;
+      border-radius: 8px 8px 0 0;
+      padding: 10px 18px;
+      font-size: 0.90rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      user-select: none;
+      text-decoration: none;
+    }
+    .ribbon-tab:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .ribbon-tab.active {
+      background: #ffffff;
+      color: var(--maroon);
+      border-top: 3px solid var(--maroon);
+      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.03);
+    }
+    .ribbon-badge {
+      background: #dc2626;
+      color: #ffffff;
+      border-radius: 12px;
+      padding: 2px 7px;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+    .ribbon-band {
+      display: none;
+      padding: 10px 16px;
+      background: #ffffff;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .ribbon-band.active {
+      display: flex;
+    }
+    .ribbon-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .ribbon-group-title {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+    }
+    .ribbon-group-content {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ribbon-divider {
+      width: 1px;
+      height: 38px;
+      background: #e2e8f0;
+      margin: 0 4px;
+    }
+    .ribbon-steps {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .ribbon-step-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 7px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      user-select: none;
+    }
+    .ribbon-step-btn:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+    .ribbon-step-btn.active {
+      background: #eff6ff;
+      border-color: #2563eb;
+      color: #1d4ed8;
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.16);
+    }
+    .ribbon-step-btn .step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      color: #1e293b;
+      font-size: 0.72rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ribbon-step-btn.active .step-num {
+      background: #2563eb;
+      color: #ffffff;
+    }
+    @media (max-width: 900px) {
+      .ribbon-band {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .ribbon-divider {
+        display: none;
+      }
+    }
+
 </style>
 </head>
 <body>
@@ -988,10 +1140,6 @@
       <button class="btn btn-outline" id="btnToggleSidebarHeader" onclick="toggleSidebar()" title="Toggle Subjects Sidebar" style="font-weight:700;">
         &#9776; My Subjects (<span id="headerSubCount">0</span>)
       </button>
-      <button class="btn btn-primary" style="background:#eab308; color:#0f172a; border-color:#ca8a04;" onclick="exportSyllabusPdf()">Export Created Syllabus (.pdf)</button>
-      <button class="btn btn-primary" style="background:#0284c7; color:#ffffff; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
-      <button class="btn btn-success" style="background:#15803d; color:#ffffff; border-color:#166534;" onclick="exportCloReportExcel()">Export CLO Report (.xlsx)</button>
-      <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Consolidated Class Record (.xlsx)</button>
     {% endif %}
     {% if current_user %}
     <div class="user-box">
@@ -1041,96 +1189,188 @@
   <div class="main-workspace">
     <div class="container">
 
-      {% if not current_user or current_user.can_access_faculty_tools %}
-      <!-- Active Subject Status Bar -->
-      <div class="active-subject-bar" id="activeSubjectBar">
-        <div class="asb-left">
-          <button class="btn btn-light btn-sm" onclick="toggleSidebar()" title="Toggle Subjects Sidebar">
-            &#9776; Subjects (<span id="asbCountBadge">0</span>)
+  <!-- ==================== USeP OBE RIBBON SYSTEM ==================== -->
+  <nav class="ribbon-system" id="ribbonSystem">
+    <!-- Ribbon Tabs (Level 1) -->
+    <div class="ribbon-tabs-bar">
+      <div class="ribbon-tabs">
+        {% if current_user and not current_user.can_access_faculty_tools %}
+          <button type="button" class="ribbon-tab active" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
+            📥 Requests for Approval &amp; Institutional Oversight <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
           </button>
-          <div class="asb-info">
-            <span class="asb-code" id="asbCode">EE 211</span>
-            <span class="asb-sec" id="asbSec">EE 2A</span>
-            <span class="asb-title" id="asbTitle">Electrical Circuits 1</span>
-            <span class="asb-sem" id="asbSemAy">1st Semester, A.Y. 2026-2027</span>
+        {% else %}
+          <button type="button" class="ribbon-tab active" id="ribbonTabDashboard" onclick="switchRibbon('ribbon-dashboard', 'tab-dashboard')">
+            📊 Dashboard
+          </button>
+          <button type="button" class="ribbon-tab" id="ribbonTabSyllabus" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">
+            📝 Syllabus Creator &amp; Class Record
+          </button>
+          <button type="button" class="ribbon-tab" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
+            📥 Requests for Approval <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Ribbon Command Bands (Level 2) -->
+    <!-- 1. DASHBOARD RIBBON BAND -->
+    <div class="ribbon-band active" id="ribbonBandDashboard">
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Evaluation Term</span>
+        <div class="ribbon-group-content">
+          <div class="seg" id="dashTermSegRibbon">
+            <button type="button" class="dashTermBtn active" data-term="All" onclick="setDashTerm('All', this)">All</button>
+            <button type="button" class="dashTermBtn" data-term="Midterm" onclick="setDashTerm('Midterm', this)">Midterm</button>
+            <button type="button" class="dashTermBtn" data-term="Finals" onclick="setDashTerm('Finals', this)">Finals</button>
           </div>
         </div>
-        <div class="asb-right">
-          <span class="asb-status" id="asbSaveStatus"><span class="asb-dot"></span> All changes saved</span>
-          <button class="btn btn-primary btn-sm" onclick="saveActiveCourseToServer(true)">💾 Save Subject</button>
-          <button class="btn btn-light btn-sm" onclick="openDuplicateModal(currentCourseId)">📋 Copy for another Section</button>
-          <button class="btn btn-success btn-sm" onclick="openNewSubjectModal()">+ New Subject</button>
-        </div>
       </div>
-
-<!-- No Subject / Welcome Hero Banner (Visible when user has 0 subjects) -->
-      <div id="noSubjectHero" style="display:none; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 2px dashed #60a5fa; border-radius: 12px; padding: 36px 24px; text-align: center; margin-bottom: 22px;">
-        <div style="font-size: 2.6rem; margin-bottom: 10px;">📚</div>
-        <h2 style="font-size: 1.35rem; color: #1e3a8a; margin: 0 0 8px 0; font-weight: 800;">No Subjects Found in Your Account</h2>
-        <p style="color: #475569; max-width: 580px; margin: 0 auto 18px auto; font-size: 0.92rem; line-height: 1.55;">
-          You currently have no course syllabi created. You can create a brand new syllabus from scratch, select an approved curriculum course from the catalog, or import an existing syllabus PDF.
-        </p>
-        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-          <button class="btn btn-success" style="font-size: 0.95rem; padding: 10px 22px; font-weight: 700; box-shadow: 0 2px 8px rgba(22, 101, 52, 0.25);" onclick="openNewSubjectModal()">
-            ➕ Create / Add New Subject
-          </button>
-          <button class="btn btn-primary" style="font-size: 0.92rem; padding: 10px 18px;" onclick="document.getElementById('syllabusPdfInput').click()">
-            📄 Import Syllabus (.pdf)
-          </button>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">OBE Workflow Shortcuts</span>
+        <div class="ribbon-group-content">
+          <button type="button" class="btn btn-light btn-sm" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">📝 Course &amp; CLO Setup &rarr;</button>
+          <button type="button" class="btn btn-light btn-sm" onclick="switchRibbon('ribbon-syllabus', 'tab-gradebook')">📗 Edit Class Record Scores &rarr;</button>
+          <button type="button" class="btn btn-light btn-sm" onclick="switchRibbon('ribbon-syllabus', 'tab-cloreport')">📊 View CLO Assessment Report &rarr;</button>
         </div>
-      </div>
-
-  <!-- Upload & Hybrid Parser Controls -->
-  <div class="upload-banner">
-    <div>
-      <strong style="display:block; margin-bottom:6px; font-size:0.93rem;">Import Course Syllabus from PDF File (FM-USeP-MID-01 or Created OBE Syllabus .pdf)</strong>
-      <div class="upload-controls">
-        <input type="file" id="syllabusPdfInput" accept=".pdf" />
-        <button class="btn btn-primary" onclick="uploadAndAnalyzePdf()">Import &amp; Analyze Syllabus (.pdf)</button>
-        <button class="btn btn-light" onclick="exportSyllabusPdf()">Save / Export Current Syllabus as PDF (.pdf)</button>
       </div>
     </div>
-    <div class="ai-box">
-      <label style="display:flex; align-items:center; gap:6px; font-weight:600; cursor:pointer;">
-        <input type="checkbox" id="useAiToggle" />
-        Hybrid AI Fallback (Gemini)
-      </label>
-      <input type="password" id="geminiApiKey" placeholder="Optional Gemini API Key..." />
-      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-        <input type="checkbox" id="includeSampleStudents" checked />
-        Include Sample Roster
-      </label>
+
+    <!-- 2. SYLLABUS CREATOR RIBBON BAND (With Corresponding Steps & Exports) -->
+    <div class="ribbon-band" id="ribbonBandSyllabus">
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">OBE Course Workflow Steps</span>
+        <div class="ribbon-group-content ribbon-steps">
+          <button type="button" class="ribbon-step-btn active" id="stepBtnTabSyllabus" onclick="switchSyllabusStep('tab-syllabus')">
+            <span class="step-num">1</span>
+            <span class="step-lbl">Syllabus &amp; CLOs</span>
+          </button>
+          <button type="button" class="ribbon-step-btn" id="stepBtnTabAssessments" onclick="switchSyllabusStep('tab-assessments')">
+            <span class="step-num">2</span>
+            <span class="step-lbl">Assessments (FA/SA)</span>
+          </button>
+          <button type="button" class="ribbon-step-btn" id="stepBtnTabGradebook" onclick="switchSyllabusStep('tab-gradebook')">
+            <span class="step-num">3</span>
+            <span class="step-lbl">Class Record</span>
+          </button>
+          <button type="button" class="ribbon-step-btn" id="stepBtnTabCloreport" onclick="switchSyllabusStep('tab-cloreport')">
+            <span class="step-num">4</span>
+            <span class="step-lbl">CLO Report (MID-10)</span>
+          </button>
+          <button type="button" class="ribbon-step-btn" id="stepBtnTabCqi" onclick="switchSyllabusStep('tab-cqi')">
+            <span class="step-num">5</span>
+            <span class="step-lbl">CQI Plan</span>
+          </button>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title" id="ribbonContextTitle">Step 1 Actions</span>
+        <div class="ribbon-group-content" id="ribbonStepActions">
+          <button type="button" class="btn btn-sm btn-primary" style="background:#eab308; color:#0f172a; border-color:#ca8a04; font-weight:700;" onclick="exportSyllabusPdf()" title="Export FM-USeP-MID-01 Course Syllabus (.pdf)">
+            📄 Export Created Syllabus (.pdf)
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
+            💾 Save Syllabus
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="scrollToSyllabusSection('part1CourseInfoCard')">
+            ⇳ Top of Form
+          </button>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group ribbon-group-exports">
+        <span class="ribbon-group-title">Official Output Exports</span>
+        <div class="ribbon-group-content">
+          <button type="button" class="btn btn-sm btn-primary" id="ribbonBtnExportSyllabus" style="background:#eab308; color:#0f172a; border-color:#ca8a04; font-weight:700;" onclick="exportSyllabusPdf()" title="Export FM-USeP-MID-01 Course Syllabus PDF">
+            📄 Syllabus (.pdf)
+          </button>
+          <button type="button" class="btn btn-sm btn-success" id="ribbonBtnExportClassRecord" style="background:#15803d; color:#ffffff; border-color:#166534; font-weight:700;" onclick="exportExcelWorkbook()" title="Export Official USeP Consolidated Class Record (.xlsx)">
+            📗 Class Record (.xlsx)
+          </button>
+          <button type="button" class="btn btn-sm btn-primary" id="ribbonBtnExportCloPdf" style="background:#0284c7; color:#ffffff; border-color:#0369a1; font-weight:700;" onclick="exportCloReportPdf()" title="Export FM-USeP-MID-10 CLO Assessment Report (.pdf)">
+            📄 CLO Report (.pdf)
+          </button>
+          <button type="button" class="btn btn-sm btn-success" id="ribbonBtnExportCloExcel" style="background:#059669; color:#ffffff; border-color:#047857; font-weight:700;" onclick="exportCloReportExcel()" title="Export FM-USeP-MID-10 CLO Evaluation Result (.xlsx)">
+            📊 CLO Result (.xlsx)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. REQUEST FOR APPROVAL RIBBON BAND -->
+    <div class="ribbon-band" id="ribbonBandApprovals">
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Approval Portal Views</span>
+        <div class="ribbon-group-content">
+          <button type="button" id="ribbonBtnPortalSyllabi" class="btn btn-light btn-sm active" onclick="switchPortalView('syllabi')" style="font-weight:700;">
+            📜 Syllabi Review (<span id="countPortalSyllabiRibbon">0</span>)
+          </button>
+          <button type="button" id="ribbonBtnPortalClassRecords" class="btn btn-light btn-sm" onclick="switchPortalView('class_records')" style="font-weight:700;">
+            📗 Class Records Review (<span id="countPortalCrRibbon">0</span>)
+          </button>
+          <button type="button" id="ribbonBtnPortalAnalytics" class="btn btn-light btn-sm" onclick="switchPortalView('analytics')" style="font-weight:700;">
+            📊 Oversight &amp; Audit
+          </button>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Oversight Actions</span>
+        <div class="ribbon-group-content">
+          <a href="/api/workflow/oversight-report" target="_blank" class="btn btn-light btn-sm" style="font-weight:700; color:#1e3a8a; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+            📄 Auto-Generate Oversight Report (.pdf)
+          </a>
+          <button type="button" class="btn btn-light btn-sm" onclick="printOversightSummary()" style="font-weight:700; color:#1e3a8a;">
+            🖨️ Printable Summary
+          </button>
+          <button type="button" class="btn btn-light btn-sm" onclick="loadApprovalRequests(true)" style="font-weight:700; color:#1e3a8a;">
+            🔄 Refresh Requests
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  {% if not current_user or current_user.can_access_faculty_tools %}
+  <!-- Active Subject Status Bar -->
+  <div class="active-subject-bar" id="activeSubjectBar">
+    <div class="asb-left">
+      <button class="btn btn-light btn-sm" onclick="toggleSidebar()" title="Toggle Subjects Sidebar">
+        &#9776; Subjects (<span id="asbCountBadge">0</span>)
+      </button>
+      <div class="asb-info">
+        <span class="asb-code" id="asbCode">EE 211</span>
+        <span class="asb-sec" id="asbSec">EE 2A</span>
+        <span class="asb-title" id="asbTitle">Electrical Circuits 1</span>
+        <span class="asb-sem" id="asbSemAy">1st Semester, A.Y. 2026-2027</span>
+      </div>
+    </div>
+    <div class="asb-right">
+      <span class="asb-status" id="asbSaveStatus"><span class="asb-dot"></span> All changes saved</span>
+      <button class="btn btn-primary btn-sm" onclick="saveActiveCourseToServer(true)">💾 Save Subject</button>
+      <button class="btn btn-light btn-sm" onclick="openDuplicateModal(currentCourseId)">📋 Copy for another Section</button>
+      <button class="btn btn-success btn-sm" onclick="openNewSubjectModal()">+ New Subject</button>
     </div>
   </div>
 
-  <!-- Parser Diagnostic Banner -->
-  <div class="notes-bar">
-    <div>
-      <strong>Syllabus Analyzer &amp; Creator Status:</strong>
-      <ul id="parserNotesList"></ul>
+  <!-- No Subject / Welcome Hero Banner (Visible when user has 0 subjects) -->
+  <div id="noSubjectHero" style="display:none; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 2px dashed #60a5fa; border-radius: 12px; padding: 36px 24px; text-align: center; margin-bottom: 22px;">
+    <div style="font-size: 2.6rem; margin-bottom: 10px;">📚</div>
+    <h2 style="font-size: 1.35rem; color: #1e3a8a; margin: 0 0 8px 0; font-weight: 800;">No Subjects Found in Your Account</h2>
+    <p style="color: #475569; max-width: 580px; margin: 0 auto 18px auto; font-size: 0.92rem; line-height: 1.55;">
+      You currently have no course syllabi created. You can create a brand new syllabus from scratch, select an approved curriculum course from the catalog, or import an existing syllabus PDF.
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button class="btn btn-success" style="font-size: 0.95rem; padding: 10px 22px; font-weight: 700; box-shadow: 0 2px 8px rgba(22, 101, 52, 0.25);" onclick="openNewSubjectModal()">
+        ➕ Create / Add New Subject
+      </button>
+      <button class="btn btn-primary" style="font-size: 0.92rem; padding: 10px 18px;" onclick="document.getElementById('syllabusPdfInput').click()">
+        📄 Import Syllabus (.pdf)
+      </button>
     </div>
-    <div id="weightValidationSummary"></div>
   </div>
   {% endif %}
-
-  <!-- Navigation Tabs -->
-  <div class="tabs">
-    {% if current_user and not current_user.can_access_faculty_tools %}
-      <button class="tab-btn active" onclick="switchTab('tab-approvals', this)" id="tabBtnApprovals" style="font-weight:700;">
-        📥 Requests for Approval &amp; Institutional Oversight <span id="approvalsBadge" class="badge" style="display:none; background:#dc2626; color:#fff; border-radius:10px; padding:2px 7px; font-size:0.72rem; margin-left:4px; font-weight:800;">0</span>
-      </button>
-    {% else %}
-      <button class="tab-btn active" onclick="switchTab('tab-dashboard', this)">&#128202; Dashboard</button>
-      <button class="tab-btn" onclick="switchTab('tab-syllabus', this)">1. Syllabus Creator, Course &amp; CLO–PO–PI Setup</button>
-      <button class="tab-btn" onclick="switchTab('tab-assessments', this)">2. Setup: Formative (FA) &amp; Summative (SA)</button>
-      <button class="tab-btn" onclick="switchTab('tab-gradebook', this)">3. Consolidated Class Record &amp; CLO Grades</button>
-      <button class="tab-btn" onclick="switchTab('tab-cloreport', this)">4. CLO Assessment Report &amp; CO Tool</button>
-      <button class="tab-btn" onclick="switchTab('tab-cqi', this)">5. CQI Plan &amp; Syllabus Inspector</button>
-      <button class="tab-btn" onclick="switchTab('tab-approvals', this)" id="tabBtnApprovals" style="font-weight:700;">
-        📥 Requests for Approval <span id="approvalsBadge" class="badge" style="display:none; background:#dc2626; color:#fff; border-radius:10px; padding:2px 7px; font-size:0.72rem; margin-left:4px; font-weight:800;">0</span>
-      </button>
-    {% endif %}
-  </div>
 
   <!-- DASHBOARD: Student Scores, CLO Attainment vs Standard, PGO -> PI -> CLO Alignment -->
   <div id="tab-dashboard" class="tab-panel{% if not current_user or current_user.can_access_faculty_tools %} active{% endif %}">
@@ -1205,6 +1445,37 @@
 
   <!-- TAB 1: COURSE METADATA, SYLLABUS CREATOR & CLO-PO-PI ALIGNMENT -->
   <div id="tab-syllabus" class="tab-panel">
+    <!-- Upload & Hybrid Parser Controls (Step 1) -->
+    <div class="upload-banner">
+      <div>
+        <strong style="display:block; margin-bottom:6px; font-size:0.93rem;">Import Course Syllabus from PDF File (FM-USeP-MID-01 or Created OBE Syllabus .pdf)</strong>
+        <div class="upload-controls">
+          <input type="file" id="syllabusPdfInput" accept=".pdf" />
+          <button class="btn btn-primary" onclick="uploadAndAnalyzePdf()">Import &amp; Analyze Syllabus (.pdf)</button>
+          <button class="btn btn-light" onclick="exportSyllabusPdf()">Save / Export Current Syllabus as PDF (.pdf)</button>
+        </div>
+      </div>
+      <div class="ai-box">
+        <label style="display:flex; align-items:center; gap:6px; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="useAiToggle" />
+          Hybrid AI Fallback (Gemini)
+        </label>
+        <input type="password" id="geminiApiKey" placeholder="Optional Gemini API Key..." />
+        <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+          <input type="checkbox" id="includeSampleStudents" checked />
+          Include Sample Roster
+        </label>
+      </div>
+    </div>
+
+    <!-- Parser Diagnostic Banner -->
+    <div class="notes-bar">
+      <div>
+        <strong>Syllabus Analyzer &amp; Creator Status:</strong>
+        <ul id="parserNotesList"></ul>
+      </div>
+      <div id="weightValidationSummary"></div>
+    </div>
     <!-- SYLLABUS WORKFLOW & APPROVAL CHAIN STATUS BANNER -->
     <div class="card" id="syllabusWorkflowCard" style="background:#f8fafc; border:1.5px solid #cbd5e1; margin-bottom:18px;">
       <div class="card-header" style="flex-wrap:wrap; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
@@ -2049,7 +2320,7 @@
           <button id="btnCrAddStudent" class="btn btn-primary btn-sm" onclick="addStudentRow()">+ Add Student</button>
           <button class="btn btn-primary btn-sm" style="background:#0284c7; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf)</button>
           <button class="btn btn-success btn-sm" style="background:#15803d; border-color:#166534;" onclick="exportCloReportExcel()">Export CLO Report (.xlsx)</button>
-          <button class="btn btn-success btn-sm" onclick="exportExcelWorkbook()">Download Full USeP Excel Workbook (.xlsx)</button>
+          <button class="btn btn-success btn-sm" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportExcelWorkbook()" title="Download Full Official USeP Class Record Excel">📗 Export Consolidated Class Record (.xlsx)</button>
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -3125,6 +3396,7 @@
       return;
     }
     await loadCoursesList();
+    updateSyllabusStepUI('tab-syllabus');
     loadApprovalRequests();
   }
 
@@ -3654,17 +3926,142 @@
     }
   }
 
-  function switchTab(tabId, btnEl) {
-    if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && tabId !== "tab-approvals") {
-      tabId = "tab-approvals";
+  let currentRibbon = 'ribbon-dashboard';
+  let currentSyllabusStep = 'tab-syllabus';
+
+  function switchRibbon(ribbonId, targetTabId) {
+    if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && ribbonId !== 'ribbon-approvals') {
+      ribbonId = 'ribbon-approvals';
+      targetTabId = 'tab-approvals';
     }
+    currentRibbon = ribbonId;
+
+    // 1. Update primary ribbon tabs
+    document.querySelectorAll('.ribbon-tab').forEach(b => b.classList.remove('active'));
+    const tabMap = {
+      'ribbon-dashboard': 'ribbonTabDashboard',
+      'ribbon-syllabus': 'ribbonTabSyllabus',
+      'ribbon-approvals': 'tabBtnApprovals'
+    };
+    const activeTabBtn = document.getElementById(tabMap[ribbonId]);
+    if (activeTabBtn) activeTabBtn.classList.add('active');
+
+    // 2. Update ribbon command bands
+    document.querySelectorAll('.ribbon-band').forEach(band => band.classList.remove('active'));
+    const bandMap = {
+      'ribbon-dashboard': 'ribbonBandDashboard',
+      'ribbon-syllabus': 'ribbonBandSyllabus',
+      'ribbon-approvals': 'ribbonBandApprovals'
+    };
+    const activeBand = document.getElementById(bandMap[ribbonId]);
+    if (activeBand) activeBand.classList.add('active');
+
+    // 3. Determine tab to show
+    let tabToShow = targetTabId;
+    if (!tabToShow) {
+      if (ribbonId === 'ribbon-dashboard') tabToShow = 'tab-dashboard';
+      else if (ribbonId === 'ribbon-syllabus') tabToShow = currentSyllabusStep || 'tab-syllabus';
+      else if (ribbonId === 'ribbon-approvals') tabToShow = 'tab-approvals';
+    }
+
+    if (ribbonId === 'ribbon-syllabus') {
+      currentSyllabusStep = tabToShow;
+      updateSyllabusStepUI(tabToShow);
+    }
+
+    switchTabPanel(tabToShow);
+  }
+
+  function switchSyllabusStep(stepTabId) {
+    currentSyllabusStep = stepTabId;
+    switchRibbon('ribbon-syllabus', stepTabId);
+  }
+
+  function updateSyllabusStepUI(stepTabId) {
+    // Highlight active step button in ribbon
+    document.querySelectorAll('.ribbon-step-btn').forEach(btn => btn.classList.remove('active'));
+    const stepBtnMap = {
+      'tab-syllabus': 'stepBtnTabSyllabus',
+      'tab-assessments': 'stepBtnTabAssessments',
+      'tab-gradebook': 'stepBtnTabGradebook',
+      'tab-cloreport': 'stepBtnTabCloreport',
+      'tab-cqi': 'stepBtnTabCqi'
+    };
+    const activeStepBtn = document.getElementById(stepBtnMap[stepTabId]);
+    if (activeStepBtn) activeStepBtn.classList.add('active');
+
+    // Update dynamic step actions in ribbon
+    const ctxTitle = document.getElementById('ribbonContextTitle');
+    const ctxActions = document.getElementById('ribbonStepActions');
+    if (!ctxTitle || !ctxActions) return;
+
+    if (stepTabId === 'tab-syllabus') {
+      ctxTitle.textContent = 'Step 1 Actions';
+      ctxActions.innerHTML = `
+        <button type="button" class="btn btn-sm btn-primary" style="background:#eab308; color:#0f172a; border-color:#ca8a04; font-weight:700;" onclick="exportSyllabusPdf()" title="Export FM-USeP-MID-01 Course Syllabus (.pdf)">
+          📄 Export Created Syllabus (.pdf)
+        </button>
+        <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
+          💾 Save Syllabus
+        </button>
+        <button type="button" class="btn btn-sm btn-light" onclick="scrollToSyllabusSection('part1CourseInfoCard')">
+          ⇳ Top of Form
+        </button>
+      `;
+    } else if (stepTabId === 'tab-assessments') {
+      ctxTitle.textContent = 'Step 2 Actions';
+      ctxActions.innerHTML = `
+        <button type="button" class="btn btn-sm btn-success" onclick="syncClassRecordSetupFromSyllabus(false)" title="Sync Assessments & Aligned CLOs from Syllabus">
+          🔄 Sync from Syllabus
+        </button>
+        <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
+          💾 Save Setup
+        </button>
+      `;
+    } else if (stepTabId === 'tab-gradebook') {
+      ctxTitle.textContent = 'Step 3 Actions';
+      ctxActions.innerHTML = `
+        <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportExcelWorkbook()" title="Download Full Official USeP Class Record Excel">
+          📗 Export Consolidated Class Record (.xlsx)
+        </button>
+        <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('rosterFileInput').click()">
+          📥 Import Roster
+        </button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="addStudentRow()">
+          + Add Student
+        </button>
+      `;
+    } else if (stepTabId === 'tab-cloreport') {
+      ctxTitle.textContent = 'Step 4 Actions';
+      ctxActions.innerHTML = `
+        <button type="button" class="btn btn-sm btn-primary" style="background:#0284c7; color:#fff; border-color:#0369a1; font-weight:700;" onclick="exportCloReportPdf()" title="Export Official FM-USeP-MID-10 PDF">
+          📄 Export CLO Report (.pdf)
+        </button>
+        <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportCloReportExcel()" title="Export Official FM-USeP-MID-10 Excel">
+          📊 Export CLO Report (.xlsx)
+        </button>
+        <button type="button" class="btn btn-sm btn-light" onclick="syncCourseAssessmentPlanFromSyllabus(true)">
+          🔄 Re-Sync CAP
+        </button>
+      `;
+    } else if (stepTabId === 'tab-cqi') {
+      ctxTitle.textContent = 'Step 5 Actions';
+      ctxActions.innerHTML = `
+        <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
+          💾 Save CQI Plan
+        </button>
+        <button type="button" class="btn btn-sm btn-light" onclick="window.print()">
+          🖨️ Print CQI Summary
+        </button>
+      `;
+    }
+  }
+
+  function switchTabPanel(tabId) {
     document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
-    document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
     const targetPanel = document.getElementById(tabId);
     if (targetPanel) targetPanel.classList.add("active");
-    const btn = btnEl || Array.from(document.querySelectorAll(".tab-btn"))
-      .find(b => (b.getAttribute("onclick") || "").includes(`'${tabId}'`));
-    if (btn) btn.classList.add("active");
+
     if (tabId === "tab-approvals") {
       loadApprovalRequests(true);
     } else {
@@ -3672,6 +4069,18 @@
     }
     checkClassRecordLock();
     checkSyllabusLock();
+  }
+
+  function switchTab(tabId, btnEl) {
+    if (tabId === "tab-dashboard") {
+      switchRibbon("ribbon-dashboard", "tab-dashboard");
+    } else if (tabId === "tab-approvals") {
+      switchRibbon("ribbon-approvals", "tab-approvals");
+    } else if (["tab-syllabus", "tab-assessments", "tab-gradebook", "tab-cloreport", "tab-cqi"].includes(tabId)) {
+      switchRibbon("ribbon-syllabus", tabId);
+    } else {
+      switchTabPanel(tabId);
+    }
   }
 
   async function analyzeSamplePdf() {
@@ -5215,9 +5624,8 @@
   }
 
   function scrollToSyllabusSection(elementId) {
-    const sylTabBtn = document.querySelectorAll(".tabs .tab-btn")[1];
-    if (sylTabBtn && !document.getElementById("tab-syllabus").classList.contains("active")) {
-      switchTab("tab-syllabus", sylTabBtn);
+    if (!document.getElementById("tab-syllabus").classList.contains("active")) {
+      switchTab("tab-syllabus");
     }
     setTimeout(() => {
       const el = document.getElementById(elementId);
@@ -9158,8 +9566,12 @@
       // Update Portal Navigation Counters
       const elPortSyl = document.getElementById("countPortalSyllabi");
       if (elPortSyl) elPortSyl.textContent = approvalsState.institutionalRequests.length;
+      const elPortSylRibbon = document.getElementById("countPortalSyllabiRibbon");
+      if (elPortSylRibbon) elPortSylRibbon.textContent = approvalsState.institutionalRequests.length;
       const elPortCr = document.getElementById("countPortalClassRecords");
       if (elPortCr) elPortCr.textContent = approvalsState.institutionalClassRecords.length;
+      const elPortCrRibbon = document.getElementById("countPortalCrRibbon");
+      if (elPortCrRibbon) elPortCrRibbon.textContent = approvalsState.institutionalClassRecords.length;
 
       // Update Class Record Tab Counters
       const elCrAct = document.getElementById("countCrActionRequired");
@@ -12141,6 +12553,14 @@
       btnAn.style.color = viewName === "analytics" ? "#1e3a8a" : "#475569";
       btnAn.style.boxShadow = viewName === "analytics" ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
     }
+
+    // Toggle ribbon buttons
+    const ribSyl = document.getElementById("ribbonBtnPortalSyllabi");
+    const ribCr = document.getElementById("ribbonBtnPortalClassRecords");
+    const ribAn = document.getElementById("ribbonBtnPortalAnalytics");
+    if (ribSyl) ribSyl.classList.toggle("active", viewName === "syllabi");
+    if (ribCr) ribCr.classList.toggle("active", viewName === "class_records");
+    if (ribAn) ribAn.classList.toggle("active", viewName === "analytics");
 
     // Toggle container visibility
     const vSyl = document.getElementById("portalViewSyllabi");
