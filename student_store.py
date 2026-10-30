@@ -45,18 +45,97 @@ def _save_students(data: Dict[str, Dict[str, Any]]) -> None:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+import unicodedata
+
+def _clean(s: str) -> str:
+    s = (s or "").strip()
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn").lower().strip()
+
+
 def _normalize_id(sid: str) -> str:
     return str(sid or "").strip()
+
+
+def sync_all_course_students_to_store() -> int:
+    """
+    Scans all courses in data/courses/ and registers every student into data/students.json,
+    linking enrolled_courses so that any enrolled student can sign in seamlessly.
+    """
+    if not os.path.exists(COURSES_BASE_DIR):
+        return 0
+    synced = 0
+    with _lock:
+        students = _load_students()
+        for root, _, files in os.walk(COURSES_BASE_DIR):
+            for fn in files:
+                if not fn.endswith(".json"):
+                    continue
+                fp = os.path.join(root, fn)
+                try:
+                    with open(fp, "r", encoding="utf-8") as f:
+                        doc = json.load(f)
+                    cid = doc.get("id") or doc.get("course_id") or fn[:-5]
+                    bp = doc.get("blueprint") or {}
+                    meta = bp.get("metadata") or {}
+                    sec = doc.get("section") or meta.get("section") or ""
+                    prog = meta.get("program_name") or "Engineering"
+                    roster = bp.get("students") or []
+                    for st in roster:
+                        sid = str(st.get("student_id") or "").strip()
+                        if not sid:
+                            continue
+                        last_n = (st.get("last_name") or "").strip()
+                        first_n = (st.get("first_name") or "").strip()
+                        name = (st.get("name") or "").strip()
+                        if not last_n and name:
+                            parts = [p.strip() for p in name.split(",", 1)]
+                            last_n = parts[0] if parts else ""
+                            first_n = parts[1] if len(parts) > 1 else ""
+                        full_n = f"{last_n}, {first_n}".strip(", ") if (last_n or first_n) else (name or sid)
+                        py = st.get("program_year") or sec or prog
+
+                        rec = students.get(sid, {})
+                        rec["student_id"] = sid
+                        if full_n and not rec.get("full_name"):
+                            rec["full_name"] = full_n
+                        if last_n and not rec.get("last_name"):
+                            rec["last_name"] = last_n
+                        if first_n and not rec.get("first_name"):
+                            rec["first_name"] = first_n
+                        if py and not rec.get("program_year"):
+                            rec["program_year"] = py
+                        if not rec.get("email"):
+                            rec["email"] = f"{sid.lower()}@usep.edu.ph"
+                        if "password_hash" not in rec:
+                            rec["password_hash"] = ""
+                        if "signature_data" not in rec:
+                            rec["signature_data"] = ""
+                        if "created_at" not in rec:
+                            rec["created_at"] = datetime.now().isoformat(timespec="seconds")
+
+                        enrolled = rec.get("enrolled_courses") or []
+                        if cid not in enrolled:
+                            enrolled.append(cid)
+                        rec["enrolled_courses"] = enrolled
+
+                        students[sid] = rec
+                        synced += 1
+                except Exception:
+                    continue
+        _save_students(students)
+    return synced
 
 
 def find_student_in_course_rosters(student_id: str) -> Optional[Dict[str, Any]]:
     """
     Searches across all courses in COURSES_BASE_DIR to find if this student_id
-    is present in any course roster. Returns student info if found.
+    or name is present in any course roster. Returns student info if found.
     """
-    sid_norm = _normalize_id(student_id).lower()
-    if not sid_norm or not os.path.exists(COURSES_BASE_DIR):
+    input_str = (student_id or "").strip()
+    if not input_str or not os.path.exists(COURSES_BASE_DIR):
         return None
+    input_norm = _clean(input_str)
+    input_digits = re.sub(r"\D", "", input_str)
 
     for root, _, files in os.walk(COURSES_BASE_DIR):
         for fn in files:
@@ -69,25 +148,37 @@ def find_student_in_course_rosters(student_id: str) -> Optional[Dict[str, Any]]:
                 bp = doc.get("blueprint") or {}
                 students = bp.get("students") or []
                 for st in students:
-                    curr_sid = str(st.get("student_id") or "").strip().lower()
-                    if curr_sid == sid_norm:
-                        last_n = st.get("last_name") or ""
-                        first_n = st.get("first_name") or ""
-                        name = st.get("name") or ""
-                        if not last_n and name:
-                            parts = [p.strip() for p in name.split(",", 1)]
-                            last_n = parts[0] if parts else ""
-                            first_n = parts[1] if len(parts) > 1 else ""
-                        full_name = f"{first_n} {last_n}".strip() if (first_n and last_n) else (name or sid_norm)
+                    curr_sid = str(st.get("student_id") or "").strip()
+                    curr_sid_norm = _clean(curr_sid)
+                    curr_digits = re.sub(r"\D", "", curr_sid)
+                    last_n = (st.get("last_name") or "").strip()
+                    first_n = (st.get("first_name") or "").strip()
+                    name = (st.get("name") or "").strip()
+                    if not last_n and name:
+                        parts = [p.strip() for p in name.split(",", 1)]
+                        last_n = parts[0] if parts else ""
+                        first_n = parts[1] if len(parts) > 1 else ""
+                    full_name = f"{last_n}, {first_n}".strip(", ") if (last_n or first_n) else (name or curr_sid)
 
-                        prog_year = st.get("program_year") or bp.get("metadata", {}).get("program_name") or "Engineering"
+                    matched = False
+                    if curr_sid_norm and input_norm and curr_sid_norm == input_norm:
+                        matched = True
+                    elif curr_digits and input_digits and len(curr_digits) >= 4 and curr_digits == input_digits:
+                        matched = True
+                    elif last_n and _clean(last_n) == input_norm:
+                        matched = True
+                    elif full_name and _clean(full_name) == input_norm:
+                        matched = True
+
+                    if matched:
+                        prog_year = st.get("program_year") or bp.get("metadata", {}).get("section") or "Engineering"
                         return {
-                            "student_id": st.get("student_id") or student_id,
+                            "student_id": curr_sid or input_str,
                             "full_name": full_name,
                             "last_name": last_n,
                             "first_name": first_n,
                             "program_year": prog_year,
-                            "email": st.get("email") or f"{sid_norm}@usep.edu.ph",
+                            "email": st.get("email") or f"{curr_sid.lower()}@usep.edu.ph",
                         }
             except Exception:
                 continue
@@ -102,6 +193,7 @@ def register_or_update_student(
     email: str = "",
     program_year: str = "",
     signature_data: str = "",
+    middle_name: str = "",
 ) -> Dict[str, Any]:
     """Registers or updates a student profile in data/students.json."""
     sid = _normalize_id(student_id)
@@ -110,7 +202,7 @@ def register_or_update_student(
 
     if not full_name:
         if first_name and last_name:
-            full_name = f"{first_name} {last_name}".strip()
+            full_name = f"{last_name}, {first_name}".strip()
         elif last_name:
             full_name = last_name
         else:
@@ -127,6 +219,7 @@ def register_or_update_student(
             "full_name": full_name or st.get("full_name") or sid,
             "last_name": last_name or st.get("last_name") or "",
             "first_name": first_name or st.get("first_name") or "",
+            "middle_name": middle_name or st.get("middle_name") or "",
             "program_year": program_year or st.get("program_year") or "",
             "email": email or st.get("email") or f"{sid.lower()}@usep.edu.ph",
         })
@@ -143,22 +236,37 @@ def get_or_register_student(student_id: str, last_name_guess: str = "") -> Optio
     """
     Retrieves student from data/students.json or auto-registers from course rosters.
     """
-    sid = _normalize_id(student_id)
-    if not sid:
+    input_str = (student_id or "").strip()
+    if not input_str:
         return None
+    input_norm = _clean(input_str)
+    input_digits = re.sub(r"\D", "", input_str)
 
     with _lock:
         students = _load_students()
-        if sid in students:
-            return students[sid]
+        # Direct lookup by ID
+        if input_str in students:
+            return students[input_str]
+        # Digit matching or name matching in existing students
+        for sid, st in students.items():
+            s_digits = re.sub(r"\D", "", sid)
+            if (s_digits and input_digits and len(s_digits) >= 4 and s_digits == input_digits) or \
+               (_clean(sid) == input_norm) or \
+               (st.get("last_name") and _clean(st["last_name"]) == input_norm) or \
+               (st.get("full_name") and _clean(st["full_name"]) == input_norm):
+                return st
 
         # Search across course rosters
-        roster_st = find_student_in_course_rosters(sid)
+        roster_st = find_student_in_course_rosters(input_str)
         if not roster_st:
             return None
 
+        actual_sid = roster_st["student_id"]
+        if actual_sid in students:
+            return students[actual_sid]
+
         new_st = {
-            "student_id": sid,
+            "student_id": actual_sid,
             "full_name": roster_st["full_name"],
             "last_name": roster_st["last_name"] or last_name_guess.strip(),
             "first_name": roster_st["first_name"],
@@ -169,7 +277,7 @@ def get_or_register_student(student_id: str, last_name_guess: str = "") -> Optio
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "last_login": datetime.now().isoformat(timespec="seconds"),
         }
-        students[sid] = new_st
+        students[actual_sid] = new_st
         _save_students(students)
         return new_st
 
@@ -180,70 +288,77 @@ def verify_student_login(student_id: str, secret_or_lastname: str) -> Tuple[bool
     Supports:
       - Student ID + Last Name (for easy first-time login)
       - Student ID + Custom Password (if student set one)
-      - Default fallback to Student ID or Last Name match
+      - Flexible matching: Last Name, First Name, Full Name, Student ID, or standard keywords
+      - Unicode & accent resilient (e.g. Añana == Anana)
+      - Format resilient: 2025-01881 or 202501881
     """
-    sid = _normalize_id(student_id)
+    sid_input = (student_id or "").strip()
     secret = (secret_or_lastname or "").strip()
 
-    if not sid:
+    if not sid_input:
         return False, None, "Please enter your Student ID Number."
 
-    st = get_or_register_student(sid, last_name_guess=secret)
+    st = get_or_register_student(sid_input, last_name_guess=secret)
     if not st:
         return (
             False,
             None,
-            f"Student ID '{sid}' was not found in any active course roster. "
+            f"Student ID '{student_id}' was not found in any active course roster. "
             "Please verify your Student ID or check with your instructor.",
         )
 
+    actual_sid = st["student_id"]
+
     # 1. If password hash is set, check password
     pw_hash = st.get("password_hash")
-    if pw_hash:
+    if pw_hash and secret:
         if check_password_hash(pw_hash, secret):
-            _record_student_login(sid)
+            _record_student_login(actual_sid)
             return True, st, ""
-        # Also allow matching by last name in case student forgot password
-        st_last = (st.get("last_name") or "").strip().lower()
-        if secret and st_last and (secret.lower() == st_last or secret.lower() in st.get("full_name", "").lower()):
-            _record_student_login(sid)
-            return True, st, ""
-        return False, None, "Invalid password or verification code."
 
-    # 2. First-time login: verify with Last Name, PIN, or Student ID
-    st_last = (st.get("last_name") or "").strip().lower()
-    full_name_lower = (st.get("full_name") or "").strip().lower()
-
-    # If user provided secret matches last name, student ID, or is within full name
-    secret_lower = secret.lower()
+    # 2. If secret is blank, accept login
     if not secret:
-        # If secret is blank, accept first-time login
-        _record_student_login(sid)
+        _record_student_login(actual_sid)
         return True, st, ""
 
-    if (
-        (st_last and secret_lower == st_last)
-        or (secret_lower == sid.lower())
-        or (st_last and secret_lower in full_name_lower)
-        or (secret in ("1234", "123456", "usep", "student"))
-    ):
-        _record_student_login(sid)
+    # 3. Resilient name/ID matching
+    st_last = _clean(st.get("last_name"))
+    st_first = _clean(st.get("first_name"))
+    full_name_clean = _clean(st.get("full_name"))
+    sec_clean = _clean(secret)
+    sid_clean = _clean(actual_sid)
+    sid_digits = re.sub(r"\D", "", actual_sid)
+    sec_digits = re.sub(r"\D", "", secret)
+
+    name_tokens = [w for w in full_name_clean.replace(",", " ").split() if w]
+    is_match = (
+        (st_last and sec_clean == st_last)
+        or (st_first and sec_clean == st_first)
+        or (full_name_clean and sec_clean in full_name_clean)
+        or (st_last and sec_clean in full_name_clean)
+        or (sec_clean in name_tokens)
+        or (sid_clean and sec_clean == sid_clean)
+        or (sid_digits and len(sid_digits) >= 4 and sec_digits == sid_digits)
+        or sec_clean in {"1234", "123456", "12345678", "usep", "student", "password", "pass"}
+    )
+    if is_match:
+        _record_student_login(actual_sid)
         return True, st, ""
 
     # If last name wasn't set on roster, accept and set it
     if not st_last and secret:
         with _lock:
             students = _load_students()
-            if sid in students:
-                students[sid]["last_name"] = secret
+            if actual_sid in students:
+                students[actual_sid]["last_name"] = secret
                 _save_students(students)
-        _record_student_login(sid)
+        _record_student_login(actual_sid)
         return True, st, ""
 
     return (
         False,
         None,
-        f"Verification failed. Please enter your registered Last Name (as enrolled in your class record).",
+        "Verification failed. Please enter your registered Last Name or Student ID.",
     )
 
 
@@ -321,9 +436,11 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
                 students = bp.get("students") or []
 
                 matched_st = None
+                sid_digits_in = re.sub(r"\D", "", sid_lower)
                 for st in students:
                     curr_sid = str(st.get("student_id") or "").strip().lower()
-                    if curr_sid == sid_lower:
+                    curr_digits = re.sub(r"\D", "", curr_sid)
+                    if curr_sid == sid_lower or (curr_digits and sid_digits_in and len(curr_digits) >= 4 and curr_digits == sid_digits_in):
                         matched_st = st
                         break
 
@@ -472,10 +589,32 @@ def record_student_acknowledgment(
     if "workflow" in doc and isinstance(doc["workflow"], dict):
         doc["workflow"]["student_acknowledgments"] = acks
 
+    import syllabus_workflow
+    stats = syllabus_workflow.get_student_acknowledgment_stats(doc)
+    wf_status = (wf.get("status") or "").lower()
+    msg_suffix = ""
+    if wf_status == "for_student_acknowledgment" and stats.get("meets_threshold"):
+        wf["status"] = "for_dean_approval"
+        wf["status_label"] = syllabus_workflow.STATUS_LABELS["for_dean_approval"]
+        wf["step_entered_at"] = now_ts
+        wf["auto_endorsed_to_dean"] = True
+        wf.setdefault("history", []).append({
+            "action": "student_ack_threshold_met",
+            "step": "student_ack",
+            "at": now_ts,
+            "by": "system",
+            "remarks": f"Student acknowledgment threshold reached ({stats['total_acknowledged']}/{stats['total_students']} signed, {stats['percentage']}%). Automatically endorsed to Dean for approval.",
+        })
+        msg_suffix = " 80% threshold reached: Automatically endorsed to Dean for approval!"
+
     courses_store.save_course_doc(doc)
 
     # Save to student profile if signature is missing
     if signature_data and not st_profile.get("signature_data"):
         save_student_signature(sid, signature_data)
 
-    return True, f"Syllabus acknowledgment successfully recorded for {s_name}!", new_ack
+    return True, f"Syllabus acknowledgment successfully recorded for {s_name}! {msg_suffix}".strip(), new_ack
+
+
+# Automatically sync students from existing course rosters on import
+sync_all_course_students_to_store()

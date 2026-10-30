@@ -334,6 +334,59 @@ def list_courses(username: str, faculty_name: str = "") -> Dict[str, Any]:
     }
 
 
+def _sync_student_acknowledgments_from_store(doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Ensures student assessment_acknowledgments from data/students.json are merged into doc['blueprint']['students'].
+    This protects against data loss and guarantees that student acknowledgments recorded via student portal
+    are always reflected in the course blueprint for faculty views, gradebook, and receipt matrix.
+    """
+    if not doc or not isinstance(doc, dict):
+        return doc
+    cid = doc.get("id")
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+    if not cid or not students:
+        return doc
+
+    try:
+        from student_store import _load_students, _normalize_id
+        all_students = _load_students()
+        if not all_students:
+            return doc
+        for st in students:
+            sid = str(st.get("student_id") or "").strip().lower()
+            sid_norm = _normalize_id(sid)
+            sid_digits = re.sub(r"\D", "", sid)
+
+            matched_profile = all_students.get(sid_norm)
+            if not matched_profile:
+                for k, prof in all_students.items():
+                    k_sid = str(prof.get("student_id") or k).strip().lower()
+                    k_digits = re.sub(r"\D", "", k_sid)
+                    if (k_sid and k_sid == sid) or (k_digits and sid_digits and len(k_digits) >= 4 and k_digits == sid_digits):
+                        matched_profile = prof
+                        break
+
+            if matched_profile:
+                stored_acks = (matched_profile.get("assessment_acknowledgments") or {}).get(cid) or {}
+                if stored_acks:
+                    cur_acks = st.setdefault("assessment_acknowledgments", {})
+                    for it_id, ack_val in stored_acks.items():
+                        if it_id not in cur_acks or (not cur_acks[it_id].get("acknowledged") and ack_val.get("acknowledged")):
+                            cur_acks[it_id] = {
+                                "acknowledged": True,
+                                "acknowledged_at": ack_val.get("acknowledged_at", ""),
+                                "acknowledged_iso": ack_val.get("acknowledged_iso", ""),
+                                "student_id": st.get("student_id"),
+                                "student_name": st.get("name") or f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", "),
+                                "statement": ack_val.get("statement", "Student accepted the score, received test paper, and acknowledged that the score is final and reconsideration will not be entertained.")
+                            }
+    except Exception:
+        pass
+
+    return doc
+
+
 def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
     user_dir = _get_user_courses_dir(username)
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
@@ -345,6 +398,7 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
                 bp = doc.get("blueprint")
                 if isinstance(bp, dict) and "rubrics" not in bp:
                     bp["rubrics"] = []
+                _sync_student_acknowledgments_from_store(doc)
                 return doc
         except Exception:
             pass
@@ -356,6 +410,7 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
         author_unames = [(a.get("username") or "").strip().lower() for a in authors]
         u_lower = (username or "").strip().lower()
         if u_lower == (doc.get("owner") or "").lower() or u_lower in author_unames or username == "admin":
+            _sync_student_acknowledgments_from_store(doc)
             return doc
     return None
 
@@ -409,6 +464,47 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
         if "categories" in old_bp:
             bp_dict["categories"] = old_bp["categories"]
 
+    # Merge and preserve student assessment score & paper acknowledgments
+    # so that faculty saves or auto-saves never wipe out student acknowledgments!
+    existing_students = (existing.get("blueprint") or {}).get("students") or []
+    existing_ack_map = {}
+    for st in existing_students:
+        s_id = str(st.get("student_id") or "").strip().lower()
+        if s_id and st.get("assessment_acknowledgments"):
+            existing_ack_map[s_id] = dict(st.get("assessment_acknowledgments") or {})
+
+    # Also include acknowledgments recorded in data/students.json
+    try:
+        from student_store import _load_students
+        all_students_store = _load_students()
+        for s_norm_id, s_prof in all_students_store.items():
+            c_acks = (s_prof.get("assessment_acknowledgments") or {}).get(safe_id) or {}
+            if c_acks:
+                st_id_clean = str(s_prof.get("student_id") or s_norm_id).strip().lower()
+                target_acks = existing_ack_map.setdefault(st_id_clean, {})
+                for it_id, ack_entry in c_acks.items():
+                    if it_id not in target_acks or (not target_acks[it_id].get("acknowledged") and ack_entry.get("acknowledged")):
+                        target_acks[it_id] = ack_entry
+    except Exception:
+        pass
+
+    for st in bp_dict.get("students", []):
+        s_id = str(st.get("student_id") or "").strip().lower()
+        s_digits = re.sub(r"\D", "", s_id)
+        matched_acks = existing_ack_map.get(s_id)
+        if not matched_acks and s_digits and len(s_digits) >= 4:
+            for k_id, v_acks in existing_ack_map.items():
+                k_digits = re.sub(r"\D", "", k_id)
+                if k_digits and k_digits == s_digits:
+                    matched_acks = v_acks
+                    break
+
+        if matched_acks:
+            cur_acks = st.setdefault("assessment_acknowledgments", {})
+            for it_id, ack_val in matched_acks.items():
+                if it_id not in cur_acks or not cur_acks[it_id].get("acknowledged"):
+                    cur_acks[it_id] = ack_val
+
     programs = payload.get("programs") or meta.get("programs") or []
     sections = payload.get("sections") or meta.get("sections") or []
     if not sections and section:
@@ -437,6 +533,10 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
     if "metadata" in bp_dict:
         bp_dict["metadata"]["authors"] = cleaned_authors
 
+    acks = payload.get("student_acknowledgments") or existing.get("student_acknowledgments") or (wf.get("student_acknowledgments") if isinstance(wf, dict) else None) or []
+    if isinstance(wf, dict) and "student_acknowledgments" not in wf and acks:
+        wf["student_acknowledgments"] = acks
+
     doc = {
         "id": safe_id,
         "owner": orig_owner,
@@ -450,6 +550,7 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
         "blueprint": bp_dict,
         "workflow": wf,
         "class_record_workflow": cr_wf,
+        "student_acknowledgments": acks,
     }
 
     for attempt in range(5):
@@ -531,6 +632,7 @@ def create_course(
         lec_lab = catalog_course_data.get("lec_lab") or (db_course.get("lec_lab") if db_course else "") or "Lecture"
         contact_hours = catalog_course_data.get("hours") or (db_course.get("contact_hours") if db_course else "") or "3 Hours/Week"
         desc = catalog_course_data.get("description") or (db_course.get("description") if db_course else "") or ""
+        cat_pgo_pi = catalog_course_data.get("pgo_pi") or (db_course.get("pgo") if db_course else "") or ""
 
         bp = get_blank_blueprint(
             course_code=cat_code,
@@ -550,12 +652,14 @@ def create_course(
             dean_name="Joie D. Cataytay",
             year_level=cat_yr,
             sdg_alignments=cat_sdgs,
+            pgo_pi_str=cat_pgo_pi,
         )
         bp.metadata.program_heads = heads
         bp.metadata.passing_percentage = 75.0
         bp.metadata.year_level = cat_yr
         bp.metadata.sdg_alignments = cat_sdgs
         bp.metadata.sdg_table = parse_sdg_string_to_table(cat_sdgs)
+        bp.metadata.prereq_coreq_table = parse_prereqs_coreqs_to_table(prereqs, coreqs)
         bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
         bp.metadata.references_table = []
         bp.metadata.policies_table = get_default_policies_table()
@@ -601,13 +705,17 @@ def create_course(
             dean_name="Joie D. Cataytay",
             year_level=cust_yr,
             sdg_alignments=cust_sdgs,
+            pgo_pi_str=(db_course.get("pgo") if db_course else "") or "",
         )
         bp.metadata.program_heads = heads
         bp.metadata.passing_percentage = 75.0
         bp.metadata.year_level = cust_yr
         bp.metadata.sdg_alignments = cust_sdgs
         bp.metadata.sdg_table = parse_sdg_string_to_table(cust_sdgs)
+        bp.metadata.prereq_coreq_table = parse_prereqs_coreqs_to_table(cust_prereqs, cust_coreqs)
         bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
+        bp.metadata.references_table = []
+        bp.metadata.policies_table = get_default_policies_table()
         bp.metadata.references_table = []
         bp.metadata.policies_table = get_default_policies_table()
         bp_dict = bp.to_dict()
@@ -718,6 +826,7 @@ def find_course(course_id: str) -> Optional[Dict[str, Any]]:
                         if isinstance(bp, dict) and not bp.get("rubrics"):
                             import sample_syllabus
                             bp["rubrics"] = sample_syllabus.get_default_rubrics()
+                        _sync_student_acknowledgments_from_store(doc)
                         return doc
                 except Exception:
                     continue
@@ -736,6 +845,7 @@ def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     bp = doc.get("blueprint") or {}
     if "metadata" in bp:
         bp["metadata"]["authors"] = authors
+    _sync_student_acknowledgments_from_store(doc)
     for attempt in range(5):
         try:
             with open(fp, "w", encoding="utf-8") as f:

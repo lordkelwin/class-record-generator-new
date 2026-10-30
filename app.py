@@ -1232,7 +1232,7 @@ def api_get_workflow_requests():
 
         ACTIVE_SYL_REVIEW_STATUSES = {
             "for_committee_review", "for_committee_chair", "for_program_head",
-            "for_qa_countersign", "for_dean_approval",
+            "for_qa_countersign", "for_student_acknowledgment", "for_dean_approval",
             "revision_for_program_head", "revision_for_associate_dean", "revision_for_dean"
         }
         if can_act and wf.get("status") in ACTIVE_SYL_REVIEW_STATUSES:
@@ -1585,6 +1585,18 @@ def api_sign_workflow_step(course_id):
 
     overall_rec = (data.get("overall_recommendation") or "").strip()
 
+    # If syllabus is already at for_dean_approval and faculty author/owner is endorsing
+    wf_curr = syllabus_workflow.get_workflow(doc)
+    if wf_curr.get("status") == "for_dean_approval" and decision == "approve":
+        curr_s = syllabus_workflow.current_step(wf_curr)
+        if curr_s and not syllabus_workflow.user_can_act(user, doc, curr_s):
+            if user.get("username") == doc.get("owner") or "faculty" in (user.get("workflow_roles") or []):
+                return jsonify({
+                    "success": True,
+                    "message": "Student acknowledgment criteria met. Syllabus has been endorsed to College Dean for approval.",
+                    "workflow": syllabus_workflow.public_view(doc),
+                })
+
     try:
 
         wf = syllabus_workflow.sign(doc, user, decision=decision, remarks=remarks, overall_recommendation=overall_rec)
@@ -1793,12 +1805,32 @@ def api_course_student_acknowledgment(course_id):
         if "workflow" in doc and isinstance(doc["workflow"], dict):
             doc["workflow"]["student_acknowledgments"] = acks
 
+        import syllabus_workflow
+        stats = syllabus_workflow.get_student_acknowledgment_stats(doc)
+        wf_obj = doc.get("workflow") or {}
+        msg_suffix = ""
+        if wf_obj.get("status") == "for_student_acknowledgment" and stats.get("meets_threshold"):
+            wf_obj["status"] = "for_dean_approval"
+            wf_obj["status_label"] = syllabus_workflow.STATUS_LABELS["for_dean_approval"]
+            wf_obj["step_entered_at"] = now_ts
+            wf_obj["auto_endorsed_to_dean"] = True
+            wf_obj.setdefault("history", []).append({
+                "action": "student_ack_threshold_met",
+                "step": "student_ack",
+                "at": now_ts,
+                "by": "system",
+                "remarks": f"Student acknowledgment threshold reached ({stats['total_acknowledged']}/{stats['total_students']} signed, {stats['percentage']}%). Automatically endorsed to Dean for approval.",
+            })
+            doc["workflow"] = wf_obj
+            msg_suffix = " 80% threshold reached: Automatically endorsed to Dean for approval!"
+
         courses_store.save_course_doc(doc)
         return jsonify({
             "success": True,
-            "message": f"Syllabus acknowledgment recorded for {student_name}.",
+            "message": f"Syllabus acknowledgment recorded for {student_name}! {msg_suffix}".strip(),
             "acknowledgments": acks,
             "total_acknowledged": len(acks),
+            "workflow": doc.get("workflow"),
         })
 
     # Combined roster view mapping each enrolled student to acknowledgment status, signature, and comments
@@ -2056,6 +2088,7 @@ def api_course_roster_add_student(course_id):
     sid = str(data.get("student_id") or "").strip()
     last = str(data.get("last_name") or "").strip()
     first = str(data.get("first_name") or "").strip()
+    middle = str(data.get("middle_name") or "").strip()
     full = str(data.get("name") or "").strip()
     prog = str(data.get("program_year") or data.get("section") or doc.get("section") or "").strip()
     email = str(data.get("email") or (f"{sid.lower()}@usep.edu.ph" if sid else "")).strip()
@@ -2067,7 +2100,10 @@ def api_course_roster_add_student(course_id):
         return jsonify({"error": "Student Last Name is required."}), 400
 
     if not full:
-        full = f"{last}, {first}".strip(", ") if (last or first) else sid
+        if middle:
+            full = f"{last}, {first} {middle}".strip(", ")
+        else:
+            full = f"{last}, {first}".strip(", ") if (last or first) else sid
     if not last and full:
         last = full.split(",")[0].strip() if "," in full else full
 
@@ -2081,6 +2117,7 @@ def api_course_roster_add_student(course_id):
         full_name=full,
         email=email,
         program_year=prog,
+        middle_name=middle,
     )
 
     existing = None
@@ -2101,6 +2138,7 @@ def api_course_roster_add_student(course_id):
             "student_id": sid,
             "last_name": last,
             "first_name": first,
+            "middle_name": middle,
             "name": full,
             "program_year": prog,
             "email": email,
@@ -2122,6 +2160,7 @@ def api_course_roster_add_student(course_id):
             "name": full,
             "last_name": last,
             "first_name": first,
+            "middle_name": middle,
             "program_year": prog,
             "email": email,
         }
@@ -2172,7 +2211,7 @@ def student_login():
 
     if request.method == "POST":
         student_id = (request.form.get("student_id") or "").strip()
-        secret = (request.form.get("secret") or "").strip()
+        secret = (request.form.get("secret") or request.form.get("student_secret") or "").strip()
 
         ok, st, err_msg = student_store.verify_student_login(student_id, secret)
         if ok and st:
@@ -2180,7 +2219,7 @@ def student_login():
             session.permanent = True
             session["username"] = st["student_id"]
             session["student_id"] = st["student_id"]
-            session["student_name"] = st["full_name"]
+            session["student_name"] = st.get("full_name") or st.get("name") or st.get("student_id")
             session["role"] = "student"
             session["email"] = st.get("email") or f"{st['student_id']}@usep.edu.ph"
             session["has_signature"] = bool(st.get("signature_data"))
@@ -2668,18 +2707,6 @@ def api_admin_update_user_role(username):
         }
     })
 
-if __name__ == "__main__":
-
-    if not os.path.exists(SAMPLE_PDF_PATH):
-
-        generate_sample_syllabus_pdf(SAMPLE_PDF_PATH)
-
-    app.run(host="127.0.0.1", port=5000, debug=False)
-
-
-
-
-
 @app.route("/api/student/courses/<course_id>/performance", methods=["GET"])
 def api_student_course_performance(course_id):
     user = current_user()
@@ -2696,11 +2723,22 @@ def api_student_course_performance(course_id):
     categories = bp.get("categories") or []
     clos = bp.get("course_outcomes") or []
 
-    sid = (user.get("student_id") or user.get("username") or "").strip().lower()
+    req_sid = (request.args.get("student_id") or "").strip().lower()
+    if req_sid and user.get("role") != "student":
+        sid = req_sid
+    else:
+        sid = (user.get("student_id") or user.get("username") or "").strip().lower()
+
+    sid_digits = re.sub(r"\D", "", sid)
     matched_st = None
     for st in students:
         curr_sid = str(st.get("student_id") or "").strip().lower()
-        if curr_sid == sid or (user.get("full_name") and user["full_name"].lower() == str(st.get("name") or "").strip().lower()):
+        curr_digits = re.sub(r"\D", "", curr_sid)
+        st_full = f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", ").lower()
+        st_name = str(st.get("name") or "").strip().lower()
+        if (curr_sid and curr_sid == sid) or \
+           (curr_digits and sid_digits and len(curr_digits) >= 4 and curr_digits == sid_digits) or \
+           (user.get("full_name") and user["full_name"].lower() in (st_full, st_name)):
             matched_st = st
             break
 
@@ -2717,7 +2755,7 @@ def api_student_course_performance(course_id):
         }
 
     st_scores = matched_st.get("scores") or {}
-    st_clo_scores = matched_st.get("clo_scores") or {}
+    st_clo_scores = matched_st.get("clo_scores") or matched_st.get("scores") or {}
 
     # Calculate assessment categories breakdown
     cats_data = []
@@ -2729,10 +2767,11 @@ def api_student_course_performance(course_id):
     for cat in categories:
         term = cat.get("term", "Midterm")
         a_type = (cat.get("assessment_type") or "SA").upper()
+        a_code = (cat.get("assessment_code") or ("SA1" if a_type == "SA" else "FA1")).upper()
         cat_wt = float(cat.get("weight_pct") or 0.0)
         items = cat.get("items") or []
         n_items = max(1, len(items))
-        per_item_wt = cat_wt / n_items if a_type == "SA" else 0.0
+        def_item_wt = cat_wt / n_items if a_type == "SA" else 0.0
 
         items_breakdown = []
         for it in items:
@@ -2740,6 +2779,9 @@ def api_student_course_performance(course_id):
             name = it.get("name") or item_id
             pts_map = it.get("clo_points") or {}
             aligned_clos = [c.strip().upper() for c in (it.get("co_id") or "").replace(";", ",").split(",") if c.strip()]
+            it_wt = float(it.get("weight_pct") or 0.0) if a_type == "SA" else 0.0
+            if it_wt <= 0 and a_type == "SA":
+                it_wt = def_item_wt
             
             # Sum up total max points
             tot_max = sum(float(pts_map.get(c, 0.0)) for c in aligned_clos) if pts_map else float(it.get("max_score") or 30.0)
@@ -2763,8 +2805,26 @@ def api_student_course_performance(course_id):
 
             pct = (st_raw / tot_max * 100.0) if tot_max > 0 else 0.0
             if a_type == "SA" and tot_max > 0:
-                term_scores[term]["earned_wt"] += (st_raw / tot_max) * per_item_wt
-                term_scores[term]["total_wt"] += per_item_wt
+                term_scores[term]["earned_wt"] += (st_raw / tot_max) * it_wt
+                term_scores[term]["total_wt"] += it_wt
+
+            # Check assessment score acknowledgment
+            ack_map = matched_st.get("assessment_acknowledgments") or {}
+            item_ack = ack_map.get(item_id) or {}
+            is_acked = bool(item_ack.get("acknowledged"))
+            acked_at = item_ack.get("acknowledged_at") or ""
+            if not is_acked:
+                try:
+                    from student_store import _load_students, _normalize_id
+                    all_s = _load_students()
+                    st_norm = _normalize_id(matched_st.get("student_id") or sid)
+                    s_prof = all_s.get(st_norm) or {}
+                    s_acks = (s_prof.get("assessment_acknowledgments") or {}).get(course_id) or {}
+                    if item_id in s_acks and s_acks[item_id].get("acknowledged"):
+                        is_acked = True
+                        acked_at = s_acks[item_id].get("acknowledged_at") or ""
+                except Exception:
+                    pass
 
             items_breakdown.append({
                 "item_id": item_id,
@@ -2772,14 +2832,33 @@ def api_student_course_performance(course_id):
                 "max_score": round(tot_max, 1),
                 "student_score": round(st_raw, 1),
                 "percentage": round(pct, 1),
-                "weight_pct": round(per_item_wt, 1) if a_type == "SA" else 0.0,
+                "weight_pct": round(it_wt, 1) if a_type == "SA" else 0.0,
                 "aligned_clos": aligned_clos,
+                "acknowledged": is_acked,
+                "acknowledged_at": acked_at,
             })
+
+        # Assessment Grade formula: sum of (weight * (score / total)) / (sum of weights) * 50 + 50
+        cat_weighted_ratio_sum = 0.0
+        cat_weight_sum = 0.0
+        for it in items_breakdown:
+            it_max = float(it.get("max_score", 0.0) or 0.0)
+            it_sc = float(it.get("student_score", 0.0) or 0.0)
+            it_w = float(it.get("weight_pct", 0.0) or 0.0)
+            if it_w <= 0:
+                it_w = 1.0
+            if it_max > 0:
+                cat_weighted_ratio_sum += (it_sc / it_max) * it_w
+                cat_weight_sum += it_w
+
+        cat_grade = round(((cat_weighted_ratio_sum / cat_weight_sum) * 50.0 + 50.0), 2) if cat_weight_sum > 0 else 50.0
 
         cats_data.append({
             "term": term,
             "category_name": cat.get("name") or "Assessment Category",
             "assessment_type": a_type,
+            "assessment_code": a_code,
+            "assessment_grade": cat_grade,
             "weight_pct": cat_wt,
             "items": items_breakdown,
         })
@@ -2805,29 +2884,84 @@ def api_student_course_performance(course_id):
     if afg >= 98.0:
         final_gp = "1.00"
 
-    # CLO Attainment
+    # CLO Competency Attainment: Compute Final CLO Grade directly from class record
     clo_summary = []
     for co in clos:
         cid = co.get("co_id", "").upper()
+        matching_cols = []
+        for cat in categories:
+            a_type = (cat.get("assessment_type") or "SA").upper()
+            cat_wt = float(cat.get("weight_pct") or 0.0)
+            items = cat.get("items") or []
+            n_items = max(1, len(items))
+            def_item_wt = cat_wt / n_items if a_type == "SA" else 0.0
+            for it in items:
+                it_id = it.get("item_id", "")
+                pts_map = it.get("clo_points") or {}
+                aligned = [c.strip().upper() for c in (it.get("co_id") or "").replace(";", ",").split(",") if c.strip()]
+                if cid in aligned:
+                    tot_max = sum(float(pts_map.get(c, 0.0)) for c in aligned) if pts_map else float(it.get("max_score") or 30.0)
+                    if tot_max <= 0:
+                        tot_max = float(it.get("max_score") or 30.0)
+                    clo_max = float(pts_map.get(cid, 0.0)) if pts_map else (tot_max / max(1, len(aligned)))
+                    if clo_max <= 0:
+                        clo_max = tot_max / max(1, len(aligned))
+
+                    it_wt = float(it.get("weight_pct") or 0.0) if a_type == "SA" else 0.0
+                    if it_wt <= 0 and a_type == "SA":
+                        it_wt = def_item_wt
+
+                    c_key = f"{it_id}__{cid}"
+                    if c_key in st_clo_scores:
+                        st_sc = float(st_clo_scores[c_key] or 0.0)
+                    else:
+                        m_num = re.search(r"(\d+)$", cid)
+                        legacy_key = f"{it_id}_{m_num.group(1)}" if m_num else None
+                        if legacy_key and legacy_key in st_clo_scores:
+                            st_sc = float(st_clo_scores[legacy_key] or 0.0)
+                        elif it_id in st_scores:
+                            st_sc = float(st_scores[it_id] or 0.0) * (clo_max / tot_max if tot_max > 0 else 1.0)
+                        else:
+                            st_sc = 0.0
+                    matching_cols.append({
+                        "a_type": a_type,
+                        "weight": it_wt,
+                        "score": st_sc,
+                        "max_score": clo_max,
+                    })
+
+        sa_matching = [m for m in matching_cols if m["a_type"] == "SA"]
+        calc_matching = sa_matching if sa_matching else matching_cols
+
+        clo_num = sum((m["score"] / m["max_score"]) * m["weight"] for m in calc_matching if m["max_score"] > 0)
+        clo_den = sum(m["weight"] for m in calc_matching)
+
+        if clo_den > 0:
+            final_clo_grade = round((clo_num / clo_den * 50.0 + 50.0), 2)
+        else:
+            final_clo_grade = 50.0
+
+        target = float(co.get("target_score_pct") or 75.0)
+        is_competent = final_clo_grade >= target
         p_earned = clo_points_earned.get(cid, 0.0)
         p_poss = clo_points_possible.get(cid, 0.0)
-        c_pct = round((p_earned / p_poss * 100.0), 1) if p_poss > 0 else 75.0
-        target = float(co.get("target_score_pct") or 75.0)
+
         clo_summary.append({
             "co_id": cid,
             "description": co.get("description", ""),
+            "final_clo_grade": final_clo_grade,
+            "target_score_pct": target,
+            "is_competent": is_competent,
+            "status_label": "Competent" if is_competent else "Developing",
             "points_earned": round(p_earned, 1),
             "points_possible": round(p_poss, 1),
-            "attainment_pct": c_pct,
-            "target_score_pct": target,
-            "is_competent": c_pct >= target,
         })
 
     return jsonify({
         "success": True,
         "student": {
             "student_id": matched_st.get("student_id"),
-            "name": matched_st.get("name"),
+            "name": matched_st.get("name") or (f"{matched_st.get('last_name')}, {matched_st.get('first_name')}".strip(", ") if (matched_st.get('last_name') or matched_st.get('first_name')) else (matched_st.get('student_id') or "Student")),
             "program_year": matched_st.get("program_year") or meta.get("section") or "",
         },
         "course": {
@@ -2853,3 +2987,123 @@ def api_student_course_performance(course_id):
         "clo_attainment": clo_summary,
         "categories": cats_data,
     })
+
+
+@app.route("/api/courses/<course_id>/assessment-acknowledgments", methods=["GET"])
+def api_get_course_assessment_acknowledgments(course_id):
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+
+    # Map student_id -> dict of item_id -> ack_data
+    ack_data = {}
+    for st in students:
+        sid = str(st.get("student_id") or "").strip()
+        if sid:
+            ack_data[sid] = st.get("assessment_acknowledgments") or {}
+
+    return jsonify({
+        "success": True,
+        "course_id": course_id,
+        "acknowledgments": ack_data,
+    })
+
+
+@app.route("/api/student/courses/<course_id>/acknowledge-assessment", methods=["POST"])
+def api_student_acknowledge_assessment(course_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Authentication required."}), 401
+
+    data = request.get_json(silent=True) or {}
+    item_id = str(data.get("item_id") or "").strip()
+    if not item_id:
+        return jsonify({"error": "Assessment item_id is required."}), 400
+
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+
+    sid = (user.get("student_id") or user.get("username") or "").strip().lower()
+    sid_digits = re.sub(r"\D", "", sid)
+    matched_st = None
+    for st in students:
+        curr_sid = str(st.get("student_id") or "").strip().lower()
+        curr_digits = re.sub(r"\D", "", curr_sid)
+        st_full = f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", ").lower()
+        st_name = str(st.get("name") or "").strip().lower()
+        if (curr_sid and curr_sid == sid) or            (curr_digits and sid_digits and len(curr_digits) >= 4 and curr_digits == sid_digits) or            (user.get("full_name") and user["full_name"].lower() in (st_full, st_name)):
+            matched_st = st
+            break
+
+    if not matched_st and user.get("role") != "student" and students:
+        req_sid = (data.get("student_id") or "").strip().lower()
+        if req_sid:
+            for st in students:
+                if str(st.get("student_id") or "").strip().lower() == req_sid:
+                    matched_st = st
+                    break
+        if not matched_st:
+            matched_st = students[0]
+
+    if not matched_st:
+        return jsonify({"error": "Enrolled student record not found in this course."}), 404
+
+    from datetime import datetime
+    now_str = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+    now_iso = datetime.now().isoformat()
+
+    if "assessment_acknowledgments" not in matched_st:
+        matched_st["assessment_acknowledgments"] = {}
+
+    matched_st["assessment_acknowledgments"][item_id] = {
+        "acknowledged": True,
+        "acknowledged_at": now_str,
+        "acknowledged_iso": now_iso,
+        "student_id": matched_st.get("student_id"),
+        "student_name": matched_st.get("name") or f"{matched_st.get('last_name', '')}, {matched_st.get('first_name', '')}".strip(", "),
+        "statement": "Student accepted the score, received test paper, and acknowledged that the score is final and reconsideration will not be entertained."
+    }
+
+    courses_store.save_course_doc(doc)
+
+    # Also mirror into student store if registered
+    try:
+        from student_store import _load_students, _save_students, _normalize_id
+        all_s = _load_students()
+        st_norm = _normalize_id(matched_st.get("student_id") or sid)
+        if st_norm in all_s:
+            s_obj = all_s[st_norm]
+            if "assessment_acknowledgments" not in s_obj:
+                s_obj["assessment_acknowledgments"] = {}
+            if course_id not in s_obj["assessment_acknowledgments"]:
+                s_obj["assessment_acknowledgments"][course_id] = {}
+            s_obj["assessment_acknowledgments"][course_id][item_id] = {
+                "acknowledged": True,
+                "acknowledged_at": now_str,
+            }
+            _save_students(all_s)
+    except Exception:
+        pass
+
+    return jsonify({
+        "success": True,
+        "message": f"Score for {item_id} successfully acknowledged.",
+        "item_id": item_id,
+        "acknowledged_at": now_str,
+    })
+
+
+if __name__ == "__main__":
+
+    if not os.path.exists(SAMPLE_PDF_PATH):
+
+        generate_sample_syllabus_pdf(SAMPLE_PDF_PATH)
+
+    app.run(host="127.0.0.1", port=5000, debug=False)

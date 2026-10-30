@@ -1310,12 +1310,16 @@
             <span class="step-num">3</span>
             <span class="step-lbl">Class Record</span>
           </button>
-          <button type="button" class="ribbon-step-btn" id="stepBtnTabCloreport" onclick="switchSyllabusStep('tab-cloreport')">
+          <button type="button" class="ribbon-step-btn" id="stepBtnTabReceiptAck" onclick="switchSyllabusStep('tab-receipt-ack')">
             <span class="step-num">4</span>
+            <span class="step-lbl">Receipt of Scores &amp; Paper</span>
+          </button>
+          <button type="button" class="ribbon-step-btn" id="stepBtnTabCloreport" onclick="switchSyllabusStep('tab-cloreport')">
+            <span class="step-num">5</span>
             <span class="step-lbl">CLO Report (MID-10)</span>
           </button>
           <button type="button" class="ribbon-step-btn" id="stepBtnTabCqi" onclick="switchSyllabusStep('tab-cqi')">
-            <span class="step-num">5</span>
+            <span class="step-num">6</span>
             <span class="step-lbl">CQI Plan</span>
           </button>
         </div>
@@ -2218,6 +2222,7 @@
           <button class="btn btn-primary btn-sm" onclick="addLearningPlanRow()">+ Add Learning Plan Topic Row</button>
         </div>
       </div>
+      <div id="learningPlanHoursCounter"></div>
       <div style="overflow-x:auto;">
         <table>
           <thead>
@@ -2393,7 +2398,69 @@
     </div>
   </div>
 
-  <!-- TAB 4: CLO ASSESSMENT REPORT & CO ASSESSMENT TOOL -->
+  <!-- TAB 4 (SUB-RIBBON): ACKNOWLEDGEMENT OF RECEIPT OF ASSESSMENT SCORES AND PAPER -->
+  <div id="tab-receipt-ack" class="tab-panel">
+    <div class="card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:18px 22px; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:14px; margin-bottom:14px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.4rem;">📋</span>
+            <h2 style="margin:0; font-size:1.18rem; color:#0f172a; font-weight:800;">Acknowledgement of Receipt of Assessment Scores and Paper</h2>
+          </div>
+          <div style="font-size:0.8rem; color:#475569; margin-top:3px;">
+            Instructor oversight portal verifying student receipt of evaluated papers and formal acceptance of final assessment scores (non-contestable).
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshCourseAndReceiptAcks()" style="display:inline-flex; align-items:center; gap:5px;">
+            <span>🔄</span> Refresh Status
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="printReceiptAckSheet()" style="display:inline-flex; align-items:center; gap:5px;">
+            <span>🖨️</span> Print Summary Sheet
+          </button>
+        </div>
+      </div>
+
+      <!-- Overview Metric Cards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:18px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; text-align:center;">
+          <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Enrolled Students</div>
+          <div id="receiptAckTotalStudents" style="font-size:1.5rem; font-weight:800; color:#0f172a; margin-top:2px;">0</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; text-align:center;">
+          <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Total Assessment Tasks</div>
+          <div id="receiptAckTotalItems" style="font-size:1.5rem; font-weight:800; color:#0369a1; margin-top:2px;">0</div>
+        </div>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px 14px; text-align:center;">
+          <div style="font-size:0.75rem; color:#15803d; font-weight:700; text-transform:uppercase;">Confirmed Acknowledgments</div>
+          <div id="receiptAckTotalConfirmed" style="font-size:1.5rem; font-weight:800; color:#16a34a; margin-top:2px;">0</div>
+        </div>
+        <div style="background:#fefce8; border:1px solid #fef08a; border-radius:8px; padding:12px 14px; text-align:center;">
+          <div style="font-size:0.75rem; color:#854d0e; font-weight:700; text-transform:uppercase;">Completion Rate</div>
+          <div id="receiptAckCompletionRate" style="font-size:1.5rem; font-weight:800; color:#ca8a04; margin-top:2px;">0.0%</div>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <input type="text" id="receiptAckSearchInput" placeholder="🔍 Search student name or ID..." oninput="filterReceiptAckTable()"
+          style="padding:6px 12px; font-size:0.8rem; border:1px solid #cbd5e1; border-radius:6px; width:260px;" />
+        <div style="font-size:0.78rem; color:#64748b;">
+          Green badges indicate the student has verified receipt of their paper and accepted their score as final.
+        </div>
+      </div>
+
+      <!-- Main Tracking Grid -->
+      <div style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px;">
+        <table id="receiptAckTable" style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+          <thead id="receiptAckThead"></thead>
+          <tbody id="receiptAckTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: CLO ASSESSMENT REPORT & CO ASSESSMENT TOOL -->
   <div id="tab-cloreport" class="tab-panel">
     <div class="card" style="background:#f8fafc; border:1px solid #cbd5e1; margin-bottom:14px;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -3988,6 +4055,8 @@
 
   // Modals: New Subject
   function openNewSubjectModal() {
+    modalSelectedPrograms = { catalog: [], custom: [] };
+    activeModalTab = "catalog";
     populateModalCatalog();
     renderModalProgramPills("catalog");
     renderModalProgramPills("custom");
@@ -4255,6 +4324,7 @@
       'tab-syllabus': 'stepBtnTabSyllabus',
       'tab-assessments': 'stepBtnTabAssessments',
       'tab-gradebook': 'stepBtnTabGradebook',
+      'tab-receipt-ack': 'stepBtnTabReceiptAck',
       'tab-cloreport': 'stepBtnTabCloreport',
       'tab-cqi': 'stepBtnTabCqi'
     };
@@ -4302,8 +4372,18 @@
           + Add Student
         </button>
       `;
-    } else if (stepTabId === 'tab-cloreport') {
+    } else if (stepTabId === 'tab-receipt-ack') {
       ctxTitle.textContent = 'Step 4 Actions';
+      ctxActions.innerHTML = `
+        <button type="button" class="btn btn-sm btn-primary" onclick="refreshCourseAndReceiptAcks()" title="Refresh student receipt and acknowledgment records">
+          🔄 Refresh Status
+        </button>
+        <button type="button" class="btn btn-sm btn-light" onclick="printReceiptAckSheet()" title="Print Student Score & Paper Receipt Report">
+          🖨️ Print Receipt Sheet
+        </button>
+      `;
+    } else if (stepTabId === 'tab-cloreport') {
+      ctxTitle.textContent = 'Step 5 Actions';
       ctxActions.innerHTML = `
         <button type="button" class="btn btn-sm btn-primary" style="background:#0284c7; color:#fff; border-color:#0369a1; font-weight:700;" onclick="exportCloReportPdf()" title="Export Official FM-USeP-MID-10 PDF">
           📄 Export CLO Report (.pdf)
@@ -4316,7 +4396,7 @@
         </button>
       `;
     } else if (stepTabId === 'tab-cqi') {
-      ctxTitle.textContent = 'Step 5 Actions';
+      ctxTitle.textContent = 'Step 6 Actions';
       ctxActions.innerHTML = `
         <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
           💾 Save CQI Plan
@@ -4334,8 +4414,14 @@
     if (targetPanel) targetPanel.classList.add("active");
 
     if (tabId === "tab-approvals") {
+      stopReceiptAckPolling();
       loadApprovalRequests(true);
+    } else if (tabId === "tab-receipt-ack") {
+      renderReceiptAckTab();
+      refreshCourseAndReceiptAcks(true);
+      startReceiptAckPolling();
     } else {
+      stopReceiptAckPolling();
       renderLiveGradebookAndReports();
     }
     checkClassRecordLock();
@@ -4347,7 +4433,7 @@
       switchRibbon("ribbon-dashboard", "tab-dashboard");
     } else if (tabId === "tab-approvals") {
       switchRibbon("ribbon-approvals", "tab-approvals");
-    } else if (["tab-syllabus", "tab-assessments", "tab-gradebook", "tab-cloreport", "tab-cqi"].includes(tabId)) {
+    } else if (["tab-syllabus", "tab-assessments", "tab-gradebook", "tab-receipt-ack", "tab-cloreport", "tab-cqi"].includes(tabId)) {
       switchRibbon("ribbon-syllabus", tabId);
     } else {
       switchTabPanel(tabId);
@@ -5634,8 +5720,15 @@
     const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     if (!coOptions.length) coOptions.push("CLO1");
 
-    const activities = m.syllabus_assessment_activities || [];
-    if (!activities.length) return;
+    let activities = m.syllabus_assessment_activities || [];
+    if (!activities.length) {
+      m.syllabus_assessment_activities = [
+        { code: "FA1", activity: "Group Activity", type: "Formative", weight_pct: 0.0, items_per_term: 2, clo_aligned: coOptions.join(", ") },
+        { code: "SA1", activity: "Quizzes", type: "Summative", weight_pct: 40.0, items_per_term: 2, clo_aligned: coOptions.join(", ") },
+        { code: "SA2", activity: "Term Examination", type: "Summative", weight_pct: 60.0, items_per_term: 1, clo_aligned: coOptions.join(", ") }
+      ];
+      activities = m.syllabus_assessment_activities;
+    }
 
     // Preserve existing clo_points by item_id so user-customized per-CLO points aren't lost
     const existingItemMap = {};
@@ -6129,6 +6222,195 @@
     renderLearningPlanTable();
   }
 
+  // --- PART IX: CONTACT HOURS AUDIT ENGINE ---
+  function computeLearningPlanHoursStats() {
+    if (!blueprint?.metadata) return null;
+    const m = blueprint.metadata;
+    const table = m.learning_plan_table || [];
+
+    let lecUnits = 0;
+    let labUnits = 0;
+    const cuStr = String(m.credit_units || "").toLowerCase();
+    const lecLab = String(m.lec_lab || "").toLowerCase();
+
+    const lecMatch = cuStr.match(/(\d+(?:\.\d+)?)\s*(?:unit[s]?)?\s*lec/i);
+    const labMatch = cuStr.match(/(\d+(?:\.\d+)?)\s*(?:unit[s]?)?\s*lab/i);
+
+    if (lecMatch || labMatch) {
+      if (lecMatch) lecUnits = parseFloat(lecMatch[1]) || 0;
+      if (labMatch) labUnits = parseFloat(labMatch[1]) || 0;
+    } else {
+      const totalUnitsMatch = cuStr.match(/(\d+(?:\.\d+)?)/);
+      const totalU = totalUnitsMatch ? parseFloat(totalUnitsMatch[1]) : 3.0;
+      if (lecLab.includes("lab")) {
+        labUnits = totalU;
+      } else {
+        lecUnits = totalU;
+      }
+    }
+
+    const totalRequiredHours = (lecUnits * 18) + (labUnits * 54);
+
+    const midIdx = table.findIndex(r => (r.topics || "").toUpperCase().includes("MIDTERM"));
+    const hasMidterm = midIdx !== -1;
+
+    let targetMidterm = hasMidterm ? (totalRequiredHours / 2.0) : 0;
+    let targetFinals = hasMidterm ? (totalRequiredHours / 2.0) : totalRequiredHours;
+
+    let allocMidterm = 0;
+    let allocFinals = 0;
+
+    table.forEach((row, idx) => {
+      const tf = String(row.time_frame || "");
+      const hMatch = tf.match(/(\d+(?:\.\d+)?)/);
+      const hrs = hMatch ? parseFloat(hMatch[1]) : 0;
+      if (hasMidterm) {
+        if (idx <= midIdx) {
+          allocMidterm += hrs;
+        } else {
+          allocFinals += hrs;
+        }
+      } else {
+        allocFinals += hrs;
+      }
+    });
+
+    const totalAllocated = allocMidterm + allocFinals;
+
+    return {
+      lecUnits,
+      labUnits,
+      totalRequiredHours,
+      hasMidterm,
+      targetMidterm,
+      targetFinals,
+      allocMidterm,
+      allocFinals,
+      totalAllocated,
+      midtermMet: hasMidterm ? (Math.abs(allocMidterm - targetMidterm) < 0.1) : true,
+      finalsMet: Math.abs(allocFinals - targetFinals) < 0.1,
+      totalMet: Math.abs(totalAllocated - totalRequiredHours) < 0.1,
+    };
+  }
+
+  function renderLearningPlanHoursCounter() {
+    const el = document.getElementById("learningPlanHoursCounter");
+    if (!el) return;
+    const stats = computeLearningPlanHoursStats();
+    if (!stats) {
+      el.innerHTML = "";
+      return;
+    }
+
+    const midStatusBadge = stats.hasMidterm
+      ? `<span class="badge" style="background:${stats.midtermMet ? '#dcfce7; color:#166534;' : (stats.allocMidterm < stats.targetMidterm ? '#fef3c7; color:#92400e;' : '#e0e7ff; color:#3730a3;')}; padding:4px 8px; font-weight:700;">
+           Midterm: <strong>${stats.allocMidterm}</strong> / ${stats.targetMidterm} hrs ${stats.midtermMet ? '✓ Met' : (stats.allocMidterm < stats.targetMidterm ? `⚠️ -${stats.targetMidterm - stats.allocMidterm}h` : `+${stats.allocMidterm - stats.targetMidterm}h`)}
+         </span>`
+      : '';
+
+    const finalsStatusBadge = `<span class="badge" style="background:${stats.finalsMet ? '#dcfce7; color:#166534;' : (stats.allocFinals < stats.targetFinals ? '#fef3c7; color:#92400e;' : '#e0e7ff; color:#3730a3;')}; padding:4px 8px; font-weight:700;">
+      ${stats.hasMidterm ? 'Final Term' : 'Total Course'}: <strong>${stats.allocFinals}</strong> / ${stats.targetFinals} hrs ${stats.finalsMet ? '✓ Met' : (stats.allocFinals < stats.targetFinals ? `⚠️ -${stats.targetFinals - stats.allocFinals}h` : `+${stats.allocFinals - stats.targetFinals}h`)}
+    </span>`;
+
+    const totalStatusBadge = `<span class="badge" style="background:${stats.totalMet ? '#15803d; color:#ffffff;' : (stats.totalAllocated < stats.totalRequiredHours ? '#b45309; color:#ffffff;' : '#4338ca; color:#ffffff;')}; padding:4px 10px; font-weight:800;">
+      Semester Total: ${stats.totalAllocated} / ${stats.totalRequiredHours} hrs (${Math.round((stats.totalAllocated / Math.max(1, stats.totalRequiredHours)) * 100)}% ${stats.totalMet ? '✓ Complete' : ''})
+    </span>`;
+
+    el.innerHTML = `
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:0.78rem; font-weight:800; color:#1e293b;">⏱️ Contact Hours Audit:</span>
+          ${midStatusBadge}
+          ${finalsStatusBadge}
+          ${totalStatusBadge}
+        </div>
+        <div style="font-size:0.71rem; color:#64748b;">
+          Basis: <strong>${stats.lecUnits} Lec units</strong> (18h/unit) + <strong>${stats.labUnits} Lab units</strong> (54h/unit) = <strong>${stats.totalRequiredHours} hrs total</strong>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- PART IX: REFERENCES CHECKBOX SELECTION HELPERS ---
+  function toggleLearningPlanRowReference(rowIdx, refCode) {
+    if (!blueprint?.metadata?.learning_plan_table?.[rowIdx]) return;
+    const row = blueprint.metadata.learning_plan_table[rowIdx];
+    const availableRefs = blueprint.metadata.references_table || [];
+    let curReading = row.required_reading || "";
+    
+    const activeCodes = new Set();
+    availableRefs.forEach(r => {
+      const c = (r.code || "").trim();
+      if (c && curReading.includes(c)) activeCodes.add(c);
+    });
+
+    if (activeCodes.has(refCode)) {
+      activeCodes.delete(refCode);
+    } else {
+      activeCodes.add(refCode);
+    }
+
+    let customText = curReading;
+    availableRefs.forEach(r => {
+      const c = (r.code || "").trim();
+      customText = customText.replace(new RegExp(`\\s*\\[?${c}\\]?(?:,\\s*)?`, "gi"), "");
+    });
+    customText = customText.trim().replace(/^,\s*|,\s*$/g, "");
+
+    const refListStr = Array.from(activeCodes).map(c => `[${c}]`).join(", ");
+    row.required_reading = refListStr ? (customText ? `${refListStr} - ${customText}` : refListStr) : customText;
+    renderLearningPlanTable();
+    queueAutoSave();
+  }
+
+  function toggleAllLearningPlanReferences(rowIdx) {
+    if (!blueprint?.metadata?.learning_plan_table?.[rowIdx]) return;
+    const row = blueprint.metadata.learning_plan_table[rowIdx];
+    const availableRefs = blueprint.metadata.references_table || [];
+    if (!availableRefs.length) return;
+
+    let curReading = row.required_reading || "";
+    const activeCodes = new Set();
+    availableRefs.forEach(r => {
+      const c = (r.code || "").trim();
+      if (c && curReading.includes(c)) activeCodes.add(c);
+    });
+
+    const allSelected = availableRefs.every(r => activeCodes.has((r.code || "").trim()));
+
+    let customText = curReading;
+    availableRefs.forEach(r => {
+      const c = (r.code || "").trim();
+      customText = customText.replace(new RegExp(`\\s*\\[?${c}\\]?(?:,\\s*)?`, "gi"), "");
+    });
+    customText = customText.trim().replace(/^,\s*|,\s*$/g, "");
+
+    if (allSelected) {
+      row.required_reading = customText;
+    } else {
+      const refListStr = availableRefs.map(r => `[${(r.code || '').trim()}]`).join(", ");
+      row.required_reading = customText ? `${refListStr} - ${customText}` : refListStr;
+    }
+    renderLearningPlanTable();
+    queueAutoSave();
+  }
+
+  function toggleCustomReadingNotes(rowIdx) {
+    if (!blueprint?.metadata?.learning_plan_table?.[rowIdx]) return;
+    const row = blueprint.metadata.learning_plan_table[rowIdx];
+    row._show_custom_reading = !row._show_custom_reading;
+    renderLearningPlanTable();
+  }
+
+  // --- RUBRIC SCORING MODE (WEIGHTED VS RAW SCORE/POINTS) HELPERS ---
+  function toggleRubricScoringMode(rIdx) {
+    if (!blueprint?.rubrics?.[rIdx]) return;
+    const rub = blueprint.rubrics[rIdx];
+    rub.scoring_mode = rub.scoring_mode === "points" ? "weighted" : "points";
+    renderRubrics();
+    queueAutoSave();
+  }
+
   function renderLearningPlanTable() {
     const m = blueprint.metadata;
     if (!m.learning_plan_table) m.learning_plan_table = [];
@@ -6275,10 +6557,65 @@
         <tr style="${bgStyle}">
           <td><textarea rows="3" onchange="blueprint.metadata.learning_plan_table[${idx}].ilo=this.value">${escapeHtml(row.ilo)}</textarea></td>
           <td style="vertical-align:top;">${cloCellHtml}</td>
-          <td><input type="text" value="${escapeHtml(row.time_frame)}" onchange="blueprint.metadata.learning_plan_table[${idx}].time_frame=this.value" /></td>
+          <td><input type="text" value="${escapeHtml(row.time_frame)}" oninput="blueprint.metadata.learning_plan_table[${idx}].time_frame=this.value; renderLearningPlanHoursCounter();" onchange="blueprint.metadata.learning_plan_table[${idx}].time_frame=this.value; renderLearningPlanHoursCounter(); queueAutoSave();" /></td>
           <td><textarea rows="3" style="${isExam ? 'font-weight:700;' : ''}" onchange="blueprint.metadata.learning_plan_table[${idx}].topics=this.value; renderLearningPlanTable();">${escapeHtml(row.topics)}</textarea></td>
           <td><textarea rows="3" onchange="blueprint.metadata.learning_plan_table[${idx}].tla=this.value">${escapeHtml(row.tla)}</textarea></td>
-          <td><textarea rows="2" onchange="blueprint.metadata.learning_plan_table[${idx}].required_reading=this.value">${escapeHtml(row.required_reading)}</textarea></td>
+                    <td style="vertical-align:top;">
+            ${(() => {
+              const availableRefs = m.references_table || [];
+              if (idx === 0) {
+                return `<textarea rows="3" style="width:100%; font-size:0.73rem;" placeholder="e.g. USeP Student Handbook, University Code" onchange="blueprint.metadata.learning_plan_table[${idx}].required_reading=this.value; queueAutoSave();">${escapeHtml(row.required_reading || '')}</textarea>`;
+              }
+              if (!availableRefs.length) {
+                return `
+                  <div style="font-size:0.68rem; color:#94a3b8; font-style:italic; margin-bottom:2px;">No Part X references yet</div>
+                  <textarea rows="3" style="width:100%; font-size:0.73rem;" placeholder="Type required reading or add Part X references..." onchange="blueprint.metadata.learning_plan_table[${idx}].required_reading=this.value; queueAutoSave();">${escapeHtml(row.required_reading || '')}</textarea>
+                `;
+              }
+              const curReading = row.required_reading || "";
+              const selectedRefCodes = availableRefs.filter(ref => {
+                const code = (ref.code || "").trim();
+                return code && curReading.includes(code);
+              }).map(r => (r.code || "").trim());
+              const allRefsSelected = availableRefs.length > 0 && availableRefs.every(r => selectedRefCodes.includes((r.code || "").trim()));
+
+              return `
+                <div style="min-width:145px; max-width:240px; display:flex; flex-direction:column; gap:3px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                    <span style="font-size:0.67rem; font-weight:700; color:#334155;">References:</span>
+                    <button type="button" class="btn btn-xs ${allRefsSelected ? 'btn-outline-secondary' : 'btn-outline-primary'}"
+                            style="padding:1px 5px; font-size:0.65rem; line-height:1.2;"
+                            onclick="toggleAllLearningPlanReferences(${idx})">
+                      ${allRefsSelected ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:2px; max-height:105px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:4px; padding:3px 5px; background:#f8fafc;">
+                    ${availableRefs.map(ref => {
+                      const rCode = (ref.code || "").trim();
+                      const isChecked = selectedRefCodes.includes(rCode);
+                      const rText = ref.reference ? (ref.reference.slice(0, 40) + (ref.reference.length > 40 ? '...' : '')) : rCode;
+                      return `
+                        <label style="font-size:0.69rem; display:flex; align-items:flex-start; gap:4px; cursor:pointer; margin:0; line-height:1.25; color:${isChecked ? '#0f172a' : '#475569'}; font-weight:${isChecked ? '700' : 'normal'};">
+                          <input type="checkbox" style="margin-top:2px;" ${isChecked ? 'checked' : ''}
+                                 onchange="toggleLearningPlanRowReference(${idx}, '${escapeHtml(rCode)}')" />
+                          <span title="${escapeHtml(ref.reference || rCode)}"><strong>${escapeHtml(rCode)}</strong>: ${escapeHtml(rText)}</span>
+                        </label>
+                      `;
+                    }).join("")}
+                  </div>
+                  <div style="margin-top:2px;">
+                    <span style="font-size:0.67rem; color:#2563eb; cursor:pointer; text-decoration:underline;" onclick="toggleCustomReadingNotes(${idx})">
+                      ${row._show_custom_reading ? '▲ Hide custom notes' : '✏️ Custom notes/pages'}
+                    </span>
+                    ${row._show_custom_reading ? `
+                      <textarea rows="2" style="font-size:0.71rem; margin-top:2px; width:100%;" placeholder="e.g. Ch. 4 (pp. 110-145)"
+                                onchange="blueprint.metadata.learning_plan_table[${idx}].required_reading=this.value; queueAutoSave();">${escapeHtml(row.required_reading || '')}</textarea>
+                    ` : ''}
+                  </div>
+                </div>
+              `;
+            })()}
+          </td>
           <td style="vertical-align:top; min-width:180px;">${actCellHtml}</td>
           <td style="vertical-align:middle; text-align:center;">
             <div style="display:flex; flex-direction:column; gap:3px; align-items:center;">
@@ -6292,6 +6629,7 @@
         </tr>
       `;
     }).join("");
+    renderLearningPlanHoursCounter();
   }
 
   function addLearningPlanRow() {
@@ -6340,6 +6678,7 @@
   }
 
   function renderReferencesTable() {
+    if (typeof renderLearningPlanTable === "function") renderLearningPlanTable();
     const m = blueprint.metadata;
     if (!m.references_table) m.references_table = [];
     const tbody = document.getElementById("referencesTableBody");
@@ -6794,6 +7133,7 @@
     renderCourseOutcomes();
     renderCategories();
     renderLiveGradebookAndReports();
+    renderSyllabusAssessmentActivitiesTable();
   }
 
   function onCloPoChange(cloIdx, newPgoCode) {
@@ -6810,6 +7150,7 @@
     }
     renderCourseOutcomes();
     renderLiveGradebookAndReports();
+    renderSyllabusAssessmentActivitiesTable();
   }
 
   function onCloPiChange(cloIdx, newPiFullText) {
@@ -6826,6 +7167,7 @@
     }
     renderCourseOutcomes();
     renderLiveGradebookAndReports();
+    renderSyllabusAssessmentActivitiesTable();
   }
 
   function renderCourseOutcomes() {
@@ -6931,16 +7273,15 @@
   }
 
   function removeCourseOutcome(idx) {
-    if (blueprint.course_outcomes.length <= 1) return;
     blueprint.course_outcomes.splice(idx, 1);
     renderCourseOutcomes();
     renderCategories();
     renderLiveGradebookAndReports();
     renderLearningPlanTable();
+    renderSyllabusAssessmentActivitiesTable();
   }
 
   function toggleItemClo(cIdx, iIdx, cloId) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") return;
     const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     const it = blueprint.categories[cIdx].items[iIdx];
     ensureItemCloPoints(it);
@@ -6967,7 +7308,6 @@
   }
 
   function setItemAllClos(cIdx, iIdx) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") return;
     const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     const it = blueprint.categories[cIdx].items[iIdx];
     ensureItemCloPoints(it);
@@ -7005,7 +7345,6 @@
   }
 
   function updateItemCloPoint(cIdx, iIdx, cloId, rawVal) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") return;
     const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     const it = blueprint.categories[cIdx].items[iIdx];
     ensureItemCloPoints(it);
@@ -7036,7 +7375,6 @@
   }
 
   function updateItemTotalPoints(cIdx, iIdx, rawTotal) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") return;
     const it = blueprint.categories[cIdx].items[iIdx];
     const newTotal = parseFloat(rawTotal) || 30.0;
     const clos = parseCloList(it.co_id);
@@ -7055,8 +7393,8 @@
   function renderCategories() {
     if (!blueprint) return;
     const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
-    const disAttr = !isSyllabusApproved ? 'disabled="disabled"' : '';
-    const disStyle = !isSyllabusApproved ? 'cursor:not-allowed; opacity:0.6;' : '';
+    const disAttr = '';
+    const disStyle = '';
     const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     const container = document.getElementById("categoriesContainer");
     if (!container) return;
@@ -7338,164 +7676,347 @@
         ? "Class record is locked until syllabus is approved"
         : "Import Roster";
     }
-    // Expand every assessment item into separated per-CLO score columns!
+
+    // Determine terms present in course
+    const termNames = [];
+    (blueprint.categories || []).forEach(c => {
+      const t = c.term || "Midterm";
+      if (!termNames.includes(t)) termNames.push(t);
+    });
+    if (!termNames.length) termNames.push("Midterm");
+    termNames.sort((a, b) => (a === "Midterm" ? -1 : b === "Midterm" ? 1 : 0));
+
+    // Structure layout by Term -> Category -> Items -> per-CLO columns
+    const termLayout = [];
     const allCloCols = [];
     const itemGroups = [];
     const saCodes = [];
     const saWeights = {};
     const saNames = {};
 
-    blueprint.categories.forEach(cat => {
-      const aType = (cat.assessment_type || "SA").toUpperCase();
-      const aCode = (cat.assessment_code || "SA1").toUpperCase();
-      if (aType === "SA" && !saCodes.includes(aCode)) {
-        saCodes.push(aCode);
-        saWeights[aCode] = parseFloat(cat.weight_pct) || 0;
-        saNames[aCode] = cat.name || aCode;
-      }
-      const nItems = Math.max(1, (cat.items || []).length);
-      const defWt = aType === "FA" ? 100.0 : (parseFloat(cat.weight_pct) || 0) / nItems;
-      (cat.items || []).forEach(it => {
-        const ptsMap = ensureItemCloPoints(it);
-        const clos = parseCloList(it.co_id);
-        const totalItPts = clos.reduce((acc, c) => acc + (parseFloat(ptsMap[c.toUpperCase()]) || 0), 0) || (parseFloat(it.max_score) || 30.0);
-        const itEffWt = aType === "FA" ? 100.0 : (parseFloat(it.weight_pct) || defWt);
+    termNames.forEach(tName => {
+      const catsInTerm = (blueprint.categories || []).filter(c => (c.term || "Midterm") === tName);
+      const catList = [];
 
-        itemGroups.push({
-          term: cat.term,
-          assessment_type: aType,
-          assessment_code: aCode,
-          item_id: it.item_id,
-          total_pts: totalItPts,
-          eff_weight: itEffWt,
-          clo_count: clos.length
-        });
+      catsInTerm.forEach((cat, cIdx) => {
+        const aType = (cat.assessment_type || "SA").toUpperCase();
+        const aCode = (cat.assessment_code || (aType + (cIdx + 1))).toUpperCase();
+        const catWt = parseFloat(cat.weight_pct) || 0;
+        if (aType === "SA" && !saCodes.includes(aCode)) {
+          saCodes.push(aCode);
+          saWeights[aCode] = catWt;
+          saNames[aCode] = cat.name || aCode;
+        }
 
-        clos.forEach(cloId => {
-          const cloMaxPts = parseFloat(ptsMap[cloId.toUpperCase()]) || (totalItPts / Math.max(1, clos.length));
-          // Consolidated assessment weight: Even if separated into CLO columns,
-          // the assessment weight is recognized as the full consolidated activity weight (e.g. 20%)
-          const fractionalCloWt = totalItPts > 0
-            ? Math.round((itEffWt * (cloMaxPts / totalItPts)) * 100) / 100
-            : Math.round((itEffWt / Math.max(1, clos.length)) * 100) / 100;
+        const itemsInCat = cat.items || [];
+        const nItems = Math.max(1, itemsInCat.length);
+        const defWt = aType === "FA" ? 0.0 : (catWt / nItems);
 
-          allCloCols.push({
-            item_id: it.item_id,
-            name: it.name,
-            clo_id: cloId,
-            co_id: cloId, // single CLO per column
-            score_key: `${it.item_id}__${cloId.toUpperCase()}`,
-            col_label: clos.length > 1 ? `${it.item_id} (${cloId})` : it.item_id,
-            is_multi_clo: clos.length > 1,
-            max_score: cloMaxPts,
-            total_item_max: totalItPts,
-            term: cat.term,
+        const itemsList = [];
+        itemsInCat.forEach(it => {
+          const ptsMap = ensureItemCloPoints(it);
+          const clos = parseCloList(it.co_id);
+          const totalItPts = clos.reduce((acc, c) => acc + (parseFloat(ptsMap[c.toUpperCase()]) || 0), 0) || (parseFloat(it.max_score) || 30.0);
+          const itEffWt = aType === "FA" ? 0.0 : (parseFloat(it.weight_pct) || defWt);
+
+          itemGroups.push({
+            term: tName,
             assessment_type: aType,
             assessment_code: aCode,
-            eff_weight: itEffWt, // consolidated activity weight
-            fractional_weight: fractionalCloWt
+            item_id: it.item_id,
+            total_pts: totalItPts,
+            eff_weight: itEffWt,
+            clo_count: clos.length
+          });
+
+          const itemCols = [];
+          clos.forEach(cloId => {
+            const cloMaxPts = parseFloat(ptsMap[cloId.toUpperCase()]) || (totalItPts / Math.max(1, clos.length));
+            const fractionalCloWt = totalItPts > 0
+              ? Math.round((itEffWt * (cloMaxPts / totalItPts)) * 100) / 100
+              : Math.round((itEffWt / Math.max(1, clos.length)) * 100) / 100;
+
+            const colObj = {
+              item_id: it.item_id,
+              name: it.name,
+              clo_id: cloId,
+              co_id: cloId,
+              score_key: `${it.item_id}__${cloId.toUpperCase()}`,
+              col_label: clos.length > 1 ? `${it.item_id} (${cloId})` : it.item_id,
+              is_multi_clo: clos.length > 1,
+              max_score: cloMaxPts,
+              total_item_max: totalItPts,
+              term: tName,
+              assessment_type: aType,
+              assessment_code: aCode,
+              eff_weight: itEffWt,
+              fractional_weight: fractionalCloWt
+            };
+            itemCols.push(colObj);
+            allCloCols.push(colObj);
+          });
+
+          itemsList.push({
+            item: it,
+            item_id: it.item_id,
+            total_pts: totalItPts,
+            eff_weight: itEffWt,
+            cols: itemCols
           });
         });
+
+        catList.push({
+          category: cat,
+          cat_code: aCode,
+          cat_name: cat.name || aCode,
+          assessment_type: aType,
+          cat_weight: catWt,
+          items: itemsList
+        });
+      });
+
+      termLayout.push({
+        term: tName,
+        categories: catList
       });
     });
 
     // Build SA CLO pairs: (saCode, co_id) from separated per-CLO columns
     const saCloPairs = [];
     saCodes.forEach(sc => {
-      blueprint.course_outcomes.forEach(co => {
+      (blueprint.course_outcomes || []).forEach(co => {
         const hasMatch = allCloCols.some(col => col.assessment_type === "SA" && col.assessment_code === sc && col.clo_id.toUpperCase() === co.co_id.toUpperCase());
         if (hasMatch) saCloPairs.push({ saCode: sc, coId: co.co_id });
       });
     });
 
+    // Header Row 1
+    let thRow1 = `
+      <th rowspan="2" style="vertical-align:middle;">#</th>
+      <th rowspan="2" style="vertical-align:middle;">ID #</th>
+      <th rowspan="2" style="vertical-align:middle;">Student Name</th>
+    `;
+
+    termLayout.forEach(tb => {
+      tb.categories.forEach(cb => {
+        cb.items.forEach(ib => {
+          thRow1 += `
+            <th colspan="${ib.cols.length}" style="text-align:center; background:${cb.assessment_type === 'FA' ? '#f1f5f9' : '#dbeafe'}; border-bottom:1px solid #93c5fd;">
+              <div style="font-size:0.66rem; color:#475569;">${escapeHtml(tb.term)} ${escapeHtml(cb.cat_code)}</div>
+              <div style="font-weight:800; color:#0f172a; font-size:0.82rem;">${escapeHtml(ib.item_id)}</div>
+              <div style="font-size:0.68rem; color:#1e3a8a;">Total: ${ib.total_pts} pts | Wt: ${ib.eff_weight}%</div>
+            </th>
+          `;
+        });
+        // Category Grade column per term
+        thRow1 += `
+          <th rowspan="2" class="th-cat-grade" style="background:#fef9c3; text-align:center; vertical-align:middle; min-width:85px; font-weight:800; border-left:1px solid #eab308; border-right:1px solid #eab308;">
+            <div style="font-size:0.75rem; color:#854d0e;">${escapeHtml(cb.cat_code)} GRADE</div>
+            <div style="font-size:0.65rem; color:#a16207; font-weight:600;">(Base 50)</div>
+          </th>
+        `;
+      });
+
+      // Midterm Grade column placed immediately after the last assessment column in Midterm!
+      if (tb.term === "Midterm") {
+        thRow1 += `
+          <th rowspan="2" style="background:#bae6fd; text-align:center; vertical-align:middle; min-width:92px; font-weight:900; color:#0369a1; border-left:2px solid #0284c7; border-right:2px solid #0284c7;">
+            <div>MIDTERM GRADE</div>
+            <div style="font-size:0.68rem; color:#075985;">(MG)</div>
+          </th>
+        `;
+      } else if (tb.term === "Finals") {
+        thRow1 += `
+          <th rowspan="2" style="background:#bae6fd; text-align:center; vertical-align:middle; min-width:92px; font-weight:900; color:#0369a1; border-left:2px solid #0284c7; border-right:2px solid #0284c7;">
+            <div>FINAL GRADE</div>
+            <div style="font-size:0.68rem; color:#075985;">(FG)</div>
+          </th>
+        `;
+      }
+    });
+
+    const hasBothTerms = termLayout.some(tb => tb.term === "Midterm") && termLayout.some(tb => tb.term === "Finals");
+    if (hasBothTerms) {
+      thRow1 += `
+        <th rowspan="2" style="background:#fef3c7; text-align:center; vertical-align:middle; min-width:88px; font-weight:900; color:#854d0e; border-left:1px solid #fde047; border-right:1px solid #fde047;">
+          <div>AFG</div>
+          <div style="font-size:0.66rem;">(Average)</div>
+        </th>
+      `;
+    }
+
+    thRow1 += `
+      <th rowspan="2" style="background:#dcfce7; text-align:center; vertical-align:middle; min-width:85px; font-weight:900; color:#14532d;">
+        <div>GRADES</div>
+        <div style="font-size:0.66rem;">(USeP)</div>
+      </th>
+      <th rowspan="2" style="text-align:center; vertical-align:middle; min-width:85px; font-weight:800;">REMARKS</th>
+    `;
+
+    saCloPairs.forEach(p => {
+      thRow1 += `
+        <th rowspan="2" style="background:#f1f5f9; text-align:center; vertical-align:middle;">
+          <div style="font-size:0.7rem;">${escapeHtml(p.saCode)} CLO</div>
+          <span class="badge badge-co">${escapeHtml(p.coId)}</span>
+        </th>
+      `;
+    });
+
+    (blueprint.course_outcomes || []).forEach(co => {
+      thRow1 += `
+        <th rowspan="2" style="background:#dbeafe; text-align:center; vertical-align:middle;">
+          <div style="font-size:0.7rem;">CLO FINAL</div>
+          <strong>${escapeHtml(co.co_id)}</strong>
+        </th>
+      `;
+    });
+
+    thRow1 += `<th rowspan="2"></th>`;
+
+    // Header Row 2
+    const thRow2 = allCloCols.map(col => `
+      <th style="text-align:center; min-width:78px; background:${col.assessment_type === 'FA' ? '#f8fafc' : '#eff6ff'};">
+        <span class="badge badge-co" style="margin-bottom:2px;">${escapeHtml(col.clo_id)}</span>
+        <div style="font-size:0.69rem; color:#1e3a8a; font-weight:700;">Max: ${col.max_score} pts</div>
+        <div style="font-size:0.65rem; color:#166534; font-weight:700;" title="Consolidated assessment activity weight">Item Wt: ${col.eff_weight}%</div>
+      </th>
+    `).join("");
+
     const thead = `
       <thead>
-        <tr>
-          <th rowspan="2" style="vertical-align:middle;">#</th>
-          <th rowspan="2" style="vertical-align:middle;">ID #</th>
-          <th rowspan="2" style="vertical-align:middle;">Student Name</th>
-          ${itemGroups.map(grp => `
-            <th colspan="${grp.clo_count}" style="text-align:center; background:${grp.assessment_type === 'FA' ? '#f1f5f9' : '#dbeafe'}; border-bottom:1px solid #93c5fd;">
-              <div style="font-size:0.66rem; color:#475569;">${escapeHtml(grp.term)} ${escapeHtml(grp.assessment_code)}</div>
-              <div style="font-weight:800; color:#0f172a; font-size:0.82rem;">${escapeHtml(grp.item_id)}</div>
-              <div style="font-size:0.68rem; color:#1e3a8a;">Total: ${grp.total_pts} pts | Wt: ${grp.eff_weight}%</div>
-            </th>
-          `).join("")}
-          <th rowspan="2" style="background:#e0f2fe; text-align:center; vertical-align:middle;">MG</th>
-          <th rowspan="2" style="background:#e0f2fe; text-align:center; vertical-align:middle;">FG</th>
-          <th rowspan="2" style="background:#fef3c7; text-align:center; vertical-align:middle;">AFG</th>
-          <th rowspan="2" style="background:#dcfce7; text-align:center; vertical-align:middle;">GRADES</th>
-          <th rowspan="2" style="text-align:center; vertical-align:middle;">REMARKS</th>
-          ${saCloPairs.map(p => `
-            <th rowspan="2" style="background:#f1f5f9; text-align:center; vertical-align:middle;">
-              <div style="font-size:0.7rem;">${p.saCode} CLO</div>
-              <span class="badge badge-co">${p.coId}</span>
-            </th>
-          `).join("")}
-          ${blueprint.course_outcomes.map(co => `
-            <th rowspan="2" style="background:#dbeafe; text-align:center; vertical-align:middle;">
-              <div style="font-size:0.7rem;">CLO FINAL</div>
-              <strong>${escapeHtml(co.co_id)}</strong>
-            </th>
-          `).join("")}
-          <th rowspan="2"></th>
-        </tr>
-        <tr>
-          ${allCloCols.map(col => `
-            <th style="text-align:center; min-width:78px; background:${col.assessment_type === 'FA' ? '#f8fafc' : '#eff6ff'};">
-              <span class="badge badge-co" style="margin-bottom:2px;">${escapeHtml(col.clo_id)}</span>
-              <div style="font-size:0.69rem; color:#1e3a8a; font-weight:700;">Max: ${col.max_score} pts</div>
-              <div style="font-size:0.65rem; color:#166534; font-weight:700;" title="Consolidated assessment activity weight">Item Wt: ${col.eff_weight}%</div>
-            </th>
-          `).join("")}
-        </tr>
+        <tr>${thRow1}</tr>
+        <tr>${thRow2}</tr>
       </thead>
     `;
 
     // Track stats for Tab 4 reports
-    const saCloPassCounts = {}; // `${saCode}_${coId}` -> count >= degree
+    const saCloPassCounts = {};
     saCloPairs.forEach(p => saCloPassCounts[`${p.saCode}_${p.coId}`] = 0);
-    const cloFinalPassCounts = {}; // coId -> count >= degree
-    blueprint.course_outcomes.forEach(co => cloFinalPassCounts[co.co_id] = 0);
+    const cloFinalPassCounts = {};
+    (blueprint.course_outcomes || []).forEach(co => cloFinalPassCounts[co.co_id] = 0);
 
     const studentResults = [];
     const studentsList = blueprint.students || [];
-    const rowsHtml = studentsList.length ? studentsList.map((st, sIdx) => {
-      // Compute MG and FG using Base-50 formula across all separated per-CLO columns
-      const termGrades = { Midterm: 50.0, Finals: 50.0 };
-      ["Midterm", "Finals"].forEach(tName => {
-        const saCats = blueprint.categories.filter(c => c.term === tName && (c.assessment_type || "SA").toUpperCase() === "SA");
-        let tTotal = 0;
-        saCats.forEach(cat => {
-          // Group by item_id to calculate consolidated item score percentage
-          const itemsInCat = cat.items || [];
-          const catWt = parseFloat(cat.weight_pct) || 0;
-          let catEarnedNumerator = 0;
-          let catTotalWeight = 0;
 
-          itemsInCat.forEach(it => {
-            const itemCols = allCloCols.filter(col => col.term === tName && col.item_id === it.item_id && col.assessment_type === "SA");
-            const itemTotalMax = itemCols.reduce((sum, col) => sum + (parseFloat(col.max_score) || 0), 0) || (parseFloat(it.max_score) || 30.0);
-            const itemStudentScore = itemCols.reduce((sum, col) => sum + (parseFloat(getStudentCloScore(st, col)) || 0), 0);
-            const itemEffWt = parseFloat(it.weight_pct) || (catWt / Math.max(1, itemsInCat.length));
-            const itemFraction = itemTotalMax > 0 ? (itemStudentScore / itemTotalMax) : 0;
-            catEarnedNumerator += (itemFraction * itemEffWt);
-            catTotalWeight += itemEffWt;
+    const rowsHtml = studentsList.length ? studentsList.map((st, sIdx) => {
+      let rowCells = `
+        <td>${sIdx + 1}</td>
+        <td><input type="text" style="width:95px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.student_id)}" oninput="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(800);" onchange="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
+        <td><input type="text" style="width:170px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.last_name || '')}, ${escapeHtml(st.first_name || '')}"
+          oninput="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(800);"
+          onchange="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
+      `;
+
+      const termGrades = {};
+
+      termLayout.forEach(tb => {
+        let termWeightedRawRatio = 0.0;
+        let totalTermWeight = 0.0;
+
+        tb.categories.forEach(cb => {
+          if (cb.assessment_type === "SA") {
+            cb.items.forEach(ib => {
+              totalTermWeight += ib.eff_weight;
+            });
+          }
+        });
+        if (totalTermWeight <= 0) totalTermWeight = 100.0;
+
+        tb.categories.forEach(cb => {
+          let catWeightedRatioSum = 0.0;
+          let catWeightSum = 0.0;
+
+          cb.items.forEach(ib => {
+            let itemScoreSum = 0.0;
+            let itemMaxSum = 0.0;
+
+            ib.cols.forEach(col => {
+              const val = getStudentCloScore(st, col);
+              const valNum = parseFloat(val) || 0.0;
+              itemScoreSum += valNum;
+              itemMaxSum += parseFloat(col.max_score) || 0.0;
+
+              const isAcked = Boolean(st.assessment_acknowledgments && st.assessment_acknowledgments[col.item_id] && st.assessment_acknowledgments[col.item_id].acknowledged);
+              const ackAt = isAcked ? st.assessment_acknowledgments[col.item_id].acknowledged_at : '';
+
+              rowCells += `<td style="text-align:center; position:relative;">
+                <input type="number" step="any" min="0" max="${col.max_score}" value="${val}"
+                  data-col-item="${escapeHtml(col.item_id)}" data-col-clo="${escapeHtml(col.clo_id)}"
+                  style="width:62px; text-align:center; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''} ${isAcked ? 'border-color:#16a34a; background:#f0fdf4;' : ''}"
+                  title="${escapeHtml(col.item_id)} - ${escapeHtml(col.clo_id)} (Max: ${col.max_score})${isAcked ? ' [Student Acknowledged Score: ' + ackAt + ']' : ''}"
+                  oninput="validateAndLimitScoreInput(this, ${col.max_score}); liveCalculateStudentRow(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value);"
+                  onchange="updateStudentCloScore(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value)"
+                  ${isCrLocked ? 'disabled' : ''} />
+                ${isAcked ? `<span title="Student acknowledged receipt of paper & final score on ${escapeHtml(ackAt)}" style="position:absolute; top:2px; right:4px; font-size:0.6rem; color:#16a34a; line-height:1; pointer-events:none;">✓</span>` : ''}
+              </td>`;
+            });
+
+            const itemTotalMax = itemMaxSum || ib.total_pts;
+            const itemRatio = itemTotalMax > 0 ? (itemScoreSum / itemTotalMax) : 0.0;
+            const itemWt = ib.eff_weight > 0 ? ib.eff_weight : 1.0;
+            catWeightedRatioSum += (itemRatio * itemWt);
+            catWeightSum += itemWt;
+
+            if (cb.assessment_type === "SA") {
+              const itemNormWeight = (ib.eff_weight / totalTermWeight);
+              termWeightedRawRatio += (itemRatio * itemNormWeight);
+            }
           });
 
-          const catBase50 = catTotalWeight > 0 ? (catEarnedNumerator / catTotalWeight) * 50.0 + 50.0 : 50.0;
-          tTotal += (catBase50 * sumWt) / 100.0;
+          // Category Grade formula: sum of (weight * (score / total)) / (sum of weights) * 50 + 50
+          const catGrade = catWeightSum > 0 ? ((catWeightedRatioSum / catWeightSum) * 50.0 + 50.0) : 50.0;
+          rowCells += `
+            <td id="stCatGrd_${sIdx}_${escapeHtml(tb.term)}_${escapeHtml(cb.cat_code)}" style="text-align:center; font-weight:700; background:#fefce8; color:#854d0e; border-left:1px solid #fef08a; border-right:1px solid #fef08a;">
+              ${catGrade.toFixed(2)}
+            </td>
+          `;
         });
-        termGrades[tName] = tTotal;
+
+        // Term Grade formula: [((Q1/T1)*W1) + ((Q2/T2)*W2) + ((Exam/TExam)*W3)] * 50 + 50
+        const termGrade = (termWeightedRawRatio * 50.0) + 50.0;
+        termGrades[tb.term] = termGrade;
+
+        if (tb.term === "Midterm") {
+          rowCells += `
+            <td id="stMg_${sIdx}" style="text-align:center; font-weight:800; background:#f0f9ff; color:#0369a1; border-left:2px solid #bae6fd; border-right:2px solid #bae6fd;">
+              ${termGrade.toFixed(2)}
+            </td>
+          `;
+        } else if (tb.term === "Finals") {
+          rowCells += `
+            <td id="stFg_${sIdx}" style="text-align:center; font-weight:800; background:#f0f9ff; color:#0369a1; border-left:2px solid #bae6fd; border-right:2px solid #bae6fd;">
+              ${termGrade.toFixed(2)}
+            </td>
+          `;
+        }
       });
 
-      const mg = termGrades.Midterm;
-      const fg = termGrades.Finals;
-      const afg = (mg + fg) * 0.5;
+      const mg = termGrades.Midterm !== undefined ? termGrades.Midterm : 50.0;
+      const fg = termGrades.Finals !== undefined ? termGrades.Finals : mg;
+      const afg = hasBothTerms ? ((mg + fg) * 0.5) : (termGrades.Finals !== undefined ? fg : mg);
       const finGrade = lookupUsepGrade(afg);
       const passed = finGrade !== "UW" && finGrade <= 3.00;
 
-      // Compute per-SA CLO Grades strictly from the separated score columns for that CLO
+      if (hasBothTerms) {
+        rowCells += `
+          <td id="stAfg_${sIdx}" style="text-align:center; font-weight:800; background:#fffbeb; color:#854d0e; border-left:1px solid #fef08a; border-right:1px solid #fef08a;">
+            ${afg.toFixed(2)}
+          </td>
+        `;
+      }
+
+      rowCells += `
+        <td id="stFin_${sIdx}" style="text-align:center; font-weight:900; background:${passed ? '#dcfce7' : '#fee2e2'}; color:${passed ? '#15803d' : '#b91c1c'};">
+          ${typeof finGrade === 'number' ? finGrade.toFixed(2) : finGrade}
+        </td>
+        <td style="text-align:center;">
+          <span id="stRem_${sIdx}" class="badge ${passed ? 'badge-pass' : 'badge-fail'}">
+            ${passed ? 'PASSED' : 'FAILED'}
+          </span>
+        </td>
+      `;
+
+      // Per-SA CLO Grades
       const studentSaCloGrades = saCloPairs.map(p => {
         const matching = allCloCols.filter(col => col.assessment_type === "SA" && col.assessment_code === p.saCode && col.clo_id.toUpperCase() === p.coId.toUpperCase());
         const sumWt = matching.reduce((a, col) => a + col.eff_weight, 0);
@@ -7504,14 +8025,14 @@
           return a + (sc * col.eff_weight / (parseFloat(col.max_score) || 1));
         }, 0);
         const val = sumWt > 0 ? (num / sumWt) * 50.0 + 50.0 : 50.0;
-        const coObj = blueprint.course_outcomes.find(c => c.co_id === p.coId);
+        const coObj = (blueprint.course_outcomes || []).find(c => c.co_id === p.coId);
         const deg = coObj ? (parseFloat(coObj.target_score_pct) || 75.0) : 75.0;
         if (val >= deg) saCloPassCounts[`${p.saCode}_${p.coId}`]++;
         return val;
       });
 
-      // Compute CLO Final Grades strictly from the separated score columns for that CLO
-      const studentCloFinalGrades = blueprint.course_outcomes.map(co => {
+      // CLO Final Grades
+      const studentCloFinalGrades = (blueprint.course_outcomes || []).map(co => {
         let matching = allCloCols.filter(col => col.assessment_type === "SA" && col.clo_id.toUpperCase() === co.co_id.toUpperCase());
         if (!matching.length) {
           matching = allCloCols.filter(col => col.clo_id.toUpperCase() === co.co_id.toUpperCase());
@@ -7527,42 +8048,24 @@
         return val;
       });
 
-      // Cache per-student results for the Dashboard (same math as the class record)
+      studentSaCloGrades.forEach(g => {
+        rowCells += `<td style="text-align:center; background:#f8fafc;">${g.toFixed(2)}</td>`;
+      });
+      studentCloFinalGrades.forEach(g => {
+        rowCells += `<td style="text-align:center; font-weight:700; background:#eff6ff;">${g.toFixed(2)}</td>`;
+      });
+
+      rowCells += `
+        <td>${isCrLocked ? '<span title="Locked during review / finalization" style="font-size:0.85rem; color:#94a3b8;">🔒</span>' : `<button class="btn btn-danger btn-sm" onclick="removeStudentRow(${sIdx})">&times;</button>`}</td>
+      `;
+
       studentResults.push({
         sIdx, mg, fg, afg, finGrade, passed,
-        cloFinal: Object.fromEntries(blueprint.course_outcomes.map((co, i) => [co.co_id, studentCloFinalGrades[i]])),
+        cloFinal: Object.fromEntries((blueprint.course_outcomes || []).map((co, i) => [co.co_id, studentCloFinalGrades[i]])),
         saClo: Object.fromEntries(saCloPairs.map((p, i) => [`${p.saCode}_${p.coId}`, studentSaCloGrades[i]]))
       });
 
-      return `
-        <tr id="stRow_${sIdx}">
-          <td>${sIdx + 1}</td>
-          <td><input type="text" style="width:95px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.student_id)}" oninput="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(800);" onchange="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
-          <td><input type="text" style="width:170px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.last_name)}, ${escapeHtml(st.first_name)}"
-            oninput="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(800);"
-            onchange="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
-          ${allCloCols.map(col => {
-            const val = getStudentCloScore(st, col);
-            return `<td style="text-align:center;">
-              <input type="number" step="any" min="0" max="${col.max_score}" value="${val}"
-                data-col-item="${escapeHtml(col.item_id)}" data-col-clo="${escapeHtml(col.clo_id)}"
-                style="width:62px; text-align:center; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}"
-                title="${escapeHtml(col.item_id)} - ${escapeHtml(col.clo_id)} (Max score allowed: ${col.max_score})"
-                oninput="validateAndLimitScoreInput(this, ${col.max_score}); liveCalculateStudentRow(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value);"
-                onchange="updateStudentCloScore(${sIdx}, '${escapeHtml(col.item_id)}', '${escapeHtml(col.clo_id)}', this.value)"
-                ${isCrLocked ? 'disabled' : ''} />
-            </td>`;
-          }).join("")}
-          <td id="stMg_${sIdx}" style="text-align:center; font-weight:700; background:#f0f9ff;">${mg.toFixed(2)}</td>
-          <td id="stFg_${sIdx}" style="text-align:center; font-weight:700; background:#f0f9ff;">${fg.toFixed(2)}</td>
-          <td id="stAfg_${sIdx}" style="text-align:center; font-weight:700; background:#fffbeb;">${afg.toFixed(2)}</td>
-          <td id="stFin_${sIdx}" style="text-align:center; font-weight:800;">${typeof finGrade === 'number' ? finGrade.toFixed(2) : finGrade}</td>
-          <td style="text-align:center;"><span id="stRem_${sIdx}" class="badge ${passed ? 'badge-pass' : 'badge-fail'}">${passed ? 'PASSED' : 'FAILED'}</span></td>
-          ${studentSaCloGrades.map(g => `<td style="text-align:center; background:#f8fafc;">${g.toFixed(2)}</td>`).join("")}
-          ${studentCloFinalGrades.map(g => `<td style="text-align:center; font-weight:700; background:#eff6ff;">${g.toFixed(2)}</td>`).join("")}
-          <td>${isCrLocked ? '<span title="Locked during review / finalization" style="font-size:0.85rem; color:#94a3b8;">🔒</span>' : `<button class="btn btn-danger btn-sm" onclick="removeStudentRow(${sIdx})">&times;</button>`}</td>
-        </tr>
-      `;
+      return `<tr id="stRow_${sIdx}">${rowCells}</tr>`;
     }).join("") : `<tr><td colspan="100" style="text-align:center; padding:28px; color:#64748b; font-size:0.9rem;">
         No students in class roster yet. Click <strong>+ Add Student</strong> or <strong>Import Students CSV</strong> below to populate the class record.
       </td></tr>`;
@@ -7576,8 +8079,7 @@
     checkClassRecordLock();
   }
 
-    // =========================================================================
-  // SYLLABUS TEXT FORMATTER (Bold, Bullets, En-dash, Paragraphs, Auto-Enter)
+    // SYLLABUS TEXT FORMATTER (Bold, Bullets, En-dash, Paragraphs, Auto-Enter)
   // =========================================================================
   const SyllabusFormatter = {
     activeElement: null,
@@ -8296,35 +8798,78 @@
       });
     });
 
-    // Compute Term Grades in real-time
+    const termNames = ["Midterm", "Finals"].filter(tName => (blueprint.categories || []).some(c => (c.term || "Midterm") === tName));
+    if (!termNames.length) termNames.push("Midterm");
     const termGrades = {};
-    ["Midterm", "Finals"].forEach(tName => {
-      let tTotal = 0.0;
-      (blueprint.categories || []).filter(c => c.term === tName).forEach(cat => {
-        const isFA = (cat.assessment_type || "SA").toUpperCase() === "FA";
-        if (isFA) return;
+
+    termNames.forEach(tName => {
+      const catsInTerm = (blueprint.categories || []).filter(c => (c.term || "Midterm") === tName);
+      let termWeightedRawRatio = 0.0;
+      let totalTermWeight = 0.0;
+
+      catsInTerm.forEach(cat => {
+        const aType = (cat.assessment_type || "SA").toUpperCase();
+        if (aType === "SA") {
+          const catWt = parseFloat(cat.weight_pct) || 0;
+          const items = cat.items || [];
+          const defWt = catWt / Math.max(1, items.length);
+          items.forEach(it => {
+            totalTermWeight += (parseFloat(it.weight_pct) || defWt);
+          });
+        }
+      });
+      if (totalTermWeight <= 0) totalTermWeight = 100.0;
+
+      catsInTerm.forEach((cat, cIdx) => {
+        const aType = (cat.assessment_type || "SA").toUpperCase();
+        const aCode = (cat.assessment_code || (aType + (cIdx + 1))).toUpperCase();
+        const catWt = parseFloat(cat.weight_pct) || 0;
         const items = cat.items || [];
-        let num = 0.0;
-        let sumWt = 0.0;
+        const defWt = aType === "FA" ? 0.0 : (catWt / Math.max(1, items.length));
+
+        let catWeightedRatioSum = 0.0;
+        let catWeightSum = 0.0;
+
         items.forEach(it => {
+          const ptsMap = ensureItemCloPoints(it);
           const clos = parseCloList(it.co_id);
+          const itEffWt = aType === "FA" ? 0.0 : (parseFloat(it.weight_pct) || defWt);
+          let itemScoreSum = 0.0;
+          let itemMaxSum = 0.0;
+
           clos.forEach(c => {
             const sc = parseFloat(st.scores[`${it.item_id}__${c.toUpperCase()}`]) || 0;
-            const maxS = getItemCloMaxScore(it.item_id, c);
-            const effWt = (parseFloat(it.weight_pct) || 0) / Math.max(1, clos.length);
-            num += (sc * effWt) / maxS;
-            sumWt += effWt;
+            const maxS = parseFloat(ptsMap[c.toUpperCase()]) || ((parseFloat(it.max_score) || 30.0) / Math.max(1, clos.length));
+            itemScoreSum += sc;
+            itemMaxSum += maxS;
           });
+
+          const itemTotalMax = itemMaxSum || parseFloat(it.max_score) || 30.0;
+          const itemRatio = itemTotalMax > 0 ? (itemScoreSum / itemTotalMax) : 0.0;
+          const itemWt = itEffWt > 0 ? itEffWt : 1.0;
+          catWeightedRatioSum += (itemRatio * itemWt);
+          catWeightSum += itemWt;
+
+          if (aType === "SA") {
+            const itemNormWeight = itEffWt / totalTermWeight;
+            termWeightedRawRatio += (itemRatio * itemNormWeight);
+          }
         });
-        const catBase50 = sumWt > 0 ? (num / sumWt) * 50.0 + 50.0 : 50.0;
-        tTotal += (catBase50 * sumWt) / 100.0;
+
+        // Update Category Grade DOM cell: sum of (weight * (score / total)) / (sum of weights) * 50 + 50
+        const catGrade = catWeightSum > 0 ? ((catWeightedRatioSum / catWeightSum) * 50.0 + 50.0) : 50.0;
+        const elCat = document.getElementById(`stCatGrd_${sIdx}_${tName}_${aCode}`);
+        if (elCat) elCat.textContent = catGrade.toFixed(2);
       });
-      termGrades[tName] = tTotal;
+
+      const termGrade = (termWeightedRawRatio * 50.0) + 50.0;
+      termGrades[tName] = termGrade;
     });
 
-    const mg = termGrades.Midterm;
-    const fg = termGrades.Finals;
-    const afg = (mg + fg) * 0.5;
+    const mg = termGrades.Midterm !== undefined ? termGrades.Midterm : 50.0;
+    const fg = termGrades.Finals !== undefined ? termGrades.Finals : mg;
+    const hasBothTerms = termNames.includes("Midterm") && termNames.includes("Finals");
+    const afg = hasBothTerms ? ((mg + fg) * 0.5) : (termGrades.Finals !== undefined ? fg : mg);
     const finGrade = lookupUsepGrade(afg);
     const passed = finGrade !== "UW" && finGrade <= 3.00;
 
@@ -8345,7 +8890,6 @@
 
     queueAutoSave(800);
   }
-
   function updateStudentCloScore(sIdx, itemId, cloId, val) {
     if (!currentWorkflow || currentWorkflow.status !== "approved") return;
     if (!blueprint.students[sIdx].scores) blueprint.students[sIdx].scores = {};
@@ -9047,6 +9591,11 @@
   }
 
   // Render Workflow Stepper & Actions (Sequential 6 Stages)
+  function renderWorkflowState(wf) {
+    if (wf) currentWorkflow = wf;
+    renderWorkflowStepper();
+  }
+
   function renderWorkflowStepper() {
     const card = document.getElementById("syllabusWorkflowCard");
     if (!currentWorkflow) {
@@ -9950,7 +10499,7 @@
         alert(data.message || `Syllabus successfully submitted!\nNotification dispatched to Review Committee (${assignedCommName}).`);
       }
       currentWorkflow = data.workflow;
-      renderWorkflowState(currentWorkflow);
+      renderWorkflowStepper();
       loadApprovalRequests(true);
       await loadCoursesList();
     } catch(err) {
@@ -10366,7 +10915,7 @@
       loadApprovalRequests(true);
       if (courseId === currentCourseId) {
         currentWorkflow = data.workflow;
-        renderWorkflowState(currentWorkflow);
+        renderWorkflowStepper();
       }
     } catch(e) {
       alert("Error: " + e.message);
@@ -10568,9 +11117,11 @@
 
       const numLevels = rub.levels.length;
       const critCount = (rub.criteria || []).length;
+      const isPointsMode = rub.scoring_mode === "points";
       const weightSum = (rub.criteria || []).reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+      const totalPts = (rub.criteria || []).reduce((acc, c) => acc + (parseFloat(c.max_points !== undefined ? c.max_points : c.weight_pct) || 0), 0);
       const isWeight100 = Math.abs(weightSum - 100) < 0.1;
-      const weightColor = isWeight100 ? "#16a34a" : (weightSum > 100 ? "#dc2626" : "#d97706");
+      const weightColor = isPointsMode ? "#2563eb" : (isWeight100 ? "#16a34a" : (weightSum > 100 ? "#dc2626" : "#d97706"));
 
       // Options for linked assessment
       const actSelectOptions = acts.map(a => {
@@ -10610,9 +11161,15 @@
                   oninput="updateRubricAssessmentCodes(${rIdx}, this.value)" />
               </div>
 
-              <!-- Weight sum badge -->
-              <span id="rubric_header_weight_${rIdx}" class="rubric-weight-badge" style="font-size:0.75rem; font-weight:700; color:${weightColor}; background:#fff; padding:4px 8px; border-radius:4px; border:1px solid #e2e8f0;" title="Sum of criteria weights">
-                Weight: ${weightSum.toFixed(0)}% ${isWeight100 ? '✓' : '⚠️'}
+              <!-- Mode Toggle & Badge -->
+              <button type="button" class="btn btn-xs ${isPointsMode ? 'btn-primary' : 'btn-outline-primary'}"
+                      style="padding:3px 7px; font-size:0.71rem; font-weight:700;"
+                      onclick="toggleRubricScoringMode(${rIdx})"
+                      title="Toggle between 100% Weighted mode and Raw Score (sum of points) mode">
+                ${isPointsMode ? '⭐ Mode: Raw Score (Points)' : '⚖️ Mode: 100% Weighted'}
+              </button>
+              <span id="rubric_header_weight_${rIdx}" class="rubric-weight-badge" style="font-size:0.75rem; font-weight:700; color:${weightColor}; background:#fff; padding:4px 8px; border-radius:4px; border:1px solid #e2e8f0;" title="${isPointsMode ? 'Sum of criteria raw score points' : 'Sum of criteria weights'}">
+                ${isPointsMode ? `Raw Score: ${totalPts.toFixed(0)} pts ✓` : `Weight: ${weightSum.toFixed(0)}% ${isWeight100 ? '✓' : '⚠️'}`}
               </span>
 
               <button class="btn btn-outline-secondary btn-xs" onclick="duplicateRubric(${rIdx})" title="Duplicate rubric">📋 Duplicate</button>
@@ -10717,12 +11274,21 @@
                             style="width:100%; font-weight:700; font-size:0.75rem; margin-bottom:4px;"
                             oninput="updateCriterionField(${rIdx}, ${cIdx}, 'name', this.value)" />
                           <div style="display:flex; align-items:center; gap:6px; font-size:0.72rem; margin-bottom:4px;">
-                            <span>Weight:</span>
-                            <input type="number" step="1" min="0" max="100" value="${crit.weight_pct || 0}"
-                              style="width:50px; font-size:0.72rem; text-align:right;"
-                              oninput="updateCriterionField(${rIdx}, ${cIdx}, 'weight_pct', this.value)" />
-                            <span>%</span>
+                            <span>${isPointsMode ? 'Max Points:' : 'Weight:'}</span>
+                            <input type="number" step="1" min="0" max="1000" value="${isPointsMode ? (crit.max_points !== undefined ? crit.max_points : (crit.weight_pct || 0)) : (crit.weight_pct || 0)}"
+                              style="width:52px; font-size:0.72rem; text-align:right; font-weight:700;"
+                              oninput="updateCriterionField(${rIdx}, ${cIdx}, '${isPointsMode ? 'max_points' : 'weight_pct'}', this.value)" />
+                            <span>${isPointsMode ? 'pts' : '%'}</span>
                           </div>
+                          ${isPointsMode ? `
+                            <div style="display:flex; align-items:center; gap:4px; font-size:0.67rem; color:#64748b; margin-bottom:4px;">
+                              <span>Weight (Opt):</span>
+                              <input type="number" step="1" min="0" max="100" value="${crit.weight_pct || ''}" placeholder="opt"
+                                style="width:40px; font-size:0.67rem; text-align:right;"
+                                oninput="updateCriterionField(${rIdx}, ${cIdx}, 'weight_pct', this.value)" />
+                              <span>%</span>
+                            </div>
+                          ` : ''}
                           ${rub.enable_criteria_clos ? `
                             <div style="display:flex; align-items:center; gap:4px; font-size:0.72rem; margin-top:3px; background:#eff6ff; padding:2px 4px; border-radius:4px; border:1px solid #bfdbfe;">
                               <span style="font-weight:700; color:#1e40af;">CLO:</span>
@@ -11687,18 +12253,23 @@
   function updateRubricWeightDisplays(rIdx) {
     if (!blueprint || !blueprint.rubrics || !blueprint.rubrics[rIdx]) return;
     const rub = blueprint.rubrics[rIdx];
+    const isPointsMode = rub.scoring_mode === "points";
     const weightSum = (rub.criteria || []).reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+    const totalPts = (rub.criteria || []).reduce((acc, c) => acc + (parseFloat(c.max_points !== undefined ? c.max_points : c.weight_pct) || 0), 0);
     const isWeight100 = Math.abs(weightSum - 100) < 0.1;
-    const weightColor = isWeight100 ? "#16a34a" : (weightSum > 100 ? "#dc2626" : "#d97706");
+    const weightColor = isPointsMode ? "#2563eb" : (isWeight100 ? "#16a34a" : (weightSum > 100 ? "#dc2626" : "#d97706"));
+
     const hBadge = document.getElementById(`rubric_header_weight_${rIdx}`);
     if (hBadge) {
       hBadge.style.color = weightColor;
-      hBadge.innerHTML = `Weight: ${weightSum.toFixed(0)}% ${isWeight100 ? '✓' : '⚠️'}`;
+      hBadge.innerHTML = isPointsMode
+        ? `Raw Score: ${totalPts.toFixed(0)} pts ✓`
+        : `Weight: ${weightSum.toFixed(0)}% ${isWeight100 ? '✓' : '⚠️'}`;
     }
     const fWeight = document.getElementById(`rubric_footer_weight_${rIdx}`);
     if (fWeight) {
       fWeight.style.color = weightColor;
-      fWeight.textContent = `${weightSum.toFixed(0)}%`;
+      fWeight.textContent = isPointsMode ? `${totalPts.toFixed(0)} pts` : `${weightSum.toFixed(0)}%`;
     }
   }
 
@@ -11720,8 +12291,8 @@
     if (!blueprint || !blueprint.rubrics || !blueprint.rubrics[rIdx]) return;
     const crit = blueprint.rubrics[rIdx].criteria[cIdx];
     if (!crit) return;
-    if (field === "weight_pct") {
-      crit.weight_pct = parseFloat(val) || 0;
+    if (field === "weight_pct" || field === "max_points") {
+      crit[field] = parseFloat(val) || 0;
       updateRubricWeightDisplays(rIdx);
     } else {
       crit[field] = val;
@@ -13885,6 +14456,7 @@
     document.getElementById("manualStudentId").value = "";
     document.getElementById("manualStudentLastName").value = "";
     document.getElementById("manualStudentFirstName").value = "";
+    document.getElementById("manualStudentMiddleName").value = "";
     document.getElementById("manualStudentEmail").value = "";
     
     // Auto-fill program/section from current course section if available
@@ -13904,8 +14476,11 @@
     const sid = (document.getElementById("manualStudentId")?.value || "").trim();
     const last = (document.getElementById("manualStudentLastName")?.value || "").trim();
     const first = (document.getElementById("manualStudentFirstName")?.value || "").trim();
+    const mid = (document.getElementById("manualStudentMiddleName")?.value || "").trim();
     const prog = (document.getElementById("manualStudentProgramYear")?.value || "").trim();
     const email = (document.getElementById("manualStudentEmail")?.value || "").trim();
+    let computedName = `${last}, ${first}`.trim();
+    if (mid) computedName = `${last}, ${first} ${mid}`.trim();
     const statusMsg = document.getElementById("manualStudentStatusMsg");
     const btn = document.getElementById("btnSubmitManualStudent");
 
@@ -13931,7 +14506,8 @@
           student_id: sid,
           last_name: last,
           first_name: first,
-          name: `${last}, ${first}`.trim(),
+          middle_name: mid,
+          name: computedName,
           program_year: prog,
           email: email || `${sid.toLowerCase()}@usep.edu.ph`
         })
@@ -13976,6 +14552,257 @@
     } catch (e) {
       alert("Error removing student: " + e.message);
     }
+  }
+
+  // ==========================================
+  // ACKNOWLEDGEMENT OF RECEIPT OF SCORES & PAPER (SUB-RIBBON TAB 4)
+  // ==========================================
+  function renderReceiptAckTab() {
+    if (!blueprint) return;
+    const thead = document.getElementById("receiptAckThead");
+    const tbody = document.getElementById("receiptAckTbody");
+    if (!thead || !tbody) return;
+
+    const students = blueprint.students || [];
+    const categories = blueprint.categories || [];
+
+    // Collect all assessment items
+    const allItems = [];
+    const catGroups = [];
+
+    categories.forEach(cat => {
+      const term = cat.term || "Midterm";
+      const catCode = cat.assessment_code || (cat.assessment_type === "SA" ? "SA" : "FA");
+      const catName = cat.name || catCode;
+      const items = cat.items || [];
+      if (items.length) {
+        catGroups.push({
+          term,
+          catCode,
+          catName,
+          count: items.length
+        });
+        items.forEach(it => {
+          allItems.push({
+            term,
+            catCode,
+            item_id: it.item_id,
+            name: it.name || it.item_id,
+            max_score: parseFloat(it.max_score) || 30,
+            weight_pct: parseFloat(it.weight_pct) || 0
+          });
+        });
+      }
+    });
+
+    const totalStudentsEl = document.getElementById("receiptAckTotalStudents");
+    const totalItemsEl = document.getElementById("receiptAckTotalItems");
+    const totalConfirmedEl = document.getElementById("receiptAckTotalConfirmed");
+    const completionRateEl = document.getElementById("receiptAckCompletionRate");
+
+    const totalPossibleAcks = students.length * allItems.length;
+    let totalConfirmedAcks = 0;
+
+    let thRow1 = `
+      <th rowspan="2" style="padding:8px; vertical-align:middle; text-align:center; width:45px; background:#f1f5f9; border:1px solid #cbd5e1;">#</th>
+      <th rowspan="2" style="padding:8px; vertical-align:middle; text-align:left; width:110px; background:#f1f5f9; border:1px solid #cbd5e1;">Student ID</th>
+      <th rowspan="2" style="padding:8px; vertical-align:middle; text-align:left; min-width:180px; background:#f1f5f9; border:1px solid #cbd5e1;">Student Name</th>
+    `;
+
+    catGroups.forEach(cg => {
+      thRow1 += `
+        <th colspan="${cg.count}" style="padding:6px; text-align:center; background:#e0f2fe; color:#0369a1; font-weight:800; border:1px solid #93c5fd; font-size:0.75rem;">
+          ${escapeHtml(cg.term)} &bull; ${escapeHtml(cg.catCode)} <span style="font-weight:normal; opacity:0.85;">(${escapeHtml(cg.catName)})</span>
+        </th>
+      `;
+    });
+
+    thRow1 += `
+      <th rowspan="2" style="padding:8px; vertical-align:middle; text-align:center; width:95px; background:#fefce8; color:#854d0e; font-weight:800; border:1px solid #fde047;">Ack Ratio</th>
+      <th rowspan="2" style="padding:8px; vertical-align:middle; text-align:center; width:110px; background:#f1f5f9; border:1px solid #cbd5e1;">Receipt Status</th>
+    `;
+
+    let thRow2 = allItems.map(it => `
+      <th style="padding:5px 6px; text-align:center; min-width:90px; background:#f8fafc; border:1px solid #cbd5e1; font-size:0.72rem;">
+        <div style="font-weight:700; color:#0f172a;">${escapeHtml(it.item_id)}</div>
+        <div style="font-size:0.65rem; color:#64748b;">${it.max_score} pts</div>
+      </th>
+    `).join("");
+
+    thead.innerHTML = `<tr>${thRow1}</tr><tr>${thRow2}</tr>`;
+
+    if (!students.length) {
+      tbody.innerHTML = `<tr><td colspan="${allItems.length + 5}" style="text-align:center; padding:30px; color:#64748b;">No students enrolled yet.</td></tr>`;
+      if (totalStudentsEl) totalStudentsEl.textContent = "0";
+      if (totalItemsEl) totalItemsEl.textContent = String(allItems.length);
+      if (totalConfirmedEl) totalConfirmedEl.textContent = "0";
+      if (completionRateEl) completionRateEl.textContent = "0.0%";
+      return;
+    }
+
+    let tbodyHtml = "";
+    students.forEach((st, sIdx) => {
+      const acks = st.assessment_acknowledgments || {};
+      let studentAckCount = 0;
+
+      let cells = `
+        <td style="padding:6px; text-align:center; border:1px solid #e2e8f0; font-weight:600;">${sIdx + 1}</td>
+        <td style="padding:6px; border:1px solid #e2e8f0; font-weight:700; color:#0f766e;">${escapeHtml(st.student_id || '')}</td>
+        <td style="padding:6px; border:1px solid #e2e8f0; font-weight:600;">${escapeHtml(st.last_name || '')}${st.first_name ? ', ' + escapeHtml(st.first_name) : (st.name ? escapeHtml(st.name) : '')}</td>
+      `;
+
+      allItems.forEach(it => {
+        const itAck = acks[it.item_id] || {};
+        const isAcked = Boolean(itAck.acknowledged);
+        if (isAcked) {
+          studentAckCount++;
+          totalConfirmedAcks++;
+          const scoreVal = st.scores && st.scores[it.item_id] !== undefined ? st.scores[it.item_id] : '—';
+          cells += `
+            <td style="padding:5px 6px; text-align:center; border:1px solid #e2e8f0; background:#f0fdf4;" title="Score: ${scoreVal} / ${it.max_score}&#10;Received paper & confirmed final score: ${escapeHtml(itAck.acknowledged_at || '')}">
+              <div style="display:inline-flex; align-items:center; gap:3px; padding:2px 6px; border-radius:4px; font-size:0.68rem; font-weight:700; background:#dcfce7; color:#15803d; border:1px solid #86efac;">
+                ✓ Ack
+              </div>
+              <div style="font-size:0.6rem; color:#15803d; margin-top:2px;">${escapeHtml(itAck.acknowledged_at ? itAck.acknowledged_at.split(' ')[0] : '')}</div>
+            </td>
+          `;
+        } else {
+          cells += `
+            <td style="padding:5px 6px; text-align:center; border:1px solid #e2e8f0; background:#ffffff;">
+              <span style="font-size:0.68rem; color:#94a3b8; padding:2px 5px; border-radius:3px; background:#f8fafc; border:1px solid #e2e8f0;">
+                ⏳ Pending
+              </span>
+            </td>
+          `;
+        }
+      });
+
+      const stPct = allItems.length ? (studentAckCount / allItems.length * 100).toFixed(0) : 0;
+      const isComplete = allItems.length > 0 && studentAckCount === allItems.length;
+
+      cells += `
+        <td style="padding:6px; text-align:center; border:1px solid #e2e8f0; font-weight:800; background:#fefce8; color:#854d0e;">
+          ${studentAckCount} / ${allItems.length}
+        </td>
+        <td style="padding:6px; text-align:center; border:1px solid #e2e8f0;">
+          <span style="display:inline-block; padding:3px 8px; border-radius:4px; font-size:0.72rem; font-weight:800; background:${isComplete ? '#dcfce7; color:#15803d;' : (studentAckCount > 0 ? '#eff6ff; color:#1d4ed8;' : '#fee2e2; color:#b91c1c;')}">
+            ${isComplete ? '✓ Completed' : (studentAckCount > 0 ? `${stPct}% Partial` : 'None')}
+          </span>
+        </td>
+      `;
+
+      tbodyHtml += `<tr class="receipt-ack-row" data-name="${escapeHtml((st.last_name || '') + ' ' + (st.first_name || '') + ' ' + (st.name || '')).toLowerCase()}" data-id="${escapeHtml(st.student_id || '').toLowerCase()}">${cells}</tr>`;
+    });
+
+    tbody.innerHTML = tbodyHtml;
+
+    if (totalStudentsEl) totalStudentsEl.textContent = String(students.length);
+    if (totalItemsEl) totalItemsEl.textContent = String(allItems.length);
+    if (totalConfirmedEl) totalConfirmedEl.textContent = String(totalConfirmedAcks);
+    if (completionRateEl) {
+      const rate = totalPossibleAcks > 0 ? ((totalConfirmedAcks / totalPossibleAcks) * 100).toFixed(1) : "0.0";
+      completionRateEl.textContent = `${rate}%`;
+    }
+  }
+
+  function filterReceiptAckTable() {
+    const q = (document.getElementById("receiptAckSearchInput")?.value || "").trim().toLowerCase();
+    document.querySelectorAll(".receipt-ack-row").forEach(r => {
+      const name = r.getAttribute("data-name") || "";
+      const id = r.getAttribute("data-id") || "";
+      if (!q || name.includes(q) || id.includes(q)) {
+        r.style.display = "";
+      } else {
+        r.style.display = "none";
+      }
+    });
+  }
+
+  let receiptAckPollTimer = null;
+  function startReceiptAckPolling() {
+    stopReceiptAckPolling();
+    receiptAckPollTimer = setInterval(() => {
+      const tabEl = document.getElementById("tab-receipt-ack");
+      if (tabEl && tabEl.classList.contains("active") && currentCourseId) {
+        refreshCourseAndReceiptAcks(true);
+      } else {
+        stopReceiptAckPolling();
+      }
+    }, 12000);
+  }
+  function stopReceiptAckPolling() {
+    if (receiptAckPollTimer) {
+      clearInterval(receiptAckPollTimer);
+      receiptAckPollTimer = null;
+    }
+  }
+
+  async function refreshCourseAndReceiptAcks(renderTab = true) {
+    if (!currentCourseId) {
+      if (renderTab) renderReceiptAckTab();
+      return;
+    }
+    try {
+      // 1. Fetch live acknowledgments from dedicated endpoint
+      const ackRes = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}/assessment-acknowledgments`);
+      if (ackRes.ok) {
+        const ackData = await ackRes.json();
+        const acksMap = ackData.acknowledgments || {};
+        if (blueprint && blueprint.students) {
+          blueprint.students.forEach(st => {
+            const sid = (st.student_id || "").trim();
+            const sidLower = sid.toLowerCase();
+            const sidDigits = sid.replace(/\D/g, "");
+            let matchedAck = acksMap[sid];
+            if (!matchedAck) {
+              for (const [k, v] of Object.entries(acksMap)) {
+                if (k.toLowerCase() === sidLower || (sidDigits && sidDigits.length >= 4 && k.replace(/\D/g, "") === sidDigits)) {
+                  matchedAck = v;
+                  break;
+                }
+              }
+            }
+            if (matchedAck) {
+              st.assessment_acknowledgments = matchedAck;
+            }
+          });
+        }
+      } else {
+        // Fallback to full course doc
+        const res = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}`);
+        if (res.ok) {
+          const doc = await res.json();
+          if (doc && doc.blueprint && doc.blueprint.students) {
+            const freshMap = {};
+            doc.blueprint.students.forEach(st => {
+              const sid = (st.student_id || "").trim().toLowerCase();
+              if (sid) freshMap[sid] = st.assessment_acknowledgments || {};
+            });
+            if (blueprint && blueprint.students) {
+              blueprint.students.forEach(st => {
+                const sid = (st.student_id || "").trim().toLowerCase();
+                if (freshMap[sid]) {
+                  st.assessment_acknowledgments = freshMap[sid];
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not reload course acknowledgments", e);
+    }
+    if (renderTab) {
+      renderReceiptAckTab();
+    }
+    const gbTab = document.getElementById("tab-gradebook");
+    if (gbTab && gbTab.classList.contains("active")) {
+      renderLiveGradebookAndReports();
+    }
+  }
+
+  function printReceiptAckSheet() {
+    window.print();
   }
 
   function exportAcknowledgmentPdf() {
@@ -14211,18 +15038,24 @@
         <input type="text" id="manualStudentId" placeholder="e.g. 2024-00101" required style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
       </div>
 
-      <div style="display:flex; gap:10px;">
+      <div style="display:flex; gap:8px;">
         <div style="flex:1;">
           <label for="manualStudentLastName" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
             Last Name <span style="color:#b91c1c;">*</span>
           </label>
-          <input type="text" id="manualStudentLastName" placeholder="e.g. Dela Cruz" required style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+          <input type="text" id="manualStudentLastName" placeholder="e.g. Dela Cruz" required style="width:100%; padding:7px 8px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
         </div>
         <div style="flex:1;">
           <label for="manualStudentFirstName" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
             First Name
           </label>
-          <input type="text" id="manualStudentFirstName" placeholder="e.g. Juan" style="width:100%; padding:7px 10px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+          <input type="text" id="manualStudentFirstName" placeholder="e.g. Juan" style="width:100%; padding:7px 8px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
+        </div>
+        <div style="flex:1;">
+          <label for="manualStudentMiddleName" style="font-weight:700; font-size:0.8rem; display:block; margin-bottom:3px; color:#1e293b;">
+            Middle Name <span style="font-size:0.7rem; color:#64748b; font-weight:normal;">(Opt)</span>
+          </label>
+          <input type="text" id="manualStudentMiddleName" placeholder="e.g. Santos" style="width:100%; padding:7px 8px; font-size:0.85rem; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box;" />
         </div>
       </div>
 

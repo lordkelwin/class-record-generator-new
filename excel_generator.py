@@ -120,7 +120,7 @@ def _get_student_clo_score(st_obj, it: AssessmentItem, clo_id: str, clo_pts: flo
     return ""
 
 
-def generate_class_record_workbook(blueprint: SyllabusBlueprint) -> bytes:
+def generate_class_record_workbook(blueprint) -> bytes:
     """
     Generates a USeP College of Engineering OBE Class Record Excel (.xlsx) workbook
     modeled directly after 'Math 211_Class Records_1st Sem SY 2026-2027.xlsm' and 'EE 211.pdf':
@@ -132,6 +132,10 @@ def generate_class_record_workbook(blueprint: SyllabusBlueprint) -> bytes:
       3. 'CLO & CQI Report' sheet: Dedicated print-ready CLO Assessment Report, CO Assessment Tool + Chart,
          and CQI Plan.
     """
+    if isinstance(blueprint, dict):
+        from models import SyllabusBlueprint
+        blueprint = SyllabusBlueprint.from_dict(blueprint)
+
     wb = Workbook()
 
     # Common Fonts & Fills
@@ -369,7 +373,7 @@ def generate_class_record_workbook(blueprint: SyllabusBlueprint) -> bytes:
             continue
 
         term_start_col = curr_col
-        sa_grade_And_weight_refs: List[Tuple[str, str, str]] = []  # (sa_grade_col_let, first_item_let, last_item_let)
+        term_sa_col_letters: List[str] = []
         t_fill = midterm_fill if t_idx == 0 else finals_fill
 
         for cat in t_cats:
@@ -460,7 +464,7 @@ def generate_class_record_workbook(blueprint: SyllabusBlueprint) -> bytes:
             ws.column_dimensions[grd_let].width = 12.5
 
             if cat.assessment_type.upper() == "SA":
-                sa_grade_And_weight_refs.append((grd_let, cat_item_letters[0], cat_item_letters[-1]))
+                term_sa_col_letters.extend(cat_item_letters)
 
             # Populate Student Per-CLO Scores & Base-50 Category Grade Formula (Rows 18 .. 17+num_students)
             for s_idx in range(num_students):
@@ -475,12 +479,11 @@ def generate_class_record_workbook(blueprint: SyllabusBlueprint) -> bytes:
                     sc_cell.border = b_grid
                     sc_cell.number_format = "0.##"
 
-                # Exact USeP Base-50 Category Grade Formula across all per-CLO columns in the category:
-                # =((H18*$H$12/$H$14 + I18*$I$12/$I$14 + ...)/SUM($H$12:$K$12))*50 + 50
-                weighted_terms = [f"{cl}{r_num}*${cl}$12/${cl}$14" for cl in cat_item_letters]
-                numerator = "+".join(weighted_terms)
-                sum_wts = f"SUM(${cat_item_letters[0]}$12:${cat_item_letters[-1]}$12)"
-                base50_formula = f"=(({numerator})/{sum_wts})*50+50"
+                # Category Grade formula: sum of (weight * (score / total)) / (sum of weights) * 50 + 50
+                weighted_cat_terms = [f"({cl}{r_num}/${cl}$14)*${cl}$12" for cl in cat_item_letters]
+                cat_num = "+".join(weighted_cat_terms)
+                cat_den = f"SUM(${cat_item_letters[0]}$12:${cat_item_letters[-1]}$12)" if len(cat_item_letters) > 1 else f"${cat_item_letters[0]}$12"
+                base50_formula = f"=((({cat_num})/({cat_den}))*50)+50"
 
                 cg = ws.cell(row=r_num, column=grd_col, value=base50_formula)
                 cg.fill = grade_col_fill
@@ -525,9 +528,13 @@ def generate_class_record_workbook(blueprint: SyllabusBlueprint) -> bytes:
         for s_idx in range(num_students):
             r_num = 18 + s_idx
             # Exact USeP Term Grade formula:
-            # =(J18*SUM($H$12:$I$12))/100 + (L18*SUM($K$12:$K$12))/100 + ...
-            sa_parts = [f"({g_let}{r_num}*SUM(${f_let}$12:${l_let}$12))/100" for g_let, f_let, l_let in sa_grade_And_weight_refs]
-            t_formula = "=" + "+".join(sa_parts) if sa_parts else "=50"
+            # [((Q1 score/Q1 total)*W1) + ((Q2 score/Q2 total)*W2) + ((Exam/Exam total)*W3)] * 50 + 50
+            sa_terms = [f"({cl}{r_num}/${cl}$14)*${cl}$12" for cl in term_sa_col_letters]
+            sa_wts = [f"${cl}$12" for cl in term_sa_col_letters]
+            if sa_terms:
+                t_formula = f"=((({'+'.join(sa_terms)})/({'+'.join(sa_wts)}))*50)+50"
+            else:
+                t_formula = "=50"
             cmg = ws.cell(row=r_num, column=t_grd_col, value=t_formula)
             cmg.fill = soft_blue_fill
             cmg.font = f_bold

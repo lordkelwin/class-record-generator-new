@@ -144,7 +144,8 @@ def init_academic_db(force_rebuild: bool = False) -> None:
     for uname, udata in users.items():
         orig_name = udata.get("full_name", uname)
         clean_name = remove_honorific(orig_name)
-        roles_json = json.dumps(udata.get("roles", [udata.get("role", "faculty")]))
+        roles_list = udata.get("workflow_roles") or udata.get("roles") or [udata.get("role", "faculty")]
+        roles_json = json.dumps(roles_list)
         faculty_rows.append((
             uname,
             clean_name,

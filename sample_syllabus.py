@@ -439,6 +439,90 @@ def get_designated_program_heads(programs: Optional[List[str]] = None, primary_c
         heads = ["Charito O. Claro"]
     return heads
 
+def generate_clos_from_pgo_pi(pgo_pi_str: str = "", program_code: str = "EE") -> List[CourseOutcome]:
+    """Generates Course Learning Outcomes (CLOs) pre-aligned with PGOs and PIs from program structure."""
+    from program_structures import get_program_structure
+    prog = get_program_structure(program_code)
+    pgo_catalog = prog.get("pgo_pi_catalog") or []
+
+    clos: List[CourseOutcome] = []
+    
+    if pgo_pi_str:
+        tokens = [t.strip() for t in pgo_pi_str.split(";") if t.strip()]
+        for tok in tokens:
+            m = re.search(r"PGO[- ]?([a-m]|\d{1,2})[- ]+([a-m]\.\d+|\d{1,2}\.\d+)", tok, re.IGNORECASE)
+            if not m:
+                continue
+            pgo_key = m.group(1).lower()
+            pi_key = m.group(2).lower()
+            
+            pgo_match = None
+            for p in pgo_catalog:
+                p_code = (p.get("pgo_code") or "").lower()
+                p_letter = (p.get("letter") or "").lower()
+                if pgo_key == p_letter or f"pgo {pgo_key}" in p_code or f"pgo-{pgo_key}" in p_code:
+                    pgo_match = p
+                    break
+            if not pgo_match and pgo_catalog:
+                pgo_match = pgo_catalog[0]
+            
+            pi_match = None
+            if pgo_match:
+                for pi in pgo_match.get("pis", []):
+                    if (pi.get("pi_code") or "").lower() == pi_key:
+                        pi_match = pi
+                        break
+                if not pi_match and pgo_match.get("pis"):
+                    pi_match = pgo_match["pis"][0]
+            
+            if pgo_match and pi_match:
+                cid = f"CLO{len(clos) + 1}"
+                igas = pi_match.get("igas") or pgo_match.get("igas") or "IGA2"
+                primary_iga = igas.split(",")[0].strip()
+                clos.append(CourseOutcome(
+                    co_id=cid,
+                    description=pi_match.get("description") or pgo_match.get("description") or f"Master concepts aligned with {cid}",
+                    program_outcomes=pgo_match.get("pgo_code", "PGO a"),
+                    graduate_outcome_desc=pgo_match.get("description", ""),
+                    performance_indicator=pi_match.get("full_text", ""),
+                    iga_aligned=primary_iga,
+                    target_score_pct=75.0,
+                    target_class_pass_pct=50.0,
+                ))
+
+    # If no CLOs were generated from string, pre-populate from first 3 PGOs/PIs
+    if not clos and pgo_catalog:
+        for idx, p in enumerate(pgo_catalog[:3]):
+            pis = p.get("pis", [])
+            pi_obj = pis[0] if pis else {}
+            cid = f"CLO{idx + 1}"
+            igas = pi_obj.get("igas") or p.get("igas") or "IGA2"
+            primary_iga = igas.split(",")[0].strip()
+            clos.append(CourseOutcome(
+                co_id=cid,
+                description=pi_obj.get("description") or p.get("description") or f"Master concepts aligned with {cid}",
+                program_outcomes=p.get("pgo_code", f"PGO {idx+1}"),
+                graduate_outcome_desc=p.get("description", ""),
+                performance_indicator=pi_obj.get("full_text", ""),
+                iga_aligned=primary_iga,
+                target_score_pct=75.0,
+                target_class_pass_pct=50.0,
+            ))
+
+    if not clos:
+        clos.append(CourseOutcome(
+            co_id="CLO1",
+            description="Apply foundational engineering concepts to analyze and solve technical problems.",
+            program_outcomes="PGO a",
+            graduate_outcome_desc="a) Apply knowledge of mathematics and sciences to solve engineering problems",
+            performance_indicator="a.1. Apply concepts in mathematics to solve engineering problems.",
+            iga_aligned="IGA2",
+            target_score_pct=75.0,
+            target_class_pass_pct=50.0,
+        ))
+
+    return clos
+
 def get_blank_blueprint(
     course_code: str = "",
     course_title: str = "",
@@ -459,6 +543,8 @@ def get_blank_blueprint(
     program_name: str = "",
     year_level: str = "Second Year",
     sdg_alignments: str = "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure",
+    pgo_pi_str: str = "",
+    course_outcomes: Optional[List[CourseOutcome]] = None,
 ) -> SyllabusBlueprint:
     """Returns a completely clean starter blueprint for creating a syllabus from scratch."""
     if course_code and (" - " in course_code or " – " in course_code):
@@ -520,21 +606,12 @@ def get_blank_blueprint(
         TermConfig(term_name="Finals", weight_pct=50.0),
     ]
 
-    starter_clo = CourseOutcome(
-        co_id="CLO1",
-        description="",
-        program_outcomes="PGO a",
-        graduate_outcome_desc="a) Apply knowledge of mathematics and sciences to solve engineering problems",
-        performance_indicator="a.1. Apply concepts in mathematics to solve engineering problems.",
-        iga_aligned="IGA2",
-        target_score_pct=75.0,
-        target_class_pass_pct=50.0,
-    )
+    clos_to_use = course_outcomes or generate_clos_from_pgo_pi(pgo_pi_str, program_code or "EE")
 
     return SyllabusBlueprint(
         metadata=metadata,
         terms=terms,
-        course_outcomes=[starter_clo],
+        course_outcomes=clos_to_use,
         categories=[],
         students=[],
         cqi_plan=CQIPlan(indicators=get_default_cqi_indicators()),

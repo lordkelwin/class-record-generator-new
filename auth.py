@@ -53,7 +53,7 @@ LEGACY_USERNAME_ALIASES = {
     "committee_arenga": "faculty_arenga",
     "committee_ravida": "faculty_ravida",
     "programhead_claro": "faculty_claro",
-    "assoc_dean": "faculty_arenga",
+    "assoc_dean": "faculty_tongson",
     "staff_simplicio_lab": "faculty_simplicio",
 }
 
@@ -280,8 +280,8 @@ def ensure_default_admin() -> None:
         seed_accounts = [
             ("faculty_tano", "Elwin Jay J. Tano", "faculty", ["review_committee"], "Faculty Member", "EE"),
             ("faculty_basan", "Nikka Samantha A. Basan", "faculty", ["review_committee"], "Faculty Member", "EE"),
-            ("faculty_arenga", "Delan Zoe H. Arenga", "faculty", ["associate_dean", "review_committee"], "Associate Dean, College of Engineering", "ECE"),
-            ("faculty_ravida", "Kim P. Ravida", "faculty", ["review_committee"], "Faculty Member", "ECE"),
+            ("faculty_arenga", "Delan Zoe H. Arenga", "faculty", ["review_committee"], "Faculty Member", "ECE"),
+            ("faculty_ravida", "Kim P. Ravida", "faculty", ["qa_head", "review_committee"], "College Quality Assurance Head", "ECE"),
             ("faculty_claro", "Charito O. Claro", "faculty", ["program_head", "review_committee"], "Program Head - Electrical Engineering", "EE"),
             ("qahead_ce", "College QA Head", "faculty", ["qa_head"], "College Quality Assurance Head", "*"),
             ("dean_cataytay", "Joie D. Cataytay", "faculty", ["dean", "review_committee"], "Dean, College of Engineering", "*"),
@@ -383,7 +383,7 @@ def _password_problem(pw: str) -> str:
 # Session / CSRF helpers
 # --------------------------------------------------------------------------
 def current_user():
-    username = session.get("username")
+    username = session.get("username") or session.get("student_id")
     if not username:
         return None
     if session.get("role") == "student":
@@ -561,14 +561,18 @@ def _safe_next(target: str) -> str:
 # --------------------------------------------------------------------------
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if current_user():
+    curr = current_user()
+    if curr:
+        if curr.get("role") == "student":
+            return redirect(url_for("student_dashboard"))
         return redirect(url_for("index"))
 
     error = None
     username = ""
     if request.method == "POST":
         _check_csrf()
-        username = _normalize_username(request.form.get("username"))
+        raw_username = request.form.get("username") or ""
+        username = _normalize_username(raw_username)
         password = request.form.get("password") or ""
         key = _attempt_key(username)
         wait = _locked_seconds_left(key)
@@ -592,6 +596,24 @@ def login():
                 if user.get("must_change_password"):
                     return redirect(url_for("auth.change_password"))
                 return redirect(_safe_next(request.args.get("next", "")))
+
+            # If not a faculty account, check if this is an enrolled student signing in
+            import student_store
+            ok_st, st_obj, _ = student_store.verify_student_login(raw_username, password)
+            if ok_st and st_obj:
+                _clear_failures(key)
+                session.clear()
+                session.permanent = True
+                session["username"] = st_obj["student_id"]
+                session["student_id"] = st_obj["student_id"]
+                session["student_name"] = st_obj.get("full_name") or st_obj.get("name") or st_obj.get("student_id")
+                session["role"] = "student"
+                session["email"] = st_obj.get("email") or f"{st_obj['student_id']}@usep.edu.ph"
+                session["has_signature"] = bool(st_obj.get("signature_data"))
+                session["signature_data"] = st_obj.get("signature_data", "")
+                get_csrf_token()
+                return redirect(url_for("student_dashboard"))
+
             _register_failure(key)
             error = "Invalid username or password."
 

@@ -94,8 +94,8 @@ class TestAdminRolesAndEmail(unittest.TestCase):
         # Revert back to original accurate values
         users = auth._load_users()
         users["faculty_arenga"]["email"] = "delan.arenga@usep.edu.ph"
-        users["faculty_arenga"]["workflow_roles"] = ["associate_dean", "review_committee"]
-        users["faculty_arenga"]["position_title"] = "Associate Dean, College of Engineering"
+        users["faculty_arenga"]["workflow_roles"] = ["review_committee"]
+        users["faculty_arenga"]["position_title"] = "Faculty Member"
         auth._save_users(users)
 
     def test_update_nonexistent_user_handles_gracefully(self):
