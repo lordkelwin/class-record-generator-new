@@ -348,166 +348,338 @@
       </div>
     </div>
 
-    <!-- 1. PENDING SYLLABUS ACKNOWLEDGMENT (ACTION REQUIRED) -->
-    <div class="sp-card">
-      <div class="sp-card-hdr" style="background:#fffbeb; border-bottom:1px solid #fef3c7;">
-        <h2 style="color:#92400e;">
-          <span>🔔</span> Action Required: Pending Syllabus Acknowledgment
-          <span class="badge-pill badge-pending" id="badgePendingCount">{{ stats.pending_count }} Subject(s)</span>
-        </h2>
-      </div>
-      <div class="sp-card-body">
-        {% if pending %}
-          <div class="course-card-grid" id="pendingCoursesGrid">
-            {% for c in pending %}
-              <div class="course-item-card pending" id="courseCard_{{ c.course_id }}">
-                <div>
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
-                    <span class="badge-pill badge-pending">QA Approved &bull; Awaiting Your Signature</span>
-                    <span style="font-size:0.75rem; color:#64748b; font-weight:700;">{{ c.credit_units }}</span>
-                  </div>
-                  <h3 style="margin:4px 0 2px 0; font-size:1.05rem; color:#0f172a;">{{ c.course_code }}</h3>
-                  <div style="font-size:0.88rem; font-weight:600; color:#334155; margin-bottom:8px;">{{ c.course_title }}</div>
-                  
-                  <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
-                    <strong>Instructor:</strong> {{ c.faculty_name }}
-                  </div>
-                  <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
-                    <strong>Section:</strong> {{ c.section or 'Regular' }} &bull; <strong>AY:</strong> {{ c.semester_ay }}
-                  </div>
-                  {% if c.schedule and c.schedule != 'TBA' %}
-                    <div style="font-size:0.78rem; color:#475569; margin-bottom:6px;">
-                      <strong>Schedule:</strong> {{ c.schedule }}
-                    </div>
-                  {% endif %}
-                </div>
-
-                <div style="display:flex; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0; flex-wrap:wrap;">
-                  <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem; color:#0f766e; border-color:#99f6e4; background:#f0fdf4;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
-                    📊 Performance
-                  </button>
-                  <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;" onclick="openReviewSyllabusModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}')">
-                    🔍 Review Syllabus
-                  </button>
-                  <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" onclick="markSyllabusReviewed('{{ c.course_id }}')" class="btn-sp btn-sp-outline" style="flex:0.85; justify-content:center; font-size:0.76rem;" title="Download complete official syllabus PDF">
-                    📄 View PDF
-                  </a>
-                  <button type="button" id="btnSignAck_{{ c.course_id }}" class="btn-sp btn-sp-primary btn-sign-ack" style="flex:1.15; justify-content:center; font-size:0.78rem; background:#94a3b8; border-color:#94a3b8; cursor:not-allowed;" onclick="attemptOpenSignModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}', '{{ c.schedule }}')" title="You must review the syllabus first before signing.">
-                    🔒 Review First
-                  </button>
-                </div>
-              </div>
+    <!-- SEMESTER & ACADEMIC YEAR SEGREGATION & FILTER CONTROLS -->
+    <div class="sp-card" style="margin-bottom:20px; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px;">
+      <div style="padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <label for="termFilterSelect" style="font-weight:700; font-size:0.86rem; color:#1e293b; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+            <span style="font-size:1.15rem;">📅</span> Semester &amp; Academic Year:
+          </label>
+          <select id="termFilterSelect" onchange="onTermFilterChange(this.value)" style="padding:7px 12px; border:1.5px solid #0f766e; border-radius:6px; font-size:0.84rem; font-weight:700; color:#0f766e; background:#f0fdf4; cursor:pointer; outline:none;">
+            <option value="ALL">🌐 All Semesters &amp; Academic Years ({{ stats.total }} Total Courses)</option>
+            {% for grp in groups %}
+              <option value="{{ grp.group_label }}">📅 {{ grp.group_label }} ({{ grp.total_courses }} {{ 'Course' if grp.total_courses == 1 else 'Courses' }}{% if grp.total_units %} &bull; {{ grp.total_units }} Units{% endif %})</option>
             {% endfor %}
+          </select>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <!-- Subject Search Filter -->
+          <div style="position:relative;">
+            <input type="text" id="studentCourseSearch" oninput="onCourseSearchChange()" placeholder="Search course code or title..." style="padding:6px 12px 6px 28px; font-size:0.8rem; border:1px solid #cbd5e1; border-radius:6px; width:220px; outline:none;" />
+            <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:0.82rem; color:#94a3b8;">🔍</span>
           </div>
-        {% else %}
-          <div style="text-align:center; padding:28px 16px; color:#64748b;">
-            <div style="font-size:2.2rem; margin-bottom:8px;">🎉</div>
-            <div style="font-weight:700; font-size:0.95rem; color:#1e293b;">All approved syllabi have been acknowledged!</div>
-            <div style="font-size:0.8rem; margin-top:4px;">You have no pending syllabus acknowledgments at this time.</div>
+
+          <!-- View Mode Switcher -->
+          <div style="display:inline-flex; border:1px solid #cbd5e1; border-radius:6px; overflow:hidden; background:#f8fafc;">
+            <button type="button" id="btnViewByTerm" onclick="switchStudentCourseView('term')" style="padding:6px 12px; font-size:0.78rem; font-weight:700; border:none; cursor:pointer; background:#0f766e; color:#ffffff; transition:all 0.15s;">
+              📅 By Semester &amp; AY
+            </button>
+            <button type="button" id="btnViewByStatus" onclick="switchStudentCourseView('status')" style="padding:6px 12px; font-size:0.78rem; font-weight:600; border:none; cursor:pointer; background:#f8fafc; color:#475569; transition:all 0.15s;">
+              📋 By Status
+            </button>
           </div>
-        {% endif %}
+        </div>
       </div>
+
+      <!-- Quick Term Selector Pills (if multiple terms available) -->
+      {% if groups and groups|length > 1 %}
+        <div style="padding:0 18px 12px; display:flex; gap:6px; flex-wrap:wrap; border-top:1px dashed #e2e8f0; padding-top:10px;">
+          <button type="button" class="term-pill-btn active" data-term="ALL" onclick="selectTermPill('ALL')" style="padding:4px 10px; font-size:0.74rem; font-weight:700; border-radius:20px; border:1px solid #0f766e; background:#0f766e; color:#ffffff; cursor:pointer;">
+            All Terms ({{ stats.total }})
+          </button>
+          {% for grp in groups %}
+            <button type="button" class="term-pill-btn" data-term="{{ grp.group_label }}" onclick="selectTermPill('{{ grp.group_label }}')" style="padding:4px 10px; font-size:0.74rem; font-weight:600; border-radius:20px; border:1px solid #cbd5e1; background:#ffffff; color:#334155; cursor:pointer;">
+              {{ grp.group_label }} ({{ grp.total_courses }})
+            </button>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
 
-    <!-- 2. ACKNOWLEDGED SYLLABI -->
-    <div class="sp-card">
-      <div class="sp-card-hdr" style="background:#f0fdf4; border-bottom:1px solid #dcfce7;">
-        <h2 style="color:#166534;">
-          <span>✅</span> Completed &amp; Acknowledged Syllabi
-          <span class="badge-pill badge-ack" id="badgeAckCount">{{ stats.acknowledged_count }} Signed</span>
-        </h2>
-      </div>
-      <div class="sp-card-body">
-        {% if acknowledged %}
-          <div class="course-card-grid" id="ackCoursesGrid">
-            {% for c in acknowledged %}
-              <div class="course-item-card acknowledged">
-                <div>
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
-                    <span class="badge-pill badge-ack">✓ Signed &amp; Acknowledged</span>
-                    <span style="font-size:0.75rem; color:#64748b; font-weight:700;">{{ c.credit_units }}</span>
-                  </div>
-                  <h3 style="margin:4px 0 2px 0; font-size:1.05rem; color:#0f172a;">{{ c.course_code }}</h3>
-                  <div style="font-size:0.88rem; font-weight:600; color:#334155; margin-bottom:8px;">{{ c.course_title }}</div>
-                  
-                  <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
-                    <strong>Instructor:</strong> {{ c.faculty_name }}
-                  </div>
-                  <div style="font-size:0.76rem; color:#166534; font-weight:600; margin-top:6px; background:#dcfce7; padding:4px 8px; border-radius:4px;">
-                    Signed on: {{ c.acknowledged_at or 'Verified' }}
-                  </div>
-                  {% if c.comment %}
-                    <div style="margin-top:6px; padding:6px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid #16a34a; border-radius:4px; font-size:0.74rem; color:#334155;">
-                      <strong style="color:#166534;">💬 My Feedback / Remarks:</strong> <em>"{{ c.comment }}"</em>
-                    </div>
+    <!-- VIEW 1: SEGREGATED BY SEMESTER & ACADEMIC YEAR (PRIMARY VIEW) -->
+    <div id="studentCoursesByTermView">
+      {% if groups %}
+        {% for grp in groups %}
+          <div class="sp-card student-term-block" data-term="{{ grp.group_label }}">
+            <div class="sp-card-hdr" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2 style="color:#0f766e; font-size:1.02rem; margin:0; display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:1.2rem;">📅</span>
+                  <span>{{ grp.group_label }}</span>
+                  <span class="badge-pill" style="background:#e0f2fe; color:#0369a1; font-weight:700;">{{ grp.total_courses }} {{ 'Course' if grp.total_courses == 1 else 'Courses' }}</span>
+                  {% if grp.total_units %}
+                    <span class="badge-pill" style="background:#f1f5f9; color:#475569; font-weight:700;">{{ grp.total_units }} Units</span>
                   {% endif %}
-                </div>
-
-                <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
-                  <button type="button" class="btn-sp btn-sp-primary" style="width:100%; justify-content:center; font-size:0.82rem; font-weight:700; background:#0f766e; border-color:#0f766e;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
-                    📊 View Performance Dashboard
-                  </button>
-                  <div style="display:flex; gap:8px;">
-                    <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;">
-                      📄 Syllabus PDF
-                    </a>
-                    <a href="/api/courses/{{ c.course_id }}/export-acknowledgment-pdf" target="_blank" class="btn-sp btn-sp-success" style="flex:1.2; justify-content:center; font-size:0.76rem;">
-                      📥 Form MID-07 (.pdf)
-                    </a>
-                  </div>
-                </div>
+                </h2>
               </div>
-            {% endfor %}
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                {% if grp.pending %}
+                  <span class="badge-pill badge-pending" title="Subjects awaiting your signature">{{ grp.pending|length }} Pending Signature</span>
+                {% endif %}
+                {% if grp.acknowledged %}
+                  <span class="badge-pill badge-ack" title="Signed & acknowledged subjects">{{ grp.acknowledged|length }} Signed</span>
+                {% endif %}
+                {% if grp.in_review %}
+                  <span class="badge-pill badge-review" title="Subjects currently under review">{{ grp.in_review|length }} In Review</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="sp-card-body">
+              <div class="course-card-grid">
+                {% for c in grp.courses %}
+                  <div class="course-item-card {{ c.status_category }} student-course-card" data-term="{{ grp.group_label }}" data-code="{{ c.course_code|lower }}" data-title="{{ c.course_title|lower }}" id="termCourseCard_{{ c.course_id }}">
+                    <div>
+                      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                        {% if c.status_category == 'acknowledged' %}
+                          <span class="badge-pill badge-ack">✓ Signed &amp; Acknowledged</span>
+                        {% elif c.status_category == 'pending' %}
+                          <span class="badge-pill badge-pending">QA Approved &bull; Awaiting Signature</span>
+                        {% else %}
+                          <span class="badge-pill badge-review">Syllabus In Review</span>
+                        {% endif %}
+                        <span style="font-size:0.75rem; color:#64748b; font-weight:700;">{{ c.credit_units }}</span>
+                      </div>
+
+                      <h3 style="margin:4px 0 2px 0; font-size:1.05rem; color:#0f172a;">{{ c.course_code }}</h3>
+                      <div style="font-size:0.88rem; font-weight:600; color:#334155; margin-bottom:8px;">{{ c.course_title }}</div>
+
+                      <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
+                        <strong>Instructor:</strong> {{ c.faculty_name }}
+                      </div>
+                      <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
+                        <strong>Section:</strong> {{ c.section or 'Regular' }} &bull; <strong>Term:</strong> {{ c.semester_ay }}
+                      </div>
+                      {% if c.schedule and c.schedule != 'TBA' %}
+                        <div style="font-size:0.78rem; color:#475569; margin-bottom:6px;">
+                          <strong>Schedule:</strong> {{ c.schedule }}
+                        </div>
+                      {% endif %}
+
+                      {% if c.status_category == 'acknowledged' and c.acknowledged_at %}
+                        <div style="font-size:0.75rem; color:#166534; font-weight:600; margin-top:6px; background:#dcfce7; padding:4px 8px; border-radius:4px;">
+                          Signed on: {{ c.acknowledged_at }}
+                        </div>
+                      {% endif %}
+
+                      {% if c.comment %}
+                        <div style="margin-top:6px; padding:6px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid #16a34a; border-radius:4px; font-size:0.74rem; color:#334155;">
+                          <strong style="color:#166534;">💬 My Feedback / Remarks:</strong> <em>"{{ c.comment }}"</em>
+                        </div>
+                      {% endif %}
+
+                      {% if c.status_category == 'in_review' %}
+                        <div style="margin-top:6px; font-size:0.74rem; color:#64748b; font-style:italic; background:#f8fafc; padding:4px 8px; border-radius:4px; border:1px solid #e2e8f0;">
+                          Status: Departmental Review in progress
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
+                      <button type="button" class="btn-sp btn-sp-outline" style="width:100%; justify-content:center; font-size:0.78rem; color:#0f766e; border-color:#99f6e4; background:#f0fdf4; font-weight:700;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
+                        📊 View Academic Performance
+                      </button>
+
+                      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;" onclick="openReviewSyllabusModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}')">
+                          🔍 Review Syllabus
+                        </button>
+                        <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" onclick="markSyllabusReviewed('{{ c.course_id }}')" class="btn-sp btn-sp-outline" style="flex:0.85; justify-content:center; font-size:0.76rem;" title="Download complete official syllabus PDF">
+                          📄 Syllabus PDF
+                        </a>
+
+                        {% if c.status_category == 'pending' %}
+                          <button type="button" id="btnSignAck_term_{{ c.course_id }}" data-course-id="{{ c.course_id }}" class="btn-sp btn-sp-primary btn-sign-ack" style="flex:1.15; justify-content:center; font-size:0.78rem; background:#94a3b8; border-color:#94a3b8; cursor:not-allowed;" onclick="attemptOpenSignModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}', '{{ c.schedule }}')" title="You must review the syllabus first before signing.">
+                            🔒 Review First
+                          </button>
+                        {% elif c.status_category == 'acknowledged' %}
+                          <a href="/api/courses/{{ c.course_id }}/export-acknowledgment-pdf" target="_blank" class="btn-sp btn-sp-success" style="flex:1.1; justify-content:center; font-size:0.76rem;" title="Download FM-USeP-MID-07 Acknowledgment Form">
+                            📥 Form MID-07
+                          </a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
           </div>
-        {% else %}
-          <div style="text-align:center; padding:24px 16px; color:#64748b;">
-            <div style="font-size:1.5rem; margin-bottom:6px;">📄</div>
-            <div style="font-size:0.85rem;">No signed syllabus acknowledgment records yet.</div>
-          </div>
-        {% endif %}
-      </div>
+        {% endfor %}
+      {% else %}
+        <div class="sp-card" style="text-align:center; padding:35px 20px; color:#64748b;">
+          <div style="font-size:2.2rem; margin-bottom:8px;">📚</div>
+          <div style="font-weight:700; font-size:1.0rem; color:#1e293b;">No enrolled courses found for this account.</div>
+          <div style="font-size:0.82rem; margin-top:4px;">You will see your enrolled subjects as soon as your instructors add you to their class records.</div>
+        </div>
+      {% endif %}
     </div>
 
-    <!-- 3. ENROLLED SUBJECTS IN REVIEW -->
-    {% if in_review %}
+    <!-- VIEW 2: SEGREGATED BY ACKNOWLEDGMENT STATUS -->
+    <div id="studentCoursesByStatusView" style="display:none;">
+      <!-- 1. PENDING SYLLABUS ACKNOWLEDGMENT (ACTION REQUIRED) -->
       <div class="sp-card">
-        <div class="sp-card-hdr">
-          <h2 style="color:#475569;">
-            <span>🕒</span> Enrolled Subjects (Syllabus Currently in Review)
-            <span class="badge-pill badge-review">{{ stats.in_review_count }} Subject(s)</span>
+        <div class="sp-card-hdr" style="background:#fffbeb; border-bottom:1px solid #fef3c7;">
+          <h2 style="color:#92400e;">
+            <span>🔔</span> Action Required: Pending Syllabus Acknowledgment
+            <span class="badge-pill badge-pending" id="badgePendingCount">{{ stats.pending_count }} Subject(s)</span>
           </h2>
         </div>
         <div class="sp-card-body">
-          <div style="font-size:0.8rem; color:#475569; margin-bottom:12px; background:#f1f5f9; padding:8px 12px; border-radius:6px;">
-            ℹ️ <strong>Why is acknowledgment not available yet?</strong> Under USeP academic policy, course syllabi must first undergo committee review, program head approval, dean approval, and quality assurance (QA) counter-signature. Electronic acknowledgment unlocks immediately once QA signs.
-          </div>
-          <div class="course-card-grid">
-            {% for c in in_review %}
-              <div class="course-item-card in-review">
-                <div>
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
-                    <span class="badge-pill badge-review">Syllabus In Review</span>
-                    <span style="font-size:0.75rem; color:#64748b; font-weight:700;">{{ c.credit_units }}</span>
+          {% if pending %}
+            <div class="course-card-grid" id="pendingStatusGrid">
+              {% for c in pending %}
+                <div class="course-item-card pending status-view-card" data-term="{{ c.group_label }}" data-code="{{ c.course_code|lower }}" data-title="{{ c.course_title|lower }}" id="courseCard_{{ c.course_id }}">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                      <span class="badge-pill badge-pending">QA Approved &bull; Awaiting Your Signature</span>
+                      <span style="font-size:0.75rem; color:#64748b; font-weight:700;">{{ c.credit_units }}</span>
+                    </div>
+                    <h3 style="margin:4px 0 2px 0; font-size:1.05rem; color:#0f172a;">{{ c.course_code }}</h3>
+                    <div style="font-size:0.88rem; font-weight:600; color:#334155; margin-bottom:8px;">{{ c.course_title }}</div>
+                    
+                    <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
+                      <strong>Instructor:</strong> {{ c.faculty_name }}
+                    </div>
+                    <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
+                      <strong>Section:</strong> {{ c.section or 'Regular' }} &bull; <strong>Term:</strong> <span style="color:#0f766e; font-weight:700;">{{ c.semester_ay }}</span>
+                    </div>
+                    {% if c.schedule and c.schedule != 'TBA' %}
+                      <div style="font-size:0.78rem; color:#475569; margin-bottom:6px;">
+                        <strong>Schedule:</strong> {{ c.schedule }}
+                      </div>
+                    {% endif %}
                   </div>
-                  <h3 style="margin:4px 0 2px 0; font-size:1.02rem; color:#1e293b;">{{ c.course_code }}</h3>
-                  <div style="font-size:0.86rem; font-weight:600; color:#475569; margin-bottom:8px;">{{ c.course_title }}</div>
-                  <div style="font-size:0.78rem; color:#64748b;">Instructor: {{ c.faculty_name }}</div>
-                  <div style="font-size:0.78rem; color:#64748b;">Section: {{ c.section or 'Regular' }}</div>
-                </div>
-                <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #cbd5e1; display:flex; gap:8px; flex-direction:column;">
-                  <button type="button" class="btn-sp btn-sp-primary" style="width:100%; justify-content:center; font-size:0.82rem; font-weight:700; background:#0f766e; border-color:#0f766e;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
-                    📊 View Performance Dashboard
-                  </button>
-                  <div style="font-size:0.75rem; color:#64748b; font-style:italic; text-align:center;">
-                    Status: Departmental Review in progress
+
+                  <div style="display:flex; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0; flex-wrap:wrap;">
+                    <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem; color:#0f766e; border-color:#99f6e4; background:#f0fdf4;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
+                      📊 Performance
+                    </button>
+                    <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;" onclick="openReviewSyllabusModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}')">
+                      🔍 Review Syllabus
+                    </button>
+                    <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" onclick="markSyllabusReviewed('{{ c.course_id }}')" class="btn-sp btn-sp-outline" style="flex:0.85; justify-content:center; font-size:0.76rem;" title="Download complete official syllabus PDF">
+                      📄 View PDF
+                    </a>
+                    <button type="button" id="btnSignAck_status_{{ c.course_id }}" data-course-id="{{ c.course_id }}" class="btn-sp btn-sp-primary btn-sign-ack" style="flex:1.15; justify-content:center; font-size:0.78rem; background:#94a3b8; border-color:#94a3b8; cursor:not-allowed;" onclick="attemptOpenSignModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}', '{{ c.schedule }}')" title="You must review the syllabus first before signing.">
+                      🔒 Review First
+                    </button>
                   </div>
                 </div>
-              </div>
-            {% endfor %}
-          </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div style="text-align:center; padding:28px 16px; color:#64748b;">
+              <div style="font-size:2.2rem; margin-bottom:8px;">🎉</div>
+              <div style="font-weight:700; font-size:0.95rem; color:#1e293b;">All approved syllabi have been acknowledged!</div>
+              <div style="font-size:0.8rem; margin-top:4px;">You have no pending syllabus acknowledgments at this time.</div>
+            </div>
+          {% endif %}
         </div>
       </div>
-    {% endif %}
+
+      <!-- 2. ACKNOWLEDGED SYLLABI -->
+      <div class="sp-card">
+        <div class="sp-card-hdr" style="background:#f0fdf4; border-bottom:1px solid #dcfce7;">
+          <h2 style="color:#166534;">
+            <span>✅</span> Completed &amp; Acknowledged Syllabi
+            <span class="badge-pill badge-ack" id="badgeAckCount">{{ stats.acknowledged_count }} Signed</span>
+          </h2>
+        </div>
+        <div class="sp-card-body">
+          {% if acknowledged %}
+            <div class="course-card-grid" id="ackStatusGrid">
+              {% for c in acknowledged %}
+                <div class="course-item-card acknowledged status-view-card" data-term="{{ c.group_label }}" data-code="{{ c.course_code|lower }}" data-title="{{ c.course_title|lower }}">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                      <span class="badge-pill badge-ack">✓ Signed &amp; Acknowledged</span>
+                      <span style="font-size:0.75rem; color:#64748b; font-weight:700;">{{ c.credit_units }}</span>
+                    </div>
+                    <h3 style="margin:4px 0 2px 0; font-size:1.05rem; color:#0f172a;">{{ c.course_code }}</h3>
+                    <div style="font-size:0.88rem; font-weight:600; color:#334155; margin-bottom:8px;">{{ c.course_title }}</div>
+                    
+                    <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
+                      <strong>Instructor:</strong> {{ c.faculty_name }}
+                    </div>
+                    <div style="font-size:0.78rem; color:#475569; margin-bottom:4px;">
+                      <strong>Section:</strong> {{ c.section or 'Regular' }} &bull; <strong>Term:</strong> <span style="color:#0f766e; font-weight:700;">{{ c.semester_ay }}</span>
+                    </div>
+                    <div style="font-size:0.76rem; color:#166534; font-weight:600; margin-top:6px; background:#dcfce7; padding:4px 8px; border-radius:4px;">
+                      Signed on: {{ c.acknowledged_at or 'Verified' }}
+                    </div>
+                    {% if c.comment %}
+                      <div style="margin-top:6px; padding:6px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid #16a34a; border-radius:4px; font-size:0.74rem; color:#334155;">
+                        <strong style="color:#166534;">💬 My Feedback / Remarks:</strong> <em>"{{ c.comment }}"</em>
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
+                    <button type="button" class="btn-sp btn-sp-primary" style="width:100%; justify-content:center; font-size:0.82rem; font-weight:700; background:#0f766e; border-color:#0f766e;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
+                      📊 View Performance Dashboard
+                    </button>
+                    <div style="display:flex; gap:8px;">
+                      <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;">
+                        📄 Syllabus PDF
+                      </a>
+                      <a href="/api/courses/{{ c.course_id }}/export-acknowledgment-pdf" target="_blank" class="btn-sp btn-sp-success" style="flex:1.2; justify-content:center; font-size:0.76rem;">
+                        📥 Form MID-07 (.pdf)
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div style="text-align:center; padding:24px 16px; color:#64748b;">
+              <div style="font-size:1.5rem; margin-bottom:6px;">📄</div>
+              <div style="font-size:0.85rem;">No signed syllabus acknowledgment records yet.</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 3. ENROLLED SUBJECTS IN REVIEW -->
+      {% if in_review %}
+        <div class="sp-card">
+          <div class="sp-card-hdr">
+            <h2 style="color:#475569;">
+              <span>🕒</span> Enrolled Subjects (Syllabus Currently in Review)
+              <span class="badge-pill badge-review">{{ stats.in_review_count }} Subject(s)</span>
+            </h2>
+          </div>
+          <div class="sp-card-body">
+            <div style="font-size:0.8rem; color:#475569; margin-bottom:12px; background:#f1f5f9; padding:8px 12px; border-radius:6px;">
+              ℹ️ <strong>Why is acknowledgment not available yet?</strong> Under USeP academic policy, course syllabi must first undergo committee review, program head approval, dean approval, and quality assurance (QA) counter-signature. Electronic acknowledgment unlocks immediately once QA signs.
+            </div>
+            <div class="course-card-grid" id="reviewStatusGrid">
+              {% for c in in_review %}
+                <div class="course-item-card in-review status-view-card" data-term="{{ c.group_label }}" data-code="{{ c.course_code|lower }}" data-title="{{ c.course_title|lower }}">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                      <span class="badge-pill badge-review">Syllabus In Review</span>
+                      <span style="font-size:0.75rem; color:#64748b; font-weight:700;">{{ c.credit_units }}</span>
+                    </div>
+                    <h3 style="margin:4px 0 2px 0; font-size:1.02rem; color:#1e293b;">{{ c.course_code }}</h3>
+                    <div style="font-size:0.86rem; font-weight:600; color:#475569; margin-bottom:8px;">{{ c.course_title }}</div>
+                    <div style="font-size:0.78rem; color:#64748b;">Instructor: {{ c.faculty_name }}</div>
+                    <div style="font-size:0.78rem; color:#64748b;">Section: {{ c.section or 'Regular' }} &bull; Term: <span style="color:#0f766e; font-weight:700;">{{ c.semester_ay }}</span></div>
+                  </div>
+                  <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #cbd5e1; display:flex; gap:8px; flex-direction:column;">
+                    <button type="button" class="btn-sp btn-sp-primary" style="width:100%; justify-content:center; font-size:0.82rem; font-weight:700; background:#0f766e; border-color:#0f766e;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
+                      📊 View Performance Dashboard
+                    </button>
+                    <div style="font-size:0.75rem; color:#64748b; font-style:italic; text-align:center;">
+                      Status: Departmental Review in progress
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
 
   </main>
 
@@ -720,10 +892,17 @@
 
     let signPad = null;
     let profilePad = null;
+    let ackScorePad = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       signPad = setupDrawingCanvas("signCanvas");
       profilePad = setupDrawingCanvas("profileCanvas");
+      ackScorePad = setupDrawingCanvas("ackScoreCanvas");
+      const ackCvs = document.getElementById("ackScoreCanvas");
+      if (ackCvs) {
+        ackCvs.addEventListener("mouseup", () => setTimeout(toggleAckSubmitBtn, 50));
+        ackCvs.addEventListener("touchend", () => setTimeout(toggleAckSubmitBtn, 50));
+      }
     });
 
     function openSignModal(courseId, code, title, faculty, schedule) {
@@ -879,9 +1058,144 @@
       unlockReviewedButtons();
     }
 
+    let currentTermFilter = "ALL";
+    let currentViewMode = localStorage.getItem("usep_student_view_mode") || "term"; // "term" or "status"
+
+    function switchStudentCourseView(mode) {
+      currentViewMode = mode;
+      localStorage.setItem("usep_student_view_mode", mode);
+      const termView = document.getElementById("studentCoursesByTermView");
+      const statusView = document.getElementById("studentCoursesByStatusView");
+      const btnTerm = document.getElementById("btnViewByTerm");
+      const btnStatus = document.getElementById("btnViewByStatus");
+
+      if (mode === "term") {
+        if (termView) termView.style.display = "block";
+        if (statusView) statusView.style.display = "none";
+        if (btnTerm) {
+          btnTerm.style.background = "#0f766e";
+          btnTerm.style.color = "#ffffff";
+          btnTerm.style.fontWeight = "700";
+        }
+        if (btnStatus) {
+          btnStatus.style.background = "#f8fafc";
+          btnStatus.style.color = "#475569";
+          btnStatus.style.fontWeight = "600";
+        }
+      } else {
+        if (termView) termView.style.display = "none";
+        if (statusView) statusView.style.display = "block";
+        if (btnTerm) {
+          btnTerm.style.background = "#f8fafc";
+          btnTerm.style.color = "#475569";
+          btnTerm.style.fontWeight = "600";
+        }
+        if (btnStatus) {
+          btnStatus.style.background = "#0f766e";
+          btnStatus.style.color = "#ffffff";
+          btnStatus.style.fontWeight = "700";
+        }
+      }
+      applyAllCourseFilters();
+    }
+
+    function onTermFilterChange(term) {
+      currentTermFilter = term;
+      document.querySelectorAll(".term-pill-btn").forEach(btn => {
+        if (btn.getAttribute("data-term") === term) {
+          btn.style.background = "#0f766e";
+          btn.style.borderColor = "#0f766e";
+          btn.style.color = "#ffffff";
+          btn.style.fontWeight = "700";
+        } else {
+          btn.style.background = "#ffffff";
+          btn.style.borderColor = "#cbd5e1";
+          btn.style.color = "#334155";
+          btn.style.fontWeight = "600";
+        }
+      });
+      const sel = document.getElementById("termFilterSelect");
+      if (sel && sel.value !== term) sel.value = term;
+
+      applyAllCourseFilters();
+    }
+
+    function selectTermPill(term) {
+      onTermFilterChange(term);
+    }
+
+    function onCourseSearchChange() {
+      applyAllCourseFilters();
+    }
+
+    function applyAllCourseFilters() {
+      const q = (document.getElementById("studentCourseSearch")?.value || "").trim().toLowerCase();
+      const term = currentTermFilter;
+
+      // 1. Filter Term View blocks
+      document.querySelectorAll(".student-term-block").forEach(block => {
+        const blockTerm = block.getAttribute("data-term");
+        let matchesTerm = (term === "ALL" || blockTerm === term);
+        let visibleCoursesInBlock = 0;
+
+        block.querySelectorAll(".student-course-card").forEach(card => {
+          const code = card.getAttribute("data-code") || "";
+          const title = card.getAttribute("data-title") || "";
+          const matchesSearch = !q || code.includes(q) || title.includes(q);
+
+          if (matchesTerm && matchesSearch) {
+            card.style.display = "";
+            visibleCoursesInBlock++;
+          } else {
+            card.style.display = "none";
+          }
+        });
+
+        if (matchesTerm && visibleCoursesInBlock > 0) {
+          block.style.display = "";
+        } else {
+          block.style.display = "none";
+        }
+      });
+
+      // 2. Filter Status View cards
+      document.querySelectorAll(".status-view-card").forEach(card => {
+        const cardTerm = card.getAttribute("data-term") || "";
+        const code = card.getAttribute("data-code") || "";
+        const title = card.getAttribute("data-title") || "";
+        const matchesTerm = (term === "ALL" || cardTerm === term);
+        const matchesSearch = !q || code.includes(q) || title.includes(q);
+
+        if (matchesTerm && matchesSearch) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+      });
+
+      // Update empty state messages in Status View if filtered out
+      ["pendingStatusGrid", "ackStatusGrid", "reviewStatusGrid"].forEach(gridId => {
+        const grid = document.getElementById(gridId);
+        if (!grid) return;
+        const visible = Array.from(grid.querySelectorAll(".status-view-card")).filter(c => c.style.display !== "none");
+        const emptyMsg = grid.parentElement.querySelector(".status-filtered-empty");
+        if (visible.length === 0) {
+          if (!emptyMsg) {
+            const div = document.createElement("div");
+            div.className = "status-filtered-empty";
+            div.style.cssText = "text-align:center; padding:18px; color:#94a3b8; font-size:0.8rem; font-style:italic;";
+            div.textContent = "No subjects match the selected term or search filter.";
+            grid.parentElement.appendChild(div);
+          }
+        } else if (emptyMsg) {
+          emptyMsg.remove();
+        }
+      });
+    }
+
     function unlockReviewedButtons() {
       document.querySelectorAll(".btn-sign-ack").forEach(btn => {
-        const cid = btn.id.replace("btnSignAck_", "");
+        const cid = btn.getAttribute("data-course-id") || btn.id.replace(/^btnSignAck_(status_|term_)?/, "");
         if (sessionStorage.getItem("reviewed_" + cid) === "true") {
           btn.disabled = false;
           btn.style.background = "var(--primary-maroon)";
@@ -904,6 +1218,7 @@
 
     // Call unlockReviewedButtons on document ready
     document.addEventListener("DOMContentLoaded", function() {
+      switchStudentCourseView(currentViewMode);
       unlockReviewedButtons();
     });
 
@@ -937,140 +1252,355 @@
       const c = data.course || {};
       const g = data.grades || {};
       const st = data.student || {};
+      const stats = data.class_statistics || data.class_average || {};
+      const comp = data.comparison || {};
       const clos = data.clo_attainment || [];
       const cats = data.categories || [];
+      const allCourses = data.all_enrolled_courses || [];
 
       document.getElementById("perfModalTitle").textContent = `${c.course_code || 'Course'} - Academic Performance Dashboard`;
       document.getElementById("perfModalSubtitle").textContent = `${c.course_title || ''} • Instructor: ${c.faculty_name || 'Faculty'}`;
 
+      function formatVarianceBadge(diff, unit = '%') {
+        if (diff === undefined || diff === null) return '<span style="color:#94a3b8;">—</span>';
+        const val = Number(diff);
+        if (isNaN(val)) return '<span style="color:#94a3b8;">—</span>';
+        const sign = val > 0 ? '+' : '';
+        const color = val > 0 ? '#15803d' : (val < 0 ? '#b91c1c' : '#475569');
+        const bg = val > 0 ? '#dcfce7' : (val < 0 ? '#fee2e2' : '#f1f5f9');
+        const icon = val > 0 ? '▲' : (val < 0 ? '▼' : '●');
+        return `<span style="display:inline-flex; align-items:center; gap:2px; font-weight:700; font-size:0.75rem; color:${color}; background:${bg}; padding:2px 6px; border-radius:4px;" title="Difference vs Class Average: ${sign}${val.toFixed(1)}${unit}">${icon} ${sign}${val.toFixed(1)}${unit}</span>`;
+      }
+
       let html = `
-        <!-- Course & Standing Summary -->
-        <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:14px; margin-bottom:16px;">
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px; font-size:0.82rem;">
+        <!-- Fast Course Switcher Navigation Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <label for="perfCourseSelect" style="font-weight:700; font-size:0.83rem; color:#1e293b; display:inline-flex; align-items:center; gap:5px;">
+              <span>📚 Select Course:</span>
+            </label>
+            <select id="perfCourseSelect" onchange="openPerformanceDashboardModal(this.value)" style="padding:6px 12px; font-size:0.82rem; font-weight:700; border-radius:6px; border:1.5px solid #0f766e; background:#ffffff; color:#0f766e; cursor:pointer; max-width:420px; outline:none;">
+              ${allCourses.map(crs => `
+                <option value="${escapeHtml(crs.course_id)}" ${crs.course_id === c.course_id ? 'selected' : ''}>
+                  ${escapeHtml(crs.course_code)} - ${escapeHtml(crs.course_title)} (${escapeHtml(crs.semester_ay || '')})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div style="font-size:0.76rem; color:#475569; display:flex; gap:10px; align-items:center;">
+            <span>Enrolled in <strong>${allCourses.length}</strong> subject(s)</span>
+            <button type="button" onclick="openPerformanceDashboardModal('${escapeHtml(c.course_id)}')" class="btn-sp btn-sp-outline" style="padding:4px 9px; font-size:0.72rem; color:#0f766e;">🔄 Refresh</button>
+          </div>
+        </div>
+
+        <!-- Course & Student Info Strip -->
+        <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; font-size:0.82rem;">
             <div><strong>Student:</strong> ${escapeHtml(st.name || '')} (${escapeHtml(st.student_id || '')})</div>
-            <div><strong>Class Section:</strong> ${escapeHtml(c.section || '')}</div>
+            <div><strong>Class Section:</strong> ${escapeHtml(c.section || 'Regular')}</div>
             <div><strong>Semester / AY:</strong> ${escapeHtml(c.semester_ay || '')}</div>
             <div><strong>Consultation:</strong> ${escapeHtml(c.consultation_hours || 'TBA')}</div>
           </div>
         </div>
 
-        <!-- Grade Metric Cards -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-bottom:18px;">
-          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
-            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">MIDTERM GRADE</div>
-            <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) : '—'}%</div>
-          </div>
-          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
-            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">FINALS GRADE</div>
-            <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.finals_grade !== undefined ? g.finals_grade.toFixed(1) : '—'}%</div>
-          </div>
-          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
-            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">AVERAGE FINAL (AFG)</div>
-            <div style="font-size:1.45rem; font-weight:800; color:#1e293b; margin-top:2px;">${g.average_final_grade !== undefined ? g.average_final_grade.toFixed(1) : '—'}%</div>
-          </div>
-          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
-            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">TRANSMUTED GRADE</div>
-            <div style="font-size:1.45rem; font-weight:800; color:${g.passed ? '#15803d' : '#dc2626'}; margin-top:2px;">${g.transmuted_grade || '—'}</div>
-          </div>
-          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
-            <div style="font-size:0.72rem; color:#64748b; font-weight:700;">STANDING</div>
-            <span style="display:inline-block; margin-top:5px; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; background:${g.passed ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;'}">${g.status_label || 'ENROLLED'}</span>
-          </div>
-        </div>
-
-        <!-- CLO Competency Attainment Tracker (Final CLO Grade from Class Record) -->
-        <div style="margin-bottom:20px;">
-          <h4 style="margin:0 0 8px; font-size:0.92rem; color:#0f766e; border-bottom:2px solid #0f766e; padding-bottom:4px;">
-            🎯 Course Learning Outcome (CLO) Competency Attainment
-          </h4>
-          <table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:#fff; border:1px solid #e2e8f0;">
-            <thead>
-              <tr style="background:#f1f5f9; text-align:left;">
-                <th style="padding:6px 10px; width:80px;">CLO ID</th>
-                <th style="padding:6px 10px;">Outcome Statement / Description</th>
-                <th style="padding:6px 10px; width:125px; text-align:center;">Final CLO Grade</th>
-                <th style="padding:6px 10px; width:100px; text-align:center;">Target Cutoff</th>
-                <th style="padding:6px 10px; width:105px; text-align:center;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${clos.length ? clos.map(co => `
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                  <td style="padding:6px 10px; font-weight:700; color:#0f766e;">${escapeHtml(co.co_id)}</td>
-                  <td style="padding:6px 10px; font-size:0.76rem; color:#334155;">${escapeHtml(co.description || '')}</td>
-                  <td style="padding:6px 10px; text-align:center;">
-                    <span style="font-weight:800; font-size:0.92rem; color:#0369a1; background:#f0f9ff; padding:3px 8px; border-radius:4px; border:1px solid #bae6fd;">
-                      ${co.final_clo_grade !== undefined ? Number(co.final_clo_grade).toFixed(2) : '—'}
-                    </span>
-                  </td>
-                  <td style="padding:6px 10px; text-align:center;">
-                    <div style="font-weight:700; color:#334155;">${co.target_score_pct}%</div>
-                  </td>
-                  <td style="padding:6px 10px; text-align:center;">
-                    <span style="padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; background:${co.is_competent ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;'}">
-                      ${co.is_competent ? '✓ Competent' : '⚠️ Developing'}
-                    </span>
-                  </td>
-                </tr>
-              `).join('') : '<tr><td colspan="5" style="text-align:center; padding:12px; color:#94a3b8;">No CLOs recorded.</td></tr>'}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Assessment Breakdown by Term & Category -->
-        <div>
-          <h4 style="margin:0 0 8px; font-size:0.92rem; color:#0f766e; border-bottom:2px solid #0f766e; padding-bottom:4px;">
-            📝 Assessment Activities Breakdown
-          </h4>
-          ${cats.length ? cats.map(cat => `
-            <div style="margin-bottom:12px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
-              <div style="background:#f8fafc; padding:8px 12px; font-size:0.8rem; font-weight:700; color:#334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                <span>${escapeHtml(cat.term)} &bull; ${escapeHtml(cat.category_name)} <span class="badge-pill" style="background:#e2e8f0; color:#334155; font-size:0.7rem;">${escapeHtml(cat.assessment_code || cat.assessment_type)}</span></span>
-                <span style="display:flex; gap:8px; align-items:center;">
-                  <span style="background:#fef9c3; color:#854d0e; padding:2px 8px; border-radius:4px; font-weight:800; font-size:0.75rem; border:1px solid #fde047;">${escapeHtml(cat.assessment_code || 'Assessment')} Grade: ${cat.assessment_grade !== undefined ? cat.assessment_grade.toFixed(2) : '—'}</span>
-                  <span style="color:#0f766e; font-size:0.75rem;">Weight: ${cat.weight_pct}%</span>
-                </span>
+        <!-- Executive Student vs Class Benchmark Hero Banner -->
+        <div style="background:linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border:1.5px solid #5eead4; border-radius:10px; padding:16px; margin-bottom:18px; box-shadow:0 2px 8px rgba(15, 118, 110, 0.08);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:1.25rem;">📈</span>
+                <h4 style="margin:0; font-size:1.02rem; color:#0f766e; font-weight:800;">Academic Performance vs. Class Average Benchmark</h4>
+                <span class="badge-pill" style="background:#0f766e; color:#ffffff; font-weight:700; font-size:0.74rem;">${escapeHtml(comp.standing_label || 'Good Standing')}</span>
               </div>
-              <table style="width:100%; border-collapse:collapse; font-size:0.77rem;">
-                <thead>
-                  <tr style="background:#f1f5f9; text-align:left; color:#64748b;">
-                    <th style="padding:4px 8px; width:65px;">Item</th>
-                    <th style="padding:4px 8px;">Activity Name</th>
-                    <th style="padding:4px 8px; width:75px; text-align:center;">Score</th>
-                    <th style="padding:4px 8px; width:65px; text-align:center;">%</th>
-                    <th style="padding:4px 8px; width:75px; text-align:center;">Weight</th>
-                    <th style="padding:4px 8px; width:85px;">Aligned CLOs</th>
-                    <th style="padding:4px 8px; width:135px; text-align:center;">Acknowledged</th>
+              <div style="font-size:0.79rem; color:#475569; margin-top:4px;">
+                Direct comparative analytics across <strong>${stats.total_students || 1}</strong> student(s) enrolled in this course section.
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+              <div style="background:#ffffff; border:1.5px solid #99f6e4; padding:6px 14px; border-radius:8px; text-align:center; min-width:85px;">
+                <div style="font-size:0.68rem; color:#64748b; font-weight:700;">CLASS RANK</div>
+                <div style="font-size:1.15rem; font-weight:800; color:#0f766e;">#${comp.rank || 1} <span style="font-size:0.74rem; font-weight:600; color:#64748b;">of ${stats.total_students || 1}</span></div>
+              </div>
+              <div style="background:#ffffff; border:1.5px solid #99f6e4; padding:6px 14px; border-radius:8px; text-align:center; min-width:85px;">
+                <div style="font-size:0.68rem; color:#64748b; font-weight:700;">PERCENTILE</div>
+                <div style="font-size:1.15rem; font-weight:800; color:#0369a1;">Top ${comp.percentile !== undefined ? comp.percentile : 0}%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side-by-Side Key Metrics Grid -->
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px;">
+            <!-- AFG Comparison Card -->
+            <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:8px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:0.72rem; color:#64748b; font-weight:700;">AVERAGE FINAL GRADE (AFG)</div>
+                ${formatVarianceBadge(comp.afg_diff, '%')}
+              </div>
+              <div style="display:flex; align-items:baseline; gap:6px; margin-top:4px;">
+                <span style="font-size:1.45rem; font-weight:800; color:#0f766e;">${g.average_final_grade !== undefined ? g.average_final_grade.toFixed(1) : '—'}%</span>
+                <span style="font-size:0.85rem; font-weight:700; color:#64748b;">(${g.transmuted_grade || '—'})</span>
+              </div>
+              <div style="font-size:0.74rem; color:#64748b; margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; justify-content:space-between;">
+                <span>Class Average:</span>
+                <strong style="color:#1e293b;">${stats.class_avg_afg !== undefined ? stats.class_avg_afg.toFixed(1) : '—'}% (${stats.class_avg_transmuted || '—'})</strong>
+              </div>
+            </div>
+
+            <!-- Midterm Comparison Card -->
+            <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:8px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:0.72rem; color:#64748b; font-weight:700;">MIDTERM GRADE</div>
+                ${formatVarianceBadge(comp.midterm_diff, '%')}
+              </div>
+              <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:4px;">
+                ${g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) : '—'}%
+              </div>
+              <div style="font-size:0.74rem; color:#64748b; margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; justify-content:space-between;">
+                <span>Class Average:</span>
+                <strong style="color:#1e293b;">${stats.class_avg_midterm !== undefined ? stats.class_avg_midterm.toFixed(1) : '—'}%</strong>
+              </div>
+            </div>
+
+            <!-- Finals Comparison Card -->
+            <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:8px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:0.72rem; color:#64748b; font-weight:700;">FINALS GRADE</div>
+                ${formatVarianceBadge(comp.finals_diff, '%')}
+              </div>
+              <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:4px;">
+                ${g.finals_grade !== undefined ? g.finals_grade.toFixed(1) : '—'}%
+              </div>
+              <div style="font-size:0.74rem; color:#64748b; margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; justify-content:space-between;">
+                <span>Class Average:</span>
+                <strong style="color:#1e293b;">${stats.class_avg_finals !== undefined ? stats.class_avg_finals.toFixed(1) : '—'}%</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Class Range & Passing Rate Footer -->
+          <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #99f6e4; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:0.75rem; color:#334155;">
+            <div>
+              🏆 <strong>Class High:</strong> ${stats.highest_afg !== undefined ? stats.highest_afg.toFixed(1) : '—'}% &bull;
+              📉 <strong>Class Low:</strong> ${stats.lowest_afg !== undefined ? stats.lowest_afg.toFixed(1) : '—'}%
+            </div>
+            <div>
+              🎯 <strong>Class Passing Rate:</strong> <span style="color:#15803d; font-weight:700;">${stats.passing_rate !== undefined ? stats.passing_rate.toFixed(1) : '100'}%</span> (${stats.total_students || 1} Enrolled)
+            </div>
+          </div>
+        </div>
+
+        <!-- Grade Metric Cards Row -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(135px, 1fr)); gap:10px; margin-bottom:18px;">
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:0.70rem; color:#64748b; font-weight:700;">MIDTERM GRADE</div>
+            <div style="font-size:1.35rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) : '—'}%</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:0.70rem; color:#64748b; font-weight:700;">FINALS GRADE</div>
+            <div style="font-size:1.35rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.finals_grade !== undefined ? g.finals_grade.toFixed(1) : '—'}%</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:0.70rem; color:#64748b; font-weight:700;">AVERAGE FINAL (AFG)</div>
+            <div style="font-size:1.35rem; font-weight:800; color:#1e293b; margin-top:2px;">${g.average_final_grade !== undefined ? g.average_final_grade.toFixed(1) : '—'}%</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:0.70rem; color:#64748b; font-weight:700;">TRANSMUTED GRADE</div>
+            <div style="font-size:1.35rem; font-weight:800; color:${g.passed ? '#15803d' : '#dc2626'}; margin-top:2px;">${g.transmuted_grade || '—'}</div>
+          </div>
+          <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:0.70rem; color:#64748b; font-weight:700;">ACADEMIC STANDING</div>
+            <span style="display:inline-block; margin-top:4px; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; background:${g.passed ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;'}">${g.status_label || 'ENROLLED'}</span>
+          </div>
+        </div>
+
+        <!-- CLO Competency Attainment Tracker with Class Average Comparison -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0f766e; padding-bottom:6px; margin-bottom:8px;">
+            <h4 style="margin:0; font-size:0.92rem; color:#0f766e;">
+              🎯 Course Learning Outcome (CLO) Competency Attainment vs. Class Average
+            </h4>
+            <span style="font-size:0.72rem; color:#64748b;">Target Cutoff: <strong>75%</strong></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.8rem; background:#fff; border:1px solid #e2e8f0;">
+              <thead>
+                <tr style="background:#f1f5f9; text-align:left;">
+                  <th style="padding:6px 10px; width:75px;">CLO ID</th>
+                  <th style="padding:6px 10px;">Outcome Statement / Description</th>
+                  <th style="padding:6px 10px; width:110px; text-align:center;">My Final CLO</th>
+                  <th style="padding:6px 10px; width:110px; text-align:center;">Class Average</th>
+                  <th style="padding:6px 10px; width:95px; text-align:center;">Variance</th>
+                  <th style="padding:6px 10px; width:90px; text-align:center;">Target</th>
+                  <th style="padding:6px 10px; width:105px; text-align:center;">My Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${clos.length ? clos.map(co => `
+                  <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:6px 10px; font-weight:700; color:#0f766e;">${escapeHtml(co.co_id)}</td>
+                    <td style="padding:6px 10px; font-size:0.76rem; color:#334155;">${escapeHtml(co.description || '')}</td>
+                    <td style="padding:6px 10px; text-align:center;">
+                      <span style="font-weight:800; font-size:0.92rem; color:#0369a1; background:#f0f9ff; padding:3px 8px; border-radius:4px; border:1px solid #bae6fd;">
+                        ${co.final_clo_grade !== undefined ? Number(co.final_clo_grade).toFixed(2) : '—'}
+                      </span>
+                    </td>
+                    <td style="padding:6px 10px; text-align:center; font-weight:600; color:#475569;">
+                      ${co.class_avg_grade !== undefined ? Number(co.class_avg_grade).toFixed(2) : '—'}
+                    </td>
+                    <td style="padding:6px 10px; text-align:center;">
+                      ${formatVarianceBadge(co.variance_vs_avg, '')}
+                    </td>
+                    <td style="padding:6px 10px; text-align:center;">
+                      <div style="font-weight:700; color:#334155;">${co.target_score_pct}%</div>
+                    </td>
+                    <td style="padding:6px 10px; text-align:center;">
+                      <span style="padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; background:${co.is_competent ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;'}">
+                        ${co.is_competent ? '✓ Competent' : '⚠️ Developing'}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${(cat.items || []).map(it => `
-                    <tr style="border-bottom:1px solid #f1f5f9;">
-                      <td style="padding:4px 8px; font-weight:700;">${escapeHtml(it.item_id)}</td>
-                      <td style="padding:4px 8px;">${escapeHtml(it.name)}</td>
-                      <td style="padding:4px 8px; text-align:center; font-weight:600;">${it.student_score} / ${it.max_score}</td>
-                      <td style="padding:4px 8px; text-align:center;">${it.percentage}%</td>
-                      <td style="padding:4px 8px; text-align:center; color:#0f766e; font-weight:600;">${it.weight_pct > 0 ? it.weight_pct + '%' : '—'}</td>
-                      <td style="padding:4px 8px;"><span class="badge-pill" style="background:#e0f2fe; color:#0369a1; font-size:0.7rem;">${escapeHtml((it.aligned_clos || []).join(', '))}</span></td>
-                      <td style="padding:4px 8px; text-align:center;">
-                        ${it.acknowledged ? `
-                          <div style="display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:4px; font-size:0.72rem; font-weight:700; background:#dcfce7; color:#15803d; border:1px solid #86efac;" title="Paper received & score confirmed final on ${escapeHtml(it.acknowledged_at || '')}">
-                            <span>✓</span> <span>Acknowledged</span>
-                          </div>
-                          ${it.acknowledged_at ? `<div style="font-size:0.64rem; color:#64748b; margin-top:1px;">${escapeHtml(it.acknowledged_at)}</div>` : ''}
-                        ` : `
-                          <button type="button" class="btn btn-sm"
-                            style="background:#0f766e; color:#ffffff; font-size:0.72rem; font-weight:700; padding:3px 10px; border-radius:4px; border:none; cursor:pointer;"
-                            onmouseover="this.style.background='#0d9488'" onmouseout="this.style.background='#0f766e'"
-                            onclick="openAcknowledgeScoreModal('${escapeHtml(c.course_id || currentPerfCourseId || '')}', '${escapeHtml(it.item_id)}', '${escapeHtml(it.name)}', ${it.student_score}, ${it.max_score}, ${it.percentage})">
-                            ✍️ Acknowledge
-                          </button>
-                        `}
-                      </td>
+                `).join('') : '<tr><td colspan="7" style="text-align:center; padding:12px; color:#94a3b8;">No CLOs recorded.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Passing Target Advisor Banner (Baseline scores required on unrecorded assessments) -->
+        ${(() => {
+          const rec = data.passing_recommendation;
+          if (!rec) return '';
+          const isOk = rec.passing_status === 'already_passed';
+          const isCrit = rec.passing_status === 'critical';
+          const isAll = rec.passing_status === 'all_recorded';
+
+          const bgCol = isOk ? '#ecfdf5' : (isCrit ? '#fef2f2' : (isAll ? '#f8fafc' : '#f0fdf4'));
+          const borderCol = isOk ? '#a7f3d0' : (isCrit ? '#fecaca' : (isAll ? '#cbd5e1' : '#bbf7d0'));
+          const titleCol = isOk ? '#065f46' : (isCrit ? '#991b1b' : (isAll ? '#334155' : '#166534'));
+          const icon = isOk ? '🎉' : (isCrit ? '⚠️' : (isAll ? '📋' : '🎯'));
+
+          return `
+            <div style="background:${bgCol}; border:1.5px solid ${borderCol}; border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:flex-start; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <div style="font-size:1.6rem; line-height:1;">${icon}</div>
+              <div style="flex:1;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                  <strong style="color:${titleCol}; font-size:0.88rem;">Passing Target Advisor &bull; Required Baseline Score (Target AFG &ge; ${rec.target_grade || 75.0}% / Grade 3.00)</strong>
+                  ${rec.required_pct !== null && rec.required_pct !== undefined ? `
+                    <span class="badge-pill" style="background:#0f766e; color:#ffffff; font-weight:800; font-size:0.75rem;">
+                      Baseline Required: ${rec.required_pct}% on unrecorded
+                    </span>
+                  ` : ''}
+                </div>
+                <div style="font-size:0.80rem; color:#334155; margin-top:4px; line-height:1.45;">
+                  ${escapeHtml(rec.message || '')}
+                </div>
+                ${rec.unrecorded_count > 0 ? `
+                  <div style="font-size:0.72rem; color:#64748b; margin-top:5px; border-top:1px dashed ${borderCol}; padding-top:4px;">
+                    💡 <em>Note: Assessments that already have a recorded score are automatically excluded from recommendations. Check the "Target to Pass" column in the table below for unrecorded items.</em>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        })()}
+
+        <!-- Assessment Breakdown by Term & Category with Class Average -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0f766e; padding-bottom:6px; margin-bottom:8px;">
+            <h4 style="margin:0; font-size:0.92rem; color:#0f766e;">
+              📝 Assessment Activities Breakdown vs. Class Average
+            </h4>
+            <span style="font-size:0.72rem; color:#64748b;">Detailed student activity scores compared against class benchmark</span>
+          </div>
+
+          ${cats.length ? cats.map(cat => `
+            <div style="margin-bottom:14px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
+              <div style="background:#f8fafc; padding:8px 12px; font-size:0.8rem; font-weight:700; color:#334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                <span>
+                  ${escapeHtml(cat.term)} &bull; ${escapeHtml(cat.category_name)}
+                  <span class="badge-pill" style="background:#e2e8f0; color:#334155; font-size:0.7rem;">${escapeHtml(cat.assessment_code || cat.assessment_type)}</span>
+                </span>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                  <span style="background:#fef9c3; color:#854d0e; padding:2px 8px; border-radius:4px; font-weight:800; font-size:0.75rem; border:1px solid #fde047;">
+                    ${escapeHtml(cat.assessment_code || 'Assessment')} Grade: ${cat.assessment_grade !== undefined ? cat.assessment_grade.toFixed(2) : '—'}
+                  </span>
+                  <span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.73rem;">
+                    Class Avg: ${cat.class_avg_percentage !== undefined ? cat.class_avg_percentage.toFixed(1) + '%' : '—'}
+                  </span>
+                  <span style="color:#0f766e; font-size:0.75rem;">Weight: ${cat.weight_pct}%</span>
+                </div>
+              </div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.77rem;">
+                  <thead>
+                    <tr style="background:#f1f5f9; text-align:left; color:#64748b;">
+                      <th style="padding:5px 8px; width:65px;">Item</th>
+                      <th style="padding:5px 8px;">Activity Name</th>
+                      <th style="padding:5px 8px; width:80px; text-align:center;">My Score</th>
+                      <th style="padding:5px 8px; width:65px; text-align:center;">My %</th>
+                      <th style="padding:5px 8px; width:110px; text-align:center;">Target to Pass</th>
+                      <th style="padding:5px 8px; width:80px; text-align:center;">Class Avg</th>
+                      <th style="padding:5px 8px; width:75px; text-align:center;">Variance</th>
+                      <th style="padding:5px 8px; width:70px; text-align:center;">Weight</th>
+                      <th style="padding:5px 8px; width:85px;">Aligned CLOs</th>
+                      <th style="padding:5px 8px; width:135px; text-align:center;">Acknowledged</th>
                     </tr>
-                  `).join('')}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    ${(cat.items || []).map(it => `
+                      <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:5px 8px; font-weight:700;">${escapeHtml(it.item_id)}</td>
+                        <td style="padding:5px 8px;">${escapeHtml(it.name)}</td>
+                        <td style="padding:5px 8px; text-align:center; font-weight:600;">
+                          ${it.is_recorded ? `${it.student_score} / ${it.max_score}` : `<span style="color:#94a3b8; font-size:0.73rem; font-style:italic;">Pending</span>`}
+                        </td>
+                        <td style="padding:5px 8px; text-align:center; font-weight:700; color:#0f766e;">
+                          ${it.is_recorded ? `${it.percentage}%` : `<span style="color:#94a3b8; font-size:0.73rem;">—</span>`}
+                        </td>
+                        <td style="padding:5px 8px; text-align:center;">
+                          ${it.is_recorded ? `
+                            <span style="color:#64748b; font-size:0.72rem; font-style:italic;" title="Score recorded — excluded from baseline passing targets">— (Recorded)</span>
+                          ` : (it.target_score !== undefined && it.target_score !== null ? `
+                            <span style="display:inline-block; font-weight:800; font-size:0.75rem; color:#0f766e; background:#f0fdfa; border:1px solid #99f6e4; padding:2px 6px; border-radius:4px;" title="Target baseline points needed to pass: ${it.target_score} out of ${it.max_score} (${it.target_pct}%)">
+                              🎯 ${it.target_score} / ${it.max_score} <span style="font-size:0.68rem; color:#0d9488;">(${it.target_pct}%)</span>
+                            </span>
+                          ` : `<span style="color:#94a3b8; font-size:0.72rem;">—</span>`)}
+                        </td>
+                        <td style="padding:5px 8px; text-align:center; color:#475569;">
+                          ${it.class_avg_score !== undefined ? `${it.class_avg_score} <span style="font-size:0.68rem; color:#64748b;">(${it.class_avg_pct}%)</span>` : '—'}
+                        </td>
+                        <td style="padding:5px 8px; text-align:center;">
+                          ${formatVarianceBadge(it.variance_vs_avg, '%')}
+                        </td>
+                        <td style="padding:5px 8px; text-align:center; color:#0f766e; font-weight:600;">${it.weight_pct > 0 ? it.weight_pct + '%' : '—'}</td>
+                        <td style="padding:5px 8px;"><span class="badge-pill" style="background:#e0f2fe; color:#0369a1; font-size:0.7rem;">${escapeHtml((it.aligned_clos || []).join(', '))}</span></td>
+                        <td style="padding:5px 8px; text-align:center;">
+                          ${it.acknowledged ? `
+                            <div style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:3px 6px; border-radius:5px; background:#f0fdf4; border:1px solid #86efac; cursor:pointer;"
+                              onclick="viewAffixedSignatureModal('${escapeHtml(c.course_code || '')}', '${escapeHtml(it.item_id)}', '${escapeHtml(it.name || it.item_id)}', '${escapeHtml(it.signature_data || '')}', '${escapeHtml(it.acknowledged_at || '')}')"
+                              title="Click to view full affixed signature and timestamp receipt">
+                              ${it.signature_data ? `
+                                <img src="${it.signature_data}" alt="Affixed Signature" style="max-height:28px; max-width:85px; object-fit:contain; border-bottom:1px solid #bbf7d0; padding-bottom:1px;" />
+                              ` : `
+                                <div style="font-size:0.72rem; font-weight:700; color:#15803d;">✓ Signed</div>
+                              `}
+                              <div style="font-size:0.62rem; color:#15803d; font-weight:700; line-height:1.2; word-break:break-word; max-width:115px;">
+                                ${escapeHtml(it.acknowledged_at || '')}
+                              </div>
+                            </div>
+                          ` : `
+                            <button type="button" class="btn btn-sm"
+                              style="background:#0f766e; color:#ffffff; font-size:0.72rem; font-weight:700; padding:3px 10px; border-radius:4px; border:none; cursor:pointer;"
+                              onmouseover="this.style.background='#0d9488'" onmouseout="this.style.background='#0f766e'"
+                              onclick="openAcknowledgeScoreModal('${escapeHtml(c.course_id || currentPerfCourseId || '')}', '${escapeHtml(it.item_id)}', '${escapeHtml(it.name)}', ${it.student_score}, ${it.max_score}, ${it.percentage})">
+                              ✍️ Sign &amp; Ack
+                            </button>
+                          `}
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
             </div>
           `).join('') : '<div style="font-size:0.8rem; color:#94a3b8; font-style:italic;">No assessment tasks recorded.</div>'}
         </div>
@@ -1231,12 +1761,47 @@
       document.getElementById("ackItemPct").textContent = `${pct}%`;
       document.getElementById("ackStudentName").textContent = currentPerfStudent ? `${currentPerfStudent.name || ''} (${currentPerfStudent.student_id || ''})` : "Student";
       document.getElementById("ackAgreementCheck").checked = false;
+
+      // Update live whole timestamp preview
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const year = now.getFullYear();
+      const month = pad(now.getMonth() + 1);
+      const day = pad(now.getDate());
+      let hours = now.getHours();
+      const minutes = pad(now.getMinutes());
+      const seconds = pad(now.getSeconds());
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hoursStr = pad(hours);
+      const wholeTs = `${year}-${month}-${day} ${hoursStr}:${minutes}:${seconds} ${ampm}`;
+      const tsEl = document.getElementById("ackLiveTimestampPreview");
+      if (tsEl) tsEl.textContent = wholeTs;
+
       const btn = document.getElementById("ackSubmitBtn");
       btn.disabled = true;
       btn.style.opacity = "0.5";
       btn.style.cursor = "not-allowed";
-      btn.innerHTML = '<span>✓ Confirm & Acknowledge</span>';
+      btn.innerHTML = '<span>✍️ Affix Signature &amp; Acknowledge</span>';
       document.getElementById("ackScoreBackdrop").style.display = "flex";
+
+      if (!ackScorePad) {
+        ackScorePad = setupDrawingCanvas("ackScoreCanvas");
+        const ackCvs = document.getElementById("ackScoreCanvas");
+        if (ackCvs) {
+          ackCvs.addEventListener("mouseup", () => setTimeout(toggleAckSubmitBtn, 50));
+          ackCvs.addEventListener("touchend", () => setTimeout(toggleAckSubmitBtn, 50));
+        }
+      }
+
+      if (ackScorePad) {
+        ackScorePad.clear();
+        if (storedStudentSignature) {
+          ackScorePad.loadImage(storedStudentSignature);
+          setTimeout(toggleAckSubmitBtn, 120);
+        }
+      }
     }
 
     function closeAcknowledgeScoreModal() {
@@ -1244,27 +1809,61 @@
       currentAckItemData = null;
     }
 
+    function useStoredSignatureForAck() {
+      if (storedStudentSignature && ackScorePad) {
+        ackScorePad.loadImage(storedStudentSignature);
+        setTimeout(toggleAckSubmitBtn, 100);
+      } else {
+        alert("No saved profile signature available. Please sign on the drawing canvas below.");
+      }
+    }
+
+    function clearAckScoreCanvas() {
+      if (ackScorePad) {
+        ackScorePad.clear();
+        toggleAckSubmitBtn();
+      }
+    }
+
     function toggleAckSubmitBtn() {
       const chk = document.getElementById("ackAgreementCheck");
       const btn = document.getElementById("ackSubmitBtn");
-      btn.disabled = !chk.checked;
-      btn.style.opacity = chk.checked ? "1" : "0.5";
-      btn.style.cursor = chk.checked ? "pointer" : "not-allowed";
+      const hasSig = ackScorePad && !ackScorePad.isEmpty();
+      const ready = Boolean(chk && chk.checked && hasSig);
+      btn.disabled = !ready;
+      btn.style.opacity = ready ? "1" : "0.5";
+      btn.style.cursor = ready ? "pointer" : "not-allowed";
+      if (!hasSig && chk && chk.checked) {
+        btn.title = "Please affix your signature before confirming.";
+      } else {
+        btn.title = "";
+      }
     }
 
     async function submitScoreAcknowledgment() {
       if (!currentAckItemData) return;
       const targetCourseId = currentAckItemData.courseId || currentPerfCourseId;
       const targetItemId = currentAckItemData.itemId;
+      const chk = document.getElementById("ackAgreementCheck");
+      if (!chk || !chk.checked) {
+        alert("Please check the declaration checkbox to confirm receipt of your paper and score.");
+        return;
+      }
+      if (!ackScorePad || ackScorePad.isEmpty()) {
+        alert("Please affix your electronic signature on the pad before confirming acknowledgment.");
+        return;
+      }
+      const sigData = ackScorePad.getDataUrl();
+
       const btn = document.getElementById("ackSubmitBtn");
       btn.disabled = true;
-      btn.innerHTML = '<span>⏳ Recording...</span>';
+      btn.innerHTML = '<span>⏳ Affixing Signature &amp; Recording...</span>';
 
       try {
         const res = await fetch(`/api/student/courses/${encodeURIComponent(targetCourseId)}/acknowledge-assessment`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ item_id: targetItemId })
+          body: JSON.stringify({ item_id: targetItemId, signature_data: sigData })
         });
         const result = await res.json();
         if (!res.ok || !result.success) {
@@ -1275,12 +1874,34 @@
         if (targetCourseId) {
           await openPerformanceDashboardModal(targetCourseId);
         }
-        alert(`✓ Acknowledgment Confirmed: You have officially received your paper and verified that your score for ${targetItemId} is final.`);
+        alert(`✓ Acknowledgment Confirmed: Your electronic signature and whole timestamp have been officially recorded. Your score for ${targetItemId} is now sealed.`);
       } catch (err) {
         alert(`Error: ${err.message}`);
         btn.disabled = false;
-        btn.innerHTML = '<span>✓ Confirm & Acknowledge</span>';
+        btn.innerHTML = '<span>✍️ Affix Signature &amp; Acknowledge</span>';
       }
+    }
+
+    function viewAffixedSignatureModal(courseCode, itemId, itemName, sigUrl, ts) {
+      document.getElementById("viewSigActivityTitle").textContent = `${itemId} - ${itemName}`;
+      document.getElementById("viewSigCourseCode").textContent = courseCode || "Course";
+      document.getElementById("viewSigStudentName").textContent = currentPerfStudent ? `${currentPerfStudent.name || ''} (${currentPerfStudent.student_id || ''})` : "Student";
+      document.getElementById("viewSigTimestamp").textContent = ts || "Verified";
+      const img = document.getElementById("viewSigImage");
+      const noSigMsg = document.getElementById("viewSigNone");
+      if (sigUrl) {
+        img.src = sigUrl;
+        img.style.display = "block";
+        if (noSigMsg) noSigMsg.style.display = "none";
+      } else {
+        img.style.display = "none";
+        if (noSigMsg) noSigMsg.style.display = "block";
+      }
+      document.getElementById("viewAffixedSigBackdrop").style.display = "flex";
+    }
+
+    function closeViewAffixedSigModal() {
+      document.getElementById("viewAffixedSigBackdrop").style.display = "none";
     }
 
 </script>
@@ -1290,13 +1911,13 @@
     <div style="background:#ffffff; width:100%; max-width:540px; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); overflow:hidden; display:flex; flex-direction:column; border:1px solid #cbd5e1;">
       <div style="background:#0f766e; color:#ffffff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
         <div style="font-weight:800; font-size:1rem; display:flex; align-items:center; gap:8px;">
-          <span>📝</span>
-          <span>Acknowledge Score & Paper Receipt</span>
+          <span>✍️</span>
+          <span>Acknowledge Score &amp; Affix Signature</span>
         </div>
         <button type="button" onclick="closeAcknowledgeScoreModal()" style="background:none; border:none; color:#ffffff; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
       </div>
-      <div style="padding:20px; font-size:0.85rem; color:#334155; line-height:1.5;">
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+      <div style="padding:18px; font-size:0.85rem; color:#334155; line-height:1.5; max-height:80vh; overflow-y:auto;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:12px;">
           <div style="font-weight:700; color:#0f172a; font-size:0.95rem; margin-bottom:4px;" id="ackItemTitle">Activity Name</div>
           <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#475569;">
             <span>Score: <strong style="color:#0f766e; font-size:0.95rem;" id="ackItemScore">0 / 0</strong> (<span id="ackItemPct">0%</span>)</span>
@@ -1304,35 +1925,92 @@
           </div>
         </div>
 
-        <div style="background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #ef4444; border-radius:6px; padding:12px 14px; margin-bottom:16px; color:#991b1b;">
-          <div style="font-weight:800; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #ef4444; border-radius:6px; padding:10px 12px; margin-bottom:12px; color:#991b1b;">
+          <div style="font-weight:800; margin-bottom:3px; display:flex; align-items:center; gap:6px; font-size:0.8rem;">
             <span>⚠️</span> IMPORTANT FORMAL DECLARATION
           </div>
-          <p style="margin:0; font-size:0.82rem; line-height:1.45;">
-            By confirming this acknowledgment, you verify that you have <strong>received and reviewed your evaluated test paper / assessment output</strong> from your course instructor.
+          <p style="margin:0; font-size:0.79rem; line-height:1.4;">
+            By signing and confirming, you verify that you have <strong>received and reviewed your evaluated paper / assessment output</strong> from your course instructor.
           </p>
-          <p style="margin:8px 0 0; font-size:0.82rem; font-weight:700; line-height:1.45;">
-            You acknowledge and agree that your recorded score is FINAL and that ANY REQUEST FOR RECONSIDERATION, RECHECKING, OR ALTERATION WILL NOT BE ENTERTAINED.
+          <p style="margin:6px 0 0; font-size:0.79rem; font-weight:700; line-height:1.4;">
+            You explicitly acknowledge and agree that your recorded score is FINAL and that ANY REQUEST FOR RECONSIDERATION, RECHECKING, OR ALTERATION WILL NOT BE ENTERTAINED.
           </p>
         </div>
 
-        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.82rem; color:#1e293b; background:#f1f5f9; padding:10px 12px; border-radius:6px; border:1px solid #cbd5e1;">
+        <!-- Electronic Signature Section -->
+        <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-weight:700; font-size:0.8rem; color:#0f172a;">Affix Electronic Signature:</label>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button type="button" class="btn-sp btn-sp-outline" style="padding:2px 8px; font-size:0.7rem;" onclick="useStoredSignatureForAck()" title="Pre-fill with your saved profile signature">
+                Use Saved Signature
+              </button>
+              <button type="button" class="btn-sp btn-sp-outline" style="padding:2px 8px; font-size:0.7rem;" onclick="clearAckScoreCanvas()">
+                Clear
+              </button>
+            </div>
+          </div>
+          <div style="position:relative;">
+            <canvas id="ackScoreCanvas" width="480" height="110" style="width:100%; height:110px; border:1px dashed #94a3b8; border-radius:6px; background:#fafafa; touch-action:none;"></canvas>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:0.7rem; color:#64748b;">
+            <span>Draw with mouse or finger, or load saved signature.</span>
+            <span style="color:#0f766e; font-weight:700;">Whole Timestamp: <span id="ackLiveTimestampPreview">Loading...</span></span>
+          </div>
+        </div>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.8rem; color:#1e293b; background:#f1f5f9; padding:10px 12px; border-radius:6px; border:1px solid #cbd5e1;">
           <input type="checkbox" id="ackAgreementCheck" onchange="toggleAckSubmitBtn()" style="margin-top:2px; transform:scale(1.15); cursor:pointer;">
-          <span>I have received my paper, verified my recorded score, and explicitly agree that my score is final and reconsideration will not be entertained.</span>
+          <span>I have received my paper, verified my recorded score, affixed my signature above, and explicitly agree that my score is final and reconsideration will not be entertained.</span>
         </label>
       </div>
       <div style="background:#f8fafc; padding:12px 18px; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
         <button type="button" class="btn-sp btn-sp-outline" onclick="closeAcknowledgeScoreModal()" style="padding:6px 14px; font-size:0.82rem;">Cancel</button>
         <button type="button" id="ackSubmitBtn" disabled onclick="submitScoreAcknowledgment()" style="background:#0f766e; border:none; color:#ffffff; padding:7px 16px; font-size:0.82rem; font-weight:700; border-radius:6px; cursor:not-allowed; opacity:0.5; display:inline-flex; align-items:center; gap:6px;">
-          <span>✓ Confirm & Acknowledge</span>
+          <span>✍️ Affix Signature &amp; Acknowledge</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: View Affixed Signature & Receipt Details -->
+  <div id="viewAffixedSigBackdrop" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.75); backdrop-filter:blur(4px); z-index:11500; align-items:center; justify-content:center; padding:15px;">
+    <div style="background:#ffffff; width:100%; max-width:480px; border-radius:12px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); overflow:hidden; display:flex; flex-direction:column; border:1px solid #cbd5e1;">
+      <div style="background:#0f766e; color:#ffffff; padding:12px 18px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:8px;">
+          <span>✍️</span>
+          <span>Affixed Student Signature &amp; Receipt</span>
+        </div>
+        <button type="button" onclick="closeViewAffixedSigModal()" style="background:none; border:none; color:#ffffff; font-size:1.3rem; cursor:pointer; line-height:1;">&times;</button>
+      </div>
+      <div style="padding:16px 20px; font-size:0.83rem; color:#334155;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:12px;">
+          <div style="font-weight:700; color:#0f172a;" id="viewSigActivityTitle">Activity</div>
+          <div style="font-size:0.75rem; color:#0f766e; margin-top:3px;">
+            Course: <strong id="viewSigCourseCode">-</strong> &bull; Student: <strong id="viewSigStudentName">-</strong>
+          </div>
+          <div style="font-size:0.75rem; color:#15803d; margin-top:3px; font-weight:700;">
+            Whole Timestamp: <span id="viewSigTimestamp">-</span>
+          </div>
+        </div>
+        <div style="font-size:0.75rem; color:#64748b; font-weight:700; margin-bottom:6px; text-transform:uppercase;">Affixed E-Signature:</div>
+        <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:16px; text-align:center; min-height:120px; display:flex; align-items:center; justify-content:center;">
+          <img id="viewSigImage" src="" alt="Student Signature" style="max-height:120px; max-width:100%; object-fit:contain;" />
+          <div id="viewSigNone" style="display:none; color:#94a3b8; font-style:italic; font-size:0.8rem;">No signature image recorded.</div>
+        </div>
+        <div style="margin-top:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 12px; font-size:0.75rem; color:#166534; line-height:1.4;">
+          ✓ Receipt Confirmed: You accepted this score, received the evaluated paper, and confirmed that the recorded score is final.
+        </div>
+      </div>
+      <div style="background:#f8fafc; padding:10px 18px; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn-sp btn-sp-outline" onclick="closeViewAffixedSigModal()" style="padding:5px 14px; font-size:0.8rem;">Close</button>
       </div>
     </div>
   </div>
 
   <!-- Student Performance Monitoring Dashboard Modal -->
   <div class="sp-modal-backdrop" id="performanceModalBackdrop" style="display:none;">
-    <div class="sp-modal" style="max-width:880px; max-height:92vh; display:flex; flex-direction:column;">
+    <div class="sp-modal" style="width:95%; max-width:960px; max-height:92vh; display:flex; flex-direction:column;">
       <div style="padding:14px 18px; background:#0f766e; color:#ffffff; border-radius:9px 9px 0 0; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <h3 style="margin:0; font-size:1.05rem; font-weight:700;" id="perfModalTitle">Academic Performance Dashboard</h3>

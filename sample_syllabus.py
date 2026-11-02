@@ -86,6 +86,9 @@ def get_default_rubrics() -> List[Dict[str, Any]]:
 
 def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBlueprint:
     """Returns the USeP EE 211 (Electrical Circuits 1) syllabus blueprint matching EE 211.pdf & Math 211.xlsm."""
+    lecture_units = 3.0
+    lab_units = 0.0
+
     metadata = CourseMetadata(
         university="University of Southeastern Philippines",
         college="COLLEGE OF ENGINEERING",
@@ -530,6 +533,8 @@ def get_blank_blueprint(
     semester_ay: str = "",
     faculty_name: str = "",
     credit_units: str = "3.0 Units – Lecture",
+    lecture_units: Optional[float] = None,
+    lab_units: Optional[float] = None,
     lec_lab: str = "Lecture",
     contact_hours: str = "3 Hours/Week (54 Hours/Semester)",
     course_description: str = "",
@@ -544,6 +549,7 @@ def get_blank_blueprint(
     year_level: str = "Second Year",
     sdg_alignments: str = "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure",
     pgo_pi_str: str = "",
+    schedule: str = "TBA",
     course_outcomes: Optional[List[CourseOutcome]] = None,
 ) -> SyllabusBlueprint:
     """Returns a completely clean starter blueprint for creating a syllabus from scratch."""
@@ -575,8 +581,10 @@ def get_blank_blueprint(
         course_code=course_code or "New Course",
         course_title=course_title or "Untitled Subject",
         credit_units=credit_units,
+        lecture_units=float(lecture_units if lecture_units is not None else 3.0),
+        lab_units=float(lab_units if lab_units is not None else 0.0),
         lec_lab=lec_lab,
-        schedule="TBA",
+        schedule=schedule or "TBA",
         room="TBA",
         semester_ay=semester_ay or "1st Semester, A.Y. 2026-2027",
         section=section or "EE 2A",
@@ -587,18 +595,24 @@ def get_blank_blueprint(
         transmutation_base=50,
         passing_percentage=75.0,
         grading_mode="two_term",
+        grading_system_type="two_term",
+        midterm_weight=50.0,
+        finals_weight=50.0,
+        project_weight=0.0,
+        lecture_weight=75.0,
+        lab_weight=25.0,
         course_description=course_description,
         prerequisites=prerequisites,
         corequisites=corequisites,
         contact_hours=contact_hours,
         year_level=year_level or "Second Year",
         sdg_alignments=sdg_alignments,
-        prereq_coreq_table=parse_prereqs_coreqs_to_table(prerequisites, corequisites),
-        sdg_table=parse_sdg_string_to_table(sdg_alignments),
-        syllabus_assessment_activities=get_default_syllabus_assessment_activities(),
-        learning_plan_table=[dict(DEFAULT_ORIENTATION_ROW)],
-        references_table=[],
-        policies_table=get_default_policies_table(),
+        prereq_coreq_table=[{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}],
+        sdg_table=[{"sdg": "", "description": ""}],
+        syllabus_assessment_activities=[{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "rubric_ref": ""}],
+        learning_plan_table=[{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}],
+        references_table=[{"code": "[1]", "reference": ""}],
+        policies_table=[{"number": "1", "title": "", "description": ""}],
     )
 
     terms = [
@@ -606,7 +620,18 @@ def get_blank_blueprint(
         TermConfig(term_name="Finals", weight_pct=50.0),
     ]
 
-    clos_to_use = course_outcomes or generate_clos_from_pgo_pi(pgo_pi_str, program_code or "EE")
+    clos_to_use = course_outcomes or [
+        CourseOutcome(
+            co_id="CLO1",
+            description="",
+            program_outcomes="",
+            graduate_outcome_desc="",
+            performance_indicator="",
+            iga_aligned="",
+            target_score_pct=75.0,
+            target_class_pass_pct=50.0,
+        )
+    ]
 
     return SyllabusBlueprint(
         metadata=metadata,

@@ -11,6 +11,7 @@ matching the exact structure, tables, rubrics, colors, and layout of EE 211.pdf.
 
 
 import os
+import re
 import base64
 import tempfile
 from typing import List, Dict, Any, Optional
@@ -682,23 +683,121 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
     pdf.set_font(fn_main, "", 8.5)
     pdf.cell(0, 5.0, "The final grade in this course will be composed of the following items and their weights in the final grade computation:", new_x="LMARGIN", new_y="NEXT")
 
-    # Build distinct SA codes, weights, and aligned CLOs from bp.categories
-    sa_summary: Dict[str, float] = {}
-    sa_clos_map: Dict[str, set] = {}
-    for cat in bp.categories:
-        if (cat.assessment_type or "SA").upper() == "SA":
-            code = cat.assessment_code.upper()
-            if code not in sa_summary:
-                sa_summary[code] = float(cat.weight_pct or 0.0)
-            if code not in sa_clos_map:
-                sa_clos_map[code] = set()
-            for it in cat.items:
-                for token in str(it.co_id or "").replace(";", ",").replace("/", ",").split(","):
-                    tok = token.split(":")[0].strip().upper()
-                    if tok:
-                        sa_clos_map[code].add(tok)
-    if not sa_summary:
-        sa_summary = {"SA1": 40.0, "SA2": 60.0}
+    # Build distinct SA items with section separators matching syllabus template image
+    raw_activities = meta.syllabus_assessment_activities or []
+    sa_items = []
+    if raw_activities:
+        for act in raw_activities:
+            a_type = str(act.get("type") or "").strip().lower()
+            a_code = str(act.get("code") or "").strip().upper()
+            if not a_type.startswith("form") and not a_code.startswith("FA"):
+                sa_items.append({
+                    "code": a_code,
+                    "activity": str(act.get("activity") or ""),
+                    "weight_pct": float(act.get("weight_pct") or 0.0),
+                    "clo_aligned": str(act.get("clo_aligned") or ""),
+                    "lec_lab": str(act.get("lec_lab") or "Lecture"),
+                    "is_major_assessment": bool(act.get("is_major_assessment")),
+                    "major_scope": str(act.get("major_scope") or "independent"),
+                    "clo_methods": act.get("clo_methods") or {}
+                })
+    
+    if not sa_items:
+        # Fallback from bp.categories
+        for cat in bp.categories:
+            if (cat.assessment_type or "SA").upper() == "SA":
+                code = cat.assessment_code.upper()
+                c_clos = set()
+                for it in cat.items:
+                    for token in str(it.co_id or "").replace(";", ",").replace("/", ",").split(","):
+                        tok = token.split(":")[0].strip().upper()
+                        if tok:
+                            c_clos.add(tok)
+                sa_items.append({
+                    "code": code,
+                    "activity": cat.name or code,
+                    "weight_pct": float(cat.weight_pct or 0.0),
+                    "clo_aligned": ", ".join(sorted(c_clos)),
+                    "lec_lab": cat.lec_lab or "Lecture",
+                    "is_major_assessment": bool(getattr(cat, "is_major_assessment", False))
+                })
+
+    if not sa_items:
+        sa_items = [
+            {"code": "SA1", "activity": "Quizzes", "weight_pct": 40.0, "clo_aligned": "CLO1, CLO4", "lec_lab": "Lecture", "is_major_assessment": False},
+            {"code": "SA2", "activity": "Term Examination", "weight_pct": 60.0, "clo_aligned": "CLO1, CLO4", "lec_lab": "Lecture", "is_major_assessment": False}
+        ]
+
+    scheme = str(meta.grading_system_type or "two_term").lower()
+    lec_wt = float(meta.lecture_weight if meta.lecture_weight is not None else 75.0)
+    lab_wt = float(meta.lab_weight if meta.lab_weight is not None else 25.0)
+    maj_wt = float(meta.project_weight if meta.project_weight is not None else 20.0)
+    mid_wt = float(meta.midterm_weight if meta.midterm_weight is not None else 40.0)
+    fin_wt = float(meta.finals_weight if meta.finals_weight is not None else 40.0)
+
+    # Weighted grading model: item % is relative to its section; section share is % of final grade.
+    # Standalone majors (own umbrella) are direct % of final grade; term-scoped majors behave like term items.
+    def _is_standalone_major(it):
+        return bool(it.get("is_major_assessment"))
+
+    def _term_scope(it):
+        if not it.get("is_major_assessment"):
+            return "both_terms"
+        s_ = str(it.get("major_scope") or "independent").lower()
+        return s_ if s_ in ("both_terms", "midterm", "finals") else "independent"
+
+    major_items = [it for it in sa_items if _is_standalone_major(it)]
+    term_items = [it for it in sa_items if not _is_standalone_major(it)]
+    sum_major_wt = sum(it["weight_pct"] for it in major_items)
+
+    mid_frac, fin_frac = 0.5, 0.5
+    if scheme in ("two_term", "term_project"):
+        _mf = mid_wt if meta.midterm_weight is not None else (40.0 if scheme == "term_project" else 50.0)
+        _ff = fin_wt if meta.finals_weight is not None else (40.0 if scheme == "term_project" else 50.0)
+        if (_mf + _ff) > 0:
+            mid_frac, fin_frac = _mf / (_mf + _ff), _ff / (_mf + _ff)
+
+    # (title, share, mode, items)
+    sections = []
+    if scheme == "lecture_lab":
+        sections.append(("LECTURE", lec_wt, "scaled", [it for it in term_items if (it.get("lec_lab") or "Lecture").lower() != "laboratory"]))
+        sections.append(("LABORATORY", lab_wt, "scaled", [it for it in term_items if (it.get("lec_lab") or "").lower() == "laboratory"]))
+    elif scheme == "lecture_major":
+        lw = float(meta.lecture_weight if meta.lecture_weight is not None else 80.0)
+        sections.append(("LECTURE", lw, "scaled", term_items))
+    elif scheme == "term_project":
+        sections.append(("TERM ASSESSMENTS", mid_wt + fin_wt, "scaled", term_items))
+    else:
+        sections.append(("TERM ASSESSMENTS" if major_items else "SUMMATIVE ASSESSMENTS", max(0.0, 100.0 - sum_major_wt), "scaled", term_items))
+    maj_share = sum_major_wt if major_items else (maj_wt if scheme in ("lecture_major", "term_project") else 0.0)
+    if major_items or maj_share > 0:
+        sections.append(("OTHER MAJOR ASSESSMENTS / PROJECTS", maj_share, "direct", major_items))
+
+    grade_issues = []
+    weighted_total = 0.0
+    for sec_title, sec_share, sec_mode, sec_items in sections:
+        mid_sub = fin_sub = 0.0
+        for it in sec_items:
+            w = float(it.get("weight_pct") or 0.0)
+            scope = _term_scope(it)
+            if sec_mode == "direct":
+                it["_eff"] = w
+            else:
+                tf = mid_frac if scope == "midterm" else (fin_frac if scope == "finals" else 1.0)
+                it["_eff"] = w * sec_share / 100.0 * tf
+                if scope != "finals":
+                    mid_sub += w
+                if scope != "midterm":
+                    fin_sub += w
+            weighted_total += it["_eff"]
+        if not sec_items and sec_share > 0:
+            grade_issues.append(f"{sec_title.title()} has a {sec_share:g}% share but no items")
+        elif sec_items and sec_mode == "scaled" and (abs(mid_sub - 100.0) > 0.1 or abs(fin_sub - 100.0) > 0.1):
+            grade_issues.append(f"{sec_title.title()} items total {mid_sub:g}%" + (f"/{fin_sub:g}%" if abs(mid_sub - fin_sub) > 0.05 else "") + " within section (must be 100%)")
+    share_sum = sum(sec[1] for sec in sections)
+    if abs(share_sum - 100.0) > 0.1:
+        grade_issues.append(f"section shares sum to {share_sum:g}% (must be 100%)")
+    is_grade_balanced = not grade_issues and abs(weighted_total - 100.0) < 0.1
 
     n_clos = max(1, len(bp.course_outcomes))
     clo_col_w = 120.0 / n_clos
@@ -707,39 +806,82 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
     pdf.set_font(fn_main, "", 8)
     with pdf.table(col_widths=col_widths_g, width=210.0, line_height=4.8, align="L") as t_grd:
         hdr = t_grd.row(style=gray_hdr)
-        hdr.cell("Assessment Item")
-        hdr.cell("Percentage of Final Grade")
+        hdr.cell("Assessment Item", align="L")
+        hdr.cell("Percentage of Final Grade", align="C")
         for co in bp.course_outcomes:
-            hdr.cell(_clean_text(co.co_id, has_ttf))
+            hdr.cell(_clean_text(co.co_id, has_ttf), align="C")
 
-        tot_w = 0.0
-        for code, wt in sa_summary.items():
-            tot_w += wt
-            r = t_grd.row()
-            r.cell(_clean_text(code, has_ttf), style=FontFace(emphasis="BOLD"))
-            r.cell(f"{wt:.0f}%")
-            aligned_set = sa_clos_map.get(code, set())
-            for co in bp.course_outcomes:
-                if not aligned_set or co.co_id.strip().upper() in aligned_set:
-                    matching_rubs = [
-                        r for r in rubrics
-                        if code in [str(c).upper().strip() for c in (r.get("assessment_codes") or [])]
-                        or code in [c.upper().strip() for c in str(r.get("assessment_code") or "").split(",") if c.strip()]
-                        or (r.get("assessment_code") or "").upper().strip() == code
-                        or code in (r.get("title") or "").upper()
-                    ]
-                    if matching_rubs:
-                        r.cell(_clean_text(matching_rubs[0].get("title", "Measurement Rubric"), has_ttf))
-                    else:
-                        r.cell("Scores / Assessment Items")
+        for sec_title, sec_share, sec_mode, sec_items in sections:
+            if not sec_items and not sec_share > 0:
+                continue
+            # Separator header row spanning all columns
+            r_sep = t_grd.row(style=FontFace(emphasis="BOLD", fill_color=(241, 245, 249)))
+            r_sep.cell(_clean_text(f"{sec_title} ({sec_share:g}% OF FINAL GRADE)", has_ttf), colspan=2 + n_clos, align="C")
+
+            for item in sec_items:
+                code = item["code"]
+                wt = item["weight_pct"]
+                eff = item.get("_eff", wt)
+                r = t_grd.row()
+                act_name = str(item.get("activity") or "").strip()
+                label = f"{code} ({act_name})" if act_name and act_name.upper() != code.upper() else code
+                r.cell(_clean_text(label, has_ttf), style=FontFace(emphasis="BOLD"), align="L")
+                if sec_mode == "scaled" and abs(eff - wt) > 0.05:
+                    r.cell(_clean_text(f"{wt:g}% ({eff:.1f}% of final grade)", has_ttf), align="C")
                 else:
-                    r.cell("-")
+                    r.cell(f"{wt:g}%", align="C")
+
+                aligned_raw = item.get("clo_aligned") or ""
+                aligned_tokens = [tok.strip().upper() for tok in re.split(r"[,;/]+", aligned_raw) if tok.strip()]
+
+                # Determine rubric title
+                matching_rubs = [
+                    rub for rub in rubrics
+                    if code in [str(c).upper().strip() for c in (rub.get("assessment_codes") or [])]
+                    or code in [c.upper().strip() for c in str(rub.get("assessment_code") or "").split(",") if c.strip()]
+                    or (rub.get("assessment_code") or "").upper().strip() == code
+                    or code in (rub.get("title") or "").upper()
+                ]
+                if matching_rubs:
+                    rub_name = matching_rubs[0].get("title", "Measurement Rubric")
+                    # Clean rubric prefix like "SA1: "
+                    rub_name = re.sub(r"^SA\d+:\s*", "", rub_name)
+                elif "lab" in (item.get("activity") or "").lower() or item.get("lec_lab") == "Laboratory":
+                    rub_name = "Laboratory Activity Rubric"
+                elif "proj" in (item.get("activity") or "").lower() or item.get("is_major_assessment"):
+                    rub_name = "Project Evaluation Rubric"
+                elif "recit" in (item.get("activity") or "").lower() or "oral" in (item.get("activity") or "").lower():
+                    rub_name = "Oral Recitation Rubric"
+                else:
+                    rub_name = "Problem Solving Rubric"
+
+                clo_methods = item.get("clo_methods") or {}
+                for co in bp.course_outcomes:
+                    co_key = co.co_id.strip().upper()
+                    # Custom CLO assessment method (supports rubrics and non-rubric assessment tools)
+                    custom_method = None
+                    if co.co_id in clo_methods:
+                        custom_method = clo_methods[co.co_id]
+                    elif co_key in clo_methods:
+                        custom_method = clo_methods[co_key]
+                    
+                    if custom_method is not None and str(custom_method).strip():
+                        r.cell(_clean_text(str(custom_method).strip(), has_ttf), align="C")
+                    elif custom_method is not None and not str(custom_method).strip():
+                        r.cell("", align="C")
+                    else:
+                        is_aligned = any(co_key in t or t in co_key for t in aligned_tokens)
+                        if is_aligned:
+                            r.cell(_clean_text(rub_name, has_ttf), align="C")
+                        else:
+                            r.cell("", align="C")
 
         rtot = t_grd.row(style=FontFace(emphasis="BOLD"))
-        rtot.cell("TOTAL")
-        rtot.cell(f"{tot_w:.0f}%")
-        for _ in bp.course_outcomes:
-            rtot.cell("")
+        rtot.cell("TOTAL", align="L")
+        rtot.cell(f"{weighted_total:.0f}%" if abs(weighted_total - round(weighted_total)) < 0.05 else f"{weighted_total:.1f}%", align="C")
+        status_msg = ("Verified: weighted total (item % x section share) equals 100% of the final grade"
+                      if is_grade_balanced else "Warning: " + "; ".join(grade_issues or [f"weighted total is {weighted_total:.1f}%"]))
+        rtot.cell(_clean_text(status_msg, has_ttf), colspan=n_clos, align="L")
 
     pdf.ln(3.0)
     pdf.set_font(fn_main, "", 8)
@@ -842,6 +984,13 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
                     act_val = chr(10).join(str(a) for a in act_val)
                 r.cell(_clean_text(act_val, has_ttf))
             # if span == 0, omit cell because it is covered by the lead row's rowspan
+
+    # Part IX Term Assessment Weights Audit note
+    pdf.ln(1.5)
+    pdf.set_font(fn_main, "I", 7.0)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 3.5, _clean_text("Note: Term assessment tasks are monitored in alignment with the Class Record grading scheme (Midterm: 100%, Final Term: 100%).", has_ttf), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0, 0, 0)
 
     # ==========================================================================
     # PAGE 7 & 8: PART X. REFERENCES/ARTICLES TO READ, PART XI. CLASSROOM POLICIES & SIGNATORIES

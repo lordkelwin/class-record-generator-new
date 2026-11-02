@@ -13,10 +13,11 @@ import json
 import os
 import re
 import uuid
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from models import CourseMetadata, SyllabusBlueprint
+from models import CourseOutcome, CourseMetadata, SyllabusBlueprint, get_default_cqi_indicators
 from sample_syllabus import get_default_blueprint, get_blank_blueprint, build_learning_plan_from_topics
 from catalog_data import get_full_catalog
 
@@ -377,13 +378,46 @@ def _sync_student_acknowledgments_from_store(doc: Optional[Dict[str, Any]]) -> O
                                 "acknowledged": True,
                                 "acknowledged_at": ack_val.get("acknowledged_at", ""),
                                 "acknowledged_iso": ack_val.get("acknowledged_iso", ""),
+                                "signature_data": ack_val.get("signature_data") or matched_profile.get("signature_data", ""),
                                 "student_id": st.get("student_id"),
                                 "student_name": st.get("name") or f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", "),
                                 "statement": ack_val.get("statement", "Student accepted the score, received test paper, and acknowledged that the score is final and reconsideration will not be entertained.")
                             }
+                        elif it_id in cur_acks and not cur_acks[it_id].get("signature_data"):
+                            cur_acks[it_id]["signature_data"] = ack_val.get("signature_data") or matched_profile.get("signature_data", "")
     except Exception:
         pass
 
+    return doc
+
+
+def _sync_cqi_plan(doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Ensures blueprint has a populated cqi_plan with all 20 indicators across Categories I–IV."""
+    if not doc or not isinstance(doc, dict):
+        return doc
+    bp = doc.get("blueprint")
+    if not isinstance(bp, dict):
+        return doc
+
+    default_indicators = [asdict(ind) for ind in get_default_cqi_indicators()]
+    cqi = bp.get("cqi_plan")
+    if not cqi or not isinstance(cqi, dict):
+        bp["cqi_plan"] = {
+            "key_strengths": "Course delivery strictly followed the OBE syllabus learning plan, utilizing problem-based learning, collaborative group activities (FA1), and structured rubric-based summative assessments (SA1 & SA2).",
+            "areas_for_improvement": "Some students encountered difficulties in setting up multi-loop nodal/mesh differential equations and time-domain RLC transient analysis under time constraints during major examinations.",
+            "action_plan": "1. Increase guided problem-solving drills and simulation verification during formative group activities (FA1).\n2. Conduct targeted remedial review sessions prior to term examinations focusing on CLOs with <75% average score.\n3. Provide step-by-step rubric exemplars for multi-source network theorem and transient problems.",
+            "date_of_evaluation": datetime.now().strftime("%B %Y"),
+            "indicators": default_indicators,
+        }
+    else:
+        indicators = cqi.get("indicators")
+        if not indicators or not isinstance(indicators, list) or len(indicators) == 0:
+            cqi["indicators"] = default_indicators
+        else:
+            existing_keys = {(ind.get("category"), ind.get("number")) for ind in indicators if isinstance(ind, dict)}
+            for def_ind in default_indicators:
+                if (def_ind.get("category"), def_ind.get("number")) not in existing_keys:
+                    indicators.append(def_ind)
     return doc
 
 
@@ -399,6 +433,7 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
                 if isinstance(bp, dict) and "rubrics" not in bp:
                     bp["rubrics"] = []
                 _sync_student_acknowledgments_from_store(doc)
+                _sync_cqi_plan(doc)
                 return doc
         except Exception:
             pass
@@ -411,6 +446,7 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
         u_lower = (username or "").strip().lower()
         if u_lower == (doc.get("owner") or "").lower() or u_lower in author_unames or username == "admin":
             _sync_student_acknowledgments_from_store(doc)
+            _sync_cqi_plan(doc)
             return doc
     return None
 
@@ -442,11 +478,14 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
     course_title = (payload.get("course_title") or meta.get("course_title") or existing.get("course_title") or "").strip()
     section = (payload.get("section") or meta.get("section") or existing.get("section") or "1A").strip()
     semester_ay = (payload.get("semester_ay") or meta.get("semester_ay") or existing.get("semester_ay") or "1st Semester, A.Y. 2026-2027").strip()
+    if payload.get("schedule"):
+        meta["schedule"] = str(payload.get("schedule")).strip()
 
     # Enforce syllabus workflow locks on blueprint (existing workflow cannot be forged)
     wf = existing.get("workflow") or payload.get("workflow") or syllabus_workflow.default_workflow()
     temp_doc = {"blueprint": existing.get("blueprint"), "workflow": wf, "owner": username}
     bp_dict = syllabus_workflow.enforce_locks(temp_doc, bp_dict)
+    _sync_cqi_plan({"blueprint": bp_dict})
 
     # Enforce syllabus approval barrier for Grades (students scores)
     is_syllabus_approved = (wf or {}).get("status") == "approved"
@@ -504,6 +543,8 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
             for it_id, ack_val in matched_acks.items():
                 if it_id not in cur_acks or not cur_acks[it_id].get("acknowledged"):
                     cur_acks[it_id] = ack_val
+                elif not cur_acks[it_id].get("signature_data") and ack_val.get("signature_data"):
+                    cur_acks[it_id]["signature_data"] = ack_val.get("signature_data")
 
     programs = payload.get("programs") or meta.get("programs") or []
     sections = payload.get("sections") or meta.get("sections") or []
@@ -547,6 +588,7 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
         "course_title": course_title,
         "section": section,
         "semester_ay": semester_ay,
+        "schedule": meta.get("schedule") or "TBA",
         "blueprint": bp_dict,
         "workflow": wf,
         "class_record_workflow": cr_wf,
@@ -576,6 +618,12 @@ def create_course(
     faculty_name: str = "",
     programs: Optional[List[str]] = None,
     sections: Optional[List[str]] = None,
+    credit_units: Optional[str] = None,
+    lec_lab: Optional[str] = None,
+    contact_hours: Optional[str] = None,
+    lecture_units: Optional[float] = None,
+    lab_units: Optional[float] = None,
+    schedule: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Creates a new subject entry under the user's account with multi-program & multi-section support.
@@ -628,9 +676,9 @@ def create_course(
         cat_sdgs = catalog_course_data.get("sdgs") or (db_course.get("sdgs") if db_course else "") or "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
         prereqs = catalog_course_data.get("prereqs") or (db_course.get("prerequisites") if db_course else "") or ""
         coreqs = catalog_course_data.get("coreqs") or (db_course.get("corequisites") if db_course else "") or ""
-        units = catalog_course_data.get("credit_units") or (db_course.get("credit_units") if db_course else "") or "3.0 Units – Lecture"
-        lec_lab = catalog_course_data.get("lec_lab") or (db_course.get("lec_lab") if db_course else "") or "Lecture"
-        contact_hours = catalog_course_data.get("hours") or (db_course.get("contact_hours") if db_course else "") or "3 Hours/Week"
+        units = credit_units or catalog_course_data.get("credit_units") or (db_course.get("credit_units") if db_course else "") or "3.0 Units – Lecture"
+        lec_lab_val = lec_lab or catalog_course_data.get("lec_lab") or (db_course.get("lec_lab") if db_course else "") or "Lecture"
+        contact_hours_val = contact_hours or catalog_course_data.get("hours") or (db_course.get("contact_hours") if db_course else "") or "3 Hours/Week"
         desc = catalog_course_data.get("description") or (db_course.get("description") if db_course else "") or ""
         cat_pgo_pi = catalog_course_data.get("pgo_pi") or (db_course.get("pgo") if db_course else "") or ""
 
@@ -641,8 +689,10 @@ def create_course(
             semester_ay=semester_ay,
             faculty_name=faculty_name,
             credit_units=units,
-            lec_lab=lec_lab,
-            contact_hours=contact_hours,
+            lecture_units=lecture_units,
+            lab_units=lab_units,
+            lec_lab=lec_lab_val,
+            contact_hours=contact_hours_val,
             course_description=desc,
             prerequisites=prereqs,
             corequisites=coreqs,
@@ -653,16 +703,35 @@ def create_course(
             year_level=cat_yr,
             sdg_alignments=cat_sdgs,
             pgo_pi_str=cat_pgo_pi,
+            schedule=schedule or "TBA",
         )
         bp.metadata.program_heads = heads
         bp.metadata.passing_percentage = 75.0
         bp.metadata.year_level = cat_yr
         bp.metadata.sdg_alignments = cat_sdgs
-        bp.metadata.sdg_table = parse_sdg_string_to_table(cat_sdgs)
-        bp.metadata.prereq_coreq_table = parse_prereqs_coreqs_to_table(prereqs, coreqs)
-        bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
-        bp.metadata.references_table = []
-        bp.metadata.policies_table = get_default_policies_table()
+        bp.metadata.prereq_coreq_table = [{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}]
+        bp.metadata.sdg_table = [{"sdg": "", "description": ""}]
+        bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "rubric_ref": ""}]
+        bp.metadata.learning_plan_table = [{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}]
+        bp.metadata.references_table = [{"code": "[1]", "reference": ""}]
+        bp.metadata.policies_table = [{"number": "1", "title": "", "description": ""}]
+        bp.course_outcomes = [
+            CourseOutcome(
+                co_id="CLO1",
+                description="",
+                program_outcomes="",
+                graduate_outcome_desc="",
+                performance_indicator="",
+                iga_aligned="",
+                target_score_pct=75.0,
+                target_class_pass_pct=50.0,
+            )
+        ]
+        is_lec_lab = (bp.metadata.lab_units > 0 and bp.metadata.lecture_units > 0) or ("integrated" in str(bp.metadata.credit_units).lower() or "lecture/laboratory" in str(bp.metadata.lec_lab).lower())
+        if is_lec_lab:
+            bp.metadata.grading_system_type = "lecture_lab"
+            bp.metadata.lecture_weight = 75.0
+            bp.metadata.lab_weight = 25.0
         bp_dict = bp.to_dict()
     else:
         cust_title = course_title
@@ -675,15 +744,25 @@ def create_course(
         cust_desc = ""
         cust_sdgs = "7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
 
+        if credit_units:
+            cust_units = credit_units
+        if lec_lab:
+            cust_lec_lab = lec_lab
+        if contact_hours:
+            cust_hours = contact_hours
+
         if db_course:
             if not cust_title or cust_title in ("Untitled Subject", "New Course"):
                 cust_title = db_course.get("course_title") or cust_title
             cust_yr = db_course.get("year_level") or cust_yr
             cust_prereqs = db_course.get("prerequisites") or ""
             cust_coreqs = db_course.get("corequisites") or ""
-            cust_units = db_course.get("credit_units") or cust_units
-            cust_lec_lab = db_course.get("lec_lab") or cust_lec_lab
-            cust_hours = db_course.get("contact_hours") or cust_hours
+            if not credit_units:
+                cust_units = db_course.get("credit_units") or cust_units
+            if not lec_lab:
+                cust_lec_lab = db_course.get("lec_lab") or cust_lec_lab
+            if not contact_hours:
+                cust_hours = db_course.get("contact_hours") or cust_hours
             cust_desc = db_course.get("description") or ""
             cust_sdgs = db_course.get("sdgs") or cust_sdgs
 
@@ -694,6 +773,8 @@ def create_course(
             semester_ay=semester_ay,
             faculty_name=faculty_name,
             credit_units=cust_units,
+            lecture_units=lecture_units,
+            lab_units=lab_units,
             lec_lab=cust_lec_lab,
             contact_hours=cust_hours,
             course_description=cust_desc,
@@ -706,18 +787,35 @@ def create_course(
             year_level=cust_yr,
             sdg_alignments=cust_sdgs,
             pgo_pi_str=(db_course.get("pgo") if db_course else "") or "",
+            schedule=schedule or "TBA",
         )
         bp.metadata.program_heads = heads
         bp.metadata.passing_percentage = 75.0
         bp.metadata.year_level = cust_yr
         bp.metadata.sdg_alignments = cust_sdgs
-        bp.metadata.sdg_table = parse_sdg_string_to_table(cust_sdgs)
-        bp.metadata.prereq_coreq_table = parse_prereqs_coreqs_to_table(cust_prereqs, cust_coreqs)
-        bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
-        bp.metadata.references_table = []
-        bp.metadata.policies_table = get_default_policies_table()
-        bp.metadata.references_table = []
-        bp.metadata.policies_table = get_default_policies_table()
+        bp.metadata.prereq_coreq_table = [{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}]
+        bp.metadata.sdg_table = [{"sdg": "", "description": ""}]
+        bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "rubric_ref": ""}]
+        bp.metadata.learning_plan_table = [{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}]
+        bp.metadata.references_table = [{"code": "[1]", "reference": ""}]
+        bp.metadata.policies_table = [{"number": "1", "title": "", "description": ""}]
+        bp.course_outcomes = [
+            CourseOutcome(
+                co_id="CLO1",
+                description="",
+                program_outcomes="",
+                graduate_outcome_desc="",
+                performance_indicator="",
+                iga_aligned="",
+                target_score_pct=75.0,
+                target_class_pass_pct=50.0,
+            )
+        ]
+        is_lec_lab = (bp.metadata.lab_units > 0 and bp.metadata.lecture_units > 0) or ("integrated" in str(bp.metadata.credit_units).lower() or "lecture/laboratory" in str(bp.metadata.lec_lab).lower())
+        if is_lec_lab:
+            bp.metadata.grading_system_type = "lecture_lab"
+            bp.metadata.lecture_weight = 75.0
+            bp.metadata.lab_weight = 25.0
         bp_dict = bp.to_dict()
 
     payload = {
@@ -727,6 +825,7 @@ def create_course(
         "sections": init_sections,
         "programs": bp.metadata.programs,
         "semester_ay": semester_ay,
+        "schedule": bp.metadata.schedule or schedule or "TBA",
         "blueprint": bp_dict,
     }
     return save_course(username, course_id, payload)
@@ -827,6 +926,7 @@ def find_course(course_id: str) -> Optional[Dict[str, Any]]:
                             import sample_syllabus
                             bp["rubrics"] = sample_syllabus.get_default_rubrics()
                         _sync_student_acknowledgments_from_store(doc)
+                        _sync_cqi_plan(doc)
                         return doc
                 except Exception:
                     continue
@@ -835,6 +935,7 @@ def find_course(course_id: str) -> Optional[Dict[str, Any]]:
 
 def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     """Saves an entire course document back to its owner's storage, syncing authors."""
+    _sync_cqi_plan(doc)
     owner = doc.get("owner") or "default"
     user_dir = _get_user_courses_dir(owner)
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", doc["id"])

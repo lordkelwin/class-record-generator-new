@@ -468,13 +468,22 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
                 )
 
                 meta = bp.get("metadata") or {}
+                sem_ay_raw = doc.get("semester_ay") or meta.get("semester_ay") or ""
+                import courses_store
+                school_year, semester, group_label = courses_store.parse_semester_ay(sem_ay_raw)
+
+                status_category = "acknowledged" if ack_record is not None else ("pending" if is_qa_approved else "in_review")
+
                 course_item = {
                     "course_id": cid,
                     "course_code": doc.get("course_code") or meta.get("course_code") or "Course",
                     "course_title": doc.get("course_title") or meta.get("course_title") or "Untitled",
                     "credit_units": doc.get("credit_units") or meta.get("credit_units") or "3 Units",
                     "section": doc.get("section") or meta.get("section") or "",
-                    "semester_ay": doc.get("semester_ay") or meta.get("semester_ay") or "",
+                    "semester_ay": sem_ay_raw,
+                    "school_year": school_year,
+                    "semester": semester,
+                    "group_label": group_label,
                     "faculty_name": doc.get("faculty_name") or meta.get("faculty_name") or "Faculty Instructor",
                     "schedule": doc.get("class_schedule") or meta.get("class_schedule") or "TBA",
                     "course_description": doc.get("course_description") or meta.get("course_description") or "",
@@ -486,6 +495,7 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
                     "comment": ack_record.get("comment", "") if ack_record else "",
                     "total_enrolled": len(students),
                     "total_acknowledged": len(acks),
+                    "status_category": status_category,
                 }
 
                 if ack_record is not None:
@@ -503,16 +513,68 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
     acknowledged_list.sort(key=lambda c: c.get("course_code") or "")
     in_review_list.sort(key=lambda c: c.get("course_code") or "")
 
+    # Group all enrolled courses by School Year and Semester
+    # Order: School Year descending, then 1st Sem -> 2nd Sem -> Summer
+    import courses_store
+    sem_rank = {"1st Semester": 1, "2nd Semester": 2, "3rd Trimester": 3, "Summer / Midyear": 4}
+
+    def _group_sort_key(g_item):
+        grp_label = g_item[0]
+        sy, sem, _ = courses_store.parse_semester_ay(grp_label.replace(" • ", ", "))
+        m_yr = re.search(r"(\d{4})", sy)
+        yr_val = int(m_yr.group(1)) if m_yr else 2026
+        rank = sem_rank.get(sem, 5)
+        return (-yr_val, rank)
+
+    all_enrolled_courses = pending_list + acknowledged_list + in_review_list
+    grouped_dict: Dict[str, List[Dict[str, Any]]] = {}
+    for c in all_enrolled_courses:
+        grp = c["group_label"]
+        grouped_dict.setdefault(grp, []).append(c)
+
+    sorted_groups = sorted(grouped_dict.items(), key=_group_sort_key)
+    groups = []
+    for grp_label, c_list in sorted_groups:
+        sy, sem, _ = courses_store.parse_semester_ay(grp_label.replace(" • ", ", "))
+        c_list.sort(key=lambda c: c.get("course_code") or "")
+        g_pending = [c for c in c_list if c["status_category"] == "pending"]
+        g_ack = [c for c in c_list if c["status_category"] == "acknowledged"]
+        g_review = [c for c in c_list if c["status_category"] == "in_review"]
+
+        total_units = 0.0
+        for c in c_list:
+            u_match = re.search(r"(\d+(\.\d+)?)", str(c.get("credit_units", "")))
+            if u_match:
+                try:
+                    total_units += float(u_match.group(1))
+                except Exception:
+                    pass
+
+        groups.append({
+            "group_label": grp_label,
+            "school_year": sy,
+            "semester": sem,
+            "courses": c_list,
+            "pending": g_pending,
+            "acknowledged": g_ack,
+            "in_review": g_review,
+            "total_courses": len(c_list),
+            "total_units": int(total_units) if total_units.is_integer() else total_units,
+        })
+
     return {
         "student": st_profile,
         "pending": pending_list,
         "acknowledged": acknowledged_list,
         "in_review": in_review_list,
+        "groups": groups,
+        "terms": [g["group_label"] for g in groups],
         "stats": {
-            "total": len(pending_list) + len(acknowledged_list) + len(in_review_list),
+            "total": len(all_enrolled_courses),
             "pending_count": len(pending_list),
             "acknowledged_count": len(acknowledged_list),
             "in_review_count": len(in_review_list),
+            "terms_count": len(groups),
         },
     }
 

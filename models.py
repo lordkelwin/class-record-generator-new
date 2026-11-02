@@ -544,6 +544,8 @@ class CourseMetadata:
     course_code: str = "EE 211"
     course_title: str = "Electrical Circuits 1"
     credit_units: str = "3.0 Units – Lecture"
+    lecture_units: float = 3.0
+    lab_units: float = 0.0
     lec_lab: str = "Lecture"
     schedule: str = "MWF 08:00 AM - 09:00 AM"
     room: str = "304"
@@ -557,6 +559,12 @@ class CourseMetadata:
     transmutation_base: int = 50  # Base-50 formula: (Score/Items)*50 + 50
     passing_percentage: float = 75.0  # 75 in Base-50 (which equals 50% raw score) = 3.00
     grading_mode: str = "two_term"
+    grading_system_type: str = "two_term"  # "two_term", "term_project", "lecture_lab"
+    midterm_weight: float = 50.0
+    finals_weight: float = 50.0
+    project_weight: float = 0.0
+    lecture_weight: float = 75.0
+    lab_weight: float = 25.0
     iga_framework: str = "new_5_igas"  # "new_5_igas" (IGA1-IGA5) or "program_structure_6_igas" (IGA1-IGA6)
     # Syllabus Authoring & PDF Export Fields (FM-USeP-MID-01)
     version_number: str = "2026–1.0"
@@ -609,7 +617,7 @@ class CourseMetadata:
             if not self.course_title or self.course_title == "Untitled Subject":
                 self.course_title = parts[1].strip()
 
-        if not self.policies_table:
+        if self.policies_table is None:
             self.policies_table = get_default_policies_table()
 
         # 1. Normalize programs list & program_code

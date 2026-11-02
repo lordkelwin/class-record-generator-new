@@ -1077,6 +1077,20 @@
       border-top: 3px solid var(--maroon);
       box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.03);
     }
+    .ribbon-tab.ribbon-tab-locked {
+      opacity: 0.50;
+      cursor: not-allowed !important;
+      color: #94a3b8;
+    }
+    .ribbon-tab.ribbon-tab-locked:hover {
+      background: transparent;
+      color: #94a3b8;
+    }
+    .ribbon-tab .tab-lock-indicator {
+      font-size: 0.75rem;
+      margin-left: 4px;
+      opacity: 0.85;
+    }
     .ribbon-badge {
       background: #dc2626;
       color: #ffffff;
@@ -1257,10 +1271,10 @@
           </button>
         {% else %}
           <button type="button" class="ribbon-tab active" id="ribbonTabDashboard" onclick="switchRibbon('ribbon-dashboard', 'tab-dashboard')">
-            📊 Dashboard
+            📊 Dashboard <span id="dashLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
           </button>
           <button type="button" class="ribbon-tab" id="ribbonTabSyllabus" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">
-            📝 Syllabus Creator &amp; Class Record
+            📝 Syllabus Creator &amp; Class Record <span id="syllabusLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
           </button>
           <button type="button" class="ribbon-tab" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
             📥 Requests for Approval <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
@@ -1365,31 +1379,42 @@
         <span class="ribbon-group-title">Approval Portal Views</span>
         <div class="ribbon-group-content">
           <button type="button" id="ribbonBtnPortalSyllabi" class="btn btn-light btn-sm active" onclick="switchPortalView('syllabi')" style="font-weight:700;">
-            📜 Syllabi Review (<span id="countPortalSyllabiRibbon">0</span>)
+            <span id="labelPortalSyllabiRibbon">📜 Syllabi Review</span> (<span id="countPortalSyllabiRibbon">0</span>)
           </button>
           <button type="button" id="ribbonBtnPortalClassRecords" class="btn btn-light btn-sm" onclick="switchPortalView('class_records')" style="font-weight:700;">
-            📗 Class Records Review (<span id="countPortalCrRibbon">0</span>)
+            <span id="labelPortalCrRibbon">📗 Class Records Review</span> (<span id="countPortalCrRibbon">0</span>)
           </button>
           <button type="button" id="ribbonBtnPortalAnalytics" class="btn btn-light btn-sm" onclick="switchPortalView('analytics')" style="font-weight:700;">
             📊 Oversight &amp; Audit
           </button>
+          <button type="button" class="btn btn-light btn-sm" onclick="loadApprovalRequests(true)" style="font-weight:700; color:#1e3a8a;">
+            🔄 Refresh
+          </button>
         </div>
       </div>
-      <div class="ribbon-divider"></div>
-      <div class="ribbon-group">
+      <div class="ribbon-divider" id="ribbonDividerOversight"></div>
+      <div class="ribbon-group" id="ribbonGroupOversightActions">
         <span class="ribbon-group-title">Oversight Actions</span>
         <div class="ribbon-group-content">
-          <a href="/api/workflow/oversight-report" target="_blank" class="btn btn-light btn-sm" style="font-weight:700; color:#1e3a8a; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+          <a href="/api/workflow/oversight-report" target="_blank" class="btn btn-light btn-sm" id="ribbonBtnOversightReport" style="font-weight:700; color:#1e3a8a; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
             📄 Auto-Generate Oversight Report (.pdf)
           </a>
-          <button type="button" class="btn btn-light btn-sm" onclick="printOversightSummary()" style="font-weight:700; color:#1e3a8a;">
+          <button type="button" class="btn btn-light btn-sm" id="ribbonBtnPrintSummary" onclick="printOversightSummary()" style="font-weight:700; color:#1e3a8a;">
             🖨️ Printable Summary
-          </button>
-          <button type="button" class="btn btn-light btn-sm" onclick="loadApprovalRequests(true)" style="font-weight:700; color:#1e3a8a;">
-            🔄 Refresh Requests
           </button>
         </div>
       </div>
+      {% if not current_user or current_user.can_access_faculty_tools %}
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Subject Management</span>
+        <div class="ribbon-group-content">
+          <button type="button" class="btn btn-success btn-sm" onclick="openNewSubjectModal()" style="font-weight:700;">
+            ➕ New Subject
+          </button>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </nav>
 
@@ -1420,7 +1445,7 @@
     <div style="font-size: 2.6rem; margin-bottom: 10px;">📚</div>
     <h2 style="font-size: 1.35rem; color: #1e3a8a; margin: 0 0 8px 0; font-weight: 800;">No Subjects Found in Your Account</h2>
     <p style="color: #475569; max-width: 580px; margin: 0 auto 18px auto; font-size: 0.92rem; line-height: 1.55;">
-      You currently have no course syllabi created. You can create a brand new syllabus from scratch, select an approved curriculum course from the catalog, or import an existing syllabus PDF.
+      You currently have no course syllabi created. You are currently viewing <strong>Requests for Approval</strong>. To unlock the <strong>Dashboard</strong> and <strong>Syllabus Creator &amp; Class Record</strong> ribbons, please create a new subject or import an existing syllabus.
     </p>
     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
       <button class="btn btn-success" style="font-size: 0.95rem; padding: 10px 22px; font-weight: 700; box-shadow: 0 2px 8px rgba(22, 101, 52, 0.25);" onclick="openNewSubjectModal()">
@@ -2623,10 +2648,10 @@
           </p>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <a href="/api/workflow/oversight-report" target="_blank" class="btn btn-light btn-sm" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); text-decoration:none; display:inline-flex; align-items:center; gap:5px;" title="Auto-generate and download official compliance audit PDF">
+          <a href="/api/workflow/oversight-report" target="_blank" class="btn btn-light btn-sm" id="btnHeaderOversightReport" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1); text-decoration:none; display:inline-flex; align-items:center; gap:5px;" title="Auto-generate and download official compliance audit PDF">
             📄 Auto-Generate Oversight Report (.pdf)
           </a>
-          <button class="btn btn-light btn-sm" onclick="printOversightSummary()" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1);" title="Open printable audit summary">
+          <button class="btn btn-light btn-sm" id="btnHeaderPrintSummary" onclick="printOversightSummary()" style="font-weight:700; color:#1e3a8a; border:none; box-shadow:0 2px 4px rgba(0,0,0,0.1);" title="Open printable audit summary">
             🖨️ Printable Summary
           </button>
           <button class="btn btn-warning btn-sm" id="btnApprovalsAssignRoles" onclick="openAdminRoleModal()" style="display:none; font-weight:700; color:#78350f; background:#fef3c7; border:1px solid #fde68a;">⚙️ Assign Faculty Roles</button>
@@ -2638,10 +2663,10 @@
     <!-- Portal View Switcher: Syllabi / Class Records / Analytics -->
     <div style="margin-bottom:16px; display:flex; gap:6px; flex-wrap:wrap; background:#e2e8f0; padding:4px; border-radius:10px; width:fit-content;">
       <button id="btnPortalViewSyllabi" class="btn btn-sm active" onclick="switchPortalView('syllabi')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:#ffffff; color:#1e3a8a; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-        📜 Course Syllabi Review (<span id="countPortalSyllabi">0</span>)
+        <span id="labelPortalViewSyllabi">📜 Course Syllabi Review</span> (<span id="countPortalSyllabi">0</span>)
       </button>
       <button id="btnPortalViewClassRecords" class="btn btn-sm" onclick="switchPortalView('class_records')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:transparent; color:#475569;">
-        📊 Class Records Finalization (<span id="countPortalClassRecords">0</span>)
+        <span id="labelPortalViewClassRecords">📊 Class Records Finalization</span> (<span id="countPortalClassRecords">0</span>)
       </button>
       <button id="btnPortalViewAnalytics" class="btn btn-sm" onclick="switchPortalView('analytics')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:transparent; color:#475569;">
         📈 Institutional Analytics &amp; Reports
@@ -2743,7 +2768,7 @@
     <!-- VIEW 2: CLASS RECORDS FINALIZATION & SIGNATURES -->
     <div id="portalViewClassRecords" style="display:none;">
       <!-- Class Records KPI Summary Cards -->
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+      <div id="crKpiRow" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
         <div class="card" style="margin:0; padding:12px 16px; border-left:4px solid #3b82f6; background:#f8fafc;">
           <div style="font-size:0.72rem; font-weight:700; color:#64748b; text-transform:uppercase;">Total Class Records</div>
           <div style="font-size:1.6rem; font-weight:800; color:#1e293b; margin-top:2px;" id="statTotalCr">0</div>
@@ -3704,6 +3729,8 @@
           localStorage.removeItem("usep_active_course_id");
           updateActiveSubjectBar();
           showNoSubjectPlaceholder();
+          updateRibbonSubjectLocks();
+          switchRibbon('ribbon-approvals', 'tab-approvals');
           checkClassRecordLock();
           checkSyllabusLock();
           renderWorkflowStepper();
@@ -3712,6 +3739,7 @@
           return;
         }
         hideNoSubjectPlaceholder();
+        updateRibbonSubjectLocks();
         let targetId = autoSelectId;
         if (!targetId) {
           const savedId = localStorage.getItem("usep_active_course_id");
@@ -4269,10 +4297,53 @@
   let currentRibbon = 'ribbon-dashboard';
   let currentSyllabusStep = 'tab-syllabus';
 
+  function updateRibbonSubjectLocks() {
+    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
+    const isFaculty = Boolean(window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools);
+
+    const dashTab = document.getElementById("ribbonTabDashboard");
+    const sylTab = document.getElementById("ribbonTabSyllabus");
+    const dashLock = document.getElementById("dashLockIcon");
+    const sylLock = document.getElementById("syllabusLockIcon");
+
+    if (isFaculty && !hasSubjects) {
+      if (dashTab) {
+        dashTab.classList.add("ribbon-tab-locked");
+        dashTab.setAttribute("title", "Locked: Please create or add a subject first to unlock the Dashboard.");
+      }
+      if (sylTab) {
+        sylTab.classList.add("ribbon-tab-locked");
+        sylTab.setAttribute("title", "Locked: Please create or add a subject first to unlock the Syllabus Creator & Class Record.");
+      }
+      if (dashLock) dashLock.style.display = "inline";
+      if (sylLock) sylLock.style.display = "inline";
+    } else {
+      if (dashTab) {
+        dashTab.classList.remove("ribbon-tab-locked");
+        dashTab.removeAttribute("title");
+      }
+      if (sylTab) {
+        sylTab.classList.remove("ribbon-tab-locked");
+        sylTab.removeAttribute("title");
+      }
+      if (dashLock) dashLock.style.display = "none";
+      if (sylLock) sylLock.style.display = "none";
+    }
+  }
+
   function switchRibbon(ribbonId, targetTabId) {
     if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && ribbonId !== 'ribbon-approvals') {
       ribbonId = 'ribbon-approvals';
       targetTabId = 'tab-approvals';
+    }
+
+    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
+    if (window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools && !hasSubjects) {
+      if (ribbonId !== 'ribbon-approvals') {
+        showLiveToast("You currently have no subjects in your account. You can access Requests for Approval only until you create or add a subject.", "warning");
+        ribbonId = 'ribbon-approvals';
+        targetTabId = 'tab-approvals';
+      }
     }
     currentRibbon = ribbonId;
 
@@ -4313,6 +4384,12 @@
   }
 
   function switchSyllabusStep(stepTabId) {
+    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
+    if (window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools && !hasSubjects) {
+      showLiveToast("You currently have no subjects in your account. You can access Requests for Approval only until you create or add a subject.", "warning");
+      switchRibbon('ribbon-approvals', 'tab-approvals');
+      return;
+    }
     currentSyllabusStep = stepTabId;
     switchRibbon('ribbon-syllabus', stepTabId);
   }
@@ -4429,6 +4506,12 @@
   }
 
   function switchTab(tabId, btnEl) {
+    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
+    if (window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools && !hasSubjects && tabId !== "tab-approvals") {
+      showLiveToast("You currently have no subjects in your account. You can access Requests for Approval only until you create or add a subject.", "warning");
+      switchRibbon("ribbon-approvals", "tab-approvals");
+      return;
+    }
     if (tabId === "tab-dashboard") {
       switchRibbon("ribbon-dashboard", "tab-dashboard");
     } else if (tabId === "tab-approvals") {
@@ -6312,12 +6395,72 @@
       ${stats.hasMidterm ? 'Final Term' : 'Total Course'}: <strong>${stats.allocFinals}</strong> / ${stats.targetFinals} hrs ${stats.finalsMet ? '✓ Met' : (stats.allocFinals < stats.targetFinals ? `⚠️ -${stats.targetFinals - stats.allocFinals}h` : `+${stats.allocFinals - stats.targetFinals}h`)}
     </span>`;
 
+    // Compute Term Assessment Weights Audit (matching Class Record weight monitoring)
+    const cats = blueprint.categories || [];
+    const midCats = cats.filter(c => c.term === "Midterm" && (c.assessment_type || "SA").toUpperCase() === "SA");
+    const finCats = cats.filter(c => c.term === "Finals" && (c.assessment_type || "SA").toUpperCase() === "SA");
+    const midSum = midCats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+    const finSum = finCats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+    const midOk = Math.abs(midSum - 100) < 0.1;
+    const finOk = Math.abs(finSum - 100) < 0.1;
+
+    let gModel = null;
+    try {
+      if (typeof computePart8GradingModel === "function") gModel = computePart8GradingModel();
+    } catch (e) {}
+
+    let termWeightBadges = "";
+    if (cats.length > 0) {
+      termWeightBadges = `
+        <span class="badge" style="background:${midOk ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
+          Midterm SA: <strong>${midSum.toFixed(0)}%</strong> ${midOk ? '✓ Met' : '(Must be 100%)'}
+        </span>
+        <span class="badge" style="background:${finOk ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
+          Final Term SA: <strong>${finSum.toFixed(0)}%</strong> ${finOk ? '✓ Met' : '(Must be 100%)'}
+        </span>
+      `;
+    } else if (gModel && gModel.sections) {
+      termWeightBadges = gModel.sections.filter(s => s.mode === 'scaled').map(sec => {
+        const okM = Math.abs(sec.midSubtotal - 100) < 0.1;
+        const okF = Math.abs(sec.finSubtotal - 100) < 0.1;
+        return `
+          <span class="badge" style="background:${okM ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
+            ${escapeHtml(sec.title)} Mid: <strong>${sec.midSubtotal.toFixed(0)}%</strong> ${okM ? '✓' : '⚠️'}
+          </span>
+          <span class="badge" style="background:${okF ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
+            ${escapeHtml(sec.title)} Fin: <strong>${sec.finSubtotal.toFixed(0)}%</strong> ${okF ? '✓' : '⚠️'}
+          </span>
+        `;
+      }).join(' ');
+    }
+
+    let schemeBadge = "";
+    const mMeta = blueprint.metadata || {};
+    const curScheme = mMeta.grading_scheme || "standard";
+    if (curScheme === "term_project") {
+      const midW = parseFloat(mMeta.midterm_weight) || 40;
+      const finW = parseFloat(mMeta.finals_weight) || 40;
+      const projW = parseFloat(mMeta.project_weight) || 20;
+      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${midW}% Midterm + ${finW}% Final Term + ${projW}% Project</span>`;
+    } else if (curScheme === "lecture_lab") {
+      const lecW = parseFloat(mMeta.lecture_weight) || 75;
+      const labW = parseFloat(mMeta.laboratory_weight) || 25;
+      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${lecW}% Lecture + ${labW}% Laboratory</span>`;
+    } else if (curScheme === "lecture_major") {
+      const lecW = parseFloat(mMeta.lecture_weight) || 80;
+      const projW = parseFloat(mMeta.project_weight) || 20;
+      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${lecW}% Lecture + ${projW}% Major Assessment</span>`;
+    } else {
+      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Class Record Model: 50% Midterm + 50% Final Term</span>`;
+    }
+
     const totalStatusBadge = `<span class="badge" style="background:${stats.totalMet ? '#15803d; color:#ffffff;' : (stats.totalAllocated < stats.totalRequiredHours ? '#b45309; color:#ffffff;' : '#4338ca; color:#ffffff;')}; padding:4px 10px; font-weight:800;">
       Semester Total: ${stats.totalAllocated} / ${stats.totalRequiredHours} hrs (${Math.round((stats.totalAllocated / Math.max(1, stats.totalRequiredHours)) * 100)}% ${stats.totalMet ? '✓ Complete' : ''})
     </span>`;
 
     el.innerHTML = `
-      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <span style="font-size:0.78rem; font-weight:800; color:#1e293b;">⏱️ Contact Hours Audit:</span>
           ${midStatusBadge}
@@ -6326,6 +6469,17 @@
         </div>
         <div style="font-size:0.71rem; color:#64748b;">
           Basis: <strong>${stats.lecUnits} Lec units</strong> (18h/unit) + <strong>${stats.labUnits} Lab units</strong> (54h/unit) = <strong>${stats.totalRequiredHours} hrs total</strong>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-top:1px dashed #cbd5e1; padding-top:6px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:0.78rem; font-weight:800; color:#1e293b;">⚖️ Term Assessment Weights Audit:</span>
+          ${termWeightBadges}
+          ${schemeBadge}
+        </div>
+        <div style="font-size:0.71rem; color:#64748b;">
+          Monitoring: <strong>Class Record Term Weights</strong> (each term summative assessment total must equal 100%)
+        </div>
         </div>
       </div>
     `;
@@ -6504,7 +6658,7 @@
                 <label class="lp-act-chip ${isChecked ? 'active' : ''} ${isFa ? 'formative' : ''}">
                   <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleLearningPlanRowActivity(${idx}, '${escapeHtml(code)}')" />
                   <span style="font-weight:700;">${escapeHtml(act.code)}:</span>
-                  <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:115px;" title="${escapeHtml(act.activity)}">${escapeHtml(act.activity)}</span>
+                  <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:115px;" title="${escapeHtml(act.activity)}">${escapeHtml(act.activity)}${(!isFa && act.weight_pct !== undefined && act.weight_pct !== null && act.weight_pct !== '') ? ` (${act.weight_pct}%)` : ''}</span>
                 </label>
               `;
             }).join("")}
@@ -6654,7 +6808,8 @@
     const cloVal = coOptions.slice(0, 2).join("\n") || "CLO1\nCLO2";
     const acts = blueprint.metadata.syllabus_assessment_activities || [];
     const examAct = acts.find(a => (a.code || "").toUpperCase().includes("SA2") || (a.activity || "").toUpperCase().includes("EXAM"));
-    const actVal = examAct ? `• ${examAct.code} – ${examAct.activity}` : "• SA2 – Term Examination";
+    const examWt = (examAct && examAct.weight_pct) ? ` (${examAct.weight_pct}%)` : ' (60%)';
+    const actVal = examAct ? `• ${examAct.code} – ${examAct.activity}${examWt}` : `• SA2 – Term Examination${examWt}`;
     blueprint.metadata.learning_plan_table.push({
       ilo: `• Demonstrate mastery of ${isMid ? 'Midterm' : 'Final Term'} course concepts and problem-solving.`,
       clo: cloVal,
@@ -10521,13 +10676,47 @@
       approvalsState.analytics = data.analytics || null;
       approvalsState.userInfo = data.user_info || {};
 
-      // Enforce Institutional Requests Visibility
+      // Enforce Institutional Requests Visibility & Oversight Dashboard Access
       const canViewInst = Boolean(data.can_view_institutional);
+      approvalsState.canViewInstitutional = canViewInst;
       const isStaffUser = Boolean(data.is_staff) || (approvalsState.userInfo && !approvalsState.userInfo.can_access_faculty_tools);
+
+      // 1. Ribbon Oversight Elements (Analytics & Actions hidden for regular faculty)
+      const ribAnalyticsBtn = document.getElementById("ribbonBtnPortalAnalytics");
+      if (ribAnalyticsBtn) ribAnalyticsBtn.style.display = canViewInst ? "inline-block" : "none";
+      const ribDividerOversight = document.getElementById("ribbonDividerOversight");
+      if (ribDividerOversight) ribDividerOversight.style.display = canViewInst ? "block" : "none";
+      const ribGroupOversight = document.getElementById("ribbonGroupOversightActions");
+      if (ribGroupOversight) ribGroupOversight.style.display = canViewInst ? "flex" : "none";
+
+      // 2. Portal Header Actions (Oversight Report & Printable Summary hidden for regular faculty)
+      const btnHeadRep = document.getElementById("btnHeaderOversightReport");
+      if (btnHeadRep) btnHeadRep.style.display = canViewInst ? "inline-flex" : "none";
+      const btnHeadPrint = document.getElementById("btnHeaderPrintSummary");
+      if (btnHeadPrint) btnHeadPrint.style.display = canViewInst ? "inline-block" : "none";
+
+      // 3. View Switcher Analytics Button (The Whole Dashboard with all details: Dean, Assoc Dean, Program Heads, QA Head, Staff, Admin)
+      const btnViewAnalytics = document.getElementById("btnPortalViewAnalytics");
+      if (btnViewAnalytics) btnViewAnalytics.style.display = canViewInst ? "inline-block" : "none";
+
+      // 4. Syllabi View Oversight Elements (KPI Row, SLA Banner, All Institutional Filter, Program Filter)
+      const kpiRow = document.getElementById("approvalsKpiRow");
+      if (kpiRow) kpiRow.style.display = canViewInst ? "grid" : "none";
+      const slaBanner = document.getElementById("approvalsSlaBanner");
+      if (slaBanner) slaBanner.style.display = canViewInst ? "flex" : "none";
       const btnAll = document.getElementById("btnFilterAllRequests");
-      if (btnAll) {
-        btnAll.style.display = canViewInst ? "inline-block" : "none";
-      }
+      if (btnAll) btnAll.style.display = canViewInst ? "inline-block" : "none";
+      const progFilter = document.getElementById("approvalsProgFilter");
+      if (progFilter) progFilter.style.display = canViewInst ? "inline-block" : "none";
+
+      // 5. Class Records View Oversight Elements (Class Record KPI Row, All Institutional filter, Program filter)
+      const crKpiRow = document.getElementById("crKpiRow");
+      if (crKpiRow) crKpiRow.style.display = canViewInst ? "grid" : "none";
+      const btnCrAll = document.getElementById("btnFilterCrAll");
+      if (btnCrAll) btnCrAll.style.display = canViewInst ? "inline-block" : "none";
+      const crProgFilter = document.getElementById("crProgFilter");
+      if (crProgFilter) crProgFilter.style.display = canViewInst ? "inline-block" : "none";
+
       if (isStaffUser) {
         document.getElementById("btnFilterPendingAction")?.style.setProperty("display", "none");
         document.getElementById("btnFilterMySubmissions")?.style.setProperty("display", "none");
@@ -10541,8 +10730,17 @@
       }
 
       // Auto-fallback if regular faculty cannot view institutional requests
-      if (!canViewInst && approvalsState.filter === "all") {
-        approvalsState.filter = approvalsState.pendingActionForMe.length > 0 ? "action" : "submissions";
+      if (!canViewInst) {
+        if (approvalsState.filter === "all") {
+          approvalsState.filter = approvalsState.pendingActionForMe.length > 0 ? "action" : "submissions";
+        }
+        if (approvalsState.crFilter === "all") {
+          approvalsState.crFilter = approvalsState.pendingCrActionForMe.length > 0 ? "action" : "submissions";
+        }
+        if (approvalsState.view === "analytics") {
+          approvalsState.view = "syllabi";
+          switchPortalView("syllabi");
+        }
         document.getElementById("btnFilterPendingAction")?.classList.toggle("active", approvalsState.filter === "action");
         document.getElementById("btnFilterMySubmissions")?.classList.toggle("active", approvalsState.filter === "submissions");
       }
@@ -10563,15 +10761,29 @@
       const elAll = document.getElementById("countAllRequests");
       if (elAll) elAll.textContent = approvalsState.institutionalRequests.length;
 
-      // Update Portal Navigation Counters
-      const elPortSyl = document.getElementById("countPortalSyllabi");
-      if (elPortSyl) elPortSyl.textContent = approvalsState.institutionalRequests.length;
+      // Update Portal Navigation Counters & Labels (Regular faculty sees only their requests)
+      const mySyllabiCount = approvalsState.mySubmissions.length + approvalsState.pendingActionForMe.length;
+      const myCrCount = approvalsState.mySubmittedClassRecords.length + approvalsState.pendingCrActionForMe.length;
+
+      const lblSylRibbon = document.getElementById("labelPortalSyllabiRibbon");
+      if (lblSylRibbon) lblSylRibbon.textContent = canViewInst ? "📜 Syllabi Review" : "📜 My Syllabi Requests";
       const elPortSylRibbon = document.getElementById("countPortalSyllabiRibbon");
-      if (elPortSylRibbon) elPortSylRibbon.textContent = approvalsState.institutionalRequests.length;
-      const elPortCr = document.getElementById("countPortalClassRecords");
-      if (elPortCr) elPortCr.textContent = approvalsState.institutionalClassRecords.length;
+      if (elPortSylRibbon) elPortSylRibbon.textContent = canViewInst ? approvalsState.institutionalRequests.length : mySyllabiCount;
+
+      const lblCrRibbon = document.getElementById("labelPortalCrRibbon");
+      if (lblCrRibbon) lblCrRibbon.textContent = canViewInst ? "📗 Class Records Review" : "📗 My Class Records";
       const elPortCrRibbon = document.getElementById("countPortalCrRibbon");
-      if (elPortCrRibbon) elPortCrRibbon.textContent = approvalsState.institutionalClassRecords.length;
+      if (elPortCrRibbon) elPortCrRibbon.textContent = canViewInst ? approvalsState.institutionalClassRecords.length : myCrCount;
+
+      const lblSylPortal = document.getElementById("labelPortalViewSyllabi");
+      if (lblSylPortal) lblSylPortal.textContent = canViewInst ? "📜 Course Syllabi Review" : "📜 My Syllabi Requests";
+      const elPortSyl = document.getElementById("countPortalSyllabi");
+      if (elPortSyl) elPortSyl.textContent = canViewInst ? approvalsState.institutionalRequests.length : mySyllabiCount;
+
+      const lblCrPortal = document.getElementById("labelPortalViewClassRecords");
+      if (lblCrPortal) lblCrPortal.textContent = canViewInst ? "📊 Class Records Finalization" : "📊 My Class Records";
+      const elPortCr = document.getElementById("countPortalClassRecords");
+      if (elPortCr) elPortCr.textContent = canViewInst ? approvalsState.institutionalClassRecords.length : myCrCount;
 
       // Update Class Record Tab Counters
       const elCrAct = document.getElementById("countCrActionRequired");
@@ -13617,6 +13829,10 @@
 
   // --- STAFF OVERSIGHT PORTAL MULTI-VIEW ENGINE ---
   function switchPortalView(viewName) {
+    if (viewName === "analytics" && !approvalsState.canViewInstitutional) {
+      showLiveToast("Institutional Analytics is accessible only to Dean, Associate Dean, Program Heads, QA Head, Staff, and Admin.", "warning");
+      viewName = "syllabi";
+    }
     approvalsState.view = viewName;
 
     // Toggle button styles
@@ -13838,6 +14054,7 @@
   }
 
   function renderPortalAnalyticsDashboard() {
+    if (!approvalsState.canViewInstitutional) return;
     const an = approvalsState.analytics;
     if (!an) return;
 
@@ -13928,6 +14145,10 @@
   }
 
   function printOversightSummary() {
+    if (!approvalsState.canViewInstitutional) {
+      showLiveToast("Oversight Summary is accessible only to Dean, Associate Dean, Program Heads, QA Head, Staff, and Admin.", "warning");
+      return;
+    }
     switchPortalView('analytics');
     setTimeout(() => {
       window.print();

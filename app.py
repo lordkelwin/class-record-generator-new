@@ -1,3 +1,4 @@
+import copy
 import syllabus_workflow
 import class_record_workflow
 import oversight_report_generator
@@ -849,6 +850,19 @@ def api_create_course():
 
         sem_ay = (data.get("semester_ay") or meta.get("semester_ay") or "1st Semester, A.Y. 2026-2027").strip()
 
+        if data.get("credit_units"):
+            meta["credit_units"] = data.get("credit_units")
+        if data.get("lec_lab"):
+            meta["lec_lab"] = data.get("lec_lab")
+        if data.get("contact_hours"):
+            meta["contact_hours"] = data.get("contact_hours")
+        if data.get("lecture_units") is not None:
+            meta["lecture_units"] = float(data.get("lecture_units"))
+        if data.get("lab_units") is not None:
+            meta["lab_units"] = float(data.get("lab_units"))
+        if data.get("schedule"):
+            meta["schedule"] = str(data.get("schedule")).strip()
+
         progs = data.get("programs") or meta.get("programs") or []
         secs = data.get("sections") or meta.get("sections") or []
         new_doc = courses_store.save_course(
@@ -917,6 +931,12 @@ def api_create_course():
         faculty_name=faculty_name,
         programs=progs,
         sections=secs,
+        credit_units=data.get("credit_units"),
+        lec_lab=data.get("lec_lab"),
+        contact_hours=data.get("contact_hours"),
+        lecture_units=data.get("lecture_units"),
+        lab_units=data.get("lab_units"),
+        schedule=data.get("schedule"),
     )
 
     return jsonify({
@@ -1171,23 +1191,28 @@ def api_get_workflow_signatories():
 
 
 
-@app.route("/api/workflow/requests", methods=["GET"])
-
-def api_get_workflow_requests():
-
-    user = current_user()
-
+def is_authorized_oversight_user(user):
+    """
+    Returns True only for Dean, Associate Dean, Program Heads, QA Head, Staffs, and Admin.
+    Regular faculty without these designated institutional roles return False.
+    """
     if not user:
+        return False
+    role = (user.get("role") or "").strip().lower()
+    if role in ("admin", "staff"):
+        return True
+    w_roles = set(str(r).strip().lower() for r in (user.get("workflow_roles") or []))
+    oversight_roles = {"dean", "associate_dean", "program_head", "qa_head", "staff"}
+    return bool(w_roles.intersection(oversight_roles))
 
+
+@app.route("/api/workflow/requests", methods=["GET"])
+def api_get_workflow_requests():
+    user = current_user()
+    if not user:
         return jsonify({"error": "Unauthorized"}), 401
 
     all_courses = courses_store.list_all_workflow_courses()
-
-
-
-    
-
-
 
     pending_action_for_me = []
     pending_cr_action_for_me = []
@@ -1199,7 +1224,7 @@ def api_get_workflow_requests():
     w_roles = user.get("workflow_roles") or []
     is_admin = (user.get("role") == "admin")
     is_staff = (user.get("role") == "staff" or "staff" in w_roles)
-    can_view_institutional = is_admin or is_staff or any(r in w_roles for r in ["program_head", "qa_head", "dean", "associate_dean"])
+    can_view_institutional = is_authorized_oversight_user(user)
 
     for c in all_courses:
         doc_raw = c.pop("doc_raw", None)
@@ -1265,7 +1290,7 @@ def api_get_workflow_requests():
                 institutional_requests.append(c)
                 institutional_class_records.append(c)
 
-    analytics = class_record_workflow.compute_institutional_analytics(all_courses)
+    analytics = class_record_workflow.compute_institutional_analytics(all_courses) if can_view_institutional else None
 
     # Check and dispatch automatic 3-day bottleneck reminders
     try:
@@ -1805,6 +1830,7 @@ def api_course_student_acknowledgment(course_id):
         if "workflow" in doc and isinstance(doc["workflow"], dict):
             doc["workflow"]["student_acknowledgments"] = acks
 
+
         import syllabus_workflow
         stats = syllabus_workflow.get_student_acknowledgment_stats(doc)
         wf_obj = doc.get("workflow") or {}
@@ -2257,7 +2283,7 @@ def student_dashboard():
     if cdata["stats"]["total"] == 0 and user.get("role") != "student":
         # Faculty preview mode
         preview_st = {"student_id": "Faculty Preview", "full_name": user.get("full_name"), "program_year": "Faculty Studio Oversight", "signature_data": user.get("signature_data", "")}
-        return render_template("student_dashboard.html", student=preview_st, pending=[], acknowledged=[], in_review=[], stats={"total": 0, "pending_count": 0, "acknowledged_count": 0, "in_review_count": 0})
+        return render_template("student_dashboard.html", student=preview_st, pending=[], acknowledged=[], in_review=[], stats={"total": 0, "pending_count": 0, "acknowledged_count": 0, "in_review_count": 0, "terms_count": 0}, groups=[], terms=[])
 
     return render_template(
         "student_dashboard.html",
@@ -2265,7 +2291,9 @@ def student_dashboard():
         pending=cdata["pending"],
         acknowledged=cdata["acknowledged"],
         in_review=cdata["in_review"],
-        stats=cdata["stats"]
+        stats=cdata["stats"],
+        groups=cdata.get("groups", []),
+        terms=cdata.get("terms", [])
     )
 
 
@@ -2351,7 +2379,8 @@ def api_export_course_acknowledgment_pdf(course_id):
     import syllabus_acknowledgment_form
     bp_dict = doc.get("blueprint") or {}
     bp = SyllabusBlueprint.from_dict(bp_dict)
-    pdf_bytes = syllabus_acknowledgment_form.generate_syllabus_acknowledgment_pdf(bp, doc)
+    user = current_user()
+    pdf_bytes = syllabus_acknowledgment_form.generate_syllabus_acknowledgment_pdf(bp, doc, user=user)
 
     c_code = (doc.get("course_code") or "Course").replace(" ", "_")
     sec = (doc.get("section") or "1A").replace(" ", "_")
@@ -2461,6 +2490,8 @@ def api_dispatch_workflow_reminders():
     user = current_user()
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
+    if not is_authorized_oversight_user(user):
+        return jsonify({"error": "Forbidden: Dispatching institutional bottleneck reminders is restricted to Dean, Associate Dean, Program Heads, QA Head, Staff, and Admin."}), 403
     import notification_service
     result = notification_service.check_and_dispatch_bottleneck_reminders(force=True)
     return jsonify({
@@ -2617,6 +2648,8 @@ def api_get_workflow_analytics():
     user = current_user()
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
+    if not is_authorized_oversight_user(user):
+        return jsonify({"error": "Forbidden: Institutional analytics is restricted to Dean, Associate Dean, Program Heads, QA Head, Staff, and Admin."}), 403
     all_courses = courses_store.list_all_workflow_courses()
     analytics = class_record_workflow.compute_institutional_analytics(all_courses)
     return jsonify(analytics)
@@ -2627,6 +2660,8 @@ def api_download_oversight_report():
     user = current_user()
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
+    if not is_authorized_oversight_user(user):
+        return jsonify({"error": "Forbidden: Institutional oversight report is restricted to Dean, Associate Dean, Program Heads, QA Head, Staff, and Admin."}), 403
     all_courses = courses_store.list_all_workflow_courses()
     analytics = class_record_workflow.compute_institutional_analytics(all_courses)
     generated_by = user.get("full_name") or user.get("username") or "Academic Oversight Staff"
@@ -2707,6 +2742,412 @@ def api_admin_update_user_role(username):
         }
     })
 
+def _calculate_single_student_performance(st, categories, clos, meta, ttable, passing_pct, course_id=None):
+    """
+    Computes performance metrics, CLO competency grades, and item breakdown for a single student.
+    """
+    st_scores = st.get("scores") or {}
+    st_clo_scores = st.get("clo_scores") or st.get("scores") or {}
+
+    grading_type = str(meta.get("grading_system_type") or "two_term").lower()
+    mid_wt = float(meta.get("midterm_weight") if meta.get("midterm_weight") is not None else 50.0)
+    fin_wt = float(meta.get("finals_weight") if meta.get("finals_weight") is not None else 50.0)
+    prj_wt = float(meta.get("project_weight") if meta.get("project_weight") is not None else 0.0)
+    lec_wt = float(meta.get("lecture_weight") if meta.get("lecture_weight") is not None else 75.0)
+    lab_wt = float(meta.get("lab_weight") if meta.get("lab_weight") is not None else 25.0)
+
+    term_scores = {"Midterm": {"earned_wt": 0.0, "total_wt": 0.0}, "Finals": {"earned_wt": 0.0, "total_wt": 0.0}, "Major Assessment": {"earned_wt": 0.0, "total_wt": 0.0}}
+    cats_data = []
+    clo_points_earned = {co.get("co_id", "").upper(): 0.0 for co in clos}
+    clo_points_possible = {co.get("co_id", "").upper(): 0.0 for co in clos}
+    item_pcts = {}
+    item_raw_scores = {}
+
+    for cat in categories:
+        term = cat.get("term", "Midterm")
+        if term not in term_scores:
+            term_scores[term] = {"earned_wt": 0.0, "total_wt": 0.0}
+        a_type = (cat.get("assessment_type") or "SA").upper()
+        cat_wt = float(cat.get("weight_pct") or 0.0)
+        is_summative = (a_type in ("SA", "SUMMATIVE") or (a_type not in ("FA", "FORMATIVE") and cat_wt > 0))
+        a_code = (cat.get("assessment_code") or ("SA1" if is_summative else "FA1")).upper()
+        items = cat.get("items") or []
+        n_items = max(1, len(items))
+        def_item_wt = cat_wt / n_items if is_summative else 0.0
+
+        items_breakdown = []
+        for it in items:
+            item_id = it.get("item_id", "")
+            name = it.get("name") or item_id
+            pts_map = it.get("clo_points") or {}
+            raw_clos = it.get("co_id") or it.get("aligned_clos") or []
+            if isinstance(raw_clos, str):
+                aligned_clos = [c.strip().upper() for c in raw_clos.replace(";", ",").split(",") if c.strip()]
+            else:
+                aligned_clos = [str(c).strip().upper() for c in raw_clos if str(c).strip()]
+
+            it_wt = float(it.get("weight_pct") or 0.0) if is_summative else 0.0
+            if it_wt <= 0 and is_summative:
+                it_wt = def_item_wt
+
+            tot_max = sum(float(pts_map.get(c, 0.0)) for c in aligned_clos) if pts_map else float(it.get("max_score") or 30.0)
+            if tot_max <= 0:
+                tot_max = float(it.get("max_score") or 30.0)
+
+            st_raw = 0.0
+            has_clo_entry = False
+            for c in aligned_clos:
+                c_key = f"{item_id}__{c}"
+                if c_key in st_clo_scores:
+                    st_raw += float(st_clo_scores[c_key] or 0.0)
+                    has_clo_entry = True
+                    clo_points_earned[c] = clo_points_earned.get(c, 0.0) + float(st_clo_scores[c_key] or 0.0)
+                c_max = float(pts_map.get(c, 0.0)) if pts_map else (tot_max / max(1, len(aligned_clos)))
+                clo_points_possible[c] = clo_points_possible.get(c, 0.0) + c_max
+
+            has_direct_entry = False
+            if not has_clo_entry and item_id in st_scores and st_scores[item_id] is not None and str(st_scores[item_id]).strip() != "":
+                has_direct_entry = True
+                st_raw = float(st_scores[item_id] or 0.0)
+            is_recorded = bool(has_clo_entry or has_direct_entry)
+
+            pct = (st_raw / tot_max * 100.0) if tot_max > 0 else 0.0
+            item_pcts[item_id] = round(pct, 1)
+            item_raw_scores[item_id] = round(st_raw, 1)
+
+            if is_summative and tot_max > 0:
+                is_standalone_project = (term == "Major Assessment" or (cat.get("major_scope") == "independent" and cat.get("is_major_assessment")))
+                is_separate_project = (grading_type in ("term_project", "lecture_major") and is_standalone_project)
+                if not is_separate_project:
+                    term_scores[term]["earned_wt"] += (st_raw / tot_max) * it_wt
+                    term_scores[term]["total_wt"] += it_wt
+
+            # Check assessment score acknowledgment
+            ack_map = st.get("assessment_acknowledgments") or {}
+            item_ack = ack_map.get(item_id) or {}
+            is_acked = bool(item_ack.get("acknowledged"))
+            acked_at = item_ack.get("acknowledged_at") or ""
+            sig_data = item_ack.get("signature_data") or ""
+            if not is_acked or not sig_data:
+                try:
+                    from student_store import _load_students, _normalize_id
+                    all_s = _load_students()
+                    st_norm = _normalize_id(st.get("student_id") or "")
+                    s_prof = all_s.get(st_norm) or {}
+                    s_acks = (s_prof.get("assessment_acknowledgments") or {}).get(course_id) or {}
+                    if item_id in s_acks and s_acks[item_id].get("acknowledged"):
+                        is_acked = True
+                        if not acked_at:
+                            acked_at = s_acks[item_id].get("acknowledged_at") or ""
+                        if not sig_data:
+                            sig_data = s_acks[item_id].get("signature_data") or ""
+                    if not sig_data:
+                        sig_data = s_prof.get("signature_data") or ""
+                except Exception:
+                    pass
+
+            items_breakdown.append({
+                "item_id": item_id,
+                "name": name,
+                "max_score": round(tot_max, 1),
+                "is_recorded": is_recorded,
+                "student_score": round(st_raw, 1),
+                "percentage": round(pct, 1),
+                "weight_pct": round(it_wt, 1) if a_type == "SA" else 0.0,
+                "aligned_clos": aligned_clos,
+                "acknowledged": is_acked,
+                "acknowledged_at": acked_at,
+                "signature_data": sig_data,
+            })
+
+        cat_weighted_ratio_sum = 0.0
+        cat_weight_sum = 0.0
+        for it in items_breakdown:
+            it_max = float(it.get("max_score", 0.0) or 0.0)
+            it_sc = float(it.get("student_score", 0.0) or 0.0)
+            it_w = float(it.get("weight_pct", 0.0) or 0.0)
+            if it_w <= 0:
+                it_w = 1.0
+            if it_max > 0:
+                cat_weighted_ratio_sum += (it_sc / it_max) * it_w
+                cat_weight_sum += it_w
+
+        cat_grade = round(((cat_weighted_ratio_sum / cat_weight_sum) * 50.0 + 50.0), 2) if cat_weight_sum > 0 else 50.0
+        cats_data.append({
+            "term": term,
+            "category_name": cat.get("name") or "Assessment Category",
+            "assessment_type": a_type,
+            "assessment_code": a_code,
+            "lec_lab": cat.get("lec_lab") or "Lecture",
+            "assessment_grade": cat_grade,
+            "weight_pct": cat_wt,
+            "items": items_breakdown,
+        })
+
+    grading_type = str(meta.get("grading_system_type") or "two_term").lower()
+    mid_wt = float(meta.get("midterm_weight") if meta.get("midterm_weight") is not None else 50.0)
+    fin_wt = float(meta.get("finals_weight") if meta.get("finals_weight") is not None else 50.0)
+    prj_wt = float(meta.get("project_weight") if meta.get("project_weight") is not None else 0.0)
+    lec_wt = float(meta.get("lecture_weight") if meta.get("lecture_weight") is not None else 75.0)
+    lab_wt = float(meta.get("lab_weight") if meta.get("lab_weight") is not None else 25.0)
+
+    mg_ratio = (term_scores["Midterm"]["earned_wt"] / term_scores["Midterm"]["total_wt"]) if term_scores["Midterm"]["total_wt"] > 0 else 0.5
+    fg_ratio = (term_scores["Finals"]["earned_wt"] / term_scores["Finals"]["total_wt"]) if term_scores["Finals"]["total_wt"] > 0 else 0.5
+    mg = round(mg_ratio * 50.0 + 50.0, 1)
+    fg = round(fg_ratio * 50.0 + 50.0, 1)
+
+    standalone_maj_cats = [c for c in cats_data if c.get("term") == "Major Assessment" or (c.get("is_major_assessment") and c.get("term") not in ("Midterm", "Finals"))]
+    maj_weighted_sum = sum(c["assessment_grade"] * float(c.get("weight_pct", 0.0) or 0.0) for c in standalone_maj_cats)
+    standalone_maj_total_wt = sum(float(c.get("weight_pct", 0.0) or 0.0) for c in standalone_maj_cats)
+    maj_grade = round(maj_weighted_sum / standalone_maj_total_wt, 1) if standalone_maj_total_wt > 0 else round((mg + fg) / 2.0, 1)
+
+    if grading_type == "term_project":
+        effective_prj_wt = standalone_maj_total_wt if standalone_maj_total_wt > 0 else prj_wt
+        maj_contrib = maj_weighted_sum if standalone_maj_total_wt > 0 else (maj_grade * effective_prj_wt)
+        tot_wt = (mid_wt + fin_wt + effective_prj_wt) or 100.0
+        afg = round(((mg * mid_wt) + (fg * fin_wt) + maj_contrib) / tot_wt, 1)
+    elif grading_type == "lecture_major":
+        lec_cats = [c for c in cats_data if c.get("term") != "Major Assessment" and not (c.get("is_major_assessment") and c.get("term") not in ("Midterm", "Finals")) and c.get("assessment_type") == "SA"]
+        lec_grade = round(sum(c["assessment_grade"] * (c.get("weight_pct", 1.0) or 1.0) for c in lec_cats) / sum((c.get("weight_pct", 1.0) or 1.0) for c in lec_cats), 1) if lec_cats else round((mg + fg) / 2.0, 1)
+        effective_prj_wt = standalone_maj_total_wt if standalone_maj_total_wt > 0 else prj_wt
+        maj_contrib = maj_weighted_sum if standalone_maj_total_wt > 0 else (maj_grade * effective_prj_wt)
+        tot_wt = (lec_wt + effective_prj_wt) or 100.0
+        afg = round(((lec_grade * lec_wt) + maj_contrib) / tot_wt, 1)
+    elif grading_type == "lecture_lab":
+        lec_cats = [c for c in cats_data if (c.get("lec_lab") or "lecture").lower() != "laboratory" and c.get("assessment_type") == "SA" and c.get("term") != "Major Assessment"]
+        lab_cats = [c for c in cats_data if (c.get("lec_lab") or "").lower() == "laboratory" and c.get("assessment_type") == "SA" and c.get("term") != "Major Assessment"]
+        lec_grade = round(sum(c["assessment_grade"] * (c.get("weight_pct", 1.0) or 1.0) for c in lec_cats) / sum((c.get("weight_pct", 1.0) or 1.0) for c in lec_cats), 1) if lec_cats else round((mg + fg) / 2.0, 1)
+        lab_grade = round(sum(c["assessment_grade"] * (c.get("weight_pct", 1.0) or 1.0) for c in lab_cats) / sum((c.get("weight_pct", 1.0) or 1.0) for c in lab_cats), 1) if lab_cats else round((mg + fg) / 2.0, 1)
+        maj_contrib = maj_weighted_sum if standalone_maj_total_wt > 0 else 0.0
+        tot_wt = (lec_wt + lab_wt + standalone_maj_total_wt) or 100.0
+        afg = round(((lec_grade * lec_wt) + (lab_grade * lab_wt) + maj_contrib) / tot_wt, 1)
+    else:
+        if standalone_maj_total_wt > 0:
+            # Term grades share the remaining (100 - majors)% in the midterm:final ratio
+            term_share = max(0.0, 100.0 - standalone_maj_total_wt)
+            term_avg = ((mg * mid_wt) + (fg * fin_wt)) / ((mid_wt + fin_wt) or 100.0)
+            afg = round(((term_avg * term_share) + maj_weighted_sum) / ((term_share + standalone_maj_total_wt) or 100.0), 1)
+        else:
+            tot_wt = (mid_wt + fin_wt) or 100.0
+            afg = round(((mg * mid_wt) + (fg * fin_wt)) / tot_wt, 1)
+    passed = afg >= passing_pct
+
+    final_gp = "5.00"
+    for r in ttable:
+        if r["min_pct"] <= afg <= r["max_pct"]:
+            g = r["grade"]
+            final_gp = f"{g:.2f}" if isinstance(g, float) else str(g)
+            break
+    if afg >= 98.0:
+        final_gp = "1.00"
+
+    clo_summary = []
+    clo_grades_map = {}
+    for co in clos:
+        cid = co.get("co_id", "").upper()
+        matching_cols = []
+        for cat in categories:
+            a_type = (cat.get("assessment_type") or "SA").upper()
+            cat_wt = float(cat.get("weight_pct") or 0.0)
+            is_summative = (a_type in ("SA", "SUMMATIVE") or (a_type not in ("FA", "FORMATIVE") and cat_wt > 0))
+            items = cat.get("items") or []
+            n_items = max(1, len(items))
+            def_item_wt = cat_wt / n_items if is_summative else 0.0
+            for it in items:
+                it_id = it.get("item_id", "")
+                pts_map = it.get("clo_points") or {}
+                raw_clos = it.get("co_id") or it.get("aligned_clos") or []
+                if isinstance(raw_clos, str):
+                    aligned = [c.strip().upper() for c in raw_clos.replace(";", ",").split(",") if c.strip()]
+                else:
+                    aligned = [str(c).strip().upper() for c in raw_clos if str(c).strip()]
+
+                if cid in aligned:
+                    tot_max = sum(float(pts_map.get(c, 0.0)) for c in aligned) if pts_map else float(it.get("max_score") or 30.0)
+                    if tot_max <= 0:
+                        tot_max = float(it.get("max_score") or 30.0)
+                    clo_max = float(pts_map.get(cid, 0.0)) if pts_map else (tot_max / max(1, len(aligned)))
+                    if clo_max <= 0:
+                        clo_max = tot_max / max(1, len(aligned))
+
+                    it_wt = float(it.get("weight_pct") or 0.0) if is_summative else 0.0
+                    if it_wt <= 0 and is_summative:
+                        it_wt = def_item_wt
+
+                    c_key = f"{it_id}__{cid}"
+                    if c_key in st_clo_scores:
+                        st_sc = float(st_clo_scores[c_key] or 0.0)
+                    else:
+                        m_num = re.search(r"(\d+)$", cid)
+                        legacy_key = f"{it_id}_{m_num.group(1)}" if m_num else None
+                        if legacy_key and legacy_key in st_clo_scores:
+                            st_sc = float(st_clo_scores[legacy_key] or 0.0)
+                        elif it_id in st_scores:
+                            st_sc = float(st_scores[it_id] or 0.0) * (clo_max / tot_max if tot_max > 0 else 1.0)
+                        else:
+                            st_sc = 0.0
+                    matching_cols.append({
+                        "a_type": "SA" if is_summative else "FA",
+                        "weight": it_wt,
+                        "score": st_sc,
+                        "max_score": clo_max,
+                    })
+
+        sa_matching = [m for m in matching_cols if m["a_type"] == "SA"]
+        calc_matching = sa_matching if sa_matching else matching_cols
+        clo_num = sum((m["score"] / m["max_score"]) * m["weight"] for m in calc_matching if m["max_score"] > 0)
+        clo_den = sum(m["weight"] for m in calc_matching)
+        final_clo_grade = round((clo_num / clo_den * 50.0 + 50.0), 2) if clo_den > 0 else 50.0
+
+        target = float(co.get("target_score_pct") or 75.0)
+        is_competent = final_clo_grade >= target
+        p_earned = clo_points_earned.get(cid, 0.0)
+        p_poss = clo_points_possible.get(cid, 0.0)
+
+        clo_grades_map[cid] = final_clo_grade
+        clo_summary.append({
+            "co_id": cid,
+            "description": co.get("description", ""),
+            "final_clo_grade": final_clo_grade,
+            "target_score_pct": target,
+            "is_competent": is_competent,
+            "status_label": "Competent" if is_competent else "Developing",
+            "points_earned": round(p_earned, 1),
+            "points_possible": round(p_poss, 1),
+        })
+
+    return {
+        "midterm_grade": mg,
+        "finals_grade": fg,
+        "average_final_grade": afg,
+        "transmuted_grade": final_gp,
+        "passed": passed,
+        "clo_summary": clo_summary,
+        "clo_grades": clo_grades_map,
+        "categories": cats_data,
+        "item_pcts": item_pcts,
+        "item_raw_scores": item_raw_scores,
+    }
+
+
+def _compute_baseline_passing_recommendations(matched_st, categories, clos, meta, ttable, passing_pct, course_id):
+    """
+    Computes baseline scores on unrecorded summative assessments so the student
+    knows how many points are needed to achieve a passing grade (AFG >= passing_pct / Grade 3.00).
+    Assessments that already have a recorded score are automatically excluded from the recommendations.
+    """
+    st_scores = matched_st.get("scores") or {}
+    st_clo_scores = matched_st.get("clo_scores") or {}
+
+    unrecorded_items = []
+    recorded_items = []
+
+    for cat in categories:
+        a_type = (cat.get("assessment_type") or "SA").upper()
+        cat_wt = float(cat.get("weight_pct") or 0.0)
+        is_summative = (a_type in ("SA", "SUMMATIVE") or (a_type not in ("FA", "FORMATIVE") and cat_wt > 0))
+        if not is_summative:
+            continue
+
+        for it in (cat.get("items") or []):
+            item_id = it.get("item_id", "")
+            pts_map = it.get("clo_points") or {}
+            raw_clos = it.get("co_id") or it.get("aligned_clos") or []
+            if isinstance(raw_clos, str):
+                aligned_clos = [c.strip().upper() for c in raw_clos.replace(";", ",").split(",") if c.strip()]
+            else:
+                aligned_clos = [str(c).strip().upper() for c in raw_clos if str(c).strip()]
+
+            tot_max = sum(float(pts_map.get(c, 0.0)) for c in aligned_clos) if pts_map else float(it.get("max_score") or 30.0)
+            if tot_max <= 0:
+                tot_max = float(it.get("max_score") or 30.0)
+
+            has_clo_entry = any(
+                (f"{item_id}__{c}" in st_clo_scores and st_clo_scores[f"{item_id}__{c}"] is not None and str(st_clo_scores[f"{item_id}__{c}"]).strip() != "")
+                for c in aligned_clos
+            )
+            has_direct_score = (
+                item_id in st_scores and st_scores[item_id] is not None and str(st_scores[item_id]).strip() != ""
+            )
+
+            if has_clo_entry or has_direct_score:
+                recorded_items.append({"item_id": item_id, "max_score": tot_max})
+            else:
+                unrecorded_items.append({"item_id": item_id, "max_score": tot_max, "term": cat.get("term") or "Midterm"})
+
+    unrecorded_count = len(unrecorded_items)
+    if unrecorded_count == 0:
+        return {
+            "unrecorded_count": 0,
+            "passing_status": "all_recorded",
+            "required_pct": None,
+            "target_grade": passing_pct,
+            "message": "All assessment activities have recorded grades.",
+            "item_targets": {it["item_id"]: {"is_recorded": True, "target_score": None, "target_pct": None, "max_score": it["max_score"]} for it in recorded_items}
+        }
+
+    def _sim_afg(r_val):
+        mock_st = copy.deepcopy(matched_st)
+        mock_scores = dict(mock_st.get("scores") or {})
+        mock_clo_scores = dict(mock_st.get("clo_scores") or {})
+        for unrec in unrecorded_items:
+            iid = unrec["item_id"]
+            m_score = r_val * unrec["max_score"]
+            mock_scores[iid] = m_score
+            mock_clo_scores[iid] = m_score
+        mock_st["scores"] = mock_scores
+        mock_st["clo_scores"] = mock_clo_scores
+        perf = _calculate_single_student_performance(mock_st, categories, clos, meta, ttable, passing_pct, course_id)
+        return perf["average_final_grade"]
+
+    afg_0 = _sim_afg(0.0)
+    afg_1 = _sim_afg(1.0)
+
+    if afg_0 >= passing_pct:
+        status = "already_passed"
+        r_req = 0.0
+        r_pct = 0.0
+        msg = f"Your recorded scores have already secured a passing mark for this course (AFG ≥ {passing_pct:.1f}%). 0 additional points needed to pass."
+    elif afg_1 < passing_pct:
+        status = "critical"
+        r_req = 1.0
+        r_pct = round(((passing_pct - afg_0) / max(0.01, afg_1 - afg_0)) * 100.0, 1)
+        msg = f"Passing this course (AFG ≥ {passing_pct:.1f}%) requires maximum possible performance on all remaining unrecorded assessments. Please consult your instructor during consultation hours."
+    else:
+        status = "achievable"
+        r_req = (passing_pct - afg_0) / max(0.001, (afg_1 - afg_0))
+        r_req = max(0.0, min(1.0, r_req))
+        r_pct = round(r_req * 100.0, 1)
+        msg = f"To achieve a passing grade of {passing_pct:.1f}% (Grade 3.00), you need an average baseline score of {r_pct:.1f}% across your {unrecorded_count} unrecorded assessment(s)."
+
+    item_targets = {}
+    for it in recorded_items:
+        item_targets[it["item_id"]] = {
+            "is_recorded": True,
+            "target_score": None,
+            "target_pct": None,
+            "max_score": it["max_score"]
+        }
+
+    for it in unrecorded_items:
+        target_score = round(r_req * it["max_score"], 1)
+        item_targets[it["item_id"]] = {
+            "is_recorded": False,
+            "target_score": target_score,
+            "target_pct": r_pct,
+            "max_score": it["max_score"]
+        }
+
+    return {
+        "unrecorded_count": unrecorded_count,
+        "passing_status": status,
+        "required_pct": r_pct,
+        "target_grade": passing_pct,
+        "message": msg,
+        "item_targets": item_targets
+    }
+
+
 @app.route("/api/student/courses/<course_id>/performance", methods=["GET"])
 def api_student_course_performance(course_id):
     user = current_user()
@@ -2721,7 +3162,11 @@ def api_student_course_performance(course_id):
     meta = bp.get("metadata") or {}
     students = bp.get("students") or []
     categories = bp.get("categories") or []
-    clos = bp.get("course_outcomes") or []
+    clos = bp.get("course_outcomes") or bp.get("clos") or []
+
+    passing_pct = float(meta.get("passing_percentage") or 75.0)
+    from models import build_transmutation_table
+    ttable = build_transmutation_table(passing_pct)
 
     req_sid = (request.args.get("student_id") or "").strip().lower()
     if req_sid and user.get("role") != "student":
@@ -2754,208 +3199,135 @@ def api_student_course_performance(course_id):
             "clo_scores": {},
         }
 
-    st_scores = matched_st.get("scores") or {}
-    st_clo_scores = matched_st.get("clo_scores") or matched_st.get("scores") or {}
+    # 1. Compute target student's individual performance
+    matched_perf = _calculate_single_student_performance(matched_st, categories, clos, meta, ttable, passing_pct, course_id)
 
-    # Calculate assessment categories breakdown
-    cats_data = []
-    clo_points_earned = {co.get("co_id", "").upper(): 0.0 for co in clos}
-    clo_points_possible = {co.get("co_id", "").upper(): 0.0 for co in clos}
+    # 2. Compute performance across all enrolled students in the class
+    class_students = students if students else [matched_st]
+    all_perf = []
+    for s in class_students:
+        p = _calculate_single_student_performance(s, categories, clos, meta, ttable, passing_pct, course_id)
+        all_perf.append(p)
 
-    term_scores = {"Midterm": {"earned_wt": 0.0, "total_wt": 0.0}, "Finals": {"earned_wt": 0.0, "total_wt": 0.0}}
+    n_st = len(all_perf)
+    all_afg_list = [p["average_final_grade"] for p in all_perf]
+    all_mg_list = [p["midterm_grade"] for p in all_perf]
+    all_fg_list = [p["finals_grade"] for p in all_perf]
 
-    for cat in categories:
-        term = cat.get("term", "Midterm")
-        a_type = (cat.get("assessment_type") or "SA").upper()
-        a_code = (cat.get("assessment_code") or ("SA1" if a_type == "SA" else "FA1")).upper()
-        cat_wt = float(cat.get("weight_pct") or 0.0)
-        items = cat.get("items") or []
-        n_items = max(1, len(items))
-        def_item_wt = cat_wt / n_items if a_type == "SA" else 0.0
+    class_avg_afg = round(sum(all_afg_list) / n_st, 1) if n_st else matched_perf["average_final_grade"]
+    class_avg_midterm = round(sum(all_mg_list) / n_st, 1) if n_st else matched_perf["midterm_grade"]
+    class_avg_finals = round(sum(all_fg_list) / n_st, 1) if n_st else matched_perf["finals_grade"]
+    class_highest_afg = round(max(all_afg_list), 1) if all_afg_list else matched_perf["average_final_grade"]
+    class_lowest_afg = round(min(all_afg_list), 1) if all_afg_list else matched_perf["average_final_grade"]
+    pass_cnt = sum(1 for p in all_perf if p["passed"])
+    class_passing_rate = round((pass_cnt / n_st * 100.0), 1) if n_st else 100.0
 
-        items_breakdown = []
-        for it in items:
-            item_id = it.get("item_id", "")
-            name = it.get("name") or item_id
-            pts_map = it.get("clo_points") or {}
-            aligned_clos = [c.strip().upper() for c in (it.get("co_id") or "").replace(";", ",").split(",") if c.strip()]
-            it_wt = float(it.get("weight_pct") or 0.0) if a_type == "SA" else 0.0
-            if it_wt <= 0 and a_type == "SA":
-                it_wt = def_item_wt
-            
-            # Sum up total max points
-            tot_max = sum(float(pts_map.get(c, 0.0)) for c in aligned_clos) if pts_map else float(it.get("max_score") or 30.0)
-            if tot_max <= 0:
-                tot_max = float(it.get("max_score") or 30.0)
-
-            # Sum student points across CLO parts or direct score
-            st_raw = 0.0
-            has_clo_entry = False
-            for c in aligned_clos:
-                c_key = f"{item_id}__{c}"
-                if c_key in st_clo_scores:
-                    st_raw += float(st_clo_scores[c_key] or 0.0)
-                    has_clo_entry = True
-                    clo_points_earned[c] = clo_points_earned.get(c, 0.0) + float(st_clo_scores[c_key] or 0.0)
-                c_max = float(pts_map.get(c, 0.0)) if pts_map else (tot_max / max(1, len(aligned_clos)))
-                clo_points_possible[c] = clo_points_possible.get(c, 0.0) + c_max
-
-            if not has_clo_entry and item_id in st_scores:
-                st_raw = float(st_scores[item_id] or 0.0)
-
-            pct = (st_raw / tot_max * 100.0) if tot_max > 0 else 0.0
-            if a_type == "SA" and tot_max > 0:
-                term_scores[term]["earned_wt"] += (st_raw / tot_max) * it_wt
-                term_scores[term]["total_wt"] += it_wt
-
-            # Check assessment score acknowledgment
-            ack_map = matched_st.get("assessment_acknowledgments") or {}
-            item_ack = ack_map.get(item_id) or {}
-            is_acked = bool(item_ack.get("acknowledged"))
-            acked_at = item_ack.get("acknowledged_at") or ""
-            if not is_acked:
-                try:
-                    from student_store import _load_students, _normalize_id
-                    all_s = _load_students()
-                    st_norm = _normalize_id(matched_st.get("student_id") or sid)
-                    s_prof = all_s.get(st_norm) or {}
-                    s_acks = (s_prof.get("assessment_acknowledgments") or {}).get(course_id) or {}
-                    if item_id in s_acks and s_acks[item_id].get("acknowledged"):
-                        is_acked = True
-                        acked_at = s_acks[item_id].get("acknowledged_at") or ""
-                except Exception:
-                    pass
-
-            items_breakdown.append({
-                "item_id": item_id,
-                "name": name,
-                "max_score": round(tot_max, 1),
-                "student_score": round(st_raw, 1),
-                "percentage": round(pct, 1),
-                "weight_pct": round(it_wt, 1) if a_type == "SA" else 0.0,
-                "aligned_clos": aligned_clos,
-                "acknowledged": is_acked,
-                "acknowledged_at": acked_at,
-            })
-
-        # Assessment Grade formula: sum of (weight * (score / total)) / (sum of weights) * 50 + 50
-        cat_weighted_ratio_sum = 0.0
-        cat_weight_sum = 0.0
-        for it in items_breakdown:
-            it_max = float(it.get("max_score", 0.0) or 0.0)
-            it_sc = float(it.get("student_score", 0.0) or 0.0)
-            it_w = float(it.get("weight_pct", 0.0) or 0.0)
-            if it_w <= 0:
-                it_w = 1.0
-            if it_max > 0:
-                cat_weighted_ratio_sum += (it_sc / it_max) * it_w
-                cat_weight_sum += it_w
-
-        cat_grade = round(((cat_weighted_ratio_sum / cat_weight_sum) * 50.0 + 50.0), 2) if cat_weight_sum > 0 else 50.0
-
-        cats_data.append({
-            "term": term,
-            "category_name": cat.get("name") or "Assessment Category",
-            "assessment_type": a_type,
-            "assessment_code": a_code,
-            "assessment_grade": cat_grade,
-            "weight_pct": cat_wt,
-            "items": items_breakdown,
-        })
-
-    # Base-50 transmutations
-    mg_ratio = (term_scores["Midterm"]["earned_wt"] / term_scores["Midterm"]["total_wt"]) if term_scores["Midterm"]["total_wt"] > 0 else 0.5
-    fg_ratio = (term_scores["Finals"]["earned_wt"] / term_scores["Finals"]["total_wt"]) if term_scores["Finals"]["total_wt"] > 0 else 0.5
-    mg = round(mg_ratio * 50.0 + 50.0, 1)
-    fg = round(fg_ratio * 50.0 + 50.0, 1)
-    afg = round((mg + fg) / 2.0, 1)
-
-    passing_pct = float(meta.get("passing_percentage") or 75.0)
-    passed = afg >= passing_pct
-
-    from models import build_transmutation_table
-    ttable = build_transmutation_table(passing_pct)
-    final_gp = "5.00"
+    class_avg_transmuted = "5.00"
     for r in ttable:
-        if r["min_pct"] <= afg <= r["max_pct"]:
+        if r["min_pct"] <= class_avg_afg <= r["max_pct"]:
             g = r["grade"]
-            final_gp = f"{g:.2f}" if isinstance(g, float) else str(g)
+            class_avg_transmuted = f"{g:.2f}" if isinstance(g, float) else str(g)
             break
-    if afg >= 98.0:
-        final_gp = "1.00"
+    if class_avg_afg >= 98.0:
+        class_avg_transmuted = "1.00"
 
-    # CLO Competency Attainment: Compute Final CLO Grade directly from class record
-    clo_summary = []
+    # CLO class averages
+    class_clo_averages = {}
     for co in clos:
         cid = co.get("co_id", "").upper()
-        matching_cols = []
-        for cat in categories:
-            a_type = (cat.get("assessment_type") or "SA").upper()
-            cat_wt = float(cat.get("weight_pct") or 0.0)
-            items = cat.get("items") or []
-            n_items = max(1, len(items))
-            def_item_wt = cat_wt / n_items if a_type == "SA" else 0.0
-            for it in items:
-                it_id = it.get("item_id", "")
-                pts_map = it.get("clo_points") or {}
-                aligned = [c.strip().upper() for c in (it.get("co_id") or "").replace(";", ",").split(",") if c.strip()]
-                if cid in aligned:
-                    tot_max = sum(float(pts_map.get(c, 0.0)) for c in aligned) if pts_map else float(it.get("max_score") or 30.0)
-                    if tot_max <= 0:
-                        tot_max = float(it.get("max_score") or 30.0)
-                    clo_max = float(pts_map.get(cid, 0.0)) if pts_map else (tot_max / max(1, len(aligned)))
-                    if clo_max <= 0:
-                        clo_max = tot_max / max(1, len(aligned))
+        c_vals = [p["clo_grades"].get(cid, 50.0) for p in all_perf]
+        class_clo_averages[cid] = round(sum(c_vals) / len(c_vals), 2) if c_vals else 50.0
 
-                    it_wt = float(it.get("weight_pct") or 0.0) if a_type == "SA" else 0.0
-                    if it_wt <= 0 and a_type == "SA":
-                        it_wt = def_item_wt
+    # Assessment item class averages
+    class_item_averages = {}
+    for cat in categories:
+        for it in (cat.get("items") or []):
+            iid = it.get("item_id", "")
+            p_vals = [p["item_pcts"].get(iid, 0.0) for p in all_perf]
+            r_vals = [p["item_raw_scores"].get(iid, 0.0) for p in all_perf]
+            class_item_averages[iid] = {
+                "avg_percentage": round(sum(p_vals) / len(p_vals), 1) if p_vals else 0.0,
+                "avg_score": round(sum(r_vals) / len(r_vals), 1) if r_vals else 0.0,
+            }
 
-                    c_key = f"{it_id}__{cid}"
-                    if c_key in st_clo_scores:
-                        st_sc = float(st_clo_scores[c_key] or 0.0)
-                    else:
-                        m_num = re.search(r"(\d+)$", cid)
-                        legacy_key = f"{it_id}_{m_num.group(1)}" if m_num else None
-                        if legacy_key and legacy_key in st_clo_scores:
-                            st_sc = float(st_clo_scores[legacy_key] or 0.0)
-                        elif it_id in st_scores:
-                            st_sc = float(st_scores[it_id] or 0.0) * (clo_max / tot_max if tot_max > 0 else 1.0)
-                        else:
-                            st_sc = 0.0
-                    matching_cols.append({
-                        "a_type": a_type,
-                        "weight": it_wt,
-                        "score": st_sc,
-                        "max_score": clo_max,
+    # 3. Student vs Class Comparison metrics
+    afg_diff = round(matched_perf["average_final_grade"] - class_avg_afg, 1)
+    mg_diff = round(matched_perf["midterm_grade"] - class_avg_midterm, 1)
+    fg_diff = round(matched_perf["finals_grade"] - class_avg_finals, 1)
+
+    sorted_afgs = sorted(all_afg_list, reverse=True)
+    try:
+        student_rank = sorted_afgs.index(matched_perf["average_final_grade"]) + 1
+    except ValueError:
+        student_rank = 1
+
+    percentile = round((student_rank / max(1, n_st)) * 100.0, 1)
+
+    if afg_diff >= 2.0:
+        standing_label = "Above Class Average"
+    elif afg_diff <= -2.0:
+        standing_label = "Below Class Average"
+    else:
+        standing_label = "At Class Average"
+
+    # Merge benchmark into CLO summary
+    for c_entry in matched_perf["clo_summary"]:
+        cid = c_entry["co_id"]
+        c_avg = class_clo_averages.get(cid, 50.0)
+        c_diff = round(c_entry["final_clo_grade"] - c_avg, 2)
+        c_entry["class_avg_grade"] = c_avg
+        c_entry["variance_vs_avg"] = c_diff
+        c_entry["is_above_avg"] = (c_diff >= 0)
+
+    # Merge benchmark into categories / items breakdown
+    for cat_entry in matched_perf["categories"]:
+        for it_entry in cat_entry.get("items", []):
+            iid = it_entry["item_id"]
+            c_stats = class_item_averages.get(iid, {"avg_percentage": 0.0, "avg_score": 0.0})
+            it_diff = round(it_entry["percentage"] - c_stats["avg_percentage"], 1)
+            it_entry["class_avg_percentage"] = c_stats["avg_percentage"]
+            it_entry["class_avg_score"] = c_stats["avg_score"]
+            it_entry["variance_vs_avg"] = it_diff
+            it_entry["is_above_avg"] = (it_diff >= 0)
+
+    # 3b. Compute baseline passing recommendations for unrecorded assessments
+    passing_recommendation = _compute_baseline_passing_recommendations(
+        matched_st, categories, clos, meta, ttable, passing_pct, course_id
+    )
+    item_targets = passing_recommendation.get("item_targets", {})
+    for cat_entry in matched_perf["categories"]:
+        for it_entry in cat_entry.get("items", []):
+            iid = it_entry.get("item_id")
+            rec_target = item_targets.get(iid)
+            if rec_target:
+                it_entry["is_recorded"] = rec_target.get("is_recorded", it_entry.get("is_recorded", False))
+                it_entry["target_score"] = rec_target.get("target_score")
+                it_entry["target_pct"] = rec_target.get("target_pct")
+            else:
+                it_entry["target_score"] = None
+                it_entry["target_pct"] = None
+
+    # 4. Enrolled courses list for fast switching between courses in dashboard
+    all_enrolled_courses = []
+    try:
+        import student_store
+        st_courses_data = student_store.find_courses_for_student(matched_st.get("student_id") or sid)
+        seen_cids = set()
+        for group_key in ("pending", "acknowledged", "in_review"):
+            for sc in st_courses_data.get(group_key, []):
+                cid_key = sc.get("course_id")
+                if cid_key and cid_key not in seen_cids:
+                    seen_cids.add(cid_key)
+                    all_enrolled_courses.append({
+                        "course_id": cid_key,
+                        "course_code": sc.get("course_code"),
+                        "course_title": sc.get("course_title"),
+                        "section": sc.get("section"),
+                        "semester_ay": sc.get("semester_ay"),
+                        "is_current": (cid_key == course_id)
                     })
-
-        sa_matching = [m for m in matching_cols if m["a_type"] == "SA"]
-        calc_matching = sa_matching if sa_matching else matching_cols
-
-        clo_num = sum((m["score"] / m["max_score"]) * m["weight"] for m in calc_matching if m["max_score"] > 0)
-        clo_den = sum(m["weight"] for m in calc_matching)
-
-        if clo_den > 0:
-            final_clo_grade = round((clo_num / clo_den * 50.0 + 50.0), 2)
-        else:
-            final_clo_grade = 50.0
-
-        target = float(co.get("target_score_pct") or 75.0)
-        is_competent = final_clo_grade >= target
-        p_earned = clo_points_earned.get(cid, 0.0)
-        p_poss = clo_points_possible.get(cid, 0.0)
-
-        clo_summary.append({
-            "co_id": cid,
-            "description": co.get("description", ""),
-            "final_clo_grade": final_clo_grade,
-            "target_score_pct": target,
-            "is_competent": is_competent,
-            "status_label": "Competent" if is_competent else "Developing",
-            "points_earned": round(p_earned, 1),
-            "points_possible": round(p_poss, 1),
-        })
+    except Exception:
+        pass
 
     return jsonify({
         "success": True,
@@ -2975,17 +3347,59 @@ def api_student_course_performance(course_id):
             "consultation_hours": meta.get("consultation_hours") or "Monday-Friday 8:00 AM - 5:00 PM",
             "schedule": meta.get("schedule") or "TBA",
         },
+        "all_enrolled_courses": all_enrolled_courses,
         "grades": {
-            "midterm_grade": mg,
-            "finals_grade": fg,
-            "average_final_grade": afg,
-            "transmuted_grade": final_gp,
-            "passed": passed,
-            "status_label": "PASSED" if passed else "IN PROGRESS / DEFICIENT",
+            "midterm_grade": matched_perf["midterm_grade"],
+            "finals_grade": matched_perf["finals_grade"],
+            "average_final_grade": matched_perf["average_final_grade"],
+            "transmuted_grade": matched_perf["transmuted_grade"],
+            "passed": matched_perf["passed"],
+            "status_label": "PASSED" if matched_perf["passed"] else "IN PROGRESS / DEFICIENT",
             "passing_cutoff": passing_pct,
         },
-        "clo_attainment": clo_summary,
-        "categories": cats_data,
+        "class_average": {
+            "midterm_grade": class_avg_midterm,
+            "finals_grade": class_avg_finals,
+            "average_final_grade": class_avg_afg,
+            "class_avg_midterm": class_avg_midterm,
+            "class_avg_finals": class_avg_finals,
+            "class_avg_afg": class_avg_afg,
+            "transmuted_grade": class_avg_transmuted,
+            "class_avg_transmuted": class_avg_transmuted,
+            "highest_afg": class_highest_afg,
+            "lowest_afg": class_lowest_afg,
+            "passing_rate": class_passing_rate,
+            "total_students": n_st,
+            "passing_cutoff": passing_pct,
+        },
+        "class_statistics": {
+            "midterm_grade": class_avg_midterm,
+            "finals_grade": class_avg_finals,
+            "average_final_grade": class_avg_afg,
+            "class_avg_midterm": class_avg_midterm,
+            "class_avg_finals": class_avg_finals,
+            "class_avg_afg": class_avg_afg,
+            "transmuted_grade": class_avg_transmuted,
+            "class_avg_transmuted": class_avg_transmuted,
+            "highest_afg": class_highest_afg,
+            "lowest_afg": class_lowest_afg,
+            "passing_rate": class_passing_rate,
+            "total_students": n_st,
+            "passing_cutoff": passing_pct,
+        },
+        "comparison": {
+            "afg_diff": afg_diff,
+            "midterm_diff": mg_diff,
+            "finals_diff": fg_diff,
+            "rank": student_rank,
+            "total_students": n_st,
+            "percentile": percentile,
+            "standing_label": standing_label,
+            "is_above_average": (afg_diff >= 0),
+        },
+        "clo_attainment": matched_perf["clo_summary"],
+        "categories": matched_perf["categories"],
+        "passing_recommendation": passing_recommendation,
     })
 
 
@@ -3056,8 +3470,20 @@ def api_student_acknowledge_assessment(course_id):
         return jsonify({"error": "Enrolled student record not found in this course."}), 404
 
     from datetime import datetime
-    now_str = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+    now_str = datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")
     now_iso = datetime.now().isoformat()
+
+    sig_data = (data.get("signature_data") or "").strip()
+    if not sig_data:
+        sig_data = (user.get("signature_data") or "").strip()
+    if not sig_data:
+        try:
+            from student_store import _load_students, _normalize_id
+            all_s = _load_students()
+            st_norm = _normalize_id(matched_st.get("student_id") or sid)
+            sig_data = (all_s.get(st_norm) or {}).get("signature_data") or ""
+        except Exception:
+            pass
 
     if "assessment_acknowledgments" not in matched_st:
         matched_st["assessment_acknowledgments"] = {}
@@ -3066,6 +3492,7 @@ def api_student_acknowledge_assessment(course_id):
         "acknowledged": True,
         "acknowledged_at": now_str,
         "acknowledged_iso": now_iso,
+        "signature_data": sig_data,
         "student_id": matched_st.get("student_id"),
         "student_name": matched_st.get("name") or f"{matched_st.get('last_name', '')}, {matched_st.get('first_name', '')}".strip(", "),
         "statement": "Student accepted the score, received test paper, and acknowledged that the score is final and reconsideration will not be entertained."
@@ -3087,16 +3514,20 @@ def api_student_acknowledge_assessment(course_id):
             s_obj["assessment_acknowledgments"][course_id][item_id] = {
                 "acknowledged": True,
                 "acknowledged_at": now_str,
+                "signature_data": sig_data,
             }
+            if sig_data and not s_obj.get("signature_data"):
+                s_obj["signature_data"] = sig_data
             _save_students(all_s)
     except Exception:
         pass
 
     return jsonify({
         "success": True,
-        "message": f"Score for {item_id} successfully acknowledged.",
+        "message": f"Score for {item_id} successfully acknowledged with affixed signature.",
         "item_id": item_id,
         "acknowledged_at": now_str,
+        "signature_data": sig_data,
     })
 
 

@@ -113,7 +113,7 @@ class USePAcknowledgmentPDF(FPDF):
         self.cell(47.8, 4.0, f"Page {self.page_no()} of {{nb}}", border=0, align="R")
 
 
-def generate_syllabus_acknowledgment_pdf(bp_or_doc: Any, doc: Optional[Dict[str, Any]] = None) -> bytes:
+def generate_syllabus_acknowledgment_pdf(bp_or_doc: Any, doc: Optional[Dict[str, Any]] = None, user: Optional[Dict[str, Any]] = None) -> bytes:
     """
     Renders official FM-USeP-MID-07 Syllabus Acknowledgement Form PDF with:
       - Document Control Header with Cinzel Bold
@@ -262,43 +262,93 @@ def generate_syllabus_acknowledgment_pdf(bp_or_doc: Any, doc: Optional[Dict[str,
     col_w = (65.0, 60.0, pdf.epw - 125.0)
     pdf.set_font(pdf.font_narrow, "B", 8.0)
 
-    student_rows = []
-    if raw_students:
-        for s in raw_students:
-            s_id = (s.get("student_id") or "").strip()
-            s_name = (s.get("name") or s.get("student_name") or "").strip()
-            ack = ack_map.get(s_id.lower()) or ack_map.get(s_name.lower())
-            student_rows.append({
-                "student_id": s_id,
-                "name": s_name,
-                "signature_data": ack.get("signature_data") if ack else "",
-                "date": ack.get("acknowledged_at")[:10] if (ack and ack.get("acknowledged_at")) else "",
-            })
-    else:
-        # If no roster imported yet, provide 20 blank rows for manual physical signing
-        for i in range(1, 21):
-            student_rows.append({
-                "student_id": "",
-                "name": "",
-                "signature_data": "",
-                "date": "",
-            })
+    temp_files = []
+    try:
+        is_student_user = bool(user and str(user.get("role", "")).lower() == "student")
+        user_sid = str(user.get("student_id") or user.get("username") or "").strip().lower() if user else ""
+        user_name = str(user.get("full_name") or user.get("name") or "").strip().lower() if user else ""
+        user_digits = "".join(filter(str.isdigit, user_sid))
 
-    with pdf.table(col_widths=col_w, width=page_w, line_height=7.0, align="L") as t_stud:
-        hdr = t_stud.row(style=gray_hdr)
-        hdr.cell("STUDENT NAME")
-        hdr.cell("SIGNATURE")
-        hdr.cell("DATE")
+        student_rows = []
+        if raw_students:
+            for s in raw_students:
+                s_id = (s.get("student_id") or "").strip()
+                s_name = (s.get("name") or s.get("student_name") or f"{s.get('last_name', '')}, {s.get('first_name', '')}".strip(", ") or s.get("last_name") or "").strip()
+                ack = ack_map.get(s_id.lower()) or ack_map.get(s_name.lower())
+                has_signed = bool(ack and (ack.get("signature_data") or ack.get("acknowledged_at")))
+                sig_raw = ack.get("signature_data") if (ack and ack.get("signature_data")) else ""
+                ack_ts = (ack.get("acknowledged_at") or ack.get("date") or "") if ack else ""
+                date_display = ack_ts.replace("T", " ")[:16] if ack_ts else ""
 
-        for s in student_rows:
-            r = t_stud.row()
-            r.cell(_clean_text(s["name"], pdf.has_ttf))
-            # E-Signature or blank line
-            sig_img = _save_data_url_image(s["signature_data"]) if s["signature_data"] else None
-            if sig_img:
-                r.cell("(Electronically Signed)")
-            else:
-                r.cell("")
-            r.cell(_clean_text(s["date"], pdf.has_ttf))
+                curr_digits = "".join(filter(str.isdigit, s_id))
+                is_self = False
+                if is_student_user:
+                    if (s_id and s_id.lower() == user_sid) or \
+                       (curr_digits and user_digits and len(curr_digits) >= 4 and curr_digits == user_digits) or \
+                       (user_name and (user_name == s_name.lower() or user_name in s_name.lower() or s_name.lower() in user_name)):
+                        is_self = True
 
-    return bytes(pdf.output())
+                if is_student_user and not is_self:
+                    display_name = "(Name of the Student)"
+                    if has_signed:
+                        display_sig = "(Electronically Signed)"
+                        display_date = "(Date)"
+                    else:
+                        display_sig = ""
+                        display_date = ""
+                    sig_img = None
+                else:
+                    display_name = s_name
+                    display_date = date_display
+                    sig_img = None
+                    if sig_raw:
+                        tmp_img = _save_data_url_image(sig_raw)
+                        if tmp_img:
+                            temp_files.append(tmp_img)
+                            sig_img = tmp_img
+                    display_sig = "(Electronically Signed)" if (has_signed and not sig_img) else ""
+
+                student_rows.append({
+                    "student_id": s_id,
+                    "name": s_name,
+                    "display_name": display_name,
+                    "sig_img": sig_img,
+                    "display_sig": display_sig,
+                    "display_date": display_date,
+                })
+        else:
+            for i in range(1, 21):
+                student_rows.append({
+                    "student_id": "",
+                    "name": "",
+                    "display_name": "",
+                    "sig_img": None,
+                    "display_sig": "",
+                    "display_date": "",
+                })
+
+        with pdf.table(col_widths=col_w, width=page_w, line_height=7.0, align="L") as t_stud:
+            hdr = t_stud.row(style=gray_hdr)
+            hdr.cell("STUDENT NAME")
+            hdr.cell("SIGNATURE")
+            hdr.cell("DATE")
+
+            for s in student_rows:
+                r = t_stud.row()
+                r.cell(_clean_text(s["display_name"], pdf.has_ttf))
+                if s.get("sig_img"):
+                    r.cell(img=s["sig_img"], align="C")
+                elif s.get("display_sig"):
+                    r.cell(_clean_text(s["display_sig"], pdf.has_ttf), align="C")
+                else:
+                    r.cell("")
+                r.cell(_clean_text(s["display_date"], pdf.has_ttf), align="C" if s.get("display_date") == "(Date)" else "L")
+
+        return bytes(pdf.output())
+    finally:
+        for tf in temp_files:
+            try:
+                if os.path.exists(tf):
+                    os.remove(tf)
+            except Exception:
+                pass
