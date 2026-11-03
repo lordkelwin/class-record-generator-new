@@ -358,9 +358,11 @@ def generate_class_record_workbook(blueprint) -> bytes:
         c.alignment = al_center
         c.border = b_hdr
 
-    # Build Term Columns (Midterm, Finals) starting at Column D (col=4)
+    # Build Term Columns (Midterm, Finals, Major Assessment) starting at Column D (col=4)
     curr_col = 4
     term_names = ["Midterm", "Finals"]
+    if any(c.term == "Major Assessment" or str(c.term).lower().startswith("maj") for c in blueprint.categories):
+        term_names.append("Major Assessment")
     term_grade_col_letters: Dict[str, str] = {}
 
     # Track item columns for CLO Grade & CLO Final Grade calculations:
@@ -374,7 +376,7 @@ def generate_class_record_workbook(blueprint) -> bytes:
 
         term_start_col = curr_col
         term_sa_col_letters: List[str] = []
-        t_fill = midterm_fill if t_idx == 0 else finals_fill
+        t_fill = midterm_fill if t_name == "Midterm" else (finals_fill if t_name == "Finals" else soft_blue_fill)
 
         for cat in t_cats:
             cat_start_col = curr_col
@@ -518,7 +520,7 @@ def generate_class_record_workbook(blueprint) -> bytes:
         c8_mg.alignment = al_center
         c8_mg.border = b_grid
 
-        c13_mg = ws.cell(row=13, column=t_grd_col, value="MG" if t_idx == 0 else "FG")
+        c13_mg = ws.cell(row=13, column=t_grd_col, value="PG" if t_name == "Major Assessment" else ("MG" if t_idx == 0 else "FG"))
         c13_mg.fill = gold_fill
         c13_mg.font = f_sm_bold
         c13_mg.alignment = al_center
@@ -745,8 +747,23 @@ def generate_class_record_workbook(blueprint) -> bytes:
             ws.cell(row=r_num, column=ci).font = f_reg
             ws.cell(row=r_num, column=ci).border = b_grid
 
-        # AFG = (MG + FG) * 0.5
-        c_afg = ws.cell(row=r_num, column=afg_col, value=f"=({mg_let}{r_num}+{fg_let}{r_num})*0.5")
+        # AFG = (MG * mid_w% + FG * fin_w% [+ PG * prj_w%])
+        mid_w = float(meta.midterm_weight if meta.midterm_weight is not None else 50.0)
+        fin_w = float(meta.finals_weight if meta.finals_weight is not None else 50.0)
+        sum_maj_cat_w = sum(float(c.weight_pct or 0) for c in blueprint.categories if c.term == "Major Assessment" or str(c.term).lower().startswith("maj"))
+        prj_w = sum_maj_cat_w if sum_maj_cat_w > 0 else float(meta.project_weight if meta.project_weight is not None else 20.0)
+        prj_let = term_grade_col_letters.get("Major Assessment")
+        grading_type = str(meta.grading_system_type or "two_term").lower()
+
+        if prj_let and (grading_type == "term_project" or getattr(meta, "project_weight", None)):
+            tot_w = (mid_w + fin_w + prj_w) or 100.0
+            afg_formula = f"=(({mg_let}{r_num}*{mid_w/tot_w:.4f})+({fg_let}{r_num}*{fin_w/tot_w:.4f})+({prj_let}{r_num}*{prj_w/tot_w:.4f}))"
+        elif abs(mid_w - 50.0) < 0.1 and abs(fin_w - 50.0) < 0.1:
+            afg_formula = f"=({mg_let}{r_num}+{fg_let}{r_num})*0.5"
+        else:
+            tot_w = (mid_w + fin_w) or 100.0
+            afg_formula = f"=(({mg_let}{r_num}*{mid_w/tot_w:.4f})+({fg_let}{r_num}*{fin_w/tot_w:.4f}))"
+        c_afg = ws.cell(row=r_num, column=afg_col, value=afg_formula)
         c_afg.font = f_bold
         c_afg.alignment = al_center
         c_afg.border = b_grid

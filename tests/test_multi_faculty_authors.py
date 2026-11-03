@@ -194,7 +194,15 @@ class MultiFacultyAuthorshipTestCase(unittest.TestCase):
         self.client.put(f"/api/courses/{cid}", json={"blueprint": bp, "authors": multi_authors})
 
         # Lead author submits
-        sub_res = self.client.post(f"/api/courses/{cid}/workflow/submit", json={})
+        submit_data = {
+            "committee_members": [
+                {"username": "faculty_basan", "name": "Engr. Nikka Samantha A. Basan", "role": "Review Committee Chair"},
+                {"username": "faculty_ravida", "name": "Engr. Kim P. Ravida", "role": "Review Committee Member"},
+                {"username": "faculty_claro", "name": "Engr. Charito O. Claro", "role": "Review Committee Member"}
+            ],
+            "submission_notes": "Ready for multi-faculty team review."
+        }
+        sub_res = self.client.post(f"/api/courses/{cid}/workflow/submit", json=submit_data)
         self.assertEqual(sub_res.status_code, 200)
         self.assertTrue(sub_res.get_json()["awaiting_coauthors"])
 

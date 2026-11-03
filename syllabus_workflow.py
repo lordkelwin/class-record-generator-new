@@ -208,7 +208,9 @@ def get_reviewers_for_step(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
     if status == "for_committee_chair":
         comm_list = wf.get("committee_members") or []
         chair = next((m for m in comm_list if m.get("role") == "Review Committee Chair"), None)
-        chair_uname = (chair.get("username") if chair else None) or wf.get("assigned_committee") or "faculty_basan"
+        chair_uname = (chair.get("username") if chair else None) or wf.get("assigned_committee")
+        if not chair_uname:
+            return []
         u_canon = auth.LEGACY_USERNAME_ALIASES.get(chair_uname, chair_uname)
         u_obj = users.get(u_canon) or {"username": u_canon, "full_name": chair.get("name", u_canon) if chair else u_canon}
         return [_clean_user(u_canon, u_obj)]
@@ -539,13 +541,13 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
 
     # Committee must have at least three (3) members
     if committee_members is None:
-        committee_members = wf.get("committee_members") or [
-            {"username": "faculty_basan", "name": "Nikka Samantha A. Basan", "role": "Review Committee Chair"},
-            {"username": "faculty_arenga", "name": "Delan Zoe H. Arenga", "role": "Review Committee Member"},
-            {"username": "faculty_ravida", "name": "Kim P. Ravida", "role": "Review Committee Member"},
-        ]
-    if len(committee_members) < 3:
-        raise WorkflowError(f"The Syllabus Review Committee must have at least three (3) members (currently has {len(committee_members)}).")
+        committee_members = wf.get("committee_members") or []
+    if not committee_members or len(committee_members) < 3:
+        raise WorkflowError("The Syllabus Review Committee must have at least three (3) members.")
+    for idx, m in enumerate(committee_members, 1):
+        if not m.get("username") or not str(m.get("username")).strip():
+            role_label = m.get("role") or f"Member #{idx}"
+            raise WorkflowError(f"Please select a faculty member for committee position #{idx} ({role_label}).")
 
     # Record this author's individual submission
     if "author_submissions" not in wf or not isinstance(wf["author_submissions"], dict):
@@ -563,8 +565,8 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     wf["committee_members"] = committee_members
     wf["checklist"]["committee_members"] = committee_members
     chair_member = next((m for m in committee_members if m.get("role") == "Review Committee Chair"), committee_members[0])
-    wf["assigned_committee"] = chair_member.get("username") or assigned_committee or "faculty_basan"
-    wf["assigned_committee_name"] = ", ".join(m.get("name") for m in committee_members)
+    wf["assigned_committee"] = chair_member.get("username") or assigned_committee
+    wf["assigned_committee_name"] = ", ".join(m.get("name") for m in committee_members if m.get("name"))
     if submission_notes:
         wf["submission_notes"] = (submission_notes or "").strip()
 

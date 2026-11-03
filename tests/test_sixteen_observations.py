@@ -61,8 +61,8 @@ class Test16Observations(unittest.TestCase):
         doc = courses_store.create_course("faculty_tano", "EE 311", "Electromagnetics", from_catalog=True, catalog_course_data=cat_data)
         bp_dict = doc.get("blueprint", {})
         lp = bp_dict.get("metadata", {}).get("learning_plan_table", [])
-        self.assertEqual(len(lp), 1, "Part IX learning plan should only default to Orientation row")
-        self.assertIn("Course Orientation", lp[0].get("topics", ""))
+        self.assertEqual(len(lp), 1, "Part IX learning plan should default to a single empty row")
+        self.assertEqual(lp[0].get("topics", ""), "")
         # Clean up created test file
         courses_store.delete_course("faculty_tano", doc["id"])
 

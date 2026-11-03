@@ -36,15 +36,12 @@ class TestPart5DropdownAndEmptyRubrics(unittest.TestCase):
         self.assertGreater(len(pdf_bytes), 5000)
 
     def test_part5_prereq_coreq_structure(self):
-        bp = get_blank_blueprint(
-            course_code="EE 211",
-            course_title="Electrical Circuits 1",
-            program_code="EE",
-            prerequisites="MATH 121 - ENGINEERING CALCULUS 2",
-            corequisites="EE 211L - ELECTRICAL CIRCUITS 1 LAB"
+        from sample_syllabus import parse_prereqs_coreqs_to_table
+        table = parse_prereqs_coreqs_to_table(
+            prereqs="MATH 121 - ENGINEERING CALCULUS 2",
+            coreqs="EE 211L - ELECTRICAL CIRCUITS 1 LAB"
         )
         # Verify prereq_coreq_table is structured with course_code and course_title
-        table = bp.metadata.prereq_coreq_table
         self.assertGreaterEqual(len(table), 2)
         prereq = next(r for r in table if "pre" in r["req_type"].lower())
         self.assertEqual(prereq["course_code"], "MATH 121")

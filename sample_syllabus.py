@@ -609,7 +609,7 @@ def get_blank_blueprint(
         sdg_alignments=sdg_alignments,
         prereq_coreq_table=[{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}],
         sdg_table=[{"sdg": "", "description": ""}],
-        syllabus_assessment_activities=[{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "rubric_ref": ""}],
+        syllabus_assessment_activities=[{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""}],
         learning_plan_table=[{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}],
         references_table=[{"code": "[1]", "reference": ""}],
         policies_table=[{"number": "1", "title": "", "description": ""}],

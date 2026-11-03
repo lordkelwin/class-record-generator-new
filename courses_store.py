@@ -711,7 +711,7 @@ def create_course(
         bp.metadata.sdg_alignments = cat_sdgs
         bp.metadata.prereq_coreq_table = [{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}]
         bp.metadata.sdg_table = [{"sdg": "", "description": ""}]
-        bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "rubric_ref": ""}]
+        bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""}]
         bp.metadata.learning_plan_table = [{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}]
         bp.metadata.references_table = [{"code": "[1]", "reference": ""}]
         bp.metadata.policies_table = [{"number": "1", "title": "", "description": ""}]
@@ -795,7 +795,7 @@ def create_course(
         bp.metadata.sdg_alignments = cust_sdgs
         bp.metadata.prereq_coreq_table = [{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}]
         bp.metadata.sdg_table = [{"sdg": "", "description": ""}]
-        bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "rubric_ref": ""}]
+        bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""}]
         bp.metadata.learning_plan_table = [{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}]
         bp.metadata.references_table = [{"code": "[1]", "reference": ""}]
         bp.metadata.policies_table = [{"number": "1", "title": "", "description": ""}]

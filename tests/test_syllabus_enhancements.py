@@ -47,9 +47,9 @@ class TestSyllabusEnhancements(unittest.TestCase):
         self.assertEqual(bp.metadata.transmutation_base, 50)
         self.assertEqual(bp.metadata.passing_percentage, 75.0)
 
-        # Learning plan table has only orientation by default
+        # Learning plan table has a single empty row by default
         self.assertEqual(len(bp.metadata.learning_plan_table), 1)
-        self.assertIn("Course Orientation", bp.metadata.learning_plan_table[0]["topics"])
+        self.assertEqual(bp.metadata.learning_plan_table[0]["topics"], "")
 
     def test_courses_store_create_course_autofills(self):
         doc = courses_store.create_course(
@@ -67,7 +67,7 @@ class TestSyllabusEnhancements(unittest.TestCase):
         self.assertEqual(meta["dean_name"], "Joie D. Cataytay")
         self.assertEqual(meta["passing_percentage"], 75.0)
         self.assertEqual(len(meta["learning_plan_table"]), 1)
-        self.assertIn("Course Orientation", meta["learning_plan_table"][0]["topics"])
+        self.assertEqual(meta["learning_plan_table"][0]["topics"], "")
 
         # Clean up created course
         courses_store.delete_course("faculty_tano", doc["id"])

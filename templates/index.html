@@ -1200,10 +1200,10 @@
   <div class="brand">
     {% if current_user and not current_user.can_access_faculty_tools %}
       <h1>USeP OBE Syllabus Review &amp; Institutional Oversight Portal</h1>
-      <p>Academic Affairs Oversight &amp; Tracking &bull; Monitor ongoing syllabus approval requests, evaluate review checklists (FM-USeP-MID-02), and ensure institutional accommodation across programs.</p>
+
     {% else %}
       <h1>USeP OBE Syllabus Creator &amp; Class Record Generator</h1>
-      <p>Create &amp; Export FM-USeP-MID-01 Syllabus (.pdf) or Import Existing Syllabus (.pdf) &rarr; Cascading College/Dept/Course &amp; PO/PI Dropdowns &rarr; Consolidated Class Record, CLO Report &amp; CQI Plan (.xlsx)</p>
+
     {% endif %}
   </div>
   <div class="header-actions">
@@ -1806,30 +1806,43 @@
           </div>
         </div>
         <div class="form-group" style="grid-column: span 2;">
-          <label style="display:flex; justify-content:space-between; align-items:center;">
-            <span>Class Schedule (Day &amp; Time Picker)</span>
-            <button type="button" class="btn btn-link btn-sm" style="font-size:0.72rem; padding:0; text-decoration:none; color:#2563eb;" onclick="toggleSchedulePicker()">🗓️ Schedule Picker</button>
-          </label>
-          <div id="schedulePickerContainer" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:8px 10px; margin-bottom:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="margin-bottom:0; font-weight:700;">
+              Class Schedule
+              <span style="font-size:0.72rem; color:#64748b; font-weight:normal; margin-left:4px;">(Days, time slots, and lecture/laboratory sessions)</span>
+            </label>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button type="button" class="btn btn-sm btn-primary" onclick="openAddScheduleModal()" style="padding:2px 9px; font-size:0.75rem; font-weight:700;" title="Prompt to add and select a new class schedule">🗓️ + Add Schedule</button>
+              <button type="button" class="btn btn-link btn-sm" style="font-size:0.72rem; padding:0; text-decoration:none; color:#2563eb;" onclick="toggleSchedulePicker()" title="Toggle quick day/time picker">⚡ Quick Picker</button>
+            </div>
+          </div>
+          <div id="scheduleChipsContainer" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; min-height:26px; align-items:center;">
+            <!-- Rendered dynamically -->
+          </div>
+          <div id="schedulePickerContainer" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:8px 10px; margin-bottom:6px;">
             <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px;">
               <span style="font-size:0.75rem; font-weight:700; color:#475569;">Days:</span>
-              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="M" onchange="buildScheduleString()"> Mon</label>
-              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="T" onchange="buildScheduleString()"> Tue</label>
-              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="W" onchange="buildScheduleString()"> Wed</label>
-              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="Th" onchange="buildScheduleString()"> Thu</label>
-              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="F" onchange="buildScheduleString()"> Fri</label>
-              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="Sa" onchange="buildScheduleString()"> Sat</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="M" onchange="updateInlinePickerPreview()"> Mon</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="T" onchange="updateInlinePickerPreview()"> Tue</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="W" onchange="updateInlinePickerPreview()"> Wed</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="Th" onchange="updateInlinePickerPreview()"> Thu</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="F" onchange="updateInlinePickerPreview()"> Fri</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="sched-day" value="Sa" onchange="updateInlinePickerPreview()"> Sat</label>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
               <span style="font-size:0.75rem; font-weight:700; color:#475569;">Time:</span>
-              <input type="time" id="sched_time_start" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="buildScheduleString()" />
+              <input type="time" id="sched_time_start" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateInlinePickerPreview()" />
               <span style="font-size:0.75rem; color:#64748b;">to</span>
-              <input type="time" id="sched_time_end" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="buildScheduleString()" />
-              <button type="button" class="btn btn-sm btn-success" style="font-size:0.72rem; padding:2px 8px; font-weight:600;" onclick="appendScheduleBlock()">+ Add Schedule</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="clearSchedulePicker()">Clear</button>
+              <input type="time" id="sched_time_end" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateInlinePickerPreview()" />
+              <button type="button" class="btn btn-sm btn-success" style="font-size:0.72rem; padding:2px 8px; font-weight:600;" onclick="appendScheduleBlock()">+ Append Block</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="clearSchedulePicker()">Reset Picker</button>
+              <span id="inlinePickerPreview" style="font-size:0.73rem; font-weight:700; color:#2563eb; margin-left:4px;"></span>
             </div>
           </div>
-          <input type="text" id="meta_schedule" placeholder="e.g. TTh 08:30 AM - 10:00 AM" oninput="syncMetaFromInputs()" />
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="text" id="meta_schedule" placeholder="e.g. TTh 08:30 AM - 10:00 AM / F 01:00 PM - 04:00 PM" oninput="onScheduleManualInput()" style="font-size:0.78rem; padding:4px 8px; flex:1;" title="Combined class schedule (slash-separated)" />
+            <button type="button" class="btn btn-sm btn-primary" onclick="openAddScheduleModal()" style="padding:4px 10px; font-size:0.75rem; white-space:nowrap; font-weight:700;">+ Add Schedule</button>
+          </div>
         </div>
         <div class="form-group">
           <label>Room</label>
@@ -2121,22 +2134,25 @@
         </div>
       </div>
       <div style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:110px;">Type</th>
-              <th style="width:70px;">Code</th>
-              <th style="width:160px;">Assessment Activity</th>
-              <th>Description and Other Details</th>
-              <th style="width:145px;">CLO Aligned to</th>
-              <th style="width:190px;">Measurement Rubric (Part VII)</th>
-              <th style="width:85px; text-align:center;">Term Wt (%)</th>
-              <th style="width:85px; text-align:center;">Items / Term</th>
-              <th style="width:40px;"></th>
-            </tr>
-          </thead>
-          <tbody id="syllabusAssessmentActivitiesBody"></tbody>
-        </table>
+        <table class="table-compact" style="width:100%; border-collapse:collapse;">
+            <thead id="syllabusAssessmentActivitiesHead">
+              <tr>
+                <th style="width:105px;">Type</th>
+                <th style="width:115px; text-align:center;">Component</th>
+                <th style="width:65px;">Code</th>
+                <th style="width:150px;">Assessment Activity</th>
+                <th>Description and Other Details</th>
+                <th style="width:130px;">CLO Aligned to</th>
+                <th style="width:170px;">Measurement Rubric (Part VII)</th>
+                <th style="width:135px; text-align:center;">Major Activity</th>
+                <th style="width:110px; text-align:center;">Weight (%)</th>
+                <th style="width:145px; text-align:center;">Assessments / Term</th>
+                <th style="width:35px;"></th>
+              </tr>
+            </thead>
+            <tbody id="syllabusAssessmentActivitiesBody"></tbody>
+            <tfoot id="syllabusAssessmentActivitiesFoot"></tfoot>
+          </table>
       </div>
     </div>
 
@@ -2178,13 +2194,43 @@
         </div>
       </div>
       <div style="padding:16px;">
+        <!-- Interactive Grading Scheme & Weights Configurator -->
+        <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-weight:800; font-size:0.88rem; color:#1e293b;">⚖️ Grading System &amp; Final Grade Composition:</span>
+              <select id="part8GradingSchemeSelect" style="padding:4px 8px; font-weight:700; font-size:0.83rem; border:1px solid #94a3b8; border-radius:6px; background:#ffffff;" onchange="onPart8GradingSchemeChange(this.value)">
+                <option value="two_term">Two-Term Standard (Midterm Grade + Final Term Grade)</option>
+                <option value="term_project">Term Grades + Major Assessment / Project (e.g. 40% Midterm + 40% Finals + 20% Project)</option>
+                <option value="lecture_lab">Lecture &amp; Laboratory (e.g. 75% Lecture + 25% Laboratory)</option>
+              </select>
+              <button type="button" class="btn btn-outline-primary btn-sm" onclick="addPart8MajorActivity()" style="font-size:0.8rem; font-weight:700; padding:4px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:5px; border-color:#8b5cf6; color:#6d28d9; background:#f5f3ff;">
+                + Add Major Activity / Project
+              </button>
+            </div>
+            <div id="part8WeightAuditBadge" style="font-size:0.78rem; font-weight:800; padding:4px 10px; border-radius:6px; background:#dcfce7; color:#166534;">
+              ✓ Total Weight: 100%
+            </div>
+          </div>
+
+          <!-- Customizable Weights Row -->
+          <div id="part8WeightsInputsRow" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:0.82rem; margin-bottom:8px; padding-bottom:8px; border-bottom:1px dashed #cbd5e1;">
+            <!-- Dynamically populated inputs based on scheme and major activities -->
+          </div>
+
+          <!-- Formula Banner -->
+          <div id="part8FormulaBanner" style="font-size:0.8rem; font-family:monospace; color:#0369a1; background:#e0f2fe; padding:6px 10px; border-radius:6px; font-weight:700;">
+            Final Grade = (Midterm Grade &times; 50%) + (Final Term Grade &times; 50%)
+          </div>
+        </div>
+
         <div style="overflow-x:auto; margin-bottom:16px;">
-          <table class="table-compact" style="width:100%; font-size:0.8rem; border-collapse:collapse;">
-            <thead>
+          <table class="table-compact" style="width:100%; font-size:0.8rem; border-collapse:collapse;" id="part8GradingPlanTable">
+            <thead id="part8GradingPlanHead">
               <tr style="background:#f1f5f9;">
-                <th style="width:130px; padding:8px 10px;">Assessment Item</th>
-                <th style="width:140px; text-align:center; padding:8px 10px;">Percentage of Final Grade</th>
-                <th style="padding:8px 10px;">CLO Distribution &amp; Part VII Measurement Rubrics Applied</th>
+                <th style="min-width:210px; padding:8px 10px;">Assessment Item</th>
+                <th style="min-width:160px; text-align:center; padding:8px 10px;">Percentage of Final Grade</th>
+                <th style="padding:8px 10px;">CLO Distribution &amp; Assessment Tools Applied</th>
               </tr>
             </thead>
             <tbody id="part8GradingPlanBody">
@@ -2348,6 +2394,7 @@
           <button id="btnAddMidtermSa" class="btn btn-primary btn-sm" onclick="addAssessmentCategory('Midterm', 'SA')">+ Midterm SA</button>
           <button id="btnAddFinalsFa" class="btn btn-light btn-sm" onclick="addAssessmentCategory('Finals', 'FA')">+ Finals FA</button>
           <button id="btnAddFinalsSa" class="btn btn-primary btn-sm" onclick="addAssessmentCategory('Finals', 'SA')">+ Finals SA</button>
+          <button id="btnAddMajorSa" class="btn btn-warning btn-sm" onclick="addAssessmentCategory('Major Assessment', 'SA', true)" style="font-weight:700;">+ Major Assessment / Project</button>
         </div>
       </div>
       <div id="categoriesContainer"></div>
@@ -3078,13 +3125,10 @@
 
 <!-- Modal: FM-USeP-MID-02 Official Syllabus Review Tool (Strict Committee Lock) -->
 <div class="modal-overlay" id="evaluationToolModal" style="display:none;" onclick="if(event.target===this) closeEvaluationToolModal();">
-  <div class="modal-box" style="max-width:1050px; width:95%; max-height:92vh; display:flex; flex-direction:column;">
+  <div class="modal-box" style="max-width:1080px; width:96%; max-height:92vh; display:flex; flex-direction:column;">
     <div class="modal-header" style="background:#1e3a8a; color:#fff; padding:12px 20px; border-radius:8px 8px 0 0;">
       <div>
-        <h3 style="margin:0; font-size:1.15rem; color:#fff;">📋 FM-USeP-MID-02: Syllabus Evaluation Tool</h3>
-        <div style="font-size:0.75rem; color:#bfdbfe; margin-top:2px;">
-          Official Syllabus Review &amp; Audit Form (Issue Status 01, Rev 00, Effective Jan 5, 2026)
-        </div>
+        <h3 style="margin:0; font-size:1.15rem; color:#fff;">📋 FM-USeP-MID-02: Syllabus Evaluation Form</h3>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
         <button class="btn btn-sm btn-outline-light" style="color:#fff; border-color:rgba(255,255,255,0.4);" onclick="exportEvaluationPdf()">Download Form PDF</button>
@@ -3099,37 +3143,87 @@
         <!-- Populated via JS -->
       </div>
 
-      <!-- Course & Evaluation Summary Header -->
-      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px 16px; margin-bottom:16px;">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; font-size:0.8rem;">
-          <div><strong>Course Code:</strong> <span id="evalCourseCode">EE 211</span></div>
-          <div><strong>Course Title:</strong> <span id="evalCourseTitle">Electrical Circuits 1</span></div>
-          <div><strong>Faculty in Charge:</strong> <span id="evalFacultyName">Engr. Ramon G. Tano</span></div>
-          <div><strong>Degree Program:</strong> <span id="evalProgramName">BSEE</span></div>
-          <div><strong>Semester / AY:</strong> <span id="evalSemesterAy">1st Semester, A.Y. 2026-2027</span></div>
-          <div><strong>Current Workflow:</strong> <span id="evalWorkflowStatus" class="badge">Draft</span></div>
-          <div style="grid-column: 1 / -1; margin-top:4px; padding-top:6px; border-top:1px dashed #cbd5e1;">
-            <strong>Review Committee Composition (Min. 3 Members):</strong>
-            <span id="evalCommitteeMembersSummary" style="color:#1e40af; font-weight:700;">Loading members...</span>
+      <!-- Institutional Header & Document Control Info (Controlled Document Rev 01) -->
+      <div style="border:1px solid #0f172a; margin-bottom:14px; background:#fff;">
+        <div style="display:grid; grid-template-columns:100px 1fr 240px; border-bottom:1px solid #0f172a;">
+          <div style="padding:8px; text-align:center; border-right:1px solid #0f172a; display:flex; align-items:center; justify-content:center;">
+            <img src="/static/logo_1_Image39.jpg" alt="USeP Logo" style="height:55px; width:55px; object-fit:contain;" onerror="this.style.display='none'" />
           </div>
+          <div style="padding:8px 12px; text-align:center; border-right:1px solid #0f172a; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:0.75rem;">Republic of the Philippines</div>
+            <div style="font-size:0.92rem; font-weight:800; color:#0f172a;">University of Southeastern Philippines</div>
+            <div style="font-size:0.72rem; color:#475569;">Iñigo St., Bo. Obrero, Davao City 8000 • Telephone: (082) 227-8192</div>
+            <div style="font-size:0.72rem; color:#475569;">Website: www.usep.edu.ph • E-mail: president@usep.edu.ph</div>
+          </div>
+          <div style="font-size:0.72rem; line-height:1.35;">
+            <div style="display:flex; border-bottom:1px solid #0f172a;"><div style="width:105px; padding:3px 6px; font-weight:700; border-right:1px solid #0f172a;">Form No.</div><div style="padding:3px 6px; font-weight:700;">FM-USeP-MID-02</div></div>
+            <div style="display:flex; border-bottom:1px solid #0f172a;"><div style="width:105px; padding:3px 6px; font-weight:700; border-right:1px solid #0f172a;">Issue Status</div><div style="padding:3px 6px;">02</div></div>
+            <div style="display:flex; border-bottom:1px solid #0f172a;"><div style="width:105px; padding:3px 6px; font-weight:700; border-right:1px solid #0f172a;">Revision No.</div><div style="padding:3px 6px;">01</div></div>
+            <div style="display:flex; border-bottom:1px solid #0f172a;"><div style="width:105px; padding:3px 6px; font-weight:700; border-right:1px solid #0f172a;">Date Effective</div><div style="padding:3px 6px;">24 September 2026</div></div>
+            <div style="display:flex;"><div style="width:105px; padding:3px 6px; font-weight:700; border-right:1px solid #0f172a;">Approved by</div><div style="padding:3px 6px;">President</div></div>
+          </div>
+        </div>
+        <div style="padding:6px; text-align:center; font-weight:800; font-size:1rem; letter-spacing:0.04em; background:#f8fafc; color:#0f172a;">
+          SYLLABUS EVALUATION FORM
         </div>
       </div>
 
-      <!-- PART I: 23 CORE EVALUATION STATEMENTS -->
-      <div style="margin-bottom:20px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h4 style="margin:0; font-size:0.95rem; color:#1e293b;">PART I. Core Evaluation Statements (CHED CMO &amp; USeP OBE Standards)</h4>
-          <span style="font-size:0.75rem; color:#64748b;">23 Statements</span>
-        </div>
-        <table class="table-compact" style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+      <!-- Course Details Table (FM-USeP-MID-02 Controlled Format) -->
+      <table class="table-compact" style="width:100%; border:1px solid #0f172a; border-collapse:collapse; font-size:0.78rem; margin-bottom:14px;">
+        <tbody>
+          <tr style="border-bottom:1px solid #0f172a;">
+            <td colspan="4" style="padding:6px 10px; background:#fff;">
+              <strong>Choose One:</strong>
+              <label style="margin-left:14px; margin-right:16px; cursor:pointer; font-weight:600;">
+                <input type="radio" name="evalRevisionType" value="New" id="evalRevNew" class="eval-input" checked /> New
+              </label>
+              <label style="cursor:pointer; font-weight:600;">
+                <input type="radio" name="evalRevisionType" value="Major Revision" id="evalRevMajor" class="eval-input" /> Major Revision
+              </label>
+            </td>
+          </tr>
+          <tr style="border-bottom:1px solid #0f172a;">
+            <td style="width:150px; font-weight:700; padding:5px 8px; border-right:1px solid #0f172a; background:#f8fafc;">Faculty Name</td>
+            <td colspan="3" style="padding:5px 8px;" id="evalFacultyName">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid #0f172a;">
+            <td style="font-weight:700; padding:5px 8px; border-right:1px solid #0f172a; background:#f8fafc;">Program</td>
+            <td style="padding:5px 8px; border-right:1px solid #0f172a;" id="evalProgramName">—</td>
+            <td style="width:150px; font-weight:700; padding:5px 8px; border-right:1px solid #0f172a; background:#f8fafc;">Academic Unit</td>
+            <td style="padding:5px 8px;" id="evalAcademicUnit">College of Engineering</td>
+          </tr>
+          <tr style="border-bottom:1px solid #0f172a;">
+            <td style="font-weight:700; padding:5px 8px; border-right:1px solid #0f172a; background:#f8fafc;">Course Title</td>
+            <td colspan="3" style="padding:5px 8px;" id="evalCourseTitle">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid #0f172a;">
+            <td style="font-weight:700; padding:5px 8px; border-right:1px solid #0f172a; background:#f8fafc; vertical-align:top;">Course Description</td>
+            <td colspan="3" style="padding:5px 8px;" id="evalCourseDesc">—</td>
+          </tr>
+          <tr>
+            <td style="font-weight:700; padding:5px 8px; border-right:1px solid #0f172a; background:#f8fafc;">Semester</td>
+            <td style="padding:5px 8px; border-right:1px solid #0f172a;" id="evalSemester">—</td>
+            <td style="font-weight:700; padding:5px 8px; border-right:1px solid #0f172a; background:#f8fafc;">Academic Year</td>
+            <td style="padding:5px 8px;" id="evalAcademicYear">—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Instructions Text -->
+      <div style="font-size:0.77rem; color:#1e293b; background:#f8fafc; border-left:3.5px solid #1e3a8a; padding:8px 12px; margin-bottom:14px; line-height:1.45;">
+        <strong>Instructions:</strong> Use this form to evaluate course syllabi. For each statement below, place a check (✓) under the appropriate column if the course <strong>FULLY</strong> meets the requirement, <strong>PARTIALLY</strong> complying with, or <strong>NOT FULFILLING</strong> the requirements. For indicators that are not fully met, write down the observed gap and recommended action.
+      </div>
+
+      <!-- Core Evaluation Statements Table (Table 2 in FM-USeP-MID-02) -->
+      <div style="margin-bottom:18px;">
+        <table class="table-compact" style="width:100%; border:1px solid #0f172a; border-collapse:collapse; font-size:0.77rem;">
           <thead>
-            <tr style="background:#f1f5f9;">
-              <th style="width:35px; text-align:center;">#</th>
-              <th>Evaluation Statement</th>
-              <th style="width:85px; text-align:center;">Fully</th>
-              <th style="width:85px; text-align:center;">Partially</th>
-              <th style="width:85px; text-align:center;">Not</th>
-              <th style="width:230px;">Observed Gaps / Recommendations</th>
+            <tr style="background:#0f172a; color:#fff;">
+              <th style="padding:6px 8px; text-align:left;">EVALUATION STATEMENT</th>
+              <th style="width:75px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">FULLY</th>
+              <th style="width:85px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">PARTIALLY</th>
+              <th style="width:110px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">NOT FULFILLING</th>
+              <th style="width:230px; text-align:left; padding:6px 8px; border-left:1px solid #334155;">OBSERVED GAP</th>
             </tr>
           </thead>
           <tbody id="evalCoreStatementsBody">
@@ -3138,18 +3232,19 @@
         </table>
       </div>
 
-      <!-- PART II: FRAMEWORK INTEGRATION AREAS -->
-      <div style="margin-bottom:20px;">
-        <h4 style="margin:0 0 8px; font-size:0.95rem; color:#1e293b;">PART II. University &amp; National Frameworks Integration</h4>
-        <table class="table-compact" style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+      <!-- Attached Checklist of Frameworks Integrated into Course Syllabus (Table 3 in FM-USeP-MID-02) -->
+      <div style="margin-bottom:18px;">
+        <div style="font-weight:800; font-size:0.86rem; color:#0f172a; margin-bottom:6px;">
+          Attached Checklist of Frameworks Integrated into Course Syllabus
+        </div>
+        <table class="table-compact" style="width:100%; border:1px solid #0f172a; border-collapse:collapse; font-size:0.77rem;">
           <thead>
-            <tr style="background:#f1f5f9;">
-              <th style="width:35px; text-align:center;">#</th>
-              <th>Framework Statement</th>
-              <th style="width:85px; text-align:center;">Fully</th>
-              <th style="width:85px; text-align:center;">Partially</th>
-              <th style="width:85px; text-align:center;">Not</th>
-              <th style="width:230px;">Observed Gaps / Remarks</th>
+            <tr style="background:#0f172a; color:#fff;">
+              <th style="padding:6px 8px; text-align:left;">INTEGRATION AREA</th>
+              <th style="width:75px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">FULLY</th>
+              <th style="width:85px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">PARTIALLY</th>
+              <th style="width:110px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">NOT FULFILLING</th>
+              <th style="width:230px; text-align:left; padding:6px 8px; border-left:1px solid #334155;">OBSERVED GAP</th>
             </tr>
           </thead>
           <tbody id="evalFrameworksBody">
@@ -3158,30 +3253,116 @@
         </table>
       </div>
 
-      <!-- ANNEX A: DETAILED FRAMEWORKS CHECKLIST -->
-      <div style="margin-bottom:20px;">
-        <h4 style="margin:0 0 4px; font-size:0.95rem; color:#1e293b;">ANNEX A. Detailed Framework Checklist</h4>
-        <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px;">
-          Includes CDIO, Fourth Industrial Revolution (FIRe), Cultural/Conflict Sensitivity, SDGs, GAD Domains 1–4, and Bloom's Taxonomy/Curriculum Mapping.
+      <!-- Recommendations for Course Syllabus Improvement (Table 4 in FM-USeP-MID-02) -->
+      <div style="margin-bottom:18px;">
+        <div style="font-weight:800; font-size:0.86rem; color:#0f172a; margin-bottom:6px;">
+          Recommendations for Course Syllabus Improvement
         </div>
-        <div id="evalAnnexSectionsContainer">
-          <!-- Populated dynamically -->
+        <div style="border:1px solid #0f172a; padding:8px; background:#fff;">
+          <textarea id="evalCommitteeRecommendations" class="eval-input" rows="3" style="width:100%; font-size:0.78rem; border:none; outline:none; resize:vertical; font-family:inherit;" placeholder="State specific observations, gaps, and required changes..."></textarea>
         </div>
       </div>
 
-      <!-- COMMITTEE RECOMMENDATIONS & FACULTY ACTION TAKEN -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
-        <div>
-          <label style="font-size:0.8rem; font-weight:700; color:#1e293b; display:block; margin-bottom:4px;">
-            Syllabus Review Committee Recommendations:
-          </label>
-          <textarea id="evalCommitteeRecommendations" class="eval-input" rows="3" style="width:100%; font-size:0.78rem;" placeholder="State specific observations, gaps, and required changes..."></textarea>
+      <!-- Signatories: REVIEWED BY / CONFORME (Table 5 in FM-USeP-MID-02) -->
+      <table class="table-compact" style="width:100%; border:1px solid #0f172a; border-collapse:collapse; font-size:0.78rem; margin-bottom:18px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:1px solid #0f172a;">
+            <th style="width:50%; padding:6px 10px; border-right:1px solid #0f172a; text-align:left; font-weight:800;">REVIEWED BY :</th>
+            <th style="width:50%; padding:6px 10px; text-align:left; font-weight:800;">CONFORME:</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:10px 12px; border-right:1px solid #0f172a; vertical-align:top;">
+              <div id="evalCommitteeMembersSummary" style="color:#0f172a; font-weight:700; min-height:48px;">Loading committee...</div>
+              <div style="font-size:0.73rem; color:#475569; margin-top:4px;">(Course Committee)</div>
+            </td>
+            <td style="padding:10px 12px; vertical-align:top;">
+              <div id="evalFacultyConformeName" style="color:#0f172a; font-weight:700; min-height:48px;">—</div>
+              <div style="font-size:0.73rem; color:#475569; margin-top:4px;">Faculty</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Faculty Writer Action Taken Table (Table 6 in FM-USeP-MID-02) -->
+      <div style="margin-bottom:18px;">
+        <table class="table-compact" style="width:100%; border:1px solid #0f172a; border-collapse:collapse; font-size:0.77rem;">
+          <thead>
+            <tr style="background:#f1f5f9; border-bottom:1px solid #0f172a;">
+              <th colspan="2" style="padding:6px; text-align:center; font-weight:800; letter-spacing:0.03em;">
+                – TO BE FILLED UP BY THE FACULTY SYLLABUS WRITER -
+              </th>
+            </tr>
+            <tr style="background:#0f172a; color:#fff;">
+              <th style="width:50%; padding:6px 8px; border-right:1px solid #334155; text-align:left;">OBSERVED GAP</th>
+              <th style="width:50%; padding:6px 8px; text-align:left;">ACTION TAKEN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:8px; border-right:1px solid #0f172a; vertical-align:top;">
+                <div id="evalObservedGapsSummary" style="font-size:0.75rem; color:#475569; min-height:60px;">No observed gaps recorded yet.</div>
+              </td>
+              <td style="padding:8px; vertical-align:top;">
+                <textarea id="evalFacultyActionTaken" class="eval-input" rows="3" style="width:100%; font-size:0.78rem; border:1px solid #cbd5e1; border-radius:4px; padding:6px; font-family:inherit;" placeholder="Actions taken by faculty in addressing observed gaps..."></textarea>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Signatories: ENDORSED BY / APPROVED BY (Table 7 in FM-USeP-MID-02) -->
+      <table class="table-compact" style="width:100%; border:1px solid #0f172a; border-collapse:collapse; font-size:0.78rem; margin-bottom:18px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:1px solid #0f172a;">
+            <th style="width:50%; padding:6px 10px; border-right:1px solid #0f172a; text-align:left; font-weight:800;">ENDORSED BY:</th>
+            <th style="width:50%; padding:6px 10px; text-align:left; font-weight:800;">APPROVED BY:</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:10px 12px; border-right:1px solid #0f172a; vertical-align:top;">
+              <div id="evalProgramHeadName" style="color:#0f172a; font-weight:700; min-height:36px;">Charito O. Claro</div>
+              <div style="font-size:0.73rem; color:#475569;">Program Head</div>
+            </td>
+            <td style="padding:10px 12px; vertical-align:top;">
+              <div id="evalDeanName" style="color:#0f172a; font-weight:700; min-height:36px;">Joie D. Cataytay</div>
+              <div style="font-size:0.73rem; color:#475569;">Dean</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Annex A (Table 8 in FM-USeP-MID-02) -->
+      <div style="margin-bottom:18px;">
+        <div style="font-weight:800; font-size:1rem; color:#0f172a; margin-bottom:3px;">Annex A</div>
+        <div style="font-weight:700; font-size:0.8rem; color:#1e293b; margin-bottom:4px; line-height:1.4;">
+          Checklist on Conceive, Design, Implement, Operate (CDIO) Framework, Fourth Industrial Revolution (FIRe) Framework, Cultural Sensitivity and Conflict Sensitivity Framework, Sustainable Development Goals (SDG) Framework, and Gender and Development (GAD) Framework
         </div>
-        <div>
-          <label style="font-size:0.8rem; font-weight:700; color:#1e293b; display:block; margin-bottom:4px;">
-            Faculty Action Taken (Conforme):
-          </label>
-          <textarea id="evalFacultyActionTaken" class="eval-input" rows="3" style="width:100%; font-size:0.78rem;" placeholder="Actions taken by faculty in addressing observed gaps..."></textarea>
+        <div style="font-size:0.74rem; color:#475569; margin-bottom:8px; font-style:italic;">
+          Direction: Tick the appropriate box to indicate the presence or absence of the following indicators in the course syllabus reviewed.
+        </div>
+        <table class="table-compact" style="width:100%; border:1px solid #0f172a; border-collapse:collapse; font-size:0.76rem;">
+          <thead>
+            <tr style="background:#0f172a; color:#fff;">
+              <th style="padding:6px 8px; text-align:left;">COMPONENTS</th>
+              <th style="width:55px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">YES</th>
+              <th style="width:55px; text-align:center; padding:6px 4px; border-left:1px solid #334155;">NO</th>
+              <th style="width:230px; text-align:left; padding:6px 8px; border-left:1px solid #334155;">REMARKS</th>
+            </tr>
+          </thead>
+          <tbody id="evalAnnexSectionsContainer">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Other Comments (Page 5 in FM-USeP-MID-02) -->
+      <div style="margin-bottom:18px;">
+        <div style="font-weight:800; font-size:0.86rem; color:#0f172a; margin-bottom:6px;">Other Comments:</div>
+        <div style="border:1px solid #0f172a; padding:8px; background:#fff;">
+          <textarea id="evalOtherComments" class="eval-input" rows="3" style="width:100%; font-size:0.78rem; border:none; outline:none; resize:vertical; font-family:inherit;" placeholder="Enter any additional observations, notes, or instructions..."></textarea>
         </div>
       </div>
 
@@ -3255,8 +3436,8 @@
       <div style="margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px;">
         <div style="font-size:0.74rem; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:6px;">Sequential 5-Step Approval Flow:</div>
         <div style="font-size:0.76rem; color:#334155; line-height:1.65;">
-          <div>1️⃣ <strong>Review Committee Members:</strong> <span id="chainMembersName">Committee Members (FM-USeP-MID-02 Checklist &amp; Signatures)</span></div>
-          <div>2️⃣ <strong>Review Committee Chair:</strong> <span id="chainCommitteeName">Engr. Nikka Samantha A. Basan</span> (Endorsement to Program Head)</div>
+          <div>1️⃣ <strong>Review Committee Members:</strong> <span id="chainMembersName">--Select Faculty--</span></div>
+          <div>2️⃣ <strong>Review Committee Chair:</strong> <span id="chainCommitteeName">--Select Faculty--</span></div>
           <div>3️⃣ <strong>Program Head:</strong> <span id="chainProgramHeadName">Engr. Charito O. Claro</span> (Endorsement)</div>
           <div>4️⃣ <strong>College QA Head:</strong> <span id="chainQaHeadName">College QA Head</span> (Countersign)</div>
           <div>5️⃣ <strong>Dean:</strong> <span id="chainDeanName">Engr. Joie D. Cataytay, Ph.D.</span> (Final Approval &amp; Lock-in)</div>
@@ -3521,6 +3702,7 @@
   };
 
   // Multi-Subject state & Auto-Save
+  let currentCourse = null;
   let currentCourseId = null;
   let allCoursesList = [];
   let groupedCourses = [];
@@ -3844,9 +4026,10 @@
     }
 
     try {
-      const res = await fetch(`/api/courses/${courseId}`);
+      const res = await fetch(`/api/courses/${encodeURIComponent(courseId)}`);
       if (!res.ok) throw new Error("Course not found");
       const data = await res.json();
+      currentCourse = data.course;
       currentCourseId = courseId;
       localStorage.setItem("usep_active_course_id", courseId);
 
@@ -3856,14 +4039,24 @@
       currentClassRecordWorkflow = data.class_record_workflow;
       ensureDefaultRubricsExist();
 
+      // If user was viewing requests for approvals and clicked a subject, switch to that subject's dashboard
+      if (currentRibbon === 'ribbon-approvals') {
+        switchRibbon('ribbon-dashboard', 'tab-dashboard');
+      }
+
       // Update active subject bar
       updateActiveSubjectBar();
 
       // Render full studio (Syllabus, Setup, Gradebook, CLO Report, CQI, Dashboard)
-      renderAll();
-      renderWorkflowStepper();
-      renderClassRecordWorkflowBar();
-      checkClassRecordLock();
+      try { renderAll(); } catch (err) { console.error("renderAll failed:", err); }
+      try { renderWorkflowStepper(); } catch (err) { console.error("renderWorkflowStepper failed:", err); }
+      try { renderClassRecordWorkflowBar(); } catch (err) { console.error("renderClassRecordWorkflowBar failed:", err); }
+      try { checkClassRecordLock(); } catch (err) { console.error("checkClassRecordLock failed:", err); }
+      try {
+        if (currentRibbon === 'ribbon-dashboard' || document.getElementById('tab-dashboard')?.classList.contains('active')) {
+          renderDashboard();
+        }
+      } catch (err) { console.error("renderDashboard failed:", err); }
 
       // Highlight active card in sidebar
       document.querySelectorAll(".subject-card").forEach(el => el.classList.remove("active"));
@@ -4883,19 +5076,19 @@
       m.year_level = courseObj.year_level || m.year_level || "First Year";
       if (document.getElementById("meta_year_level")) document.getElementById("meta_year_level").value = m.year_level;
 
-      m.prereq_coreq_table = _parseReqStringsToTable(m.prerequisites, m.corequisites);
-      m.sdg_table = _parseSdgStringToTable(m.sdg_alignments);
-      m.learning_plan_table = [getOrientationRow()];
-      m.policies_table = getDefaultPoliciesTable();
+      m.prereq_coreq_table = [{ req_type: "Pre-requisite", course_code: "", course_title: "" }];
+      m.sdg_table = [{ sdg: "", description: "" }];
+      m.learning_plan_table = [{ ilo: "", clo: "", time_frame: "", topics: "", tla: "", required_reading: "", assessment_activities: "", merge_assessment_with_prev: false }];
+      m.policies_table = [{ number: "1", title: "", description: "" }];
+      m.references_table = [{ code: "[1]", reference: "" }];
+      m.syllabus_assessment_activities = [{ type: "Summative", code: "", activity: "", description: "", clo_aligned: "", weight_pct: 0, items_midterm: 1, items_finals: 1, items_per_term: 1, is_major_assessment: false, rubric_ref: "" }];
+      blueprint.course_outcomes = [{ co_id: "CLO1", description: "", program_outcomes: "", graduate_outcome_desc: "", performance_indicator: "", iga_aligned: "", target_score_pct: 75.0, target_class_pass_pct: 50.0 }];
 
       document.getElementById("meta_course_title").value = m.course_title;
       document.getElementById("meta_credit_units").value = m.credit_units;
       document.getElementById("meta_lec_lab").value = m.lec_lab;
       document.getElementById("meta_contact_hours").value = m.contact_hours;
       document.getElementById("meta_course_description").value = m.course_description;
-
-      // Sync CLOs to the active program structure's PGOs/PIs if program changed
-      syncClosToActiveProgramStructure(courseObj.pgo_pi);
 
       renderCourseOutcomes();
       renderSyllabusTables();
@@ -4914,7 +5107,11 @@
 
   function renderAll() {
     if (!blueprint) return;
-    const m = blueprint.metadata;
+    const m = blueprint.metadata || {};
+
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ""; };
+    const setHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html ?? ""; };
+    const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt ?? ""; };
 
     // Ensure programs and sections arrays exist and are synchronized
     if (!m.programs || !Array.isArray(m.programs) || !m.programs.length) {
@@ -4928,23 +5125,24 @@
     m.program_code = m.programs.join(", ");
     m.section = m.sections.join(", ");
 
-    document.getElementById("meta_university").value = m.university || "";
-    populateCollegeDepartmentCourseDropdowns();
+    setVal("meta_university", m.university || "");
+    try { populateCollegeDepartmentCourseDropdowns(); } catch (e) { console.warn("populateDropdowns:", e); }
 
     // Sanitize course_code so it never contains title
     if (m.course_code && (m.course_code.includes(" - ") || m.course_code.includes(" – "))) {
       m.course_code = m.course_code.split(" - ")[0].split(" – ")[0].trim();
     }
-    document.getElementById("meta_course_title").value = m.course_title || "";
-    document.getElementById("meta_credit_units").value = m.credit_units || "";
-    document.getElementById("meta_lec_lab").value = m.lec_lab || "Lecture";
-    document.getElementById("meta_schedule").value = m.schedule || "";
-    document.getElementById("meta_room").value = m.room || "";
-    document.getElementById("meta_section").value = m.section || "";
-    document.getElementById("meta_program_code").value = m.program_code || "EE";
+    setVal("meta_course_title", m.course_title || "");
+    setVal("meta_credit_units", m.credit_units || "");
+    setVal("meta_lec_lab", m.lec_lab || "Lecture");
+    setVal("meta_schedule", m.schedule || "");
+    setVal("meta_room", m.room || "");
+    setVal("meta_section", m.section || "");
+    setVal("meta_program_code", m.program_code || "EE");
 
-    renderProgramPills();
-    renderSectionChips();
+    try { renderProgramPills(); } catch (e) { console.warn("renderProgramPills:", e); }
+    try { renderSectionChips(); } catch (e) { console.warn("renderSectionChips:", e); }
+    try { renderScheduleChips(); } catch (e) { console.warn("renderScheduleChips:", e); }
 
     // Auto-fill faculty_name to account holder if empty
     const acctHolder = window.CURRENT_USER?.full_name || currentUser?.full_name || "";
@@ -4952,75 +5150,83 @@
       m.faculty_name = acctHolder;
     }
     if (!m.faculty_name) m.faculty_name = acctHolder || "Elwin Jay J. Tano";
-    document.getElementById("meta_faculty_name").value = m.faculty_name;
+    setVal("meta_faculty_name", m.faculty_name);
 
     // Auto-fill dean_name if empty
     if (!m.dean_name) m.dean_name = "Joie D. Cataytay";
-    document.getElementById("meta_dean_name").value = m.dean_name;
+    setVal("meta_dean_name", m.dean_name);
 
     // Auto-fill program_head
     if (!m.program_head || m.program_head === "CHARITO O. CLARO") {
       m.program_head = getProgramHeadsForCodes(m.programs || [m.program_code || "EE"]);
     }
-    document.getElementById("meta_program_head").value = m.program_head;
+    setVal("meta_program_head", m.program_head);
 
     // Auto-fill Base-50 cutoff to 75
     m.passing_percentage = m.passing_percentage || 75;
-    document.getElementById("meta_passing_pct").value = m.passing_percentage;
-    renderCoauthorsList();
-    populateCoauthorDropdown();
-    document.getElementById("meta_semester_ay").value = m.semester_ay || "";
+    setVal("meta_passing_pct", m.passing_percentage);
+    try { renderCoauthorsList(); } catch (e) { console.warn("renderCoauthorsList:", e); }
+    try { populateCoauthorDropdown(); } catch (e) { console.warn("populateCoauthorDropdown:", e); }
+    setVal("meta_semester_ay", m.semester_ay || "");
     if (!m.faculty_name && (window.CURRENT_USER?.full_name || window.CURRENT_USER?.username || currentUser?.full_name || currentUser?.username)) {
       m.faculty_name = (window.CURRENT_USER?.full_name || window.CURRENT_USER?.username || currentUser?.full_name || currentUser?.username);
     }
-    document.getElementById("meta_faculty_name").value = m.faculty_name || "";
-    document.getElementById("meta_program_head").value = m.program_head || "";
-    document.getElementById("meta_dean_name").value = m.dean_name || "";
-    document.getElementById("meta_passing_pct").value = m.passing_percentage || 75;
-    if (document.getElementById("meta_iga_framework")) {
-      document.getElementById("meta_iga_framework").value = m.iga_framework || "new_5_igas";
-    }
+    setVal("meta_faculty_name", m.faculty_name || "");
+    setVal("meta_program_head", m.program_head || "");
+    setVal("meta_dean_name", m.dean_name || "");
+    setVal("meta_passing_pct", m.passing_percentage || 75);
+    setVal("meta_iga_framework", m.iga_framework || "new_5_igas");
 
     // Document & Faculty fields (Parts III, IV, V, VIII)
-    document.getElementById("meta_version_number").value = m.version_number || "2026–1.0";
-    document.getElementById("meta_version_note").value = m.version_note || "New";
-    document.getElementById("meta_year_level").value = m.year_level || "Second Year";
-    document.getElementById("meta_contact_hours").value = m.contact_hours || "";
-    document.getElementById("meta_faculty_email").value = m.faculty_email || "";
-    document.getElementById("meta_faculty_contact").value = m.faculty_contact || "";
-    document.getElementById("meta_office").value = m.office || m.college || "";
-    document.getElementById("meta_consultation_hours").value = m.consultation_hours || "";
-    document.getElementById("meta_course_description").value = m.course_description || "";
-    document.getElementById("meta_workload_description").value = m.workload_description || "";
-    document.getElementById("meta_passing_grade_conditions").value = m.passing_grade_conditions || "";
+    setVal("meta_version_number", m.version_number || "2026–1.0");
+    setVal("meta_version_note", m.version_note || "New");
+    setVal("meta_year_level", m.year_level || "Second Year");
+    setVal("meta_contact_hours", m.contact_hours || "");
+    setVal("meta_faculty_email", m.faculty_email || "");
+    setVal("meta_faculty_contact", m.faculty_contact || "");
+    setVal("meta_office", m.office || m.college || "");
+    setVal("meta_consultation_hours", m.consultation_hours || "");
+    setVal("meta_course_description", m.course_description || "");
+    setVal("meta_workload_description", m.workload_description || "");
+    setVal("meta_passing_grade_conditions", m.passing_grade_conditions || "");
 
-    document.getElementById("parserNotesList").innerHTML =
-      (blueprint.parser_notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join("");
-
+    const pNotesEl = document.getElementById("parserNotesList");
+    if (pNotesEl) {
+      pNotesEl.innerHTML = (blueprint.parser_notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join("");
+    }
     if (blueprint.raw_text_preview) {
-      document.getElementById("rawPdfTextPreview").textContent = blueprint.raw_text_preview;
+      setText("rawPdfTextPreview", blueprint.raw_text_preview);
     }
 
     if (!m.learning_plan_table || !m.learning_plan_table.length) {
-      m.learning_plan_table = [getOrientationRow()];
+      m.learning_plan_table = [{ ilo: "", clo: "", time_frame: "", topics: "", tla: "", required_reading: "", assessment_activities: "", merge_assessment_with_prev: false }];
     }
     if (!m.policies_table || !m.policies_table.length) {
-      m.policies_table = getDefaultPoliciesTable();
+      m.policies_table = [{ number: "1", title: "", description: "" }];
     }
     if (!m.prereq_coreq_table || !m.prereq_coreq_table.length) {
-      m.prereq_coreq_table = _parseReqStringsToTable(m.prerequisites, m.corequisites);
+      m.prereq_coreq_table = [{ req_type: "Pre-requisite", course_code: "", course_title: "" }];
     }
     if (!m.sdg_table || !m.sdg_table.length) {
-      m.sdg_table = _parseSdgStringToTable(m.sdg_alignments);
+      m.sdg_table = [{ sdg: "", description: "" }];
     }
-    renderCourseOutcomes();
-    renderSyllabusTables();
-    renderCategories();
-    renderCqiSection();
-    renderLiveGradebookAndReports();
-    renderTransmutationTable();
-    updateWeightSummaryBadge();
-    updateActiveSubjectBar();
+    if (!m.references_table || !m.references_table.length) {
+      m.references_table = [{ code: "[1]", reference: "" }];
+    }
+    if (!m.syllabus_assessment_activities || !m.syllabus_assessment_activities.length) {
+      m.syllabus_assessment_activities = [{ type: "Summative", code: "", activity: "", description: "", clo_aligned: "", weight_pct: 0, items_midterm: 1, items_finals: 1, items_per_term: 1, is_major_assessment: false, rubric_ref: "" }];
+    }
+    if (!blueprint.course_outcomes || !blueprint.course_outcomes.length) {
+      blueprint.course_outcomes = [{ co_id: "CLO1", description: "", program_outcomes: "", graduate_outcome_desc: "", performance_indicator: "", iga_aligned: "", target_score_pct: 75.0, target_class_pass_pct: 50.0 }];
+    }
+    try { renderCourseOutcomes(); } catch (e) { console.warn("renderCourseOutcomes:", e); }
+    try { renderSyllabusTables(); } catch (e) { console.warn("renderSyllabusTables:", e); }
+    try { renderCategories(); } catch (e) { console.warn("renderCategories:", e); }
+    try { renderCqiSection(); } catch (e) { console.warn("renderCqiSection:", e); }
+    try { renderLiveGradebookAndReports(); } catch (e) { console.warn("renderLiveGradebookAndReports:", e); }
+    try { renderTransmutationTable(); } catch (e) { console.warn("renderTransmutationTable:", e); }
+    try { updateWeightSummaryBadge(); } catch (e) { console.warn("updateWeightSummaryBadge:", e); }
+    try { updateActiveSubjectBar(); } catch (e) { console.warn("updateActiveSubjectBar:", e); }
   }
 
   // ==============================================================================
@@ -5252,7 +5458,7 @@
     const meta = blueprint.metadata || {};
     let authors = meta.authors || [];
 
-    const owner = (currentCourse && currentCourse.owner) ? currentCourse.owner : "";
+    const owner = (typeof currentCourse !== "undefined" && currentCourse && currentCourse.owner) ? currentCourse.owner : ((allCoursesList || []).find(c => c.id === currentCourseId)?.owner || "");
     const leadName = meta.faculty_name || owner || "Lead Author";
 
     if (!authors.length) {
@@ -5598,21 +5804,11 @@
   function renderPrereqCoreqTable() {
     const m = blueprint.metadata;
     if (!m.prereq_coreq_table || !m.prereq_coreq_table.length) {
-      m.prereq_coreq_table = _parseReqStringsToTable(m.prerequisites, m.corequisites);
+      m.prereq_coreq_table = [{ req_type: "Pre-requisite", course_code: "", course_title: "" }];
     }
     const progCourses = getProgramCoursesForPartV();
     const tbody = document.getElementById("prereqCoreqTableBody");
     if (!tbody) return;
-    if (!m.prereq_coreq_table.length || (m.prereq_coreq_table.length === 1 && m.prereq_coreq_table[0].course_code === "None")) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="4" style="text-align:center; padding:14px; color:#64748b; font-style:italic;">
-            No pre-requisites or co-requisites required. Click <strong>+ Add Requirement</strong> to add one.
-          </td>
-        </tr>
-      `;
-      return;
-    }
     tbody.innerHTML = m.prereq_coreq_table.map((row, idx) => {
       const curCode = (row.course_code || "").trim();
       const inCatalog = progCourses.some(c => c.code.toLowerCase() === curCode.toLowerCase());
@@ -5674,12 +5870,12 @@
     const m = blueprint.metadata;
     const sdgCatalog = catalogData.sdg_catalog || [];
     if (!m.sdg_table || !m.sdg_table.length) {
-      m.sdg_table = _parseSdgStringToTable(m.sdg_alignments);
+      m.sdg_table = [{ sdg: "", description: "" }];
     }
     const tbody = document.getElementById("sdgTableBody");
     tbody.innerHTML = m.sdg_table.map((row, idx) => {
-      const curSdg = row.sdg || "7: Affordable and Clean Energy";
-      let optsHtml = sdgCatalog.map(s => `
+      const curSdg = row.sdg || "";
+      let optsHtml = `<option value="" ${!curSdg ? "selected" : ""}>-- Select SDG --</option>` + sdgCatalog.map(s => `
         <option value="${escapeHtml(s.sdg)}" ${s.sdg === curSdg ? "selected" : ""}>${escapeHtml(s.sdg)}</option>
       `).join("");
       if (curSdg && !sdgCatalog.some(s => s.sdg === curSdg)) {
@@ -5693,7 +5889,7 @@
             </select>
           </td>
           <td>
-            <textarea rows="3" onchange="blueprint.metadata.sdg_table[${idx}].description=this.value">${escapeHtml(row.description)}</textarea>
+            <textarea rows="3" placeholder="SDG Description" onchange="blueprint.metadata.sdg_table[${idx}].description=this.value">${escapeHtml(row.description || '')}</textarea>
           </td>
           <td>
             <button class="btn btn-danger btn-sm" onclick="removeSdgRow(${idx})">&times;</button>
@@ -5706,18 +5902,20 @@
   function onSdgSelectChange(idx, newSdg) {
     const row = blueprint.metadata.sdg_table[idx];
     row.sdg = newSdg;
-    const sdgObj = (catalogData.sdg_catalog || []).find(s => s.sdg === newSdg);
-    if (sdgObj) {
-      row.description = sdgObj.description;
+    if (!newSdg) {
+      row.description = "";
+    } else {
+      const sdgObj = (catalogData.sdg_catalog || []).find(s => s.sdg === newSdg);
+      if (sdgObj) {
+        row.description = sdgObj.description || "";
+      }
     }
     renderSdgTable();
   }
 
   function addSdgRow() {
-    const sdgCatalog = catalogData.sdg_catalog || [];
-    const def = sdgCatalog[3] || { sdg: "4: Quality Education", description: "Fosters outcomes-based engineering education." };
     if (!blueprint.metadata.sdg_table) blueprint.metadata.sdg_table = [];
-    blueprint.metadata.sdg_table.push({ sdg: def.sdg, description: def.description });
+    blueprint.metadata.sdg_table.push({ sdg: "", description: "" });
     renderSdgTable();
   }
 
@@ -5806,9 +6004,7 @@
     let activities = m.syllabus_assessment_activities || [];
     if (!activities.length) {
       m.syllabus_assessment_activities = [
-        { code: "FA1", activity: "Group Activity", type: "Formative", weight_pct: 0.0, items_per_term: 2, clo_aligned: coOptions.join(", ") },
-        { code: "SA1", activity: "Quizzes", type: "Summative", weight_pct: 40.0, items_per_term: 2, clo_aligned: coOptions.join(", ") },
-        { code: "SA2", activity: "Term Examination", type: "Summative", weight_pct: 60.0, items_per_term: 1, clo_aligned: coOptions.join(", ") }
+        { code: "", activity: "", type: "Summative", weight_pct: 0.0, items_midterm: 1, items_finals: 1, items_per_term: 1, is_major_assessment: false, clo_aligned: coOptions.join(", ") }
       ];
       activities = m.syllabus_assessment_activities;
     }
@@ -5823,11 +6019,137 @@
     });
 
     const newCategories = [];
+
+    // 1. Process Major Activities (Supporting Standalone and Term-Scoped scopes)
+    const majorActs = activities.filter(a => a.is_major_assessment);
+    majorActs.forEach((act, majIdx) => {
+      const aCode = (act.code || `PRJ${majIdx + 1}`).toUpperCase();
+      const actName = act.activity || "Major Course Project";
+      const catWt = parseFloat(act.weight_pct) || 0.0;
+      const alignedClos = parseCloList(act.clo_aligned || coOptions.join(", "));
+      const alignedStr = alignedClos.join(", ");
+      const scope = (act.major_scope || "independent").toLowerCase();
+
+      if (scope === "independent") {
+        const nItems = Math.max(1, parseInt(act.items_count, 10) || 1);
+        const perItemWt = Math.round((catWt / nItems) * 100) / 100;
+        const items = [];
+        for (let i = 1; i <= nItems; i++) {
+          const itemId = nItems > 1 ? `${aCode}_${i}` : aCode;
+          const prevIt = existingItemMap[itemId];
+          const ptsPerClo = Math.round((50.0 / Math.max(1, alignedClos.length)) * 10) / 10;
+          const cloPts = {};
+          alignedClos.forEach(c => {
+            const k = c.toUpperCase();
+            cloPts[k] = (prevIt?.clo_points && prevIt.clo_points[k] > 0) ? prevIt.clo_points[k] : ptsPerClo;
+          });
+          const totalPts = Object.values(cloPts).reduce((a, b) => a + b, 0) || 50.0;
+          items.push({
+            item_id: itemId,
+            name: prevIt?.name || `${actName}${nItems > 1 ? ' Part ' + i : ''} (${alignedStr})`,
+            max_score: totalPts,
+            co_id: alignedStr,
+            weight_pct: perItemWt,
+            clo_points: cloPts
+          });
+        }
+        newCategories.push({
+          category_id: `MAJ_${aCode}`,
+          term: "Major Assessment",
+          is_major_assessment: true,
+          major_scope: "independent",
+          assessment_type: "SA",
+          assessment_code: aCode,
+          name: actName,
+          lec_lab: act.lec_lab || (actName.toLowerCase().includes("lab") ? "Laboratory" : "Lecture"),
+          weight_pct: catWt,
+          items: items
+        });
+      } else if (scope === "both_terms") {
+        ["Midterm", "Finals"].forEach((tName, tIdx) => {
+          const prefix = tIdx === 0 ? "MID" : "FIN";
+          const nItems = tIdx === 0 ? Math.max(1, parseInt(act.items_midterm, 10) || 1) : Math.max(1, parseInt(act.items_finals, 10) || 1);
+          const perItemWt = Math.round((catWt / nItems) * 100) / 100;
+          const items = [];
+          for (let i = 1; i <= nItems; i++) {
+            const itemId = `${prefix}_${aCode}${nItems > 1 ? '_' + i : ''}`;
+            const prevIt = existingItemMap[`${tName}__${itemId}`] || existingItemMap[itemId];
+            const ptsPerClo = Math.round((50.0 / Math.max(1, alignedClos.length)) * 10) / 10;
+            const cloPts = {};
+            alignedClos.forEach(c => {
+              const k = c.toUpperCase();
+              cloPts[k] = (prevIt?.clo_points && prevIt.clo_points[k] > 0) ? prevIt.clo_points[k] : ptsPerClo;
+            });
+            const totalPts = Object.values(cloPts).reduce((a, b) => a + b, 0) || 50.0;
+            items.push({
+              item_id: itemId,
+              name: prevIt?.name || `${actName} (${tName}${nItems > 1 ? ' Part ' + i : ''}) (${alignedStr})`,
+              max_score: totalPts,
+              co_id: alignedStr,
+              weight_pct: perItemWt,
+              clo_points: cloPts
+            });
+          }
+          newCategories.push({
+            category_id: `${prefix}_MAJ_${aCode}`,
+            term: tName,
+            is_major_assessment: true,
+            major_scope: "both_terms",
+            assessment_type: "SA",
+            assessment_code: aCode,
+            name: `${actName} (${tName})`,
+            lec_lab: act.lec_lab || (actName.toLowerCase().includes("lab") ? "Laboratory" : "Lecture"),
+            weight_pct: catWt,
+            items: items
+          });
+        });
+      } else {
+        const tName = scope === "finals" ? "Finals" : "Midterm";
+        const prefix = scope === "finals" ? "FIN" : "MID";
+        const nItems = scope === "finals" ? Math.max(1, parseInt(act.items_finals, 10) || 1) : Math.max(1, parseInt(act.items_midterm, 10) || 1);
+        const perItemWt = Math.round((catWt / nItems) * 100) / 100;
+        const items = [];
+        for (let i = 1; i <= nItems; i++) {
+          const itemId = `${prefix}_${aCode}${nItems > 1 ? '_' + i : ''}`;
+          const prevIt = existingItemMap[`${tName}__${itemId}`] || existingItemMap[itemId];
+          const ptsPerClo = Math.round((50.0 / Math.max(1, alignedClos.length)) * 10) / 10;
+          const cloPts = {};
+          alignedClos.forEach(c => {
+            const k = c.toUpperCase();
+            cloPts[k] = (prevIt?.clo_points && prevIt.clo_points[k] > 0) ? prevIt.clo_points[k] : ptsPerClo;
+          });
+          const totalPts = Object.values(cloPts).reduce((a, b) => a + b, 0) || 50.0;
+          items.push({
+            item_id: itemId,
+            name: prevIt?.name || `${actName}${nItems > 1 ? ' Part ' + i : ''} (${alignedStr})`,
+            max_score: totalPts,
+            co_id: alignedStr,
+            weight_pct: perItemWt,
+            clo_points: cloPts
+          });
+        }
+        newCategories.push({
+          category_id: `${prefix}_MAJ_${aCode}`,
+          term: tName,
+          is_major_assessment: true,
+          major_scope: scope,
+          assessment_type: "SA",
+          assessment_code: aCode,
+          name: actName,
+          lec_lab: act.lec_lab || (actName.toLowerCase().includes("lab") ? "Laboratory" : "Lecture"),
+          weight_pct: catWt,
+          items: items
+        });
+      }
+    });
+
+    // 2. Process Regular Term Assessments (Midterm & Finals)
+    const termActs = activities.filter(a => !a.is_major_assessment);
     ["Midterm", "Finals"].forEach((tName, tIdx) => {
       const prefix = tIdx === 0 ? "MID" : "FIN";
       let faGlobalCounter = 0;
 
-      activities.forEach(act => {
+      termActs.forEach(act => {
         const isFa = String(act.type || "").toLowerCase().startsWith("form") || String(act.code || "").toUpperCase().startsWith("FA");
         const aType = isFa ? "FA" : "SA";
         const aCode = (act.code || (isFa ? "FA1" : "SA1")).toUpperCase();
@@ -5836,15 +6158,20 @@
         const alignedStr = alignedClos.join(", ");
 
         const isExam = actName.toLowerCase().includes("exam") || aCode === "SA2";
-        const defaultWt = isFa ? 0.0 : (isExam ? 60.0 : 40.0);
-        const catWt = act.weight_pct !== undefined ? (parseFloat(act.weight_pct) || 0.0) : defaultWt;
         const defaultCount = isExam ? 1 : 2;
-        const itemsPerTerm = Math.max(1, parseInt(act.items_per_term ?? defaultCount, 10) || defaultCount);
+        const termItemCount = tIdx === 0
+          ? (act.items_midterm !== undefined ? parseInt(act.items_midterm, 10) : (act.items_per_term ?? defaultCount))
+          : (act.items_finals !== undefined ? parseInt(act.items_finals, 10) : (act.items_per_term ?? defaultCount));
+        const itemsThisTerm = Math.max(0, parseInt(termItemCount, 10) || 0);
+
+        if (itemsThisTerm === 0) return; // Skip if no assessments scheduled this term!
+
+        const catWt = act.weight_pct !== undefined ? (parseFloat(act.weight_pct) || 0.0) : (isFa ? 0.0 : (isExam ? 60.0 : 40.0));
 
         if (isFa) {
-          for (let i = 1; i <= itemsPerTerm; i++) {
+          for (let i = 1; i <= itemsThisTerm; i++) {
             faGlobalCounter++;
-            const itemNum = tIdx * itemsPerTerm + i;
+            const itemNum = faGlobalCounter;
             const itemId = `A${itemNum}`;
             const prevIt = existingItemMap[`${tName}__${itemId}`] || existingItemMap[itemId];
             const ptsPerClo = Math.round((100.0 / Math.max(1, alignedClos.length)) * 10) / 10;
@@ -5861,7 +6188,7 @@
               assessment_type: "FA",
               assessment_code: `FA${faGlobalCounter}`,
               name: `Formative Assessment ${faGlobalCounter} (${actName})`,
-              lec_lab: m.lec_lab || "Lecture",
+              lec_lab: act.lec_lab || (actName.toLowerCase().includes("lab") ? "Laboratory" : "Lecture"),
               weight_pct: 0.0,
               items: [
                 {
@@ -5877,20 +6204,24 @@
           }
         } else {
           const items = [];
-          const perItemWt = Math.round((catWt / itemsPerTerm) * 100) / 100;
-          for (let i = 1; i <= itemsPerTerm; i++) {
+          const perItemWt = Math.round((catWt / itemsThisTerm) * 100) / 100;
+          for (let i = 1; i <= itemsThisTerm; i++) {
             let itemId = "";
             let itemTitle = "";
             if (isExam) {
               const baseExamId = tIdx === 0 ? "MTE" : "FTE";
-              itemId = itemsPerTerm > 1 ? `${baseExamId}_${i}` : baseExamId;
+              itemId = itemsThisTerm > 1 ? `${baseExamId}_${i}` : baseExamId;
               itemTitle = `${tName} Examination (${alignedStr})`;
             } else if (actName.toLowerCase().includes("quiz") || aCode === "SA1") {
-              const qNum = tIdx * itemsPerTerm + i;
+              const qNum = tIdx === 0 ? i : (parseInt(act.items_midterm || 2, 10) + i);
               itemId = `Q${qNum}`;
               itemTitle = `Quiz ${qNum} (${alignedStr})`;
+            } else if (actName.toLowerCase().includes("lab") || (act.lec_lab || "").toLowerCase() === "laboratory") {
+              const laNum = tIdx === 0 ? i : (parseInt(act.items_midterm || 3, 10) + i);
+              itemId = `LA${laNum}`;
+              itemTitle = `Lab Activity ${laNum} (${alignedStr})`;
             } else {
-              const sNum = tIdx * itemsPerTerm + i;
+              const sNum = tIdx === 0 ? i : (parseInt(act.items_midterm || 2, 10) + i);
               itemId = `${aCode}_${sNum}`;
               itemTitle = `${actName} ${sNum} (${alignedStr})`;
             }
@@ -5920,8 +6251,8 @@
             term: tName,
             assessment_type: "SA",
             assessment_code: aCode,
-            name: `Summative Assessment ${saNum} (${actName})`,
-            lec_lab: m.lec_lab || "Lecture",
+            name: `${tName} ${actName}`,
+            lec_lab: act.lec_lab || (actName.toLowerCase().includes("lab") ? "Laboratory" : "Lecture"),
             weight_pct: catWt,
             items: items
           });
@@ -5959,15 +6290,71 @@
     maybeAutoSyncSetupFromSyllabus();
   }
 
+  function isLecLabCourse(bp) {
+    if (!bp || !bp.metadata) return false;
+    const m = bp.metadata;
+    const scheme = (m.grading_system_type || "").toLowerCase();
+    if (scheme === "lecture_lab") return true;
+    const cType = (m.course_type || "").toLowerCase();
+    if (cType.includes("lab") || cType.includes("laboratory") || cType.includes("integrated")) return true;
+    const lecLab = (m.lec_lab || "").toLowerCase();
+    if (lecLab.includes("lab") || lecLab.includes("both")) return true;
+    const cu = String(m.credit_units || "").toLowerCase();
+    if (cu.includes("lab") || cu.includes("integrated")) return true;
+    const labUnits = parseFloat(m.lab_units) || 0;
+    const labHours = parseFloat(m.lab_hours) || 0;
+    if (labUnits > 0 || labHours > 0) return true;
+    return false;
+  }
+
   function renderSyllabusAssessmentActivitiesTable() {
     const m = blueprint.metadata;
     if (!m.syllabus_assessment_activities) m.syllabus_assessment_activities = [];
     const coOptions = (blueprint.course_outcomes || []).map(c => c.co_id);
     const rubrics = blueprint.rubrics || [];
     const tbody = document.getElementById("syllabusAssessmentActivitiesBody");
+    const thead = document.getElementById("syllabusAssessmentActivitiesHead");
+    const tfoot = document.getElementById("syllabusAssessmentActivitiesFoot");
     if (!tbody) return;
 
-    tbody.innerHTML = m.syllabus_assessment_activities.map((act, idx) => {
+    const isLecLab = isLecLabCourse(blueprint);
+    const scheme = (m.grading_system_type || (isLecLab ? "lecture_lab" : "two_term")).toLowerCase();
+    const lecWt = m.lecture_weight !== undefined ? parseFloat(m.lecture_weight) : 75.0;
+    const labWt = m.lab_weight !== undefined ? parseFloat(m.lab_weight) : 25.0;
+
+    // Major activities vs term-scoped regular activities
+    const acts = m.syllabus_assessment_activities;
+    const allMajorActs = acts.filter(a => !!a.is_major_assessment);
+    const sumAllMajorWt = allMajorActs.reduce((s, a) => s + (parseFloat(a.weight_pct) || 0), 0);
+    const termShare = Math.max(0.0, 100.0 - sumAllMajorWt);
+    let effLecShare = lecWt;
+    let effLabShare = labWt;
+    if (sumAllMajorWt > 0 && (lecWt + labWt) > 0) {
+      effLecShare = termShare * (lecWt / (lecWt + labWt));
+      effLabShare = termShare * (labWt / (lecWt + labWt));
+    }
+
+    // 1. Dynamic Table Head
+    if (thead) {
+      thead.innerHTML = `
+        <tr style="background:#f1f5f9; color:#1e293b;">
+          <th style="width:105px;">Type</th>
+          ${isLecLab ? '<th style="width:115px; text-align:center;">Component</th>' : ''}
+          <th style="width:65px;">Code</th>
+          <th style="width:150px;">Assessment Activity</th>
+          <th>Description and Other Details</th>
+          <th style="width:130px;">CLO Aligned to</th>
+          <th style="width:170px;">Measurement Rubric (Part VII)</th>
+          <th style="width:135px; text-align:center;">Major Activity</th>
+          <th style="width:110px; text-align:center;">Weight (%)</th>
+          <th style="width:145px; text-align:center;">Assessments / Term</th>
+          <th style="width:35px;"></th>
+        </tr>
+      `;
+    }
+
+    // 2. Render Rows
+    tbody.innerHTML = acts.map((act, idx) => {
       const isFa = String(act.type || "").toLowerCase().startsWith("form") || String(act.code || "").toUpperCase().startsWith("FA");
       const isExam = String(act.activity || "").toLowerCase().includes("exam") || String(act.code || "").toUpperCase() === "SA2";
       if (act.weight_pct === undefined) {
@@ -5976,6 +6363,10 @@
       if (act.items_per_term === undefined) {
         act.items_per_term = isExam ? 1 : 2;
       }
+      if (!act.lec_lab) {
+        act.lec_lab = (act.activity && act.activity.toLowerCase().includes("lab")) ? "Laboratory" : "Lecture";
+      }
+
       const selectedClos = parseCloList(act.clo_aligned);
       const chipsHtml = coOptions.map(cid => {
         const isChecked = selectedClos.includes(cid);
@@ -5988,7 +6379,7 @@
         `;
       }).join("");
 
-      // Find all rubrics attached to this assessment code (supports multiple assessments per rubric)
+      // Find all rubrics attached to this assessment code
       const actCode = (act.code || "").toUpperCase().trim();
       const attachedRubrics = rubrics.filter((r, rIdx) => {
         r._origIdx = rIdx;
@@ -6030,6 +6421,92 @@
         `;
       }
 
+      // Component (Lec/Lab) cell when integrated laboratory
+      const isLab = (act.lec_lab || "").toLowerCase() === "laboratory";
+      const compCellHtml = isLecLab ? `
+        <td style="text-align:center; vertical-align:middle;">
+          <select style="width:105px; font-size:0.74rem; font-weight:700; padding:4px; border:1.5px solid ${isLab ? '#f59e0b' : '#3b82f6'}; border-radius:5px; background:${isLab ? '#fffbeb' : '#eff6ff'}; color:${isLab ? '#92400e' : '#1e40af'};"
+            onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].lec_lab=this.value; renderSyllabusAssessmentActivitiesTable(); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();"
+            title="Select whether this assessment falls under Lecture or Laboratory">
+            <option value="Lecture" ${!isLab ? "selected" : ""}>Lecture</option>
+            <option value="Laboratory" ${isLab ? "selected" : ""}>Laboratory</option>
+          </select>
+        </td>
+      ` : '';
+
+      // Effective weight subtitle
+      let effSubtitle = "";
+      const rawWt = parseFloat(act.weight_pct) || 0;
+      if (!isFa) {
+        if (act.is_major_assessment) {
+          const mScope = (act.major_scope || "independent").toLowerCase();
+          const scopeLabel = mScope === "both_terms" ? `Both Terms (Mid: ${act.items_midterm || 1}, Fin: ${act.items_finals || 1})` : (mScope === "midterm" ? `Midterm: ${act.items_midterm || 1}` : (mScope === "finals" ? `Finals: ${act.items_finals || 1}` : `Standalone: ${act.items_count || 1}`));
+          effSubtitle = `<div style="font-size:0.68rem; color:#6b21a8; font-weight:700; margin-top:2px;">↳ ${rawWt.toFixed(1)}% final [${scopeLabel}]</div>`;
+        } else if (isLecLab) {
+          if (isLab) {
+            const effLab = (rawWt * effLabShare / 100.0);
+            effSubtitle = `<div style="font-size:0.68rem; color:#b45309; font-weight:700; margin-top:2px;" title="${rawWt}% within Lab multiplied by ${effLabShare.toFixed(1)}% lab share">↳ ${effLab.toFixed(1)}% final (${effLabShare.toFixed(1)}% lab)</div>`;
+          } else {
+            const effLec = (rawWt * effLecShare / 100.0);
+            effSubtitle = `<div style="font-size:0.68rem; color:#1e40af; font-weight:700; margin-top:2px;" title="${rawWt}% within Lecture multiplied by ${effLecShare.toFixed(1)}% lecture share">↳ ${effLec.toFixed(1)}% final (${effLecShare.toFixed(1)}% lec)</div>`;
+          }
+        } else if (scheme === "term_project" || sumAllMajorWt > 0) {
+          const effTerm = (rawWt * termShare / 100.0);
+          effSubtitle = `<div style="font-size:0.68rem; color:#1e40af; font-weight:700; margin-top:2px;" title="${rawWt}% within Term multiplied by ${termShare.toFixed(1)}% term share">↳ ${effTerm.toFixed(1)}% final (${termShare.toFixed(1)}% term)</div>`;
+        }
+      }
+
+      // Assessments / Term column with dedicated controls
+      const mScope = (act.major_scope || "independent").toLowerCase();
+      let termItemsHtml = "";
+      if (act.is_major_assessment) {
+        if (mScope === "both_terms") {
+          termItemsHtml = `
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center; background:#faf5ff; border:1.5px solid #d8b4fe; padding:5px 8px; border-radius:6px; min-width:130px;">
+              <div style="font-size:0.69rem; font-weight:800; color:#6b21a8; text-transform:uppercase;">Both Terms Entries</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:0.73rem;">
+                <span style="color:#0369a1; font-weight:700;">Midterm:</span>
+                <input type="number" min="1" max="20" style="width:44px; text-align:center; padding:2px; font-weight:800; border:1px solid #c084fc; border-radius:4px;"
+                  value="${act.items_midterm !== undefined ? act.items_midterm : 1}"
+                  onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_midterm=Math.max(1, parseInt(this.value,10)||1); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();"
+                  title="Number of major assessments / milestones in Midterm" />
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%; font-size:0.73rem;">
+                <span style="color:#0369a1; font-weight:700;">Finals:</span>
+                <input type="number" min="1" max="20" style="width:44px; text-align:center; padding:2px; font-weight:800; border:1px solid #c084fc; border-radius:4px;"
+                  value="${act.items_finals !== undefined ? act.items_finals : 1}"
+                  onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_finals=Math.max(1, parseInt(this.value,10)||1); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();"
+                  title="Number of major assessments / milestones in Final Term" />
+              </div>
+            </div>
+          `;
+        } else if (mScope === "midterm") {
+          termItemsHtml = `
+            <div style="font-size:0.73rem; font-weight:700; color:#6b21a8;"><span style="color:#0369a1;">Midterm:</span> <input type="number" min="1" max="20" style="width:44px; text-align:center; padding:2px; font-weight:800; border:1px solid #c084fc; border-radius:4px;" value="${act.items_midterm !== undefined ? act.items_midterm : 1}" onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_midterm=Math.max(1, parseInt(this.value,10)||1); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" /></div>
+          `;
+        } else if (mScope === "finals") {
+          termItemsHtml = `
+            <div style="font-size:0.73rem; font-weight:700; color:#6b21a8;"><span style="color:#0369a1;">Finals:</span> <input type="number" min="1" max="20" style="width:44px; text-align:center; padding:2px; font-weight:800; border:1px solid #c084fc; border-radius:4px;" value="${act.items_finals !== undefined ? act.items_finals : 1}" onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_finals=Math.max(1, parseInt(this.value,10)||1); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" /></div>
+          `;
+        } else {
+          // independent / standalone deliverable count
+          termItemsHtml = `
+            <div style="font-size:0.75rem; font-weight:700; color:#6b21a8; display:flex; align-items:center; justify-content:center; gap:4px;">
+              <span>Deliverables:</span>
+              <input type="number" min="1" max="10" value="${act.items_count || 1}" style="width:44px; text-align:center; padding:2px; font-weight:800; border:1px solid #c084fc; border-radius:4px;"
+                onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_count=Math.max(1, parseInt(this.value,10)||1); maybeAutoSyncSetupFromSyllabus();" title="Number of major deliverables" />
+            </div>
+          `;
+        }
+      } else {
+        termItemsHtml = `
+          <div style="display:flex; align-items:center; gap:4px; justify-content:center; font-size:0.73rem;">
+            <div title="Assessments in Midterm"><span style="color:#0369a1; font-weight:700;">Mid:</span> <input type="number" min="0" max="20" style="width:40px; text-align:center; padding:2px;" value="${act.items_midterm !== undefined ? act.items_midterm : (act.items_per_term !== undefined ? act.items_per_term : (isExam ? 1 : 2))}" onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_midterm=parseInt(this.value,10)||0; renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" /></div>
+            <div title="Assessments in Final Term"><span style="color:#0369a1; font-weight:700;">Fin:</span> <input type="number" min="0" max="20" style="width:40px; text-align:center; padding:2px;" value="${act.items_finals !== undefined ? act.items_finals : (act.items_per_term !== undefined ? act.items_per_term : (isExam ? 1 : 2))}" onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_finals=parseInt(this.value,10)||0; renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" /></div>
+          </div>
+        `;
+      }
+
       return `
       <tr>
         <td>
@@ -6038,6 +6515,7 @@
             <option value="Summative" ${act.type === "Summative" ? "selected" : ""}>Summative</option>
           </select>
         </td>
+        ${compCellHtml}
         <td>
           <input type="text" value="${escapeHtml(act.code)}" style="font-weight:700;"
             onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].code=this.value.trim().toUpperCase(); renderSyllabusAssessmentActivitiesTable(); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" />
@@ -6055,24 +6533,105 @@
             onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].clo_aligned=this.value; renderSyllabusAssessmentActivitiesTable(); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" />
         </td>
         <!-- Part VII Measurement Rubric Column -->
-        <td style="vertical-align:top; min-width:180px;">
+        <td style="vertical-align:top; min-width:170px;">
           ${rubricDisplayHtml}
         </td>
-        <td style="text-align:center;">
-          <input type="number" min="0" max="100" value="${act.weight_pct}" style="text-align:center; font-weight:700;"
-            ${isFa ? 'disabled title="Formative assessments have 0% grading weight"' : ''}
-            onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].weight_pct=parseFloat(this.value)||0; renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" />
+        <!-- Major Activity & Scope Column -->
+        <td style="text-align:center; vertical-align:middle; min-width:135px;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+            <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; font-weight:700; cursor:pointer;" title="Mark this assessment as a major activity or project">
+              <input type="checkbox" ${act.is_major_assessment ? "checked" : ""}
+                onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].is_major_assessment=this.checked; if(this.checked && !blueprint.metadata.syllabus_assessment_activities[${idx}].major_scope){ blueprint.metadata.syllabus_assessment_activities[${idx}].major_scope='independent'; } renderSyllabusAssessmentActivitiesTable(); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" />
+              Major Activity
+            </label>
+            ${act.is_major_assessment ? `
+              <select style="font-size:0.69rem; padding:2px 4px; border:1px solid #c084fc; border-radius:4px; background:#faf5ff; font-weight:700; color:#6b21a8; width:125px;"
+                onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].major_scope=this.value; renderSyllabusAssessmentActivitiesTable(); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" title="Scope of this major activity">
+                <option value="independent" ${(act.major_scope || 'independent') === 'independent' ? 'selected' : ''}>Independent (Standalone)</option>
+                <option value="both_terms" ${act.major_scope === 'both_terms' ? 'selected' : ''}>Both Terms (Mid &amp; Fin)</option>
+                <option value="midterm" ${act.major_scope === 'midterm' ? 'selected' : ''}>Midterm Only</option>
+                <option value="finals" ${act.major_scope === 'finals' ? 'selected' : ''}>Finals Only</option>
+              </select>
+            ` : ''}
+          </div>
         </td>
         <td style="text-align:center;">
-          <input type="number" min="1" max="10" value="${act.items_per_term}" style="text-align:center; font-weight:700;"
-            onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].items_per_term=Math.max(1,parseInt(this.value,10)||1); maybeAutoSyncSetupFromSyllabus();" />
+          <input type="number" min="0" max="100" value="${act.weight_pct !== undefined ? act.weight_pct : 0}" style="text-align:center; font-weight:700;"
+            ${isFa ? 'disabled title="Formative assessments have 0% grading weight"' : ''}
+            onchange="blueprint.metadata.syllabus_assessment_activities[${idx}].weight_pct=parseFloat(this.value)||0; renderSyllabusAssessmentActivitiesTable(); renderPart8GradingPlan(); maybeAutoSyncSetupFromSyllabus();" />
+          ${effSubtitle}
+        </td>
+        <td style="text-align:center;">
+          ${termItemsHtml}
         </td>
         <td>
           <button class="btn btn-danger btn-sm" onclick="removeSyllabusAssessmentActivityRow(${idx})">&times;</button>
         </td>
       </tr>
-    `;
+      `;
     }).join("");
+
+    // 3. Render Calculated Total Footer (Multiplying component ratios)
+    const saActs = acts.filter(a => !String(a.type || "").toLowerCase().startsWith("form") && !String(a.code || "").toUpperCase().startsWith("FA"));
+    let grandCalculatedTotal = 0.0;
+    let summaryTextHtml = "";
+
+    if (isLecLab) {
+      const lecItems = saActs.filter(a => !a.is_major_assessment && (a.lec_lab || "Lecture").toLowerCase() !== "laboratory");
+      const labItems = saActs.filter(a => !a.is_major_assessment && (a.lec_lab || "").toLowerCase() === "laboratory");
+      const lecRawSum = lecItems.reduce((s, a) => s + (parseFloat(a.weight_pct) || 0), 0);
+      const labRawSum = labItems.reduce((s, a) => s + (parseFloat(a.weight_pct) || 0), 0);
+      const effLec = (lecRawSum * effLecShare / 100.0);
+      const effLab = (labRawSum * effLabShare / 100.0);
+      grandCalculatedTotal = effLec + effLab + sumAllMajorWt;
+
+      summaryTextHtml = `
+        <span style="color:#1e40af;"><strong>Lecture:</strong> ${lecRawSum.toFixed(0)}% within Lecture &times; ${effLecShare.toFixed(1)}% share = <strong>${effLec.toFixed(1)}%</strong></span> &nbsp;|&nbsp;
+        <span style="color:#b45309;"><strong>Laboratory:</strong> ${labRawSum.toFixed(0)}% within Lab &times; ${effLabShare.toFixed(1)}% share = <strong>${effLab.toFixed(1)}%</strong></span>
+        ${sumAllMajorWt > 0 ? ` &nbsp;|&nbsp; <span style="color:#6b21a8;"><strong>Major Activities:</strong> ${sumAllMajorWt.toFixed(1)}%</span>` : ''}
+        &nbsp;&rarr;&nbsp; <strong>Calculated Final Grade Total: ${grandCalculatedTotal.toFixed(1)}%</strong>
+      `;
+    } else if (scheme === "term_project" || sumAllMajorWt > 0) {
+      const termItems = saActs.filter(a => !a.is_major_assessment);
+      const termRawSum = termItems.reduce((s, a) => s + (parseFloat(a.weight_pct) || 0), 0);
+      const effTerm = (termRawSum * termShare / 100.0);
+      grandCalculatedTotal = effTerm + sumAllMajorWt;
+
+      summaryTextHtml = `
+        <span style="color:#1e40af;"><strong>Term Assessments:</strong> ${termRawSum.toFixed(0)}% within Terms &times; ${termShare.toFixed(1)}% share = <strong>${effTerm.toFixed(1)}%</strong></span> &nbsp;|&nbsp;
+        <span style="color:#6b21a8;"><strong>Major Assessments:</strong> ${sumAllMajorWt.toFixed(1)}%</span>
+        &nbsp;&rarr;&nbsp; <strong>Calculated Final Grade Total: ${grandCalculatedTotal.toFixed(1)}%</strong>
+      `;
+    } else {
+      const rawSum = saActs.reduce((s, a) => s + (parseFloat(a.weight_pct) || 0), 0);
+      grandCalculatedTotal = rawSum;
+      summaryTextHtml = `<strong>Summative Assessments Total:</strong> ${rawSum.toFixed(0)}% of Final Grade`;
+    }
+
+    const isSum100 = Math.abs(grandCalculatedTotal - 100.0) < 0.1;
+    if (tfoot) {
+      tfoot.innerHTML = `
+        <tr style="background:#f8fafc; font-weight:800; border-top:2px solid #cbd5e1;">
+          <td colspan="${isLecLab ? 8 : 7}" style="padding:10px 12px; vertical-align:middle;">
+            <div style="font-size:0.8rem; font-weight:800; color:#1e293b; margin-bottom:2px;">
+              ⚖️ CALCULATED TOTAL PERCENTAGE (MULTIPLIED BY SECTION DISTRIBUTION):
+            </div>
+            <div style="font-size:0.75rem; font-weight:600; color:#475569;">
+              ${summaryTextHtml}
+            </div>
+          </td>
+          <td style="text-align:center; padding:10px 6px; vertical-align:middle;">
+            <div style="font-size:0.95rem; font-weight:800; color:${isSum100 ? '#166534' : '#dc2626'};">${grandCalculatedTotal.toFixed(1)}%</div>
+            <div style="font-size:0.67rem; font-weight:600; color:#64748b;">(Calculated Total)</div>
+          </td>
+          <td colspan="2" style="padding:10px 12px; vertical-align:middle;">
+            <div style="font-size:0.78rem; font-weight:800; padding:5px 8px; border-radius:6px; background:${isSum100 ? '#dcfce7' : '#fee2e2'}; color:${isSum100 ? '#166534' : '#991b1b'}; border:1px solid ${isSum100 ? '#86efac' : '#fca5a5'}; text-align:center;">
+              ${isSum100 ? '✓ 100.0% BALANCED' : `⚠️ Total is ${grandCalculatedTotal.toFixed(1)}% (Must equal 100%)`}
+            </div>
+          </td>
+        </tr>
+      `;
+    }
   }
 
   function scrollToSyllabusSection(elementId) {
@@ -6104,12 +6663,16 @@
     if (!blueprint.metadata.syllabus_assessment_activities) blueprint.metadata.syllabus_assessment_activities = [];
     blueprint.metadata.syllabus_assessment_activities.push({
       type: "Summative",
-      code: "SA3",
-      activity: "Project / Case Study",
-      description: "Comprehensive engineering analysis or design project.",
-      clo_aligned: (blueprint.course_outcomes || []).map(c => c.co_id).join(", ") || "CLO1, CLO2",
-      weight_pct: 20,
-      items_per_term: 1
+      code: "",
+      activity: "",
+      description: "",
+      clo_aligned: (blueprint.course_outcomes || []).map(c => c.co_id).join(", "),
+      weight_pct: 0,
+      items_midterm: 1,
+      items_finals: 1,
+      items_per_term: 1,
+      is_major_assessment: false,
+      rubric_ref: ""
     });
     renderSyllabusAssessmentActivitiesTable();
     maybeAutoSyncSetupFromSyllabus();
@@ -7341,12 +7904,13 @@
     }
 
     tbody.innerHTML = blueprint.course_outcomes.map((co, i) => {
-      const normPgo = _normalizePgoCode(co.program_outcomes, pgoList);
+      const rawPgo = (co.program_outcomes || "").trim();
+      const normPgo = rawPgo ? _normalizePgoCode(rawPgo, pgoList) : "";
       co.program_outcomes = normPgo;
-      const pgoObj = pgoList.find(p => p.pgo_code === normPgo) || pgoList[0] || { pis: [] };
-      const pisForPo = pgoObj.pis || [];
+      const pgoObj = normPgo ? pgoList.find(p => p.pgo_code === normPgo) : null;
+      const pisForPo = pgoObj ? (pgoObj.pis || []) : [];
 
-      const poOptionsHtml = pgoList.map(p => `
+      const poOptionsHtml = `<option value="" ${!normPgo ? "selected" : ""}>-- Select PGO --</option>` + pgoList.map(p => `
         <option value="${escapeHtml(p.pgo_code)}" ${p.pgo_code === normPgo ? "selected" : ""}>
           ${escapeHtml(p.short_label || p.pgo_code)}
         </option>
@@ -7357,7 +7921,7 @@
       const curPiPrefix = curPiPrefixMatch ? curPiPrefixMatch[1].toLowerCase() : "";
 
       let matchedInCatalog = false;
-      let piOptionsHtml = pisForPo.map(pi => {
+      let piOptionsHtml = `<option value="" ${!curPi ? "selected" : ""}>-- Select PI --</option>` + pisForPo.map(pi => {
         const isExact = pi.full_text === curPi;
         const isPrefix = !isExact && curPiPrefix && pi.pi_code.toLowerCase() === curPiPrefix;
         const sel = isExact || isPrefix;
@@ -7377,7 +7941,7 @@
       return `
         <tr>
           <td><input type="text" value="${escapeHtml(co.co_id)}" onchange="blueprint.course_outcomes[${i}].co_id=this.value.trim(); renderCategories(); renderLiveGradebookAndReports();" /></td>
-          <td><textarea rows="2" onchange="blueprint.course_outcomes[${i}].description=this.value; renderLiveGradebookAndReports();">${escapeHtml(co.description)}</textarea></td>
+          <td><textarea rows="2" placeholder="Course outcome description" onchange="blueprint.course_outcomes[${i}].description=this.value; renderLiveGradebookAndReports();">${escapeHtml(co.description || '')}</textarea></td>
           <td>
             <select onchange="onCloPoChange(${i}, this.value)" style="font-weight:700; background:#eff6ff;">
               ${poOptionsHtml}
@@ -7388,9 +7952,9 @@
               ${piOptionsHtml}
             </select>
           </td>
-          <td><textarea rows="2" onchange="blueprint.course_outcomes[${i}].graduate_outcome_desc=this.value; renderLiveGradebookAndReports();">${escapeHtml(co.graduate_outcome_desc)}</textarea></td>
+          <td><textarea rows="2" placeholder="Graduate outcome description" onchange="blueprint.course_outcomes[${i}].graduate_outcome_desc=this.value; renderLiveGradebookAndReports();">${escapeHtml(co.graduate_outcome_desc || '')}</textarea></td>
           <td>
-            <input type="text" value="${escapeHtml(co.iga_aligned)}" title="${escapeHtml(igaTooltip)}"
+            <input type="text" value="${escapeHtml(co.iga_aligned || '')}" title="${escapeHtml(igaTooltip)}" placeholder="Aligned IGA"
               style="font-weight:700; text-align:center; background:#fef3c7;"
               onchange="blueprint.course_outcomes[${i}].iga_aligned=this.value;" />
           </td>
@@ -7404,20 +7968,13 @@
 
   function addCourseOutcome() {
     const nextIdx = blueprint.course_outcomes.length + 1;
-    const pgoList = getActivePgoCatalog();
-    const defPgo = pgoList[0] || {
-      pgo_code: "PGO a",
-      description: "a) Apply knowledge of mathematics and sciences to solve engineering problems",
-      pis: [{ full_text: "a.1. Apply concepts in mathematics to solve engineering problems.", igas: "IGA2", igas_legacy: "IGA1" }]
-    };
-    const defPi = (defPgo.pis && defPgo.pis[0]) || { full_text: "", igas: "IGA2", igas_legacy: "IGA1" };
     blueprint.course_outcomes.push({
       co_id: `CLO${nextIdx}`,
-      description: `Course Learning Outcome ${nextIdx}`,
-      program_outcomes: defPgo.pgo_code,
-      graduate_outcome_desc: defPgo.description,
-      performance_indicator: defPi.full_text,
-      iga_aligned: _pickIgaForMode(defPi, _pickIgaForMode(defPgo, "IGA2")),
+      description: "",
+      program_outcomes: "",
+      graduate_outcome_desc: "",
+      performance_indicator: "",
+      iga_aligned: "",
       target_score_pct: 75.0,
       target_class_pass_pct: 50.0
     });
@@ -7645,19 +8202,26 @@
         <div class="cat-block">
           <div class="cat-top">
             <span class="badge ${isFa ? 'badge-fa' : 'badge-sa'}">${isFa ? 'FORMATIVE (FA)' : 'SUMMATIVE (SA)'}</span>
-            <select style="width:110px; padding:5px; ${disStyle}" ${disAttr} onchange="blueprint.categories[${cIdx}].term=this.value; updateWeightSummaryBadge(); renderLiveGradebookAndReports();">
+            <select style="width:130px; padding:5px; font-weight:700; ${disStyle}" ${disAttr} onchange="blueprint.categories[${cIdx}].term=this.value; if(this.value==='Major Assessment'){blueprint.categories[${cIdx}].is_major_assessment=true;} updateWeightSummaryBadge(); renderCategories(); renderLiveGradebookAndReports();">
               <option value="Midterm" ${cat.term === "Midterm" ? "selected" : ""}>Midterm</option>
               <option value="Finals" ${cat.term === "Finals" ? "selected" : ""}>Finals</option>
+              <option value="Major Assessment" ${cat.term === "Major Assessment" ? "selected" : ""}>Major Assessment (Standalone)</option>
             </select>
+            <label style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; font-weight:700; color:#6b21a8; cursor:pointer;" title="Mark this assessment as a major activity/project (either standalone or within term)">
+              <input type="checkbox" ${(cat.is_major_assessment || cat.term === 'Major Assessment') ? 'checked' : ''} ${disAttr}
+                onchange="blueprint.categories[${cIdx}].is_major_assessment=this.checked; updateWeightSummaryBadge(); renderCategories(); renderLiveGradebookAndReports();" />
+              Major Activity
+            </label>
+            ${(cat.is_major_assessment && cat.term !== 'Major Assessment') ? `<span class="badge" style="background:#f3e8ff; color:#7e22ce; font-size:0.68rem; border:1px solid #d8b4fe;" title="Major activity with entries in ${cat.term}">Major (${cat.term})</span>` : ''}
             <select style="width:75px; padding:5px; ${disStyle}" ${disAttr} onchange="blueprint.categories[${cIdx}].assessment_type=this.value; renderCategories(); renderLiveGradebookAndReports();">
               <option value="FA" ${isFa ? "selected" : ""}>FA</option>
               <option value="SA" ${!isFa ? "selected" : ""}>SA</option>
             </select>
             <input type="text" style="width:70px; padding:5px; font-weight:700; ${disStyle}" ${disAttr} value="${escapeHtml(cat.assessment_code)}"
               onchange="blueprint.categories[${cIdx}].assessment_code=this.value.trim(); renderLiveGradebookAndReports();" />
-            <input type="text" style="width:255px; padding:5px; font-weight:600; ${disStyle}" ${disAttr} value="${escapeHtml(cat.name)}"
+            <input type="text" style="width:235px; padding:5px; font-weight:600; ${disStyle}" ${disAttr} value="${escapeHtml(cat.name)}"
               onchange="blueprint.categories[${cIdx}].name=this.value; renderLiveGradebookAndReports();" />
-            <label style="font-size:0.8rem; font-weight:700;">SA Term Weight (%):</label>
+            <label style="font-size:0.8rem; font-weight:700; ${(cat.is_major_assessment || cat.term === 'Major Assessment') ? 'color:#6b21a8;' : ''}">${(cat.is_major_assessment || cat.term === 'Major Assessment') ? 'Major Grade Weight (%):' : 'SA Term Weight (%):'}</label>
             <input type="number" style="width:70px; padding:5px; ${disStyle}" ${disAttr} value="${cat.weight_pct}" min="0" max="100"
               onchange="blueprint.categories[${cIdx}].weight_pct=parseFloat(this.value)||0; updateWeightSummaryBadge(); renderLiveGradebookAndReports();" />
             <button type="button" class="btn btn-light btn-sm" ${disAttr} style="${disStyle}" onclick="setCategoryAllItemsClo(${cIdx}, 'ALL')" title="Align all items in this assessment to all CLOs">Align All Items &rarr; All CLOs</button>
@@ -7686,24 +8250,37 @@
     checkClassRecordLock();
   }
 
-  function addAssessmentCategory(termName, aType) {
+  function addAssessmentCategory(termName, aType, isMajor) {
     if (!currentWorkflow || currentWorkflow.status !== "approved") {
       alert("Class Record Setup & Grades are locked until the syllabus is approved through the official review chain.");
       return;
     }
-    const nextNum = blueprint.categories.length + 1;
-    const defaultCo = blueprint.course_outcomes[0]?.co_id || "CLO1";
-    const code = aType === "FA" ? "FA1" : "SA1";
+    const isMaj = Boolean(isMajor || termName === "Major Assessment");
+    const effTerm = isMaj ? "Major Assessment" : (termName || "Midterm");
+    const nextNum = (blueprint.categories || []).length + 1;
+    const defaultCo = blueprint.course_outcomes && blueprint.course_outcomes[0]?.co_id || "CLO1";
+    const code = isMaj ? `PRJ${nextNum}` : (aType === "FA" ? `FA${nextNum}` : `SA${nextNum}`);
+    const name = isMaj ? "Major Course Project / Design" : (aType === "FA" ? "Formative Assessment (Activity)" : "Summative Assessment");
+    const defWt = isMaj ? 20.0 : (aType === "FA" ? 0.0 : 20.0);
+
     blueprint.categories.push({
-      category_id: `${termName.slice(0,3).toUpperCase()}_${code}_${nextNum}`,
-      term: termName,
-      assessment_type: aType,
+      category_id: `${effTerm.slice(0,3).toUpperCase()}_${code}_${nextNum}`,
+      term: effTerm,
+      is_major_assessment: isMaj,
+      assessment_type: isMaj ? "SA" : aType,
       assessment_code: code,
-      name: aType === "FA" ? "Formative Assessment (Activity)" : "Summative Assessment",
+      name: name,
       lec_lab: "Lecture",
-      weight_pct: aType === "FA" ? 0.0 : 20.0,
+      weight_pct: defWt,
       items: [
-        { item_id: `IT${nextNum}`, name: `${termName} ${code} Item`, max_score: 30.0, co_id: defaultCo, weight_pct: aType === "FA" ? 100.0 : 20.0, clo_points: { [defaultCo.toUpperCase()]: 30.0 } }
+        {
+          item_id: isMaj ? `PRJ${nextNum}` : `IT${nextNum}`,
+          name: `${effTerm} ${code} Item`,
+          max_score: isMaj ? 50.0 : 30.0,
+          co_id: defaultCo,
+          weight_pct: isMaj ? 100.0 : (aType === "FA" ? 100.0 : 20.0),
+          clo_points: { [defaultCo.toUpperCase()]: isMaj ? 50.0 : 30.0 }
+        }
       ]
     });
     renderCategories();
@@ -7755,15 +8332,98 @@
 
   function updateWeightSummaryBadge() {
     const summaryEl = document.getElementById("weightValidationSummary");
+    if (!summaryEl || !blueprint) return;
+    const meta = blueprint.metadata || {};
+    const scheme = (meta.grading_system_type || "two_term").toLowerCase();
     const badges = ["Midterm", "Finals"].map(tName => {
-      const cats = blueprint.categories.filter(c => c.term === tName && (c.assessment_type || "SA").toUpperCase() === "SA");
+      const cats = (blueprint.categories || []).filter(c => (c.term || "Midterm") === tName && (c.assessment_type || "SA").toUpperCase() === "SA" && !c.is_major_assessment);
       const sum = cats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
       const ok = Math.abs(sum - 100) < 0.1;
       return `<span class="weight-pill ${ok ? 'weight-ok' : 'weight-warn'}" style="margin-left:6px;">
-        ${tName} SA Weight: ${sum.toFixed(0)}% ${ok ? '✓' : '(Should be 100%)'}
+        ${tName} SA: ${sum.toFixed(0)}% ${ok ? '✓' : '(Should be 100%)'}
       </span>`;
     });
+
+    const majCats = (blueprint.categories || []).filter(c => c.term === "Major Assessment" || c.is_major_assessment);
+    if (majCats.length > 0) {
+      const sumMaj = majCats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+      badges.push(`<span class="weight-pill" style="margin-left:6px; background:#f3e8ff; color:#6b21a8; border:1px solid #c084fc; font-weight:700;">
+        Major Activities: ${sumMaj.toFixed(0)}%
+      </span>`);
+    }
+
+    if (scheme === "term_project") {
+      const mw = meta.midterm_weight !== undefined ? meta.midterm_weight : 40;
+      const fw = meta.finals_weight !== undefined ? meta.finals_weight : 40;
+      const pw = meta.project_weight !== undefined ? meta.project_weight : 20;
+      badges.push(`<span class="weight-pill" style="margin-left:6px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; font-weight:700;">
+        Grading: ${mw}% Mid + ${fw}% Fin + ${pw}% Project
+      </span>`);
+    } else if (scheme === "lecture_lab") {
+      const lw = meta.lecture_weight !== undefined ? meta.lecture_weight : 75;
+      const lb = meta.lab_weight !== undefined ? meta.lab_weight : 25;
+      badges.push(`<span class="weight-pill" style="margin-left:6px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; font-weight:700;">
+        Grading: ${lw}% Lec + ${lb}% Lab
+      </span>`);
+    }
+
     summaryEl.innerHTML = badges.join("");
+  }
+
+  function computeStudentFinalGrade(termGrades, catListWithGrades, mMeta) {
+    const meta = mMeta || (blueprint && blueprint.metadata) || {};
+    const scheme = (meta.grading_system_type || "two_term").toLowerCase();
+    const midWt = meta.midterm_weight !== undefined ? parseFloat(meta.midterm_weight) : (scheme === "term_project" ? 40.0 : 50.0);
+    const finWt = meta.finals_weight !== undefined ? parseFloat(meta.finals_weight) : (scheme === "term_project" ? 40.0 : 50.0);
+    const prjWt = meta.project_weight !== undefined ? parseFloat(meta.project_weight) : 20.0;
+    const lecWt = meta.lecture_weight !== undefined ? parseFloat(meta.lecture_weight) : 75.0;
+    const labWt = meta.lab_weight !== undefined ? parseFloat(meta.lab_weight) : 25.0;
+
+    const mg = termGrades && termGrades.Midterm !== undefined ? termGrades.Midterm : 50.0;
+    const fg = termGrades && termGrades.Finals !== undefined ? termGrades.Finals : mg;
+
+    // Standalone major assessment categories
+    const standaloneMajCats = (catListWithGrades || []).filter(c => c.term === "Major Assessment" || (c.is_major_assessment && c.term !== "Midterm" && c.term !== "Finals"));
+    let majWeightedSum = 0;
+    let majTotalWt = 0;
+    standaloneMajCats.forEach(c => {
+      const w = parseFloat(c.weight_pct) || 0;
+      majWeightedSum += (c.catGrade * w);
+      majTotalWt += w;
+    });
+    const majGrade = majTotalWt > 0 ? (majWeightedSum / majTotalWt) : ((mg + fg) / 2.0);
+
+    if (scheme === "term_project") {
+      const effectivePrjWt = majTotalWt > 0 ? majTotalWt : prjWt;
+      const majContrib = majTotalWt > 0 ? majWeightedSum : (majGrade * effectivePrjWt);
+      const totWt = (midWt + finWt + effectivePrjWt) || 100.0;
+      return Math.round((((mg * midWt) + (fg * finWt) + majContrib) / totWt) * 100) / 100;
+    } else if (scheme === "lecture_lab") {
+      const lecCats = (catListWithGrades || []).filter(c => (c.lec_lab || "Lecture").toLowerCase() !== "laboratory" && c.assessment_type === "SA" && c.term !== "Major Assessment" && !c.is_major_assessment);
+      const labCats = (catListWithGrades || []).filter(c => (c.lec_lab || "").toLowerCase() === "laboratory" && c.assessment_type === "SA" && c.term !== "Major Assessment" && !c.is_major_assessment);
+
+      let lecSum = 0, lecWtSum = 0;
+      lecCats.forEach(c => { const w = parseFloat(c.weight_pct) || 1.0; lecSum += (c.catGrade * w); lecWtSum += w; });
+      const lecGrade = lecWtSum > 0 ? (lecSum / lecWtSum) : ((mg + fg) / 2.0);
+
+      let labSum = 0, labWtSum = 0;
+      labCats.forEach(c => { const w = parseFloat(c.weight_pct) || 1.0; labSum += (c.catGrade * w); labWtSum += w; });
+      const labGrade = labWtSum > 0 ? (labSum / labWtSum) : ((mg + fg) / 2.0);
+
+      const majContrib = majTotalWt > 0 ? majWeightedSum : 0.0;
+      const totWt = (lecWt + labWt + majTotalWt) || 100.0;
+      return Math.round((((lecGrade * lecWt) + (labGrade * labWt) + majContrib) / totWt) * 100) / 100;
+    } else {
+      // two_term standard
+      if (majTotalWt > 0) {
+        const termShare = Math.max(0.0, 100.0 - majTotalWt);
+        const termAvg = ((mg * midWt) + (fg * finWt)) / ((midWt + finWt) || 100.0);
+        return Math.round((((termAvg * termShare) + majWeightedSum) / 100.0) * 100) / 100;
+      } else {
+        const totWt = (midWt + finWt) || 100.0;
+        return Math.round((((mg * midWt) + (fg * finWt)) / totWt) * 100) / 100;
+      }
+    }
   }
 
   function lookupUsepGrade(afg) {
@@ -7839,7 +8499,13 @@
       if (!termNames.includes(t)) termNames.push(t);
     });
     if (!termNames.length) termNames.push("Midterm");
-    termNames.sort((a, b) => (a === "Midterm" ? -1 : b === "Midterm" ? 1 : 0));
+    termNames.sort((a, b) => {
+      if (a === "Midterm") return -1;
+      if (b === "Midterm") return 1;
+      if (a === "Finals") return -1;
+      if (b === "Finals") return 1;
+      return a.localeCompare(b);
+    });
 
     // Structure layout by Term -> Category -> Items -> per-CLO columns
     const termLayout = [];
@@ -7987,18 +8653,22 @@
             <div style="font-size:0.68rem; color:#075985;">(FG)</div>
           </th>
         `;
+      } else if (tb.term === "Major Assessment") {
+        thRow1 += `
+          <th rowspan="2" style="background:#f3e8ff; text-align:center; vertical-align:middle; min-width:92px; font-weight:900; color:#6b21a8; border-left:2px solid #a855f7; border-right:2px solid #a855f7;">
+            <div>MAJOR GRADE</div>
+            <div style="font-size:0.68rem; color:#7e22ce;">(PG)</div>
+          </th>
+        `;
       }
     });
 
-    const hasBothTerms = termLayout.some(tb => tb.term === "Midterm") && termLayout.some(tb => tb.term === "Finals");
-    if (hasBothTerms) {
-      thRow1 += `
-        <th rowspan="2" style="background:#fef3c7; text-align:center; vertical-align:middle; min-width:88px; font-weight:900; color:#854d0e; border-left:1px solid #fde047; border-right:1px solid #fde047;">
-          <div>AFG</div>
-          <div style="font-size:0.66rem;">(Average)</div>
-        </th>
-      `;
-    }
+    thRow1 += `
+      <th rowspan="2" style="background:#fef3c7; text-align:center; vertical-align:middle; min-width:88px; font-weight:900; color:#854d0e; border-left:1px solid #fde047; border-right:1px solid #fde047;">
+        <div>AFG</div>
+        <div style="font-size:0.66rem;">(Final)</div>
+      </th>
+    `;
 
     thRow1 += `
       <th rowspan="2" style="background:#dcfce7; text-align:center; vertical-align:middle; min-width:85px; font-weight:900; color:#14532d;">
@@ -8063,6 +8733,7 @@
       `;
 
       const termGrades = {};
+      const studentCatGradesList = [];
 
       termLayout.forEach(tb => {
         let termWeightedRawRatio = 0.0;
@@ -8120,6 +8791,16 @@
 
           // Category Grade formula: sum of (weight * (score / total)) / (sum of weights) * 50 + 50
           const catGrade = catWeightSum > 0 ? ((catWeightedRatioSum / catWeightSum) * 50.0 + 50.0) : 50.0;
+          studentCatGradesList.push({
+            category_id: cb.category.category_id,
+            term: tb.term,
+            is_major_assessment: cb.category.is_major_assessment || tb.term === "Major Assessment",
+            assessment_type: cb.assessment_type,
+            assessment_code: cb.cat_code,
+            lec_lab: cb.category.lec_lab || "Lecture",
+            weight_pct: cb.cat_weight,
+            catGrade: catGrade
+          });
           rowCells += `
             <td id="stCatGrd_${sIdx}_${escapeHtml(tb.term)}_${escapeHtml(cb.cat_code)}" style="text-align:center; font-weight:700; background:#fefce8; color:#854d0e; border-left:1px solid #fef08a; border-right:1px solid #fef08a;">
               ${catGrade.toFixed(2)}
@@ -8143,22 +8824,24 @@
               ${termGrade.toFixed(2)}
             </td>
           `;
+        } else if (tb.term === "Major Assessment") {
+          rowCells += `
+            <td id="stPg_${sIdx}" style="text-align:center; font-weight:800; background:#faf5ff; color:#6b21a8; border-left:2px solid #e9d5ff; border-right:2px solid #e9d5ff;">
+              ${termGrade.toFixed(2)}
+            </td>
+          `;
         }
       });
 
-      const mg = termGrades.Midterm !== undefined ? termGrades.Midterm : 50.0;
-      const fg = termGrades.Finals !== undefined ? termGrades.Finals : mg;
-      const afg = hasBothTerms ? ((mg + fg) * 0.5) : (termGrades.Finals !== undefined ? fg : mg);
+      const afg = computeStudentFinalGrade(termGrades, studentCatGradesList, blueprint.metadata);
       const finGrade = lookupUsepGrade(afg);
       const passed = finGrade !== "UW" && finGrade <= 3.00;
 
-      if (hasBothTerms) {
-        rowCells += `
-          <td id="stAfg_${sIdx}" style="text-align:center; font-weight:800; background:#fffbeb; color:#854d0e; border-left:1px solid #fef08a; border-right:1px solid #fef08a;">
-            ${afg.toFixed(2)}
-          </td>
-        `;
-      }
+      rowCells += `
+        <td id="stAfg_${sIdx}" style="text-align:center; font-weight:800; background:#fffbeb; color:#854d0e; border-left:1px solid #fef08a; border-right:1px solid #fef08a;">
+          ${afg.toFixed(2)}
+        </td>
+      `;
 
       rowCells += `
         <td id="stFin_${sIdx}" style="text-align:center; font-weight:900; background:${passed ? '#dcfce7' : '#fee2e2'}; color:${passed ? '#15803d' : '#b91c1c'};">
@@ -8953,9 +9636,21 @@
       });
     });
 
-    const termNames = ["Midterm", "Finals"].filter(tName => (blueprint.categories || []).some(c => (c.term || "Midterm") === tName));
+    const termNames = [];
+    (blueprint.categories || []).forEach(c => {
+      const t = c.term || "Midterm";
+      if (!termNames.includes(t)) termNames.push(t);
+    });
     if (!termNames.length) termNames.push("Midterm");
+    termNames.sort((a, b) => {
+      if (a === "Midterm") return -1;
+      if (b === "Midterm") return 1;
+      if (a === "Finals") return -1;
+      if (b === "Finals") return 1;
+      return a.localeCompare(b);
+    });
     const termGrades = {};
+    const studentCatGradesList = [];
 
     termNames.forEach(tName => {
       const catsInTerm = (blueprint.categories || []).filter(c => (c.term || "Midterm") === tName);
@@ -9013,6 +9708,17 @@
 
         // Update Category Grade DOM cell: sum of (weight * (score / total)) / (sum of weights) * 50 + 50
         const catGrade = catWeightSum > 0 ? ((catWeightedRatioSum / catWeightSum) * 50.0 + 50.0) : 50.0;
+        studentCatGradesList.push({
+          category_id: cat.category_id,
+          term: tName,
+          is_major_assessment: cat.is_major_assessment || tName === "Major Assessment",
+          assessment_type: aType,
+          assessment_code: aCode,
+          lec_lab: cat.lec_lab || "Lecture",
+          weight_pct: catWt,
+          catGrade: catGrade
+        });
+
         const elCat = document.getElementById(`stCatGrd_${sIdx}_${tName}_${aCode}`);
         if (elCat) elCat.textContent = catGrade.toFixed(2);
       });
@@ -9023,8 +9729,9 @@
 
     const mg = termGrades.Midterm !== undefined ? termGrades.Midterm : 50.0;
     const fg = termGrades.Finals !== undefined ? termGrades.Finals : mg;
-    const hasBothTerms = termNames.includes("Midterm") && termNames.includes("Finals");
-    const afg = hasBothTerms ? ((mg + fg) * 0.5) : (termGrades.Finals !== undefined ? fg : mg);
+    const pg = termGrades["Major Assessment"] !== undefined ? termGrades["Major Assessment"] : null;
+
+    const afg = computeStudentFinalGrade(termGrades, studentCatGradesList, blueprint.metadata);
     const finGrade = lookupUsepGrade(afg);
     const passed = finGrade !== "UW" && finGrade <= 3.00;
 
@@ -9033,6 +9740,8 @@
     if (elMg) elMg.textContent = mg.toFixed(2);
     const elFg = document.getElementById(`stFg_${sIdx}`);
     if (elFg) elFg.textContent = fg.toFixed(2);
+    const elPg = document.getElementById(`stPg_${sIdx}`);
+    if (elPg && pg !== null) elPg.textContent = pg.toFixed(2);
     const elAfg = document.getElementById(`stAfg_${sIdx}`);
     if (elAfg) elAfg.textContent = afg.toFixed(2);
     const elFin = document.getElementById(`stFin_${sIdx}`);
@@ -10449,9 +11158,9 @@
   }
 
   let submitModalCommitteeState = [
-    { username: "faculty_basan", name: "Nikka Samantha A. Basan", role: "Review Committee Chair" },
-    { username: "faculty_arenga", name: "Delan Zoe H. Arenga", role: "Review Committee Member" },
-    { username: "faculty_ravida", name: "Kim P. Ravida", role: "Review Committee Member" }
+    { username: "", name: "", role: "Review Committee Chair" },
+    { username: "", name: "", role: "Review Committee Member" },
+    { username: "", name: "", role: "Review Committee Member" }
   ];
 
   function renderSubmitCommitteeRows() {
@@ -10476,13 +11185,15 @@
     const nonChairs = submitModalCommitteeState.filter(m => m.role !== "Review Committee Chair");
     const chainMemsEl = document.getElementById("chainMembersName");
     if (chainMemsEl) {
-      chainMemsEl.textContent = nonChairs.map(m => m.name || m.username).join(", ") || "Committee Members";
+      const names = nonChairs.map(m => m.name || m.username).filter(Boolean);
+      chainMemsEl.textContent = names.length > 0 ? names.join(", ") : "--Select Faculty--";
     }
 
     const chair = submitModalCommitteeState.find(m => m.role === "Review Committee Chair") || submitModalCommitteeState[0];
     const chainCommEl = document.getElementById("chainCommitteeName");
-    if (chainCommEl && chair) {
-      chainCommEl.textContent = chair.name || chair.username;
+    if (chainCommEl) {
+      const cName = chair ? (chair.name || chair.username) : "";
+      chainCommEl.textContent = cName || "--Select Faculty--";
     }
 
     container.innerHTML = submitModalCommitteeState.map((mem, idx) => {
@@ -10499,6 +11210,7 @@
             ${badgeIcon}
           </span>
           <select onchange="updateSubmitCommitteeMember(${idx}, this.value)" style="flex:1; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px; font-size:0.8rem; font-weight:600;">
+            <option value="" ${!mem.username ? 'selected' : ''}>--Select Faculty--</option>
             ${signatories.map(s => `
               <option value="${s.username}" ${s.username === mem.username ? 'selected' : ''}>
                 ${escapeHtml(s.full_name)} (${escapeHtml(s.position_title)})
@@ -10538,6 +11250,13 @@
   }
 
   function updateSubmitCommitteeMember(idx, uname) {
+    if (!submitModalCommitteeState[idx]) return;
+    if (!uname) {
+      submitModalCommitteeState[idx].username = "";
+      submitModalCommitteeState[idx].name = "";
+      renderSubmitCommitteeRows();
+      return;
+    }
     const rawSignatories = (approvalsState.signatories && approvalsState.signatories.review_committee) || [];
     const found = rawSignatories.find(s => s.username === uname);
     if (found) {
@@ -10548,23 +11267,9 @@
   }
 
   function addSubmitCommitteeRow() {
-    const rawSignatories = (approvalsState.signatories && approvalsState.signatories.review_committee) || [];
-    const seenSigs = new Set();
-    const signatories = [];
-    rawSignatories.forEach(s => {
-      const key = (s.full_name || s.username || "").toLowerCase().trim();
-      if (!seenSigs.has(key)) {
-        seenSigs.add(key);
-        signatories.push(s);
-      }
-    });
-
-    // pick one not yet selected if possible
-    const existingUnames = submitModalCommitteeState.map(m => m.username);
-    const candidate = signatories.find(s => !existingUnames.includes(s.username)) || signatories[0] || { username: "faculty_basan", full_name: "Nikka Samantha A. Basan" };
     submitModalCommitteeState.push({
-      username: candidate.username,
-      name: candidate.full_name,
+      username: "",
+      name: "",
       role: "Review Committee Member"
     });
     renderSubmitCommitteeRows();
@@ -10592,12 +11297,18 @@
     if (titleEl) titleEl.textContent = `${courseMeta.course_code || 'Course'} - ${courseMeta.course_title || 'Untitled'}`;
     if (metaEl) metaEl.textContent = `${courseMeta.section || '1A'} • ${courseMeta.semester_ay || '1st Semester, A.Y. 2026-2027'}`;
 
-    if (currentWorkflow && Array.isArray(currentWorkflow.committee_members) && currentWorkflow.committee_members.length >= 3) {
+    if (currentWorkflow && Array.isArray(currentWorkflow.committee_members) && currentWorkflow.committee_members.length >= 3 && currentWorkflow.committee_members.some(m => m.username)) {
       submitModalCommitteeState = currentWorkflow.committee_members.map(m => ({
-        username: m.username,
-        name: m.name,
+        username: m.username || "",
+        name: m.name || "",
         role: m.role || "Review Committee Member"
       }));
+    } else {
+      submitModalCommitteeState = [
+        { username: "", name: "", role: "Review Committee Chair" },
+        { username: "", name: "", role: "Review Committee Member" },
+        { username: "", name: "", role: "Review Committee Member" }
+      ];
     }
 
     renderSubmitCommitteeRows();
@@ -10620,6 +11331,13 @@
     if (!currentCourseId) return;
     if (submitModalCommitteeState.length < 3) {
       alert("The Syllabus Review Committee must have at least three (3) members per official USeP standard.");
+      return;
+    }
+
+    const unselectedIdx = submitModalCommitteeState.findIndex(m => !m.username);
+    if (unselectedIdx !== -1) {
+      const unselectedRole = submitModalCommitteeState[unselectedIdx].role || `Member #${unselectedIdx + 1}`;
+      alert(`Please select a faculty member for committee position #${unselectedIdx + 1} (${unselectedRole}).`);
       return;
     }
 
@@ -11764,67 +12482,629 @@
     setTimeout(() => scrollToRubricCard(newIdx), 120);
   }
 
-  // --- Part VIII Rendering ---
+  // --- Part VIII Controllers & Rendering ---
+  function onPart8GradingSchemeChange(scheme) {
+    if (!blueprint) return;
+    if (!blueprint.metadata) blueprint.metadata = {};
+    blueprint.metadata.grading_system_type = scheme;
+
+    if (scheme === "term_project") {
+      if (blueprint.metadata.midterm_weight === undefined || blueprint.metadata.midterm_weight === null || blueprint.metadata.midterm_weight === 50) blueprint.metadata.midterm_weight = 40.0;
+      if (blueprint.metadata.finals_weight === undefined || blueprint.metadata.finals_weight === null || blueprint.metadata.finals_weight === 50) blueprint.metadata.finals_weight = 40.0;
+      if (blueprint.metadata.project_weight === undefined || blueprint.metadata.project_weight === null || blueprint.metadata.project_weight === 0) blueprint.metadata.project_weight = 20.0;
+    } else if (scheme === "lecture_lab") {
+      if (blueprint.metadata.lecture_weight === undefined || blueprint.metadata.lecture_weight === null) blueprint.metadata.lecture_weight = 75.0;
+      if (blueprint.metadata.lab_weight === undefined || blueprint.metadata.lab_weight === null) blueprint.metadata.lab_weight = 25.0;
+    } else {
+      if (blueprint.metadata.midterm_weight === undefined || blueprint.metadata.midterm_weight === null) blueprint.metadata.midterm_weight = 50.0;
+      if (blueprint.metadata.finals_weight === undefined || blueprint.metadata.finals_weight === null) blueprint.metadata.finals_weight = 50.0;
+    }
+
+    renderPart8GradingPlan();
+    updateWeightSummaryBadge();
+    renderLiveGradebookAndReports();
+    queueAutoSave();
+  }
+
+  function updatePart8Weight(key, val) {
+    if (!blueprint) return;
+    if (!blueprint.metadata) blueprint.metadata = {};
+    blueprint.metadata[key] = parseFloat(val) || 0.0;
+
+    renderPart8GradingPlan();
+    updateWeightSummaryBadge();
+    renderLiveGradebookAndReports();
+    queueAutoSave();
+  }
+
+  function onPart8CloSelectChange(itemIdx, coId, val) {
+    const customWrap = document.getElementById(`part8_custom_input_wrap_${itemIdx}_${coId}`);
+    const customInput = document.getElementById(`part8_custom_input_${itemIdx}_${coId}`);
+    if (val === "__custom__") {
+      if (customWrap) customWrap.style.display = "block";
+      if (customInput) customInput.focus();
+    } else {
+      if (customWrap) customWrap.style.display = "none";
+      updatePart8CloMethod(itemIdx, coId, val);
+    }
+  }
+
+  function updatePart8CloMethod(itemIdx, coId, val) {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.syllabus_assessment_activities) return;
+    const act = blueprint.metadata.syllabus_assessment_activities[itemIdx];
+    if (!act) return;
+    if (!act.clo_methods) act.clo_methods = {};
+    act.clo_methods[coId] = val;
+    renderPart8GradingPlan();
+    queueAutoSave(400);
+  }
+
+  function addPart8MajorActivity() {
+    if (!blueprint) return;
+    if (!blueprint.metadata) blueprint.metadata = {};
+    if (!blueprint.metadata.syllabus_assessment_activities) blueprint.metadata.syllabus_assessment_activities = [];
+    const acts = blueprint.metadata.syllabus_assessment_activities;
+    const majorCount = acts.filter(a => a.is_major_assessment).length;
+    const newNum = majorCount + 1;
+    const coList = (blueprint.course_outcomes || []).map(c => c.co_id);
+
+    acts.push({
+      type: "Summative",
+      code: `MA${newNum}`,
+      activity: `Major Assessment ${newNum}`,
+      description: "",
+      clo_aligned: coList.join(", "),
+      is_major_assessment: true,
+      major_scope: "independent",
+      weight_pct: 10,
+      items_count: 1,
+      items_midterm: 1,
+      items_finals: 1,
+      clo_methods: {}
+    });
+
+    renderSyllabusAssessmentActivitiesTable();
+    renderPart8GradingPlan();
+    maybeAutoSyncSetupFromSyllabus();
+    queueAutoSave(400);
+  }
+
+  function removePart8MajorActivity(actIdx) {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.syllabus_assessment_activities) return;
+    const acts = blueprint.metadata.syllabus_assessment_activities;
+    if (actIdx < 0 || actIdx >= acts.length) return;
+    const name = acts[actIdx].code || acts[actIdx].activity || "Major Activity";
+    if (confirm(`Remove major activity "${name}"?`)) {
+      acts.splice(actIdx, 1);
+      renderSyllabusAssessmentActivitiesTable();
+      renderPart8GradingPlan();
+      maybeAutoSyncSetupFromSyllabus();
+      queueAutoSave(400);
+    }
+  }
+
+  function updatePart8MajorWeight(actIdx, val) {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.syllabus_assessment_activities) return;
+    const act = blueprint.metadata.syllabus_assessment_activities[actIdx];
+    if (!act) return;
+    act.weight_pct = parseFloat(val) || 0;
+    renderPart8GradingPlan();
+    renderSyllabusAssessmentActivitiesTable();
+    maybeAutoSyncSetupFromSyllabus();
+    queueAutoSave(400);
+  }
+
+  function updatePart8MajorScope(actIdx, scope) {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.syllabus_assessment_activities) return;
+    const act = blueprint.metadata.syllabus_assessment_activities[actIdx];
+    if (!act) return;
+    act.major_scope = scope;
+    renderPart8GradingPlan();
+    renderSyllabusAssessmentActivitiesTable();
+    maybeAutoSyncSetupFromSyllabus();
+    queueAutoSave(400);
+  }
+
+  function updatePart8MajorTitle(actIdx, val) {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.syllabus_assessment_activities) return;
+    const act = blueprint.metadata.syllabus_assessment_activities[actIdx];
+    if (!act) return;
+    act.activity = val.trim();
+    renderPart8GradingPlan();
+    renderSyllabusAssessmentActivitiesTable();
+    maybeAutoSyncSetupFromSyllabus();
+    queueAutoSave(400);
+  }
+
+  function updatePart8MajorTermItems(actIdx, field, val) {
+    if (!blueprint || !blueprint.metadata || !blueprint.metadata.syllabus_assessment_activities) return;
+    const act = blueprint.metadata.syllabus_assessment_activities[actIdx];
+    if (!act) return;
+    act[field] = Math.max(1, parseInt(val, 10) || 1);
+    renderPart8GradingPlan();
+    renderSyllabusAssessmentActivitiesTable();
+    maybeAutoSyncSetupFromSyllabus();
+    queueAutoSave(400);
+  }
+
+  function computePart8GradingModel() {
+    if (!blueprint || !blueprint.metadata) return null;
+    const meta = blueprint.metadata;
+    const isLecLab = isLecLabCourse(blueprint);
+    const scheme = (meta.grading_system_type || (isLecLab ? "lecture_lab" : "two_term")).toLowerCase();
+
+    const acts = meta.syllabus_assessment_activities || [];
+    const saActs = acts.filter(a => !String(a.type || "").toLowerCase().startsWith("form") && !String(a.code || "").toUpperCase().startsWith("FA"));
+
+    // ALL major assessments (is_major_assessment = true) belong to the Major section
+    // They must NEVER be moved to the lecture part, lab part, or main term part
+    const allMajorActs = saActs.filter(a => !!a.is_major_assessment);
+    const termActs = saActs.filter(a => !a.is_major_assessment);
+
+    const sumAllMajorWt = allMajorActs.reduce((s, it) => s + (parseFloat(it.weight_pct) || 0), 0);
+    const termShare = Math.max(0.0, 100.0 - sumAllMajorWt);
+
+    let midWt = meta.midterm_weight !== undefined ? parseFloat(meta.midterm_weight) : (scheme === "term_project" ? 40.0 : 50.0);
+    let finWt = meta.finals_weight !== undefined ? parseFloat(meta.finals_weight) : (scheme === "term_project" ? 40.0 : 50.0);
+    let prjWt = meta.project_weight !== undefined ? parseFloat(meta.project_weight) : 20.0;
+    let lecWt = meta.lecture_weight !== undefined ? parseFloat(meta.lecture_weight) : 75.0;
+    let labWt = meta.lab_weight !== undefined ? parseFloat(meta.lab_weight) : 25.0;
+
+    const sections = [];
+    if (scheme === "lecture_lab") {
+      let effLec = lecWt;
+      let effLab = labWt;
+      if (sumAllMajorWt > 0 && (lecWt + labWt) > 0) {
+        effLec = termShare * (lecWt / (lecWt + labWt));
+        effLab = termShare * (labWt / (lecWt + labWt));
+      }
+      const lecItems = termActs.filter(it => (it.lec_lab || "Lecture").toLowerCase() !== "laboratory");
+      const labItems = termActs.filter(it => (it.lec_lab || "").toLowerCase() === "laboratory");
+      sections.push({
+        title: "LECTURE COMPONENT",
+        share: effLec,
+        baseRatio: lecWt,
+        mode: "scaled",
+        items: lecItems
+      });
+      sections.push({
+        title: "LABORATORY COMPONENT",
+        share: effLab,
+        baseRatio: labWt,
+        mode: "scaled",
+        items: labItems
+      });
+    } else if (scheme === "term_project") {
+      sections.push({
+        title: "TERM ASSESSMENTS (MIDTERM & FINALS)",
+        share: termShare,
+        mode: "scaled",
+        items: termActs
+      });
+    } else {
+      sections.push({
+        title: allMajorActs.length ? "TERM ASSESSMENTS (MIDTERM & FINALS)" : "SUMMATIVE ASSESSMENTS",
+        share: termShare,
+        mode: "scaled",
+        items: termActs
+      });
+    }
+
+    if (allMajorActs.length > 0 || (scheme === "term_project" && prjWt > 0)) {
+      const majShare = allMajorActs.length > 0 ? sumAllMajorWt : prjWt;
+      sections.push({
+        title: "OTHER MAJOR ASSESSMENTS & PROJECTS",
+        share: majShare,
+        mode: "direct",
+        items: allMajorActs
+      });
+    }
+
+    let grandTotal = 0.0;
+    sections.forEach(sec => {
+      let secEffectiveSum = 0.0;
+      let secRawSum = 0.0;
+      sec.items.forEach(it => {
+        const w = parseFloat(it.weight_pct) || 0.0;
+        secRawSum += w;
+        let eff = 0.0;
+        if (sec.mode === "direct") {
+          eff = w;
+        } else {
+          eff = (w * sec.share / 100.0);
+        }
+        it._eff = eff;
+        secEffectiveSum += eff;
+      });
+      sec.rawSum = secRawSum;
+      sec.subtotal = secEffectiveSum;
+      grandTotal += secEffectiveSum;
+    });
+
+    return {
+      scheme,
+      isLecLab,
+      acts,
+      saActs,
+      allMajorActs,
+      termActs,
+      sumAllMajorWt,
+      termShare,
+      midWt,
+      finWt,
+      prjWt,
+      lecWt,
+      labWt,
+      sections,
+      grandTotal,
+      isBalanced: Math.abs(grandTotal - 100.0) < 0.1
+    };
+  }
+
   function renderPart8GradingPlan() {
     const tbody = document.getElementById("part8GradingPlanBody");
+    const thead = document.getElementById("part8GradingPlanHead");
     if (!tbody || !blueprint) return;
-    const acts = (blueprint.metadata && blueprint.metadata.syllabus_assessment_activities) || [];
-    const saActs = acts.filter(a => !String(a.type || "").toLowerCase().startsWith("form") && !String(a.code || "").toUpperCase().startsWith("FA"));
+    if (!blueprint.metadata) blueprint.metadata = {};
+    const meta = blueprint.metadata;
+    const model = computePart8GradingModel();
+    if (!model) return;
+
+    const { scheme, isLecLab, acts, saActs, allMajorActs, termActs, sumAllMajorWt, termShare, midWt, finWt, prjWt, lecWt, labWt, sections, grandTotal, isBalanced } = model;
     const rubrics = blueprint.rubrics || [];
+    const cos = blueprint.course_outcomes || [];
+    const nClos = cos.length;
+
+    // 1. Sync Scheme Selector
+    const schemeSelect = document.getElementById("part8GradingSchemeSelect");
+    if (schemeSelect) schemeSelect.value = scheme;
+
+    // 2. Populate Inputs Row and Formula Banner
+    const weightsRow = document.getElementById("part8WeightsInputsRow");
+    const formulaBanner = document.getElementById("part8FormulaBanner");
+    const auditBadge = document.getElementById("part8WeightAuditBadge");
+
+    let inputsHtml = "";
+    if (scheme === "lecture_lab") {
+      inputsHtml += `
+        <div style="display:flex; align-items:center; gap:6px;">
+          <label style="font-weight:700; color:#1e293b;">Lecture Component (%):</label>
+          <input type="number" min="0" max="100" step="1" value="${lecWt}" style="width:60px; text-align:center; font-weight:700; padding:4px 6px; border:1px solid #cbd5e1; border-radius:4px;"
+            onchange="updatePart8Weight('lecture_weight', this.value)" />
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <label style="font-weight:700; color:#1e293b;">Laboratory Component (%):</label>
+          <input type="number" min="0" max="100" step="1" value="${labWt}" style="width:60px; text-align:center; font-weight:700; padding:4px 6px; border:1px solid #cbd5e1; border-radius:4px;"
+            onchange="updatePart8Weight('lab_weight', this.value)" />
+        </div>
+      `;
+    } else {
+      inputsHtml += `
+        <div style="display:flex; align-items:center; gap:6px;">
+          <label style="font-weight:700; color:#1e293b;">Midterm Weight (%):</label>
+          <input type="number" min="0" max="100" step="1" value="${midWt}" style="width:60px; text-align:center; font-weight:700; padding:4px 6px; border:1px solid #cbd5e1; border-radius:4px;"
+            onchange="updatePart8Weight('midterm_weight', this.value)" />
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <label style="font-weight:700; color:#1e293b;">Finals Weight (%):</label>
+          <input type="number" min="0" max="100" step="1" value="${finWt}" style="width:60px; text-align:center; font-weight:700; padding:4px 6px; border:1px solid #cbd5e1; border-radius:4px;"
+            onchange="updatePart8Weight('finals_weight', this.value)" />
+        </div>
+      `;
+    }
+
+    // Render cards for every major activity allowing multiple major activities
+    if (allMajorActs.length > 0) {
+      allMajorActs.forEach((maj) => {
+        const actIdx = acts.indexOf(maj);
+        const mScope = (maj.major_scope || "independent").toLowerCase();
+        inputsHtml += `
+          <div style="display:flex; align-items:center; gap:5px; background:#f5f3ff; border:1px solid #ddd6fe; padding:4px 8px; border-radius:6px; flex-wrap:wrap;">
+            <span style="font-weight:800; color:#6b21a8; font-size:0.75rem;">${escapeHtml(maj.code || 'MA')}:</span>
+            <input type="text" value="${escapeHtml(maj.activity || '')}" placeholder="Major Activity Name" style="width:130px; font-size:0.74rem; padding:2px 5px; border:1px solid #cbd5e1; border-radius:4px;"
+              onchange="updatePart8MajorTitle(${actIdx}, this.value)" />
+            <input type="number" min="0" max="100" step="1" value="${maj.weight_pct !== undefined ? maj.weight_pct : 10}" style="width:50px; text-align:center; font-weight:800; padding:2px; border:1.5px solid #a855f7; border-radius:4px; color:#6b21a8;"
+              onchange="updatePart8MajorWeight(${actIdx}, this.value)" />
+            <span style="font-size:0.75rem; font-weight:700; color:#6b21a8;">%</span>
+            <select style="font-size:0.7rem; padding:2px 4px; border:1px solid #cbd5e1; border-radius:4px;" onchange="updatePart8MajorScope(${actIdx}, this.value)">
+              <option value="independent" ${mScope === 'independent' ? 'selected' : ''}>Standalone (Outside Terms)</option>
+              <option value="both_terms" ${mScope === 'both_terms' ? 'selected' : ''}>Both Terms (Mid &amp; Fin)</option>
+              <option value="midterm" ${mScope === 'midterm' ? 'selected' : ''}>Midterm Only</option>
+              <option value="finals" ${mScope === 'finals' ? 'selected' : ''}>Finals Only</option>
+            </select>
+            ${mScope === 'both_terms' ? `
+              <span style="font-size:0.69rem; font-weight:700; color:#6b21a8; display:inline-flex; align-items:center; gap:3px;">
+                Mid: <input type="number" min="1" max="20" value="${maj.items_midterm !== undefined ? maj.items_midterm : 1}" style="width:38px; text-align:center; padding:1px; font-weight:700; border:1px solid #c084fc; border-radius:3px;" onchange="updatePart8MajorTermItems(${actIdx}, 'items_midterm', this.value)" title="Midterm assessment milestones" />
+                Fin: <input type="number" min="1" max="20" value="${maj.items_finals !== undefined ? maj.items_finals : 1}" style="width:38px; text-align:center; padding:1px; font-weight:700; border:1px solid #c084fc; border-radius:3px;" onchange="updatePart8MajorTermItems(${actIdx}, 'items_finals', this.value)" title="Final term assessment milestones" />
+              </span>
+            ` : (mScope === 'midterm' ? `
+              <span style="font-size:0.69rem; font-weight:700; color:#6b21a8; display:inline-flex; align-items:center; gap:3px;">
+                Mid: <input type="number" min="1" max="20" value="${maj.items_midterm !== undefined ? maj.items_midterm : 1}" style="width:38px; text-align:center; padding:1px; font-weight:700; border:1px solid #c084fc; border-radius:3px;" onchange="updatePart8MajorTermItems(${actIdx}, 'items_midterm', this.value)" />
+              </span>
+            ` : (mScope === 'finals' ? `
+              <span style="font-size:0.69rem; font-weight:700; color:#6b21a8; display:inline-flex; align-items:center; gap:3px;">
+                Fin: <input type="number" min="1" max="20" value="${maj.items_finals !== undefined ? maj.items_finals : 1}" style="width:38px; text-align:center; padding:1px; font-weight:700; border:1px solid #c084fc; border-radius:3px;" onchange="updatePart8MajorTermItems(${actIdx}, 'items_finals', this.value)" />
+              </span>
+            ` : `
+              <span style="font-size:0.69rem; font-weight:700; color:#6b21a8; display:inline-flex; align-items:center; gap:3px;">
+                Outputs: <input type="number" min="1" max="10" value="${maj.items_count !== undefined ? maj.items_count : 1}" style="width:38px; text-align:center; padding:1px; font-weight:700; border:1px solid #c084fc; border-radius:3px;" onchange="updatePart8MajorTermItems(${actIdx}, 'items_count', this.value)" />
+              </span>
+            `))}
+            <button type="button" class="btn btn-outline-danger btn-xs" onclick="removePart8MajorActivity(${actIdx})" style="padding:1px 5px; font-weight:700;" title="Remove this major activity">&times;</button>
+          </div>
+        `;
+      });
+    }
+
+    inputsHtml += `
+      <button type="button" class="btn btn-outline-primary btn-xs" onclick="addPart8MajorActivity()" style="padding:3px 8px; font-size:0.75rem; font-weight:700; border-radius:4px; border-color:#8b5cf6; color:#6d28d9; background:#ffffff;">
+        + Add Another Major Activity
+      </button>
+    `;
+    if (weightsRow) weightsRow.innerHTML = inputsHtml;
+
+    // Build Formula Banner
+    let formulaText = "";
+    if (scheme === "lecture_lab") {
+      let effLec = lecWt;
+      let effLab = labWt;
+      if (sumAllMajorWt > 0 && (lecWt + labWt) > 0) {
+        effLec = termShare * (lecWt / (lecWt + labWt));
+        effLab = termShare * (labWt / (lecWt + labWt));
+      }
+      formulaText = `Final Grade = (Lecture Grade &times; ${effLec.toFixed(1)}%) + (Laboratory Grade &times; ${effLab.toFixed(1)}%)`;
+      if (sumAllMajorWt > 0) formulaText += ` + (Major Activities &times; ${sumAllMajorWt.toFixed(1)}%)`;
+    } else if (scheme === "term_project") {
+      const pShare = sumAllMajorWt > 0 ? sumAllMajorWt : prjWt;
+      formulaText = `Final Grade = (Midterm Grade &times; ${midWt}%) + (Final Term Grade &times; ${finWt}%) + (Major Activities &times; ${pShare}%)`;
+    } else {
+      if (sumAllMajorWt > 0) {
+        let effMid = termShare * 0.5;
+        let effFin = termShare * 0.5;
+        if (midWt + finWt > 0) {
+          effMid = termShare * (midWt / (midWt + finWt));
+          effFin = termShare * (finWt / (midWt + finWt));
+        }
+        formulaText = `Final Grade = (Midterm Grade &times; ${effMid.toFixed(1)}%) + (Final Term Grade &times; ${effFin.toFixed(1)}%) + (Major Activities &times; ${sumAllMajorWt.toFixed(1)}%)`;
+      } else {
+        formulaText = `Final Grade = (Midterm Grade &times; ${midWt}%) + (Final Term Grade &times; ${finWt}%)`;
+      }
+    }
+    if (formulaBanner) formulaBanner.innerHTML = formulaText;
+
+    // Update Top Audit Badge
+    if (auditBadge) {
+      auditBadge.style.background = isBalanced ? "#dcfce7" : "#fee2e2";
+      auditBadge.style.color = isBalanced ? "#166534" : "#991b1b";
+      auditBadge.innerHTML = isBalanced ? `✓ Total Weight: ${grandTotal.toFixed(0)}% (Balanced)` : `⚠️ Total Weight: ${grandTotal.toFixed(1)}% (Must equal 100%)`;
+    }
+
+    // 3. Render Table Headers (Col 1: Item, Col 2: %, Cols 3+: CLO columns)
+    if (thead) {
+      let thHtml = `
+        <tr style="background:#f1f5f9; color:#1e293b; border-bottom:2px solid #cbd5e1;">
+          <th style="min-width:210px; padding:8px 10px; text-align:left;">Assessment Item</th>
+          <th style="min-width:160px; text-align:center; padding:8px 10px;">Percentage of Final Grade</th>
+      `;
+      cos.forEach(co => {
+        thHtml += `
+          <th style="min-width:145px; text-align:center; padding:8px 10px; background:#f8fafc;" title="${escapeHtml(co.description || '')}">
+            <span class="badge badge-co" style="font-size:0.75rem; font-weight:700;">${escapeHtml(co.co_id)}</span>
+            <div style="font-size:0.67rem; font-weight:600; color:#475569; margin-top:2px;">Assessment Tool</div>
+          </th>
+        `;
+      });
+      thHtml += `</tr>`;
+      thead.innerHTML = thHtml;
+    }
 
     if (saActs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:12px; color:#64748b;">No summative assessments defined in Part VI yet.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${2 + nClos}" style="text-align:center; padding:16px; color:#64748b;">No summative assessments defined in Part VI yet.</td></tr>`;
       return;
     }
 
-    let totWeight = 0;
-    let html = saActs.map(sa => {
-      const wt = parseFloat(sa.weight_pct) || 0;
-      totWeight += wt;
-      const actCode = (sa.code || "").toUpperCase().trim();
-      const matchingRubrics = rubrics.filter(r => rubricAccommodatesAssessment(r, actCode));
+    // 4. Render Table Body Rows by Section with Subtotals
+    let bodyHtml = "";
+    sections.forEach(sec => {
+      if (sec.items.length === 0 && sec.share <= 0) return;
 
-      let rubricNotes = "";
-      if (matchingRubrics.length > 0) {
-        rubricNotes = matchingRubrics.map(r => `
-          <div style="margin-bottom:3px;">
-            • <strong>${escapeHtml(r.title)}</strong>
-            ${r.target_part ? `[Graded Portion: <em>${escapeHtml(r.target_part)}</em>]` : ''}
-            <span style="color:#64748b; font-size:0.7rem;">(${r.levels ? r.levels.length : 6} performance levels)</span>
-          </div>
-        `).join("");
-      } else {
-        rubricNotes = `<em>Objective / Concept Items Score / Problem Solving Items Score (Scored with Part VII Rubric)</em>`;
-      }
-      const clos = escapeHtml(sa.clo_aligned || "CLO1, CLO2");
-
-      return `
-        <tr>
-          <td style="font-weight:700; padding:8px 10px; background:#f8fafc; vertical-align:top;">
-            ${escapeHtml(sa.code)} - ${escapeHtml(sa.activity)}
-          </td>
-          <td style="text-align:center; font-weight:700; padding:8px 10px; vertical-align:top;">
-            ${wt.toFixed(0)}%
-          </td>
-          <td style="padding:8px 10px; vertical-align:top;">
-            <div style="font-weight:600; color:#1e3a8a; margin-bottom:4px;">Aligned to: ${clos}</div>
-            <div style="font-size:0.75rem; color:#334155;">${rubricNotes}</div>
+      // Section header row
+      bodyHtml += `
+        <tr style="background:${sec.mode === 'direct' ? '#faf5ff' : '#f1f5f9'}; font-weight:800; border-top:2px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">
+          <td colspan="${2 + nClos}" style="padding:6px 10px; text-align:center; color:${sec.mode === 'direct' ? '#581c87' : '#1e293b'}; font-size:0.8rem; letter-spacing:0.5px;">
+            ${escapeHtml(sec.title)} (${sec.share.toFixed(1)}% OF FINAL GRADE${sec.baseRatio && Math.abs(sec.baseRatio - sec.share) > 0.05 ? ` — ${sec.baseRatio.toFixed(0)}% Component Ratio` : ''})
           </td>
         </tr>
       `;
-    }).join("");
 
-    const isSum100 = Math.abs(totWeight - 100) < 0.1;
-    html += `
-      <tr style="background:#f1f5f9; font-weight:700;">
-        <td style="padding:8px 10px;">TOTAL</td>
-        <td style="text-align:center; padding:8px 10px; color:${isSum100 ? '#166534' : '#dc2626'};">${totWeight.toFixed(0)}%</td>
-        <td style="padding:8px 10px; font-size:0.75rem; color:${isSum100 ? '#166534' : '#dc2626'};">
-          ${isSum100 ? '✓ Weight sum equals 100% of final grade computation' : '⚠️ Warning: Sum of summative weights must equal 100%'}
+      sec.items.forEach(it => {
+        const actIdx = acts.indexOf(it);
+        const code = it.code || "ACT";
+        const wt = parseFloat(it.weight_pct) || 0;
+        const eff = it._eff !== undefined ? it._eff : wt;
+        const isMajor = !!it.is_major_assessment;
+
+        let scopeBadge = "";
+        if (isMajor) {
+          const mScope = (it.major_scope || "independent").toLowerCase();
+          if (mScope === "both_terms") {
+            const mCount = it.items_midterm || 1;
+            const fCount = it.items_finals || 1;
+            scopeBadge = `<span class="badge" style="background:#ede9fe; color:#6b21a8; font-size:0.68rem; margin-left:4px; border:1px solid #c084fc;">[Both Terms: Mid (${mCount}) &amp; Fin (${fCount})]</span>`;
+          } else if (mScope === "midterm") {
+            const mCount = it.items_midterm || 1;
+            scopeBadge = `<span class="badge" style="background:#ede9fe; color:#6b21a8; font-size:0.68rem; margin-left:4px; border:1px solid #c084fc;">[Midterm Only: ${mCount} Assmt]</span>`;
+          } else if (mScope === "finals") {
+            const fCount = it.items_finals || 1;
+            scopeBadge = `<span class="badge" style="background:#ede9fe; color:#6b21a8; font-size:0.68rem; margin-left:4px; border:1px solid #c084fc;">[Finals Only: ${fCount} Assmt]</span>`;
+          } else {
+            const dCount = it.items_count || 1;
+            scopeBadge = `<span class="badge" style="background:#ede9fe; color:#6b21a8; font-size:0.68rem; margin-left:4px; border:1px solid #c084fc;">[Standalone: ${dCount} Output]</span>`;
+          }
+        }
+
+        let compBadge = "";
+        if (isLecLab && !isMajor) {
+          const isLab = (it.lec_lab || "").toLowerCase() === "laboratory";
+          compBadge = `<span class="badge" style="background:${isLab ? '#fffbeb' : '#eff6ff'}; color:${isLab ? '#92400e' : '#1e40af'}; font-size:0.66rem; margin-left:4px; border:1px solid ${isLab ? '#fde68a' : '#bfdbfe'};">${isLab ? 'Laboratory' : 'Lecture'}</span>`;
+        }
+
+        let wtDisplay = "";
+        if (sec.mode === "scaled") {
+          wtDisplay = `
+            <div style="font-size:0.88rem; font-weight:800; color:#1e293b;">${eff.toFixed(1)}%</div>
+            <div style="font-size:0.71rem; color:#64748b; font-weight:600;">(${wt.toFixed(0)}% within section &times; ${sec.share.toFixed(1)}% share)</div>
+          `;
+        } else {
+          wtDisplay = `
+            <div style="font-size:0.88rem; font-weight:800; color:#6b21a8;">${wt.toFixed(1)}%</div>
+            <div style="font-size:0.71rem; color:#7c3aed; font-weight:600;">(Direct Final Grade Slice)</div>
+          `;
+        }
+
+        const alignedRaw = it.clo_aligned || "";
+        const alignedTokens = alignedRaw.split(/[,;/]+/).map(t => t.trim().toUpperCase()).filter(Boolean);
+
+        // Build per-CLO cells
+        let cloCellsHtml = "";
+        cos.forEach(co => {
+          const coId = co.co_id;
+          const cloKey = coId.trim().toUpperCase();
+          const cloMethods = it.clo_methods || {};
+          const customMethod = cloMethods[coId] !== undefined ? cloMethods[coId] : cloMethods[cloKey];
+
+          const isAligned = alignedTokens.some(t => cloKey.includes(t) || t.includes(cloKey));
+
+          let defaultMethod = "";
+          if (isAligned) {
+            const matchingRubs = rubrics.filter(r => rubricAccommodatesAssessment(r, code));
+            if (matchingRubs.length > 0) {
+              defaultMethod = matchingRubs[0].title || "Measurement Rubric";
+            } else if ((it.activity || "").toLowerCase().includes("lab") || it.lec_lab === "Laboratory") {
+              defaultMethod = "Laboratory Activity Rubric";
+            } else if ((it.activity || "").toLowerCase().includes("proj") || it.is_major_assessment) {
+              defaultMethod = "Project Evaluation Rubric";
+            } else if ((it.activity || "").toLowerCase().includes("recit")) {
+              defaultMethod = "Oral Recitation Rubric";
+            } else {
+              defaultMethod = "Problem Solving Rubric";
+            }
+          }
+
+          const activeMethod = (customMethod !== undefined) ? customMethod : defaultMethod;
+          const isNone = activeMethod === "" || activeMethod === "—" || activeMethod === "none";
+          const isRubric = activeMethod && activeMethod.toLowerCase().includes("rubric");
+          const isNonRubricStandard = ["Objective Exam (No Rubric)", "Problem Solving Exam (No Rubric)", "Practical Examination (No Rubric)", "Standard Quiz (No Rubric)", "Oral Defense / Recitation", "Project Demonstration"].includes(activeMethod);
+          const isCustom = activeMethod && !isNone && !isRubric && !isNonRubricStandard;
+
+          const badgeColor = isNone ? '#64748b' : (isRubric ? '#15803d' : '#0369a1');
+          const badgeBg = isNone ? '#f8fafc' : (isRubric ? '#f0fdf4' : '#f0f9ff');
+
+          cloCellsHtml += `
+            <td style="padding:6px 8px; vertical-align:top; background:${badgeBg}; border:1px solid #e2e8f0;">
+              <select style="width:100%; font-size:0.71rem; padding:3px; border:1px solid #cbd5e1; border-radius:4px; font-weight:700; color:${badgeColor}; margin-bottom:3px;"
+                onchange="onPart8CloSelectChange(${actIdx}, '${escapeHtml(coId)}', this.value)">
+                <option value="" ${isNone ? 'selected' : ''}>— None (Not Assessed) —</option>
+                <optgroup label="Rubrics (Part VII)">
+                  ${rubrics.map(r => `<option value="${escapeHtml(r.title)}" ${activeMethod === r.title ? 'selected' : ''}>Rubric: ${escapeHtml(r.title)}</option>`).join("")}
+                  ${!rubrics.some(r => r.title === activeMethod) && isRubric ? `<option value="${escapeHtml(activeMethod)}" selected>${escapeHtml(activeMethod)}</option>` : ''}
+                  <option value="Rubric: General Performance Rubric" ${activeMethod === 'Rubric: General Performance Rubric' ? 'selected' : ''}>Rubric: General Performance Rubric</option>
+                </optgroup>
+                <optgroup label="Non-Rubric Assessments">
+                  <option value="Objective Exam (No Rubric)" ${activeMethod === 'Objective Exam (No Rubric)' ? 'selected' : ''}>Objective Exam (No Rubric)</option>
+                  <option value="Problem Solving Exam (No Rubric)" ${activeMethod === 'Problem Solving Exam (No Rubric)' ? 'selected' : ''}>Problem Solving Exam (No Rubric)</option>
+                  <option value="Practical Examination (No Rubric)" ${activeMethod === 'Practical Examination (No Rubric)' ? 'selected' : ''}>Practical / Skills Exam (No Rubric)</option>
+                  <option value="Standard Quiz (No Rubric)" ${activeMethod === 'Standard Quiz (No Rubric)' ? 'selected' : ''}>Standard Quiz (No Rubric)</option>
+                  <option value="Oral Defense / Recitation" ${activeMethod === 'Oral Defense / Recitation' ? 'selected' : ''}>Oral Defense / Recitation</option>
+                  <option value="Project Demonstration" ${activeMethod === 'Project Demonstration' ? 'selected' : ''}>Project Demonstration</option>
+                </optgroup>
+                <optgroup label="Custom Assessment Tool">
+                  <option value="__custom__" ${isCustom ? 'selected' : ''}>Custom Assessment Tool...</option>
+                </optgroup>
+              </select>
+              <div id="part8_custom_input_wrap_${actIdx}_${escapeHtml(coId)}" style="${isCustom ? 'display:block;' : 'display:none;'}">
+                <input type="text" id="part8_custom_input_${actIdx}_${escapeHtml(coId)}" value="${escapeHtml(activeMethod)}" placeholder="Type custom tool / criteria"
+                  style="width:100%; font-size:0.71rem; padding:2px 4px; border:1px solid #94a3b8; border-radius:3px;"
+                  onchange="updatePart8CloMethod(${actIdx}, '${escapeHtml(coId)}', this.value)" />
+              </div>
+              ${!isNone ? `<div style="font-size:0.67rem; color:${badgeColor}; font-weight:700; margin-top:1px;">${isRubric ? '✓ Rubric' : (isCustom ? '✎ Custom' : '⚡ No Rubric')}</div>` : `<div style="font-size:0.67rem; color:#94a3b8; font-style:italic;">— unaligned —</div>`}
+            </td>
+          `;
+        });
+
+        bodyHtml += `
+          <tr>
+            <td style="font-weight:700; padding:8px 10px; background:#f8fafc; vertical-align:top; border:1px solid #e2e8f0;">
+              <div>${escapeHtml(code)} - ${escapeHtml(it.activity || '')} ${compBadge} ${scopeBadge}</div>
+            </td>
+            <td style="text-align:center; padding:8px 10px; vertical-align:top; border:1px solid #e2e8f0;">
+              ${wtDisplay}
+            </td>
+            ${cloCellsHtml}
+          </tr>
+        `;
+      });
+
+      // Section Subtotal Row
+      if (sec.mode === "scaled") {
+        const isSecOk = Math.abs(sec.rawSum - 100.0) < 0.1;
+        bodyHtml += `
+          <tr style="background:#f8fafc; font-weight:700; border-bottom:1px solid #cbd5e1;">
+            <td style="padding:6px 10px; color:#475569; font-size:0.77rem;">
+              ↳ <em>Subtotal for ${escapeHtml(sec.title)} (${sec.share.toFixed(1)}% Section Share)</em>
+            </td>
+            <td style="text-align:center; padding:6px 10px; font-weight:800; color:#1e293b; font-size:0.83rem;">
+              ${sec.subtotal.toFixed(1)}% <span style="font-size:0.69rem; font-weight:600; color:#64748b;">(${sec.rawSum.toFixed(0)}% &times; ${sec.share.toFixed(1)}%)</span>
+            </td>
+            <td colspan="${nClos}" style="padding:6px 10px; font-size:0.73rem; color:${isSecOk ? '#166534' : '#b45309'};">
+              ${isSecOk ? `✓ Within-section weights sum to 100% (contributes exactly ${sec.subtotal.toFixed(1)}% to final grade)` : `⚠️ Items sum to ${sec.rawSum.toFixed(0)}% within section (must equal 100% before multiplying by ${sec.share.toFixed(1)}%)`}
+            </td>
+          </tr>
+        `;
+      } else {
+        bodyHtml += `
+          <tr style="background:#faf5ff; font-weight:700; border-bottom:1px solid #cbd5e1;">
+            <td style="padding:6px 10px; color:#6b21a8; font-size:0.77rem;">
+              ↳ <em>Subtotal for ${escapeHtml(sec.title)} (${sec.share.toFixed(1)}% Section Share)</em>
+            </td>
+            <td style="text-align:center; padding:6px 10px; font-weight:800; color:#6b21a8; font-size:0.83rem;">
+              ${sec.subtotal.toFixed(1)}%
+            </td>
+            <td colspan="${nClos}" style="padding:6px 10px; font-size:0.73rem; color:#6b21a8;">
+              ✓ Contributes exactly ${sec.subtotal.toFixed(1)}% directly to final grade (${sec.items.length} major ${sec.items.length === 1 ? 'activity' : 'activities'})
+            </td>
+          </tr>
+        `;
+      }
+    });
+
+    // 5. Double-Check Verification & Audit Row at the bottom of the table
+    const isSum100 = isBalanced;
+    bodyHtml += `
+      <tr style="background:#f8fafc; font-weight:800; border-top:2px solid #cbd5e1; border-bottom:2px solid #cbd5e1;">
+        <td style="padding:10px; vertical-align:middle;">
+          <div style="font-weight:800; color:#1e293b; font-size:0.83rem;">⚖️ DOUBLE-CHECK VERIFICATION</div>
+          <div style="font-size:0.72rem; font-weight:600; color:#64748b;">(Audited sum of section shares &amp; item contributions)</div>
+        </td>
+        <td style="text-align:center; padding:10px; font-size:0.95rem; font-weight:800; color:${isSum100 ? '#166534' : '#dc2626'}; vertical-align:middle;">
+          ${grandTotal.toFixed(1)}%
+        </td>
+        <td colspan="${nClos}" style="padding:10px; vertical-align:middle;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:0.77rem; color:#334155;">
+              <strong>Section Subtotals:</strong>
+              ${sections.map(s => `<span>${escapeHtml(s.title.split('(')[0].trim())}: <strong>${s.subtotal.toFixed(1)}%</strong></span>`).join(' + ')}
+              = <strong style="color:${isSum100 ? '#166534' : '#dc2626'};">${grandTotal.toFixed(1)}%</strong>
+            </div>
+            <div style="font-size:0.78rem; font-weight:800; padding:4px 10px; border-radius:6px; background:${isSum100 ? '#dcfce7' : '#fee2e2'}; color:${isSum100 ? '#166534' : '#991b1b'}; border:1px solid ${isSum100 ? '#86efac' : '#fca5a5'};">
+              ${isSum100 ? '✓ 100% VERIFIED: Grade Composition Balanced (Multiplied by Section Ratios)' : `⚠️ Total is ${grandTotal.toFixed(1)}% (${(grandTotal - 100 > 0 ? '+' : '')}${(grandTotal - 100).toFixed(1)}% discrepancy) — Must equal 100%`}
+            </div>
+          </div>
         </td>
       </tr>
     `;
-    tbody.innerHTML = html;
+
+    tbody.innerHTML = bodyHtml;
   }
 
   function autoGenerateRubricsForAllAssessments() {
@@ -12599,22 +13879,42 @@
     }
     if (btnReturn) btnReturn.style.display = canSignComm ? "inline-block" : "none";
 
-    // Summary metadata
+    // Summary metadata matching FM-USeP-MID-02 controlled form
     const meta = blueprint?.metadata || {};
-    document.getElementById("evalCourseCode").textContent = meta.course_code || "EE 211";
-    document.getElementById("evalCourseTitle").textContent = meta.course_title || "";
-    document.getElementById("evalFacultyName").textContent = meta.faculty_name || "Faculty in Charge";
-    document.getElementById("evalProgramName").textContent = meta.program_name || "Bachelor of Science in Electrical Engineering";
-    document.getElementById("evalSemesterAy").textContent = meta.semester_ay || "";
-    document.getElementById("evalWorkflowStatus").textContent = (currentWorkflow?.status_label || currentWorkflow?.status || "Draft").toUpperCase();
+    const setT = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt ?? "—"; };
+    const code = (meta.course_code || "EE 211").trim();
+    const title = (meta.course_title || "").trim();
+    setT("evalCourseTitle", title ? `${code} - ${title}` : code);
+    setT("evalFacultyName", (meta.faculty_name || "Faculty in Charge").toUpperCase());
+    setT("evalProgramName", meta.program_name || meta.program_code || "Bachelor of Science in Electrical Engineering");
+    setT("evalAcademicUnit", meta.academic_unit || meta.college || "College of Engineering");
+    setT("evalCourseDesc", blueprint?.course_description || meta.course_description || "—");
+    setT("evalSemester", meta.semester || (meta.semester_ay ? meta.semester_ay.split(",")[0].trim() : "1st Semester"));
+    setT("evalAcademicYear", meta.academic_year || (meta.semester_ay && meta.semester_ay.includes("A.Y.") ? meta.semester_ay.split("A.Y.")[1].trim() : "2026-2027"));
+    setT("evalFacultyConformeName", (meta.faculty_name || "Faculty").toUpperCase());
+    setT("evalProgramHeadName", (meta.program_head || "Charito O. Claro").toUpperCase());
+    setT("evalDeanName", (meta.dean_name || "Joie D. Cataytay").toUpperCase());
+
+    // Revision Type radio
+    const revType = String(cl.revision_type || meta.revision_type || "New").toLowerCase();
+    const isNew = revType.includes("new");
+    const rNew = document.getElementById("evalRevNew");
+    const rMaj = document.getElementById("evalRevMajor");
+    if (rNew) rNew.checked = isNew;
+    if (rMaj) rMaj.checked = !isNew;
+    if (isLocked) {
+      if (rNew) rNew.setAttribute("disabled", "disabled");
+      if (rMaj) rMaj.setAttribute("disabled", "disabled");
+    } else {
+      if (rNew) rNew.removeAttribute("disabled");
+      if (rMaj) rMaj.removeAttribute("disabled");
+    }
+
     const commEl = document.getElementById("evalCommitteeMembersSummary");
     if (commEl) {
-      const commList = (currentWorkflow?.committee_members && currentWorkflow.committee_members.length) ? currentWorkflow.committee_members : [
-        { name: "Nikka Samantha A. Basan", role: "Review Committee Chair" },
-        { name: "Delan Zoe H. Arenga", role: "Review Committee Member" },
-        { name: "Kim P. Ravida", role: "Review Committee Member" }
-      ];
-      commEl.textContent = commList.map(m => `${m.name} (${m.role})`).join(" • ");
+      const commList = (currentWorkflow?.committee_members && currentWorkflow.committee_members.length) ? currentWorkflow.committee_members : [];
+      const hasAny = commList.some(m => m.name || m.username);
+      commEl.textContent = hasAny ? commList.map(m => `${m.name || m.username} (${m.role})`).join(" • ") : "--Select Faculty--";
     }
 
     // 1. Part I Core Statements
@@ -12744,6 +14044,24 @@
       else facInput.removeAttribute("disabled");
     }
 
+    // Observed gaps summary for faculty writer action taken table
+    const gapEl = document.getElementById("evalObservedGapsSummary");
+    if (gapEl) {
+      const gapList = Object.entries(gaps).filter(([k, v]) => Boolean(v && String(v).trim()));
+      if (gapList.length > 0) {
+        gapEl.innerHTML = gapList.map(([k, v]) => `<div>• <strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join("");
+      } else {
+        gapEl.innerHTML = "<em>No observed gaps noted by the review committee.</em>";
+      }
+    }
+
+    const otherCommEl = document.getElementById("evalOtherComments");
+    if (otherCommEl) {
+      otherCommEl.value = cl.other_comments || "";
+      if (isLocked) otherCommEl.setAttribute("disabled", "disabled");
+      else otherCommEl.removeAttribute("disabled");
+    }
+
     // 5. Overall recommendation radios
     const overallVal = cl.overall_recommendation || "Approved";
     document.querySelectorAll("input[name='evalOverallAction']").forEach(r => {
@@ -12790,6 +14108,9 @@
     const facVal = document.getElementById("evalFacultyActionTaken")?.value.trim() || "";
     const overallRadio = document.querySelector("input[name='evalOverallAction']:checked");
     const overallAction = overallRadio ? overallRadio.value : "Approved";
+    const revRadio = document.querySelector("input[name='evalRevisionType']:checked");
+    const revisionType = revRadio ? revRadio.value : "New";
+    const otherCommentsVal = document.getElementById("evalOtherComments")?.value.trim() || "";
 
     const payload = {
       responses,
@@ -12798,6 +14119,8 @@
       general_remarks: recVal,
       faculty_action_taken: facVal,
       overall_recommendation: overallAction,
+      revision_type: revisionType,
+      other_comments: otherCommentsVal,
     };
 
     try {
@@ -13092,11 +14415,11 @@
   // Hook into loadCourse to fetch current user and workflow
   const _origLoadCourse = loadCourse;
   loadCourse = async function(courseId) {
-    await fetchCurrentUser();
+    try { await fetchCurrentUser(); } catch (e) { console.warn("fetchCurrentUser error:", e); }
     await _origLoadCourse(courseId);
-    await fetchWorkflow(courseId);
-    renderWorkflowStepper();
-    renderRubrics();
+    try { await fetchWorkflow(courseId); } catch (e) { console.warn("fetchWorkflow error:", e); }
+    try { renderWorkflowStepper(); } catch (e) { console.warn("renderWorkflowStepper error:", e); }
+    try { renderRubrics(); } catch (e) { console.warn("renderRubrics error:", e); }
   };
 
   // Hook into renderAll
@@ -14157,8 +15480,199 @@
 
 
   // -------------------------------------------------------------------------
-  // CLASS SCHEDULE PICKER HELPERS (Item 4)
+  // CLASS SCHEDULE CHIPS & PICKER MANAGEMENT ENGINE
   // -------------------------------------------------------------------------
+  function parseScheduleStringToList(str) {
+    if (!str) return [];
+    return String(str)
+      .split(/\s*(?:\/|;)\s*/)
+      .map(s => s.trim())
+      .filter(s => Boolean(s) && s.toUpperCase() !== "TBA");
+  }
+
+  function renderScheduleChips() {
+    const container = document.getElementById("scheduleChipsContainer");
+    if (!container || !blueprint) return;
+    const meta = blueprint.metadata || {};
+    let scheds = meta.schedules;
+    if (!Array.isArray(scheds) || scheds.length === 0) {
+      scheds = parseScheduleStringToList(meta.schedule);
+      meta.schedules = scheds;
+    }
+
+    if (!scheds.length) {
+      container.innerHTML = `<span style="color:#94a3b8; font-size:0.74rem; font-style:italic;">No schedules added yet (Click "+ Add Schedule" to add days and time)</span>`;
+      return;
+    }
+
+    container.innerHTML = scheds.map((sched, idx) => {
+      const isLab = sched.toLowerCase().includes("lab");
+      const bg = isLab ? "#fffbeb" : "#eff6ff";
+      const border = isLab ? "#fde68a" : "#bfdbfe";
+      const textCol = isLab ? "#92400e" : "#1e40af";
+      const icon = isLab ? "🔬" : "🗓️";
+      return `
+        <span class="sched-chip" style="background:${bg}; color:${textCol}; border:1px solid ${border}; border-radius:6px; padding:3px 9px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+          <span>${icon} ${escapeHtml(sched)}</span>
+          <button type="button" onclick="removeScheduleChip(${idx})" title="Remove this schedule block"
+            style="background:none; border:none; color:${textCol}; cursor:pointer; font-weight:bold; font-size:0.85rem; padding:0; line-height:1;">&times;</button>
+        </span>
+      `;
+    }).join("");
+  }
+
+  function addScheduleBlock(blockStr) {
+    if (!blueprint || !blueprint.metadata) return;
+    const meta = blueprint.metadata;
+    const block = (blockStr || "").trim();
+    if (!block) return;
+    let scheds = meta.schedules || parseScheduleStringToList(meta.schedule);
+    if (!scheds.includes(block)) {
+      scheds.push(block);
+    }
+    meta.schedules = scheds;
+    meta.schedule = scheds.join(" / ");
+    const inp = document.getElementById("meta_schedule");
+    if (inp) inp.value = meta.schedule;
+    renderScheduleChips();
+    syncMetaFromInputs();
+    updateActiveSubjectBar();
+    queueAutoSave();
+  }
+
+  function removeScheduleChip(idx) {
+    if (!blueprint || !blueprint.metadata) return;
+    const meta = blueprint.metadata;
+    let scheds = meta.schedules || parseScheduleStringToList(meta.schedule);
+    if (idx >= 0 && idx < scheds.length) {
+      scheds.splice(idx, 1);
+    }
+    meta.schedules = scheds;
+    meta.schedule = scheds.join(" / ");
+    const inp = document.getElementById("meta_schedule");
+    if (inp) inp.value = meta.schedule;
+    renderScheduleChips();
+    syncMetaFromInputs();
+    updateActiveSubjectBar();
+    queueAutoSave();
+  }
+
+  function onScheduleManualInput() {
+    if (!blueprint || !blueprint.metadata) return;
+    const inp = document.getElementById("meta_schedule");
+    if (!inp) return;
+    const val = inp.value.trim();
+    blueprint.metadata.schedule = val;
+    blueprint.metadata.schedules = parseScheduleStringToList(val);
+    renderScheduleChips();
+    syncMetaFromInputs();
+    updateActiveSubjectBar();
+    queueAutoSave(500);
+  }
+
+  // --- Schedule Picker Modal Handlers ---
+  function openAddScheduleModal() {
+    const modal = document.getElementById("addScheduleModal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    setModalDays(["T", "Th"]);
+    const s = document.getElementById("modal_sched_start");
+    const e = document.getElementById("modal_sched_end");
+    const t = document.getElementById("modal_sched_type");
+    const r = document.getElementById("modal_sched_room");
+    if (s) s.value = "08:30";
+    if (e) e.value = "10:00";
+    if (t) t.value = (typeof isLecLabCourse === "function" && isLecLabCourse(blueprint)) ? "Lecture" : "";
+    if (r) r.value = "";
+    updateModalSchedulePreview();
+  }
+
+  function closeAddScheduleModal() {
+    const modal = document.getElementById("addScheduleModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function setModalDays(dayArray) {
+    document.querySelectorAll(".modal-sched-day").forEach(cb => {
+      cb.checked = dayArray.includes(cb.value);
+    });
+    updateModalSchedulePreview();
+  }
+
+  function applySchedulePreset(days, start, end, type) {
+    setModalDays(days);
+    const s = document.getElementById("modal_sched_start");
+    const e = document.getElementById("modal_sched_end");
+    const t = document.getElementById("modal_sched_type");
+    if (s) s.value = start;
+    if (e) e.value = end;
+    if (t) t.value = type || "";
+    updateModalSchedulePreview();
+  }
+
+  function getModalScheduleBlock() {
+    const days = [];
+    document.querySelectorAll(".modal-sched-day:checked").forEach(cb => days.push(cb.value));
+    const dayStr = days.join("");
+    const tStart = document.getElementById("modal_sched_start")?.value || "";
+    const tEnd = document.getElementById("modal_sched_end")?.value || "";
+    const type = document.getElementById("modal_sched_type")?.value || "";
+    const room = document.getElementById("modal_sched_room")?.value.trim() || "";
+
+    function formatTime12(t24) {
+      if (!t24) return "";
+      const parts = t24.split(":");
+      let h = parseInt(parts[0], 10);
+      const m = parts[1] || "00";
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12;
+      if (h === 0) h = 12;
+      return `${String(h).padStart(2, "0")}:${m} ${ampm}`;
+    }
+
+    let timeStr = "";
+    if (tStart && tEnd) {
+      timeStr = `${formatTime12(tStart)} - ${formatTime12(tEnd)}`;
+    } else if (tStart) {
+      timeStr = formatTime12(tStart);
+    }
+
+    let parts = [];
+    if (dayStr) parts.push(dayStr);
+    if (timeStr) parts.push(timeStr);
+    let base = parts.join(" ");
+    if (!base && room) base = `TBA`;
+    if (type) base += ` (${type})`;
+    if (room) base += ` [${room}]`;
+    return base;
+  }
+
+  function updateModalSchedulePreview() {
+    const textEl = document.getElementById("modalSchedPreviewText");
+    if (!textEl) return;
+    const block = getModalScheduleBlock();
+    textEl.textContent = block || "Please select days and time above";
+  }
+
+  function confirmAddScheduleFromModal() {
+    const block = getModalScheduleBlock();
+    if (!block || block === "Please select days and time above") {
+      alert("Please select at least one day or time slot for the schedule.");
+      return;
+    }
+    addScheduleBlock(block);
+    const rInput = document.getElementById("modal_sched_room");
+    if (rInput && rInput.value.trim()) {
+      const metaRoom = document.getElementById("meta_room");
+      if (metaRoom && !metaRoom.value.trim()) {
+        metaRoom.value = rInput.value.trim();
+        syncMetaFromInputs();
+      }
+    }
+    closeAddScheduleModal();
+  }
+
+  // --- Inline Schedule Picker Handlers ---
   function toggleSchedulePicker() {
     const c = document.getElementById("schedulePickerContainer");
     if (c) c.style.display = (c.style.display === "none") ? "block" : "none";
@@ -14192,35 +15706,27 @@
     return "";
   }
 
-  function buildScheduleString() {
-    const schedStr = getSelectedScheduleBlock();
-    if (schedStr) {
-      const inp = document.getElementById("meta_schedule");
-      if (inp) {
-        inp.value = schedStr;
-        syncMetaFromInputs();
-      }
+  function updateInlinePickerPreview() {
+    const block = getSelectedScheduleBlock();
+    const prev = document.getElementById("inlinePickerPreview");
+    if (prev) {
+      prev.textContent = block ? `↳ Ready to add: ${block}` : "";
     }
+  }
+
+  function buildScheduleString() {
+    updateInlinePickerPreview();
   }
 
   function appendScheduleBlock() {
     const block = getSelectedScheduleBlock();
     if (!block) {
-      alert("Please select days and time for the schedule block before adding.");
+      // Prompt user to add then select a new schedule!
+      openAddScheduleModal();
       return;
     }
-    const inp = document.getElementById("meta_schedule");
-    if (inp) {
-      const cur = inp.value.trim();
-      inp.value = cur ? `${cur} / ${block}` : block;
-      syncMetaFromInputs();
-    }
-    // Clear checkboxes and times ready for the next schedule
-    document.querySelectorAll(".sched-day").forEach(cb => cb.checked = false);
-    const s = document.getElementById("sched_time_start");
-    const e = document.getElementById("sched_time_end");
-    if (s) s.value = "";
-    if (e) e.value = "";
+    addScheduleBlock(block);
+    clearSchedulePicker();
   }
 
   function clearSchedulePicker() {
@@ -14229,11 +15735,8 @@
     const e = document.getElementById("sched_time_end");
     if (s) s.value = "";
     if (e) e.value = "";
-    const inp = document.getElementById("meta_schedule");
-    if (inp) {
-      inp.value = "";
-      syncMetaFromInputs();
-    }
+    const prev = document.getElementById("inlinePickerPreview");
+    if (prev) prev.textContent = "";
   }
 
   // -------------------------------------------------------------------------
@@ -15191,6 +16694,122 @@
     <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
       <button class="btn btn-secondary btn-sm" onclick="closeApaCitationModal()">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="applyGeneratedApaCitation()">✔ Insert APA Citation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Class Schedule Slot -->
+<div class="modal-overlay" id="addScheduleModal" style="display:none;" onclick="if(event.target===this) closeAddScheduleModal();">
+  <div class="modal-box" style="max-width:620px; width:94%;">
+    <div class="modal-header">
+      <h3 style="margin:0; font-size:1.1rem; color:#1e3a8a; display:flex; align-items:center; gap:8px;">
+        <span>🗓️</span> Add Class Schedule Slot
+      </h3>
+      <button class="modal-close-btn" onclick="closeAddScheduleModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;">
+      <!-- Quick Presets Shelf -->
+      <div style="margin-bottom:14px;">
+        <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:6px; display:block;">
+          ⚡ Quick Standard Schedule Presets (Click to Auto-Fill):
+        </label>
+        <div style="font-size:0.72rem; font-weight:700; color:#64748b; margin-bottom:4px;">Lecture Slots (1.5h - 2x/wk):</div>
+        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['T','Th'], '07:30', '09:00', 'Lecture')">TTh 07:30 - 09:00 AM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['T','Th'], '08:30', '10:00', 'Lecture')">TTh 08:30 - 10:00 AM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['T','Th'], '10:00', '11:30', 'Lecture')">TTh 10:00 - 11:30 AM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['T','Th'], '13:00', '14:30', 'Lecture')">TTh 01:00 - 02:30 PM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['T','Th'], '14:30', '16:00', 'Lecture')">TTh 02:30 - 04:00 PM</button>
+        </div>
+
+        <div style="font-size:0.72rem; font-weight:700; color:#64748b; margin-bottom:4px;">Lecture Slots (1.0h - 3x/wk):</div>
+        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['M','W','F'], '07:30', '08:30', 'Lecture')">MWF 07:30 - 08:30 AM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['M','W','F'], '08:30', '09:30', 'Lecture')">MWF 08:30 - 09:30 AM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['M','W','F'], '09:30', '10:30', 'Lecture')">MWF 09:30 - 10:30 AM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['M','W','F'], '13:00', '14:00', 'Lecture')">MWF 01:00 - 02:00 PM</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['M','W','F'], '14:00', '15:00', 'Lecture')">MWF 02:00 - 03:00 PM</button>
+        </div>
+
+        <div style="font-size:0.72rem; font-weight:700; color:#64748b; margin-bottom:4px;">Laboratory &amp; Weekend Slots (3h - 4h):</div>
+        <div style="display:flex; flex-wrap:wrap; gap:5px;">
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['W'], '13:00', '16:00', 'Laboratory')">Wed 01:00 - 04:00 PM (Lab)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['Th'], '13:00', '16:00', 'Laboratory')">Thu 01:00 - 04:00 PM (Lab)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['F'], '13:00', '16:00', 'Laboratory')">Fri 01:00 - 04:00 PM (Lab)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['Sa'], '08:00', '12:00', 'Laboratory')">Sat 08:00 AM - 12:00 PM (Lab)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applySchedulePreset(['Sa'], '13:00', '17:00', 'Laboratory')">Sat 01:00 - 05:00 PM (Lab)</button>
+        </div>
+      </div>
+
+      <div style="background:#f1f5f9; height:1px; margin:14px 0;"></div>
+
+      <!-- Custom Day & Time Selection -->
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:0;">Select Days:</label>
+            <div style="display:flex; gap:4px;">
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalDays(['M','W','F'])">MWF</button>
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalDays(['T','Th'])">TTh</button>
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalDays(['M','W'])">MW</button>
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalDays(['Sa'])">Sat</button>
+              <button type="button" class="btn btn-xs btn-outline-secondary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalDays([])">Clear</button>
+            </div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:8px 12px;">
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-sched-day" value="M" onchange="updateModalSchedulePreview()"> Mon</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-sched-day" value="T" onchange="updateModalSchedulePreview()"> Tue</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-sched-day" value="W" onchange="updateModalSchedulePreview()"> Wed</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-sched-day" value="Th" onchange="updateModalSchedulePreview()"> Thu</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-sched-day" value="F" onchange="updateModalSchedulePreview()"> Fri</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-sched-day" value="Sa" onchange="updateModalSchedulePreview()"> Sat</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-sched-day" value="Su" onchange="updateModalSchedulePreview()"> Sun</label>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">Time Start:</label>
+            <input type="time" id="modal_sched_start" style="width:100%; font-size:0.82rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" value="08:30" onchange="updateModalSchedulePreview()" />
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">Time End:</label>
+            <input type="time" id="modal_sched_end" style="width:100%; font-size:0.82rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" value="10:00" onchange="updateModalSchedulePreview()" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">Session Type (Optional):</label>
+            <select id="modal_sched_type" style="width:100%; font-size:0.8rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" onchange="updateModalSchedulePreview()">
+              <option value="">General / Not Specified</option>
+              <option value="Lecture">Lecture</option>
+              <option value="Laboratory">Laboratory</option>
+              <option value="Online / Sync">Online / Synchronous</option>
+              <option value="Asynchronous">Asynchronous</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">Room for this slot (Optional):</label>
+            <input type="text" id="modal_sched_room" placeholder="e.g. EB 201 or Lab 3" style="width:100%; font-size:0.8rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" oninput="updateModalSchedulePreview()" />
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div id="modalSchedPreviewContainer" style="background:#eff6ff; border:1.5px dashed #93c5fd; border-radius:6px; padding:10px 14px; display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.1rem;">🗓️</span>
+          <div style="flex:1;">
+            <div style="font-size:0.7rem; font-weight:700; color:#1e40af; text-transform:uppercase;">Schedule Preview:</div>
+            <div id="modalSchedPreviewText" style="font-size:0.88rem; font-weight:800; color:#1e3a8a;">TTh 08:30 AM - 10:00 AM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+      <button type="button" class="btn btn-light" onclick="closeAddScheduleModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="confirmAddScheduleFromModal()" style="font-weight:700; padding:6px 14px;">
+        ✓ Confirm &amp; Add to Class Schedule
+      </button>
     </div>
   </div>
 </div>

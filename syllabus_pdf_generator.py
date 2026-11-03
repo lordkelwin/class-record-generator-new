@@ -510,7 +510,7 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
             ("Credit", _clean_text(meta.credit_units, has_ttf)),
             ("Level", _clean_text(meta.year_level or "Second Year", has_ttf)),
             ("Section", _clean_text(", ".join(meta.sections) if getattr(meta, "sections", None) else meta.section, has_ttf)),
-            ("Class Schedule", _clean_text(f"{meta.schedule} ({meta.room})", has_ttf)),
+            ("Class Schedule", _clean_text(f"{meta.schedule} ({meta.room})" if (meta.room and str(meta.room).strip() and str(meta.room).lower() not in str(meta.schedule or "").lower()) else (meta.schedule or "TBA"), has_ttf)),
         ]:
             r = t_crs.row()
             r.cell(k, style=FontFace(emphasis="BOLD"))
@@ -736,8 +736,9 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
     fin_wt = float(meta.finals_weight if meta.finals_weight is not None else 40.0)
 
     # Weighted grading model: item % is relative to its section; section share is % of final grade.
-    # Standalone majors (own umbrella) are direct % of final grade; term-scoped majors behave like term items.
-    def _is_standalone_major(it):
+    # ALL major assessments (is_major_assessment=True) are retained under OTHER MAJOR ASSESSMENTS / PROJECTS,
+    # regardless of whether their scope is both_terms, independent, midterm, or finals.
+    def _is_major(it):
         return bool(it.get("is_major_assessment"))
 
     def _term_scope(it):
@@ -746,29 +747,30 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
         s_ = str(it.get("major_scope") or "independent").lower()
         return s_ if s_ in ("both_terms", "midterm", "finals") else "independent"
 
-    major_items = [it for it in sa_items if _is_standalone_major(it)]
-    term_items = [it for it in sa_items if not _is_standalone_major(it)]
-    sum_major_wt = sum(it["weight_pct"] for it in major_items)
-
-    mid_frac, fin_frac = 0.5, 0.5
-    if scheme in ("two_term", "term_project"):
-        _mf = mid_wt if meta.midterm_weight is not None else (40.0 if scheme == "term_project" else 50.0)
-        _ff = fin_wt if meta.finals_weight is not None else (40.0 if scheme == "term_project" else 50.0)
-        if (_mf + _ff) > 0:
-            mid_frac, fin_frac = _mf / (_mf + _ff), _ff / (_mf + _ff)
+    major_items = [it for it in sa_items if _is_major(it)]
+    term_items = [it for it in sa_items if not _is_major(it)]
+    sum_major_wt = sum(float(it.get("weight_pct") or 0.0) for it in major_items)
+    term_pool = max(0.0, 100.0 - sum_major_wt)
 
     # (title, share, mode, items)
     sections = []
     if scheme == "lecture_lab":
-        sections.append(("LECTURE", lec_wt, "scaled", [it for it in term_items if (it.get("lec_lab") or "Lecture").lower() != "laboratory"]))
-        sections.append(("LABORATORY", lab_wt, "scaled", [it for it in term_items if (it.get("lec_lab") or "").lower() == "laboratory"]))
+        if sum_major_wt > 0 and (lec_wt + lab_wt) > 0:
+            eff_lec = term_pool * (lec_wt / (lec_wt + lab_wt))
+            eff_lab = term_pool * (lab_wt / (lec_wt + lab_wt))
+        else:
+            eff_lec = lec_wt
+            eff_lab = lab_wt
+        sections.append(("LECTURE", eff_lec, "scaled", [it for it in term_items if (it.get("lec_lab") or "Lecture").lower() != "laboratory"]))
+        sections.append(("LABORATORY", eff_lab, "scaled", [it for it in term_items if (it.get("lec_lab") or "").lower() == "laboratory"]))
     elif scheme == "lecture_major":
         lw = float(meta.lecture_weight if meta.lecture_weight is not None else 80.0)
-        sections.append(("LECTURE", lw, "scaled", term_items))
+        sections.append(("LECTURE", min(lw, term_pool), "scaled", term_items))
     elif scheme == "term_project":
-        sections.append(("TERM ASSESSMENTS", mid_wt + fin_wt, "scaled", term_items))
+        sections.append(("TERM ASSESSMENTS", term_pool, "scaled", term_items))
     else:
-        sections.append(("TERM ASSESSMENTS" if major_items else "SUMMATIVE ASSESSMENTS", max(0.0, 100.0 - sum_major_wt), "scaled", term_items))
+        sections.append(("TERM ASSESSMENTS" if major_items else "SUMMATIVE ASSESSMENTS", term_pool, "scaled", term_items))
+
     maj_share = sum_major_wt if major_items else (maj_wt if scheme in ("lecture_major", "term_project") else 0.0)
     if major_items or maj_share > 0:
         sections.append(("OTHER MAJOR ASSESSMENTS / PROJECTS", maj_share, "direct", major_items))
@@ -776,28 +778,23 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
     grade_issues = []
     weighted_total = 0.0
     for sec_title, sec_share, sec_mode, sec_items in sections:
-        mid_sub = fin_sub = 0.0
+        sec_raw_sum = 0.0
         for it in sec_items:
             w = float(it.get("weight_pct") or 0.0)
-            scope = _term_scope(it)
+            sec_raw_sum += w
             if sec_mode == "direct":
                 it["_eff"] = w
             else:
-                tf = mid_frac if scope == "midterm" else (fin_frac if scope == "finals" else 1.0)
-                it["_eff"] = w * sec_share / 100.0 * tf
-                if scope != "finals":
-                    mid_sub += w
-                if scope != "midterm":
-                    fin_sub += w
+                it["_eff"] = w * sec_share / 100.0
             weighted_total += it["_eff"]
         if not sec_items and sec_share > 0:
             grade_issues.append(f"{sec_title.title()} has a {sec_share:g}% share but no items")
-        elif sec_items and sec_mode == "scaled" and (abs(mid_sub - 100.0) > 0.1 or abs(fin_sub - 100.0) > 0.1):
-            grade_issues.append(f"{sec_title.title()} items total {mid_sub:g}%" + (f"/{fin_sub:g}%" if abs(mid_sub - fin_sub) > 0.05 else "") + " within section (must be 100%)")
+        elif sec_items and sec_mode == "scaled" and abs(sec_raw_sum - 100.0) > 0.5:
+            grade_issues.append(f"{sec_title.title()} items total {sec_raw_sum:g}% within section (must be 100%)")
     share_sum = sum(sec[1] for sec in sections)
-    if abs(share_sum - 100.0) > 0.1:
+    if abs(share_sum - 100.0) > 0.5:
         grade_issues.append(f"section shares sum to {share_sum:g}% (must be 100%)")
-    is_grade_balanced = not grade_issues and abs(weighted_total - 100.0) < 0.1
+    is_grade_balanced = not grade_issues and abs(weighted_total - 100.0) < 0.5
 
     n_clos = max(1, len(bp.course_outcomes))
     clo_col_w = 120.0 / n_clos
@@ -825,6 +822,18 @@ def generate_usep_syllabus_pdf(bp: SyllabusBlueprint, doc: Optional[Dict[str, An
                 r = t_grd.row()
                 act_name = str(item.get("activity") or "").strip()
                 label = f"{code} ({act_name})" if act_name and act_name.upper() != code.upper() else code
+                if item.get("is_major_assessment"):
+                    m_sc = str(item.get("major_scope") or "independent").lower()
+                    if m_sc == "both_terms":
+                        mid_cnt = item.get("items_midterm") or 1
+                        fin_cnt = item.get("items_finals") or 1
+                        label += f" [Both Terms: Mid {mid_cnt}, Fin {fin_cnt}]"
+                    elif m_sc == "midterm":
+                        label += f" [Midterm: {item.get('items_midterm') or 1}]"
+                    elif m_sc == "finals":
+                        label += f" [Finals: {item.get('items_finals') or 1}]"
+                    else:
+                        label += f" [Standalone: {item.get('items_count') or 1}]"
                 r.cell(_clean_text(label, has_ttf), style=FontFace(emphasis="BOLD"), align="L")
                 if sec_mode == "scaled" and abs(eff - wt) > 0.05:
                     r.cell(_clean_text(f"{wt:g}% ({eff:.1f}% of final grade)", has_ttf), align="C")
