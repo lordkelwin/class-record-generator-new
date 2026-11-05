@@ -1469,9 +1469,9 @@
         <div class="dash-toolbar">
           <span style="font-weight:700; color:var(--muted);">Term:</span>
           <div class="seg" id="dashTermSeg">
-            <button class="active" onclick="setDashTerm('All', this)">All</button>
-            <button onclick="setDashTerm('Midterm', this)">Midterm</button>
-            <button onclick="setDashTerm('Finals', this)">Finals</button>
+            <button class="active" data-term="All" onclick="setDashTerm('All', this)">All</button>
+            <button data-term="Midterm" onclick="setDashTerm('Midterm', this)">Midterm</button>
+            <button data-term="Finals" onclick="setDashTerm('Finals', this)">Finals</button>
           </div>
           <button class="btn btn-light btn-sm" onclick="switchTab('tab-gradebook', null)">Edit Scores in Class Record &rarr;</button>
         </div>
@@ -1746,24 +1746,48 @@
           <select id="meta_department" onchange="onDepartmentChange()"></select>
         </div>
         <div class="form-group">
-          <label>Course Code (Dropdown)</label>
-          <select id="meta_course_code" onchange="onCourseCodeChange()"></select>
+          <label style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Course Code</span>
+            <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:0.67rem; border:1px solid #cbd5e1; padding:1px 5px;" title="Set upon subject creation">🔒 Locked</span>
+          </label>
+          <select id="meta_course_code" disabled style="background:#f1f5f9; cursor:not-allowed;" onchange="onCourseCodeChange()"></select>
         </div>
         <div class="form-group">
-          <label>Course Title (Auto-Filled)</label>
-          <input type="text" id="meta_course_title" style="background:#f0fdf4; font-weight:600;" oninput="syncMetaFromInputs()" />
+          <label style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Course Title</span>
+            <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:0.67rem; border:1px solid #cbd5e1; padding:1px 5px;" title="Set upon subject creation">🔒 Locked</span>
+          </label>
+          <input type="text" id="meta_course_title" readonly style="background:#f1f5f9; font-weight:600; cursor:not-allowed;" oninput="syncMetaFromInputs()" />
         </div>
         <div class="form-group">
-          <label>Credit Units (Auto-Filled)</label>
-          <input type="text" id="meta_credit_units" style="background:#f0fdf4; font-weight:600;" oninput="syncMetaFromInputs()" />
+          <label style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Credit Units</span>
+            <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:0.67rem; border:1px solid #cbd5e1; padding:1px 5px;" title="Set upon subject creation">🔒 Locked</span>
+          </label>
+          <input type="text" id="meta_credit_units" readonly style="background:#f1f5f9; font-weight:600; cursor:not-allowed;" oninput="syncMetaFromInputs()" />
         </div>
         <div class="form-group">
-          <label>Lecture / Laboratory</label>
-          <select id="meta_lec_lab" onchange="syncMetaFromInputs()">
+          <label style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Lecture / Laboratory</span>
+            <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:0.67rem; border:1px solid #cbd5e1; padding:1px 5px;" title="Set from master course database">🔒 Locked</span>
+          </label>
+          <select id="meta_lec_lab" disabled style="background:#f1f5f9; cursor:not-allowed;" onchange="syncMetaFromInputs()">
             <option value="Lecture">Lecture</option>
             <option value="Laboratory">Laboratory</option>
             <option value="Lecture/Laboratory">Lecture/Laboratory</option>
           </select>
+        </div>
+        <!-- Associated PGO-PI, IGA & IED Attributes Display (Basic Details View) -->
+        <div class="form-group" style="grid-column: span 2; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="margin:0; font-size:0.78rem; font-weight:700; color:#166534;">
+              🎯 Associated PGO-PI Alignment Attributes (Master Course Database)
+              <span style="font-size:0.71rem; color:#475569; font-weight:normal; margin-left:4px;">Institutional Graduate Attributes [IGA] &amp; Intended Engineering Demonstrations [IED]</span>
+            </label>
+          </div>
+          <div id="metaCourseAttributesBadges" style="display:flex; flex-wrap:wrap; gap:5px; align-items:center; min-height:24px;">
+            <!-- Rendered dynamically -->
+          </div>
         </div>
         <!-- Accommodated Degree Programs (Multi-Program Support for Common Courses) -->
         <div class="form-group" style="grid-column: span 2; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
@@ -2003,8 +2027,11 @@
           </select>
         </div>
         <div class="form-group">
-          <label>No. of Contact Hours</label>
-          <input type="text" id="meta_contact_hours" oninput="syncMetaFromInputs()" />
+          <label style="display:flex; align-items:center; justify-content:space-between;">
+            <span>No. of Contact Hours</span>
+            <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:0.67rem; border:1px solid #cbd5e1; padding:1px 5px;" title="Set from master course database">🔒 Locked</span>
+          </label>
+          <input type="text" id="meta_contact_hours" readonly style="background:#f1f5f9; font-weight:600; cursor:not-allowed;" oninput="syncMetaFromInputs()" />
         </div>
         <div class="form-group">
           <label>Faculty Email Address</label>
@@ -2018,9 +2045,54 @@
           <label>Office</label>
           <input type="text" id="meta_office" oninput="syncMetaFromInputs()" />
         </div>
-        <div class="form-group">
-          <label>Consultation Hours</label>
-          <input type="text" id="meta_consultation_hours" oninput="syncMetaFromInputs()" />
+        <div class="form-group" style="grid-column: span 2;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="margin-bottom:0; font-weight:700;">
+              Consultation Hours
+              <span style="font-size:0.72rem; color:#64748b; font-weight:normal; margin-left:4px;">(Days, time slots, and room/mode allocations)</span>
+            </label>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button type="button" class="btn btn-sm btn-primary" onclick="openAddConsultationModal()" style="padding:2px 9px; font-size:0.75rem; font-weight:700;" title="Prompt to add and configure consultation hours">🗓️ + Add Consultation</button>
+              <button type="button" class="btn btn-link btn-sm" style="font-size:0.72rem; padding:0; text-decoration:none; color:#2563eb;" onclick="toggleConsultationPicker()" title="Toggle quick consultation picker">⚡ Quick Picker</button>
+            </div>
+          </div>
+          <div id="consultationChipsContainer" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; min-height:26px; align-items:center;">
+            <!-- Rendered dynamically -->
+          </div>
+          <div id="consultationPickerContainer" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:8px 10px; margin-bottom:6px;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:6px;">
+              <span style="font-size:0.75rem; font-weight:700; color:#475569;">Days:</span>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="consult-day" value="M" onchange="updateInlineConsultPickerPreview()"> Mon</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="consult-day" value="T" onchange="updateInlineConsultPickerPreview()"> Tue</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="consult-day" value="W" onchange="updateInlineConsultPickerPreview()"> Wed</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="consult-day" value="Th" onchange="updateInlineConsultPickerPreview()"> Thu</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="consult-day" value="F" onchange="updateInlineConsultPickerPreview()"> Fri</label>
+              <label style="font-size:0.75rem; display:inline-flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" class="consult-day" value="Sa" onchange="updateInlineConsultPickerPreview()"> Sat</label>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+              <span style="font-size:0.75rem; font-weight:700; color:#475569;">Time:</span>
+              <input type="time" id="consult_time_start" value="13:00" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateInlineConsultPickerPreview()" />
+              <span style="font-size:0.75rem; color:#64748b;">to</span>
+              <input type="time" id="consult_time_end" value="15:00" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateInlineConsultPickerPreview()" />
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <span style="font-size:0.75rem; font-weight:700; color:#475569;">Mode &amp; Room:</span>
+              <select id="consult_mode_select" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px;" onchange="updateInlineConsultPickerPreview()">
+                <option value="Faculty Room">Face-to-Face (Faculty Room)</option>
+                <option value="Online via Google Meet">Online via Google Meet</option>
+                <option value="Office">Department Office</option>
+                <option value="By Appointment">Hybrid / By Appointment</option>
+              </select>
+              <input type="text" id="consult_room_input" placeholder="Room/Link details (e.g. EB 201 or Meet link)" style="font-size:0.78rem; padding:3px 6px; border:1px solid #cbd5e1; border-radius:4px; flex:1; min-width:140px;" oninput="updateInlineConsultPickerPreview()" />
+              <button type="button" class="btn btn-sm btn-success" style="font-size:0.72rem; padding:2px 8px; font-weight:600;" onclick="appendConsultationBlock()">+ Append Block</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px;" onclick="clearConsultationPicker()">Reset</button>
+              <span id="inlineConsultPickerPreview" style="font-size:0.73rem; font-weight:700; color:#2563eb; margin-left:4px;"></span>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="text" id="meta_consultation_hours" placeholder="e.g. MWF 01:00 PM - 03:00 PM (Faculty Room) / TTh 10:00 AM - 12:00 PM (Online)" oninput="onConsultationManualInput()" style="font-size:0.78rem; padding:4px 8px; flex:1;" title="Combined consultation hours (slash-separated)" />
+            <button type="button" class="btn btn-sm btn-primary" onclick="openAddConsultationModal()" style="padding:4px 10px; font-size:0.75rem; white-space:nowrap; font-weight:700;">+ Add Consultation</button>
+          </div>
         </div>
       </div>
 
@@ -2062,7 +2134,9 @@
 <div class="grid-4" style="grid-template-columns: 1fr 1fr;">
         <div class="form-group">
           <label>Course Description (Part V)</label>
-          <textarea id="meta_course_description" rows="4" oninput="syncMetaFromInputs()"></textarea>
+          <div style="max-height:140px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; background:#fff;">
+            <textarea id="meta_course_description" rows="5" style="border:none; width:100%; box-sizing:border-box; max-height:220px; overflow-y:auto; padding:6px 8px; font-size:0.83rem; line-height:1.45;" oninput="syncMetaFromInputs()"></textarea>
+          </div>
         </div>
         <div class="form-group">
           <label>Workload of Students (Part V)</label>
@@ -2318,7 +2392,7 @@
       <div class="card">
         <div class="card-header">
           <h2>Part X. References / Articles to Read Table</h2>
-          <button class="btn btn-primary btn-sm" onclick="addReferenceRow()">+ Add Reference</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="addReferenceRow()">+ Add Reference</button>
         </div>
         <table>
           <thead>
@@ -2472,7 +2546,22 @@
 
   <!-- TAB 4 (SUB-RIBBON): ACKNOWLEDGEMENT OF RECEIPT OF ASSESSMENT SCORES AND PAPER -->
   <div id="tab-receipt-ack" class="tab-panel">
-    <div class="card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:18px 22px; margin-bottom:16px;">
+    <!-- RECEIPT OF SCORES & PAPER LOCK BARRIER (Tab 4) -->
+    <div id="classRecordLockBannerReceiptAck" class="lock-barrier-banner" style="display:none; background:#fff7ed; border:2px solid #f97316; border-radius:8px; padding:18px 22px; margin-bottom:18px; text-align:center;">
+      <div style="font-size:2rem; margin-bottom:6px;">🔒</div>
+      <h3 style="margin:0 0 6px; color:#9a3412; font-size:1.15rem;">Receipt of Assessment Scores &amp; Paper Locked</h3>
+      <p style="margin:0 auto 12px; max-width:650px; font-size:0.85rem; color:#7c2d12;">
+        Before viewing student receipts or acknowledging assessment scores and papers, <strong>the course syllabus must be finalized and approved first</strong> through the official sequential chain (Review Committee &rarr; Program Head &rarr; College QA Head countersign &rarr; Dean).
+      </p>
+      <div style="display:flex; justify-content:center; gap:10px;">
+        <button class="btn btn-primary btn-sm" onclick="switchTab('tab-syllabus')">View Syllabus &amp; Approval Stepper &rarr;</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="openEvaluationToolModal()">Open Syllabus Evaluation Tool</button>
+      </div>
+    </div>
+
+    <!-- WRAPPER FOR TAB 4 CONTENT (LOCKED UNTIL SYLLABUS IS APPROVED) -->
+    <div id="receiptAckTabContent">
+      <div class="card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:18px 22px; margin-bottom:16px;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:14px; margin-bottom:14px;">
         <div>
           <div style="display:flex; align-items:center; gap:8px;">
@@ -2530,152 +2619,185 @@
         </table>
       </div>
     </div>
+    </div>
   </div>
 
   <!-- TAB 5: CLO ASSESSMENT REPORT & CO ASSESSMENT TOOL -->
   <div id="tab-cloreport" class="tab-panel">
-    <div class="card" style="background:#f8fafc; border:1px solid #cbd5e1; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <div>
-          <h2 style="font-size:1.02rem; color:#7f1d1d; margin-bottom:2px;">Official USeP Course Learning Outcome (CLO) Assessment Report</h2>
-          <div style="font-size:0.79rem; color:#475569;">
-            Formatted to match the official USeP CLO Assessment Report (<em>Course Assessment Plan</em> + <em>Course Learning Outcome Evaluation Result</em> + Signatories &amp; Actions Needed).
-          </div>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-primary" style="background:#0284c7; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf) [FM-USeP-MID-10]</button>
-          <button class="btn btn-success" style="background:#15803d; border-color:#166534;" onclick="exportCloReportExcel()">📊 Export CLO Evaluation Result (.xlsx) [FM-USeP-MID-10]</button>
-          <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Full Excel Class Record (.xlsx)</button>
-        </div>
+    <!-- CLO REPORT LOCK BARRIER (Tab 5) -->
+    <div id="classRecordLockBannerCloReport" class="lock-barrier-banner" style="display:none; background:#fff7ed; border:2px solid #f97316; border-radius:8px; padding:18px 22px; margin-bottom:18px; text-align:center;">
+      <div style="font-size:2rem; margin-bottom:6px;">🔒</div>
+      <h3 style="margin:0 0 6px; color:#9a3412; font-size:1.15rem;">CLO Assessment Report Locked</h3>
+      <p style="margin:0 auto 12px; max-width:650px; font-size:0.85rem; color:#7c2d12;">
+        Before viewing or exporting the Course Learning Outcome (CLO) Assessment Report (FM-USeP-MID-10), <strong>the course syllabus must be finalized and approved first</strong> through the official sequential chain (Review Committee &rarr; Program Head &rarr; College QA Head countersign &rarr; Dean).
+      </p>
+      <div style="display:flex; justify-content:center; gap:10px;">
+        <button class="btn btn-primary btn-sm" onclick="switchTab('tab-syllabus')">View Syllabus &amp; Approval Stepper &rarr;</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="openEvaluationToolModal()">Open Syllabus Evaluation Tool</button>
       </div>
     </div>
 
-    <div class="grid-4" style="grid-template-columns: 1fr 1fr;">
-      <div class="card">
-        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+    <!-- WRAPPER FOR TAB 5 CONTENT (LOCKED UNTIL SYLLABUS IS APPROVED) -->
+    <div id="cloReportTabContent">
+      <div class="card" style="background:#f8fafc; border:1px solid #cbd5e1; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
-            <h2 style="margin-bottom:2px;">Course Assessment Plan (As Declared in Syllabus)</h2>
-            <div style="font-size:0.75rem; color:#64748b;">Only <strong>Summative Assessments (SA)</strong> are included from Syllabus Part VI. Every block is adjustable in height, content, weight, and order.</div>
-          </div>
-          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-            <div class="syl-format-pill-bar" style="margin-right:4px;">
-              <span style="font-size:0.68rem; font-weight:700; color:#475569; margin-right:2px;">Block Sizing:</span>
-              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(48)" title="Set compact block height (48px)">⇳ Compact</button>
-              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(75)" title="Set standard block height (75px)">⇳ Standard</button>
-              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(120)" title="Set expanded block height (120px)">⇳ Expanded</button>
-              <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="autoFitAllCapBlocks()" title="Auto-fit block heights to text content">⇳ Auto-Fit</button>
+            <h2 style="font-size:1.02rem; color:#7f1d1d; margin-bottom:2px;">Official USeP Course Learning Outcome (CLO) Assessment Report</h2>
+            <div style="font-size:0.79rem; color:#475569;">
+              Formatted to match the official USeP CLO Assessment Report (<em>Course Assessment Plan</em> + <em>Course Learning Outcome Evaluation Result</em> + Signatories &amp; Actions Needed).
             </div>
-            <button type="button" class="btn btn-outline-primary btn-xs" onclick="syncCourseAssessmentPlanFromSyllabus(true)" title="Re-sync summative components and CLO alignments directly from Syllabus Part VI">
-              🔄 Sync from Syllabus
-            </button>
-            <button type="button" class="btn btn-primary btn-xs" onclick="addCourseAssessmentPlanRow()">
-              + Add Summative Assessment
-            </button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary" style="background:#0284c7; border-color:#0369a1;" onclick="exportCloReportPdf()">Export CLO Report (.pdf) [FM-USeP-MID-10]</button>
+            <button class="btn btn-success" style="background:#15803d; border-color:#166534;" onclick="exportCloReportExcel()">📊 Export CLO Evaluation Result (.xlsx) [FM-USeP-MID-10]</button>
+            <button class="btn btn-success" onclick="exportExcelWorkbook()">Export Full Excel Class Record (.xlsx)</button>
           </div>
         </div>
-        <div style="overflow-x:auto;">
+      </div>
+
+      <div class="grid-4" style="grid-template-columns: 1fr 1fr;">
+        <div class="card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <h2 style="margin-bottom:2px;">Course Assessment Plan (As Declared in Syllabus)</h2>
+              <div style="font-size:0.75rem; color:#64748b;">Only <strong>Summative Assessments (SA)</strong> are included from Syllabus Part VI. Every block is adjustable in height, content, weight, and order.</div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <div class="syl-format-pill-bar" style="margin-right:4px;">
+                <span style="font-size:0.68rem; font-weight:700; color:#475569; margin-right:2px;">Block Sizing:</span>
+                <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(48)" title="Set compact block height (48px)">⇳ Compact</button>
+                <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(75)" title="Set standard block height (75px)">⇳ Standard</button>
+                <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="setAllCapBlockHeights(120)" title="Set expanded block height (120px)">⇳ Expanded</button>
+                <button type="button" class="btn btn-light btn-xs" style="padding:1px 6px;" onclick="autoFitAllCapBlocks()" title="Auto-fit block heights to text content">⇳ Auto-Fit</button>
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-xs" onclick="syncCourseAssessmentPlanFromSyllabus(true)" title="Re-sync summative components and CLO alignments directly from Syllabus Part VI">
+                🔄 Sync from Syllabus
+              </button>
+              <button type="button" class="btn btn-primary btn-xs" onclick="addCourseAssessmentPlanRow()">
+                + Add Summative Assessment
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead id="capPlanHead"></thead>
+              <tbody id="capPlanBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Course Learning Outcome Evaluation Result (Based on Class Record)</h2>
+          </div>
           <table>
-            <thead id="capPlanHead"></thead>
-            <tbody id="capPlanBody"></tbody>
+            <thead id="cloEvalHead"></thead>
+            <tbody id="cloEvalBody"></tbody>
           </table>
+          <p style="font-size:0.78rem; color:#475569; margin-top:10px;">
+            <em>Note: Weighted Average is computed as Summation of Score &times; (weight / total applicable weights). An overall rating of below 50% indicates non-attainment of the course outcome and adjustment in the TLAs and assessment activities may be required.</em>
+          </p>
         </div>
       </div>
+
       <div class="card">
         <div class="card-header">
-          <h2>Course Learning Outcome Evaluation Result (Based on Class Record)</h2>
-        </div>
-        <table>
-          <thead id="cloEvalHead"></thead>
-          <tbody id="cloEvalBody"></tbody>
-        </table>
-        <p style="font-size:0.78rem; color:#475569; margin-top:10px;">
-          <em>Note: Weighted Average is computed as Summation of Score &times; (weight / total applicable weights). An overall rating of below 50% indicates non-attainment of the course outcome and adjustment in the TLAs and assessment activities may be required.</em>
-        </p>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2>CO Assessment Tool (Linked to Program Graduate Outcome &amp; Performance Indicator)</h2>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>CO#</th>
-            <th>Course Outcome</th>
-            <th>Graduate Outcome (PGO)</th>
-            <th>Performance Indicator (PI)</th>
-            <th style="text-align:center;">Degree (from CO)</th>
-            <th style="text-align:center;">CO Achievement</th>
-            <th style="text-align:center;">Target (% of Students)</th>
-            <th style="text-align:center;">Remarks</th>
-          </tr>
-        </thead>
-        <tbody id="coToolBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- TAB 5: CQI PLAN & SYLLABUS INSPECTOR -->
-  <div id="tab-cqi" class="tab-panel">
-    <div class="card">
-      <div class="card-header">
-        <h2>Continuous Quality Improvement (CQI) — Overall Reflection &amp; Action Plan</h2>
-      </div>
-      <div class="grid-4" style="grid-template-columns: 1fr 1fr 1.2fr;">
-        <div class="form-group">
-          <label>Key Strengths</label>
-          <textarea id="cqi_strengths" rows="4" oninput="blueprint.cqi_plan.key_strengths=this.value"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Main Areas for Improvement</label>
-          <textarea id="cqi_improvements" rows="4" oninput="blueprint.cqi_plan.areas_for_improvement=this.value"></textarea>
-        </div>
-        <div class="form-group">
-          <label>CQI Action Plan</label>
-          <textarea id="cqi_actions" rows="4" oninput="blueprint.cqi_plan.action_plan=this.value"></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2>Systematic CQI Course Delivery Evaluation Factors (Categories I–IV)</h2>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:210px;">Category</th>
-            <th style="width:320px;">Indicator / Factor</th>
-            <th style="width:95px; text-align:center;">Mark (✓ / ✗)</th>
-            <th>Notes / Remarks for Improvement</th>
-          </tr>
-        </thead>
-        <tbody id="cqiIndicatorsBody"></tbody>
-      </table>
-    </div>
-
-    <div class="grid-4" style="grid-template-columns: 1fr 1.4fr;">
-      <div class="card">
-        <div class="card-header">
-          <h2>USeP Base-50 Grade Equivalence Table</h2>
+          <h2>CO Assessment Tool (Linked to Program Graduate Outcome &amp; Performance Indicator)</h2>
         </div>
         <table>
           <thead>
             <tr>
-              <th>Base-50 Score Range</th>
-              <th>Grade</th>
-              <th>Remarks</th>
+              <th>CO#</th>
+              <th>Course Outcome</th>
+              <th>Graduate Outcome (PGO)</th>
+              <th>Performance Indicator (PI)</th>
+              <th style="text-align:center;">Degree (from CO)</th>
+              <th style="text-align:center;">CO Achievement</th>
+              <th style="text-align:center;">Target (% of Students)</th>
+              <th style="text-align:center;">Remarks</th>
             </tr>
           </thead>
-          <tbody id="transmutationTableBody"></tbody>
+          <tbody id="coToolBody"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: CQI PLAN & SYLLABUS INSPECTOR -->
+  <div id="tab-cqi" class="tab-panel">
+    <!-- CQI PLAN LOCK BARRIER (Tab 6) -->
+    <div id="classRecordLockBannerCqi" class="lock-barrier-banner" style="display:none; background:#fff7ed; border:2px solid #f97316; border-radius:8px; padding:18px 22px; margin-bottom:18px; text-align:center;">
+      <div style="font-size:2rem; margin-bottom:6px;">🔒</div>
+      <h3 style="margin:0 0 6px; color:#9a3412; font-size:1.15rem;">CQI Action Plan Locked</h3>
+      <p style="margin:0 auto 12px; max-width:650px; font-size:0.85rem; color:#7c2d12;">
+        Before completing or generating the Continuous Quality Improvement (CQI) Action Plan, <strong>the course syllabus must be finalized and approved first</strong> through the official sequential chain (Review Committee &rarr; Program Head &rarr; College QA Head countersign &rarr; Dean).
+      </p>
+      <div style="display:flex; justify-content:center; gap:10px;">
+        <button class="btn btn-primary btn-sm" onclick="switchTab('tab-syllabus')">View Syllabus &amp; Approval Stepper &rarr;</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="openEvaluationToolModal()">Open Syllabus Evaluation Tool</button>
+      </div>
+    </div>
+
+    <!-- WRAPPER FOR TAB 6 CONTENT (LOCKED UNTIL SYLLABUS IS APPROVED) -->
+    <div id="cqiTabContent">
       <div class="card">
         <div class="card-header">
-          <h2>Extracted Syllabus PDF Text Inspector</h2>
+          <h2>Continuous Quality Improvement (CQI) — Overall Reflection &amp; Action Plan</h2>
         </div>
-        <pre class="raw-box" id="rawPdfTextPreview">Click "Parse EE 211.pdf Syllabus" or upload a syllabus PDF to inspect the extracted text.</pre>
+        <div class="grid-4" style="grid-template-columns: 1fr 1fr 1.2fr;">
+          <div class="form-group">
+            <label>Key Strengths</label>
+            <textarea id="cqi_strengths" rows="4" oninput="blueprint.cqi_plan.key_strengths=this.value"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Main Areas for Improvement</label>
+            <textarea id="cqi_improvements" rows="4" oninput="blueprint.cqi_plan.areas_for_improvement=this.value"></textarea>
+          </div>
+          <div class="form-group">
+            <label>CQI Action Plan</label>
+            <textarea id="cqi_actions" rows="4" oninput="blueprint.cqi_plan.action_plan=this.value"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Systematic CQI Course Delivery Evaluation Factors (Categories I–IV)</h2>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:210px;">Category</th>
+              <th style="width:320px;">Indicator / Factor</th>
+              <th style="width:95px; text-align:center;">Mark (✓ / ✗)</th>
+              <th>Notes / Remarks for Improvement</th>
+            </tr>
+          </thead>
+          <tbody id="cqiIndicatorsBody"></tbody>
+        </table>
+      </div>
+
+      <div class="grid-4" style="grid-template-columns: 1fr 1.4fr;">
+        <div class="card">
+          <div class="card-header">
+            <h2>USeP Base-50 Grade Equivalence Table</h2>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Base-50 Score Range</th>
+                <th>Grade</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="transmutationTableBody"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Extracted Syllabus PDF Text Inspector</h2>
+          </div>
+          <pre class="raw-box" id="rawPdfTextPreview">Click "Parse EE 211.pdf Syllabus" or upload a syllabus PDF to inspect the extracted text.</pre>
+        </div>
       </div>
     </div>
   </div>
@@ -3027,9 +3149,37 @@
           </div>
           <div id="modalCatProgramsPills" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
         </div>
+        <div class="grid-4" style="grid-template-columns: 1fr 1fr; margin-bottom:12px;">
+          <div class="form-group">
+            <label>Year Level</label>
+            <select id="modalCatYearLevel" onchange="filterModalCourses()">
+              <option value="All">All Year Levels</option>
+              <option value="First Year">First Year</option>
+              <option value="Second Year">Second Year</option>
+              <option value="Third Year">Third Year</option>
+              <option value="Fourth Year">Fourth Year</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Semester</label>
+            <select id="modalCatSemester" onchange="filterModalCourses()">
+              <option value="All">All Semesters</option>
+              <option value="1st Semester">1st Semester</option>
+              <option value="2nd Semester">2nd Semester</option>
+              <option value="Off-Semester">Off-Semester</option>
+            </select>
+          </div>
+        </div>
         <div class="form-group" style="margin-bottom:12px;">
-          <label>Course from Catalog</label>
-          <select id="modalCatCourse" onchange="onModalCourseChange()"></select>
+          <label style="font-weight:700; color:#1e293b;">1️⃣ Course Code <span style="font-size:0.73rem; color:#2563eb; font-weight:normal;">(Search or select Course Code first)</span></label>
+          <select id="modalCatCourse" onchange="onModalCourseChange()" style="font-weight:700; font-size:0.86rem; border:1.5px solid #3b82f6; background:#eff6ff;"></select>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label style="font-weight:700; color:#1e293b; display:flex; justify-content:space-between; align-items:center;">
+            <span>2️⃣ Course Title</span>
+            <span class="badge" style="background:#f1f5f9; color:#475569; font-size:0.68rem; border:1px solid #cbd5e1; padding:2px 7px;">🔒 Auto-Fetched &amp; Locked</span>
+          </label>
+          <input type="text" id="modalCatCourseTitle" readonly style="background:#f8fafc; font-weight:700; color:#0f172a; cursor:not-allowed;" placeholder="Auto-populated upon Course Code selection" />
         </div>
         <div id="modalCatCoursePreview" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; font-size:0.79rem; color:#475569; margin-top:8px;"></div>
       </div>
@@ -3078,6 +3228,7 @@
       <datalist id="semAyPresets">
         <option value="1st Semester, A.Y. 2026-2027"></option>
         <option value="2nd Semester, A.Y. 2026-2027"></option>
+        <option value="Off-Semester, A.Y. 2026-2027"></option>
         <option value="Summer / Midyear, A.Y. 2026-2027"></option>
         <option value="1st Semester, A.Y. 2025-2026"></option>
         <option value="2nd Semester, A.Y. 2025-2026"></option>
@@ -3445,15 +3596,53 @@
       </div>
 
       <!-- Submission Notes -->
-      <div class="form-group" style="margin-bottom:16px;">
+      <div class="form-group" style="margin-bottom:14px;">
         <label style="font-weight:700; color:#1e293b; font-size:0.83rem;">Faculty Submission Notes / Remarks (Optional)</label>
         <textarea id="submitFacultyNotes" rows="2" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem;" placeholder="e.g. Updated OBE assessment activities in Part VI and rubric scaling in Part VII for 1st Semester A.Y. 2026-2027."></textarea>
       </div>
 
+      <!-- Faculty Digital Signature Verification & Inline Signature Pad Gate -->
+      <div id="submitSigSection" style="margin-bottom:16px; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:8px; padding:12px 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-weight:800; color:#1e293b; font-size:0.83rem; margin:0;">
+            ✍️ Affix Faculty Digital Signature <span style="color:#dc2626;">* (Mandatory Gate)</span>
+          </label>
+          <div style="display:flex; gap:6px;" id="submitSigPadControls">
+            <button type="button" class="btn btn-xs btn-outline-secondary" onclick="clearModalSubmitSigPad()" style="font-size:0.7rem; padding:2px 7px;">Clear</button>
+            <label class="btn btn-xs btn-outline-secondary" style="font-size:0.7rem; padding:2px 7px; cursor:pointer; margin:0;">
+              Upload <input type="file" id="submitSigUploadInput" accept="image/*" style="display:none;" onchange="handleModalSubmitSigUpload(this)" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Inline Validation Alert (Shown when unsigned) -->
+        <div id="submitSigValidationAlert" style="display:none; background:#fff1f2; border:1.5px solid #fecdd3; color:#be123c; border-radius:6px; padding:8px 12px; font-size:0.78rem; font-weight:700; margin-bottom:8px;">
+          ⚠️ A valid digital or affixed faculty signature is required before submitting the syllabus for committee review. Please affix or draw your signature below.
+        </div>
+
+        <!-- Affixed signature preview (if already signed in profile or previously drawn) -->
+        <div id="submitSigAffixedPreview" style="display:none; align-items:center; gap:12px; background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:6px; padding:8px 12px; margin-bottom:6px;">
+          <img id="submitSigAffixedImg" src="" alt="Faculty Signature" style="max-height:46px; max-width:140px; object-fit:contain; border:1px solid #86efac; border-radius:4px; background:#fff; padding:2px 6px;" />
+          <div style="flex:1;">
+            <div style="font-size:0.76rem; font-weight:800; color:#15803d;">✓ Valid Faculty Digital Signature Affixed</div>
+            <div style="font-size:0.71rem; color:#475569;">Your signature is verified and ready to seal the syllabus submission.</div>
+          </div>
+          <button type="button" class="btn btn-xs btn-outline-secondary" onclick="enableModalSigRedraw()" style="font-size:0.7rem; padding:2px 7px;">Draw New</button>
+        </div>
+
+        <!-- Canvas drawing pad for signing -->
+        <div id="submitSigCanvasContainer" style="border:1.5px dashed #94a3b8; border-radius:6px; background:#fff; position:relative; text-align:center;">
+          <canvas id="submitModalSigCanvas" width="560" height="110" style="width:100%; height:110px; touch-action:none; display:block; cursor:crosshair;"></canvas>
+          <div id="submitModalSigPlaceholder" style="position:absolute; top:38%; left:0; right:0; color:#94a3b8; font-size:0.77rem; pointer-events:none;">
+            Sign inside this box using mouse or touch to affix your digital faculty signature
+          </div>
+        </div>
+      </div>
+
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button type="button" class="btn btn-light" onclick="closeSubmitSyllabusModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="submitSyllabusWithReviewer()" style="font-weight:700; padding:6px 14px;">
-          🚀 Submit Request &amp; Notify Committee
+        <button type="button" id="btnSubmitSyllabusModal" class="btn btn-primary" onclick="submitSyllabusWithReviewer()" style="font-weight:700; padding:6px 14px;">
+          🚀 Forward to Committee
         </button>
       </div>
     </div>
@@ -4278,6 +4467,8 @@
   function openNewSubjectModal() {
     modalSelectedPrograms = { catalog: [], custom: [] };
     activeModalTab = "catalog";
+    const mYr = document.getElementById("modalCatYearLevel"); if (mYr) mYr.value = "All";
+    const mSem = document.getElementById("modalCatSemester"); if (mSem) mSem.value = "All";
     populateModalCatalog();
     renderModalProgramPills("catalog");
     renderModalProgramPills("custom");
@@ -4328,6 +4519,11 @@
   }
 
   function onModalDepartmentChange() {
+    filterModalCourses();
+    resetModalPrograms("catalog");
+  }
+
+  function filterModalCourses() {
     const colIdx = parseInt(document.getElementById("modalCatCollege").value, 10) || 0;
     const deptIdx = parseInt(document.getElementById("modalCatDepartment").value, 10) || 0;
     const col = catalogData.colleges[colIdx];
@@ -4335,33 +4531,198 @@
     const crsSel = document.getElementById("modalCatCourse");
     if (!dept || !crsSel) return;
 
-    crsSel.innerHTML = (dept.courses || []).map((c, i) => `
-      <option value="${i}">${escapeHtml(c.code)} &ndash; ${escapeHtml(c.title)}</option>
-    `).join("");
+    const selYear = document.getElementById("modalCatYearLevel") ? document.getElementById("modalCatYearLevel").value : "All";
+    const selSem = document.getElementById("modalCatSemester") ? document.getElementById("modalCatSemester").value : "All";
+
+    const courses = dept.courses || [];
+    const matched = [];
+
+    courses.forEach((c, idx) => {
+      // Check Year Level match
+      let matchYear = true;
+      if (selYear && selYear !== "All") {
+        const cy = (c.year_level || "").toLowerCase();
+        const sy = selYear.toLowerCase();
+        if (sy.includes("first")) {
+          matchYear = cy.includes("first") || cy.includes("1");
+        } else if (sy.includes("second")) {
+          matchYear = cy.includes("second") || cy.includes("2");
+        } else if (sy.includes("third")) {
+          matchYear = cy.includes("third") || cy.includes("3");
+        } else if (sy.includes("fourth")) {
+          matchYear = cy.includes("fourth") || cy.includes("4");
+        } else {
+          matchYear = cy === sy;
+        }
+      }
+
+      // Check Semester match (1 - 1st Semester, 2 - 2nd Semester, 3 - Off-Semester)
+      let matchSem = true;
+      if (selSem && selSem !== "All") {
+        const cs = (c.semester || "").toLowerCase();
+        const ss = selSem.toLowerCase();
+        if (!c.semester) {
+          // If course does not have semester metadata, keep it visible
+          matchSem = true;
+        } else if (ss.includes("1st") || ss.includes("first")) {
+          matchSem = cs.includes("1st") || cs.includes("1") || cs.includes("first");
+        } else if (ss.includes("2nd") || ss.includes("second")) {
+          matchSem = cs.includes("2nd") || cs.includes("2") || cs.includes("second");
+        } else if (ss.includes("off") || ss.includes("summer") || ss.includes("mid")) {
+          matchSem = cs.includes("off") || cs.includes("summer") || cs.includes("mid") || cs.includes("3");
+        } else {
+          matchSem = cs === ss;
+        }
+      }
+
+      if (matchYear && matchSem) {
+        matched.push({ course: c, index: idx });
+      }
+    });
+
+    if (matched.length === 0) {
+      crsSel.innerHTML = `<option value="">-- No courses match selected Year &amp; Semester --</option>`;
+    } else {
+      crsSel.innerHTML = matched.map(m => `
+        <option value="${m.index}">${escapeHtml(m.course.code)} &ndash; ${escapeHtml(m.course.title)}</option>
+      `).join("");
+    }
+
     onModalCourseChange();
-    resetModalPrograms("catalog");
+  }
+
+  
+  function _formatCoursePgoPiIgaIedBadges(course) {
+    if (!course) return "";
+    const badges = [];
+    const mappings = course.pgo_pi_mappings || [];
+    if (mappings.length > 0) {
+      const seenIga = new Set();
+      const seenIed = new Set();
+      mappings.forEach(m => {
+        if (m.igas) {
+          m.igas.split(",").forEach(g => {
+            const trimmed = g.trim();
+            if (trimmed && !seenIga.has(trimmed)) {
+              seenIga.add(trimmed);
+              badges.push(`<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-weight:700; font-size:0.7rem;" title="Institutional Graduate Attribute">🎓 ${escapeHtml(trimmed)}</span>`);
+            }
+          });
+        }
+        if (m.ied) {
+          const iedKey = `${m.ied}-${m.ied_label || ''}`;
+          if (!seenIed.has(iedKey)) {
+            seenIed.add(iedKey);
+            const isIntro = m.ied === 'I';
+            const isEnab = m.ied === 'E';
+            const bg = isIntro ? '#eff6ff' : (isEnab ? '#f0fdf4' : '#faf5ff');
+            const col = isIntro ? '#1e40af' : (isEnab ? '#166534' : '#6b21a8');
+            const bdr = isIntro ? '#bfdbfe' : (isEnab ? '#bbf7d0' : '#e9d5ff');
+            badges.push(`<span class="badge" style="background:${bg}; color:${col}; border:1px solid ${bdr}; font-weight:700; font-size:0.7rem;" title="Intended Engineering Demonstration: ${escapeHtml(m.ied_label || '')}">📌 [${escapeHtml(m.ied)}] ${escapeHtml(m.ied_label || 'Demonstration')}</span>`);
+          }
+        }
+      });
+      // Show first 3 PGO-PI alignments
+      mappings.slice(0, 3).forEach(m => {
+        badges.push(`<span class="badge" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-size:0.69rem;" title="${escapeHtml(m.pi_description || '')}">${escapeHtml(m.pgo || '')} (${escapeHtml(m.pi || '')}) [${escapeHtml(m.ied || 'I')}]</span>`);
+      });
+      if (mappings.length > 3) {
+        badges.push(`<span class="badge" style="background:#f8fafc; color:#64748b; font-size:0.68rem;">+${mappings.length - 3} more alignments</span>`);
+      }
+    } else if (course.pgo_pi) {
+      // Parse token string
+      course.pgo_pi.split(";").forEach(tok => {
+        const t = tok.trim();
+        if (!t) return;
+        const mIed = t.match(/\[([IED])\]/i);
+        const iedChar = mIed ? mIed[1].toUpperCase() : "";
+        const iedLabel = iedChar === 'I' ? 'Introductory' : (iedChar === 'E' ? 'Enabling' : (iedChar === 'D' ? 'Demonstrative' : ''));
+        if (iedChar) {
+          badges.push(`<span class="badge" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; font-weight:700; font-size:0.7rem;">📌 [${escapeHtml(iedChar)}] ${escapeHtml(iedLabel)}</span>`);
+        }
+        badges.push(`<span class="badge" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-size:0.69rem;">${escapeHtml(t)}</span>`);
+      });
+      badges.push(`<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-weight:700; font-size:0.7rem;">🎓 IGA2 (Critical Thinking)</span>`);
+    }
+    return badges.join(" ");
+  }
+
+  function renderBasicDetailsPgoPiBadges() {
+    const el = document.getElementById("metaCourseAttributesBadges");
+    if (!el || !blueprint) return;
+    const curCode = (blueprint.metadata?.course_code || "").trim();
+    if (!curCode) {
+      el.innerHTML = `<span style="font-size:0.73rem; color:#94a3b8; font-style:italic;">No course code selected.</span>`;
+      return;
+    }
+    // Find course in catalogData
+    let foundCourse = null;
+    (catalogData.colleges || []).forEach(col => {
+      (col.departments || []).forEach(dept => {
+        (dept.courses || []).forEach(c => {
+          if (c.code && c.code.toLowerCase() === curCode.toLowerCase()) {
+            foundCourse = c;
+          }
+        });
+      });
+    });
+    if (!foundCourse) {
+      // Fallback from course outcomes
+      const igas = [...new Set((blueprint.course_outcomes || []).map(co => co.iga_aligned).filter(Boolean))];
+      const igaHtml = igas.map(g => `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-weight:700; font-size:0.7rem;">🎓 ${escapeHtml(g)}</span>`).join(" ");
+      el.innerHTML = igaHtml || `<span style="font-size:0.73rem; color:#94a3b8; font-style:italic;">PGO-PI alignments loaded from syllabus outcomes.</span>`;
+      return;
+    }
+    const html = _formatCoursePgoPiIgaIedBadges(foundCourse);
+    el.innerHTML = html || `<span style="font-size:0.73rem; color:#94a3b8; font-style:italic;">Standard engineering alignment attributes active.</span>`;
   }
 
   function onModalCourseChange() {
     const colIdx = parseInt(document.getElementById("modalCatCollege").value, 10) || 0;
     const deptIdx = parseInt(document.getElementById("modalCatDepartment").value, 10) || 0;
-    const crsIdx = parseInt(document.getElementById("modalCatCourse").value, 10) || 0;
+    const crsVal = document.getElementById("modalCatCourse") ? document.getElementById("modalCatCourse").value : "";
+    const prev = document.getElementById("modalCatCoursePreview");
+    if (!prev) return;
+
+    if (crsVal === "" || crsVal === undefined || isNaN(parseInt(crsVal, 10))) {
+      prev.innerHTML = `<div style="color:#94a3b8; font-style:italic;">No course selected or matching the filters.</div>`;
+      return;
+    }
+
+    const crsIdx = parseInt(crsVal, 10);
     const col = catalogData.colleges[colIdx];
     const dept = col?.departments?.[deptIdx];
     const course = dept?.courses?.[crsIdx];
-    const prev = document.getElementById("modalCatCoursePreview");
-    if (!prev || !course) return;
+    if (!course) {
+      prev.innerHTML = `<div style="color:#94a3b8; font-style:italic;">No course selected.</div>`;
+      return;
+    }
+
+    const titleInput = document.getElementById("modalCatCourseTitle");
+    if (titleInput) titleInput.value = course.title || "";
 
     const yrLvl = course.year_level || "Second Year";
+    const semTxt = course.semester ? ` &nbsp;|&nbsp; 🗓️ <strong>Semester:</strong> ${escapeHtml(course.semester)}` : "";
     const prereqTxt = course.prereqs || "None";
     const coreqTxt = course.coreqs ? ` &nbsp;|&nbsp; <strong>Co-requisite(s):</strong> ${escapeHtml(course.coreqs)}` : "";
+
+    // Build PGO-PI, IGA & IED Badges
+    const badgeHtml = _formatCoursePgoPiIgaIedBadges(course);
+
     prev.innerHTML = `
-      <div><strong>${escapeHtml(course.code)}: ${escapeHtml(course.title)}</strong> (${escapeHtml(course.credit_units || '3.0 Units')})</div>
-      <div style="margin-top:5px; font-size:0.75rem; color:#0f766e; background:#ecfdf5; padding:4px 8px; border-radius:4px; border:1px solid #a7f3d0;">
-        📅 <strong>Year Level:</strong> ${escapeHtml(yrLvl)} &nbsp;|&nbsp; 🔗 <strong>Pre-requisite(s):</strong> ${escapeHtml(prereqTxt)}${coreqTxt}
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>${escapeHtml(course.code)}: ${escapeHtml(course.title)}</strong>
+        <span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">${escapeHtml(course.credit_units || '3.0 Units')} &bull; ${escapeHtml(course.lec_lab || 'Lecture')}</span>
       </div>
-      <div style="margin-top:5px;">${escapeHtml(course.description ? course.description.slice(0, 180) + '...' : '')}</div>
-      <div style="margin-top:4px; color:#1e40af;"><strong>Weekly Topics:</strong> ${(course.topics || []).length} topics configured in catalog.</div>
+      <div style="margin-top:5px; font-size:0.75rem; color:#0f766e; background:#ecfdf5; padding:4px 8px; border-radius:4px; border:1px solid #a7f3d0;">
+        📅 <strong>Year Level:</strong> ${escapeHtml(yrLvl)}${semTxt} &nbsp;|&nbsp; 🔗 <strong>Pre-requisite(s):</strong> ${escapeHtml(prereqTxt)}${coreqTxt}
+      </div>
+      ${badgeHtml ? `<div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">${badgeHtml}</div>` : ''}
+      <div style="margin-top:6px; font-size:0.74rem; font-weight:700; color:#475569; text-transform:uppercase;">Complete Course Description:</div>
+      <div style="margin-top:2px; max-height:120px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:4px; padding:6px 8px; font-size:0.78rem; line-height:1.45; color:#334155;">
+        ${escapeHtml(course.description || 'No description provided in course catalog.')}
+      </div>
+      <div style="margin-top:5px; color:#1e40af; font-size:0.75rem;"><strong>Weekly Topics:</strong> ${(course.topics || []).length} topics configured in master catalog.</div>
     `;
   }
 
@@ -4370,10 +4731,19 @@
     if (activeModalTab === "catalog") {
       const colIdx = parseInt(document.getElementById("modalCatCollege").value, 10) || 0;
       const deptIdx = parseInt(document.getElementById("modalCatDepartment").value, 10) || 0;
-      const crsIdx = parseInt(document.getElementById("modalCatCourse").value, 10) || 0;
+      const crsVal = document.getElementById("modalCatCourse") ? document.getElementById("modalCatCourse").value : "";
+      if (crsVal === "" || crsVal === undefined || isNaN(parseInt(crsVal, 10))) {
+        alert("Please select a course from the catalog.");
+        return;
+      }
+      const crsIdx = parseInt(crsVal, 10);
       const col = catalogData.colleges[colIdx];
       const dept = col?.departments?.[deptIdx];
       const course = dept?.courses?.[crsIdx];
+      if (!course) {
+        alert("Selected course not found in catalog.");
+        return;
+      }
       const semAy = document.getElementById("modalCatSemAy").value.trim() || "1st Semester, A.Y. 2026-2027";
       const sec = document.getElementById("modalCatSection").value.trim() || "1A";
 
@@ -4583,6 +4953,18 @@
       switchRibbon('ribbon-approvals', 'tab-approvals');
       return;
     }
+    const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+    if (['tab-assessments', 'tab-gradebook', 'tab-receipt-ack', 'tab-cloreport', 'tab-cqi'].includes(stepTabId) && !isSyllabusApproved) {
+      const stepNames = {
+        'tab-assessments': "Assessments Setup",
+        'tab-gradebook': "Class Record & Gradebook",
+        'tab-receipt-ack': "Receipt of Scores & Paper",
+        'tab-cloreport': "CLO Report",
+        'tab-cqi': "CQI Plan"
+      };
+      const stepName = stepNames[stepTabId] || "Section";
+      showLiveToast(`The ${stepName} is locked until the course syllabus is finalized and approved.`, "warning");
+    }
     currentSyllabusStep = stepTabId;
     switchRibbon('ribbon-syllabus', stepTabId);
   }
@@ -4621,60 +5003,85 @@
       `;
     } else if (stepTabId === 'tab-assessments') {
       ctxTitle.textContent = 'Step 2 Actions';
-      ctxActions.innerHTML = `
-        <button type="button" class="btn btn-sm btn-success" onclick="syncClassRecordSetupFromSyllabus(false)" title="Sync Assessments & Aligned CLOs from Syllabus">
-          🔄 Sync from Syllabus
-        </button>
-        <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
-          💾 Save Setup
-        </button>
-      `;
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      if (!isSyllabusApproved) {
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+      } else {
+        ctxActions.innerHTML = `
+          <button type="button" class="btn btn-sm btn-success" onclick="syncClassRecordSetupFromSyllabus(false)" title="Sync Assessments & Aligned CLOs from Syllabus">
+            🔄 Sync from Syllabus
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
+            💾 Save Setup
+          </button>
+        `;
+      }
     } else if (stepTabId === 'tab-gradebook') {
       ctxTitle.textContent = 'Step 3 Actions';
-      ctxActions.innerHTML = `
-        <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportExcelWorkbook()" title="Download Full Official USeP Class Record Excel">
-          📗 Export Consolidated Class Record (.xlsx)
-        </button>
-        <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('rosterFileInput').click()">
-          📥 Import Roster
-        </button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="addStudentRow()">
-          + Add Student
-        </button>
-      `;
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      if (!isSyllabusApproved) {
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+      } else {
+        ctxActions.innerHTML = `
+          <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportExcelWorkbook()" title="Download Full Official USeP Class Record Excel">
+            📗 Export Consolidated Class Record (.xlsx)
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('rosterFileInput').click()">
+            📥 Import Roster
+          </button>
+          <button type="button" class="btn btn-sm btn-primary" onclick="addStudentRow()">
+            + Add Student
+          </button>
+        `;
+      }
     } else if (stepTabId === 'tab-receipt-ack') {
       ctxTitle.textContent = 'Step 4 Actions';
-      ctxActions.innerHTML = `
-        <button type="button" class="btn btn-sm btn-primary" onclick="refreshCourseAndReceiptAcks()" title="Refresh student receipt and acknowledgment records">
-          🔄 Refresh Status
-        </button>
-        <button type="button" class="btn btn-sm btn-light" onclick="printReceiptAckSheet()" title="Print Student Score & Paper Receipt Report">
-          🖨️ Print Receipt Sheet
-        </button>
-      `;
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      if (!isSyllabusApproved) {
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+      } else {
+        ctxActions.innerHTML = `
+          <button type="button" class="btn btn-sm btn-primary" onclick="refreshCourseAndReceiptAcks()" title="Refresh student receipt and acknowledgment records">
+            🔄 Refresh Status
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="printReceiptAckSheet()" title="Print Student Score & Paper Receipt Report">
+            🖨️ Print Receipt Sheet
+          </button>
+        `;
+      }
     } else if (stepTabId === 'tab-cloreport') {
       ctxTitle.textContent = 'Step 5 Actions';
-      ctxActions.innerHTML = `
-        <button type="button" class="btn btn-sm btn-primary" style="background:#0284c7; color:#fff; border-color:#0369a1; font-weight:700;" onclick="exportCloReportPdf()" title="Export Official FM-USeP-MID-10 PDF">
-          📄 Export CLO Report (.pdf)
-        </button>
-        <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportCloReportExcel()" title="Export Official FM-USeP-MID-10 Excel">
-          📊 Export CLO Report (.xlsx)
-        </button>
-        <button type="button" class="btn btn-sm btn-light" onclick="syncCourseAssessmentPlanFromSyllabus(true)">
-          🔄 Re-Sync CAP
-        </button>
-      `;
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      if (!isSyllabusApproved) {
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+      } else {
+        ctxActions.innerHTML = `
+          <button type="button" class="btn btn-sm btn-primary" style="background:#0284c7; color:#fff; border-color:#0369a1; font-weight:700;" onclick="exportCloReportPdf()" title="Export Official FM-USeP-MID-10 PDF">
+            📄 Export CLO Report (.pdf)
+          </button>
+          <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportCloReportExcel()" title="Export Official FM-USeP-MID-10 Excel">
+            📊 Export CLO Report (.xlsx)
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="syncCourseAssessmentPlanFromSyllabus(true)">
+            🔄 Re-Sync CAP
+          </button>
+        `;
+      }
     } else if (stepTabId === 'tab-cqi') {
       ctxTitle.textContent = 'Step 6 Actions';
-      ctxActions.innerHTML = `
-        <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
-          💾 Save CQI Plan
-        </button>
-        <button type="button" class="btn btn-sm btn-light" onclick="window.print()">
-          🖨️ Print CQI Summary
-        </button>
-      `;
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      if (!isSyllabusApproved) {
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+      } else {
+        ctxActions.innerHTML = `
+          <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
+            💾 Save CQI Plan
+          </button>
+          <button type="button" class="btn btn-sm btn-light" onclick="window.print()">
+            🖨️ Print CQI Summary
+          </button>
+        `;
+      }
     }
   }
 
@@ -4689,7 +5096,12 @@
     } else if (tabId === "tab-receipt-ack") {
       renderReceiptAckTab();
       refreshCourseAndReceiptAcks(true);
-      startReceiptAckPolling();
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      if (isSyllabusApproved) {
+        startReceiptAckPolling();
+      } else {
+        stopReceiptAckPolling();
+      }
     } else {
       stopReceiptAckPolling();
       renderLiveGradebookAndReports();
@@ -4819,14 +5231,51 @@
     const deptObj = depts.find(d => d.department === deptSel.value) || depts[0] || { courses: [] };
     const courses = deptObj.courses || [];
     const curCode = m.course_code || (courses[0] ? courses[0].code : "EE 211");
-    let courseOptionsHtml = courses
-      .map(c => `<option value="${escapeHtml(c.code)}" ${c.code === curCode ? "selected" : ""}>${escapeHtml(c.code)} &ndash; ${escapeHtml(c.title)}</option>`)
+    const seenCodes = new Set();
+    const uniqueCourses = [];
+    courses.forEach(c => {
+      const codeKey = (c.code || "").trim();
+      if (!seenCodes.has(codeKey)) {
+        seenCodes.add(codeKey);
+        uniqueCourses.push(c);
+      }
+    });
+
+    let courseOptionsHtml = uniqueCourses
+      .map(c => `<option value="${escapeHtml(c.code)}" ${c.code === curCode ? "selected" : ""}>${escapeHtml(c.code)}</option>`)
       .join("");
 
-    if (curCode && !courses.some(c => c.code === curCode)) {
-      courseOptionsHtml = `<option value="${escapeHtml(curCode)}" selected>${escapeHtml(curCode)} &ndash; ${escapeHtml(m.course_title || "Custom Course")}</option>` + courseOptionsHtml;
+    if (curCode && !uniqueCourses.some(c => c.code === curCode)) {
+      courseOptionsHtml = `<option value="${escapeHtml(curCode)}" selected>${escapeHtml(curCode)}</option>` + courseOptionsHtml;
     }
     courseSel.innerHTML = courseOptionsHtml;
+    const isSubjectCreated = Boolean(currentCourseId || (m && m.course_code && m.course_title));
+    if (courseSel) {
+      courseSel.disabled = isSubjectCreated;
+      if (isSubjectCreated) {
+        courseSel.style.background = "#f1f5f9";
+        courseSel.style.cursor = "not-allowed";
+        courseSel.title = "Course Code cannot be changed once the subject is created.";
+      }
+    }
+    const titleInp = document.getElementById("meta_course_title");
+    if (titleInp) {
+      titleInp.readOnly = isSubjectCreated;
+      if (isSubjectCreated) {
+        titleInp.style.background = "#f1f5f9";
+        titleInp.style.cursor = "not-allowed";
+        titleInp.title = "Course Title cannot be changed once the subject is created.";
+      }
+    }
+    const unitsInp = document.getElementById("meta_credit_units");
+    if (unitsInp) {
+      unitsInp.readOnly = isSubjectCreated;
+      if (isSubjectCreated) {
+        unitsInp.style.background = "#f1f5f9";
+        unitsInp.style.cursor = "not-allowed";
+        unitsInp.title = "Credit Units cannot be changed once the subject is created.";
+      }
+    }
     populateFacultyPresetsAndSwitcher();
   }
 
@@ -4938,16 +5387,20 @@
       document.getElementById("meta_program_code").value = m.program_code;
       renderProgramPills();
       updateProgramHeadsForSelectedPrograms();
-      const firstCourse = (deptObj.courses || [])[0];
-      if (firstCourse) {
-        let code = firstCourse.code || "EE 211";
-        if (code.includes(" - ")) code = code.split(" - ")[0].trim();
-        if (code.includes(" – ")) code = code.split(" – ")[0].trim();
-        m.course_code = code;
+      if (!currentCourseId) {
+        const firstCourse = (deptObj.courses || [])[0];
+        if (firstCourse) {
+          let code = firstCourse.code || "EE 211";
+          if (code.includes(" - ")) code = code.split(" - ")[0].trim();
+          if (code.includes(" – ")) code = code.split(" – ")[0].trim();
+          m.course_code = code;
+        }
       }
     }
     populateCollegeDepartmentCourseDropdowns();
-    onCourseCodeChange();
+    if (!currentCourseId) {
+      onCourseCodeChange();
+    }
     renderCourseOutcomes();
     renderLiveGradebookAndReports();
   }
@@ -5052,6 +5505,10 @@
   }
 
   function onCourseCodeChange() {
+    if (currentCourseId) {
+      console.warn("Course identity is locked after subject creation.");
+      return;
+    }
     const m = blueprint.metadata;
     const selectedCollege = document.getElementById("meta_college").value;
     const selectedDept = document.getElementById("meta_department").value;
@@ -5076,13 +5533,17 @@
       m.year_level = courseObj.year_level || m.year_level || "First Year";
       if (document.getElementById("meta_year_level")) document.getElementById("meta_year_level").value = m.year_level;
 
-      m.prereq_coreq_table = [{ req_type: "Pre-requisite", course_code: "", course_title: "" }];
-      m.sdg_table = [{ sdg: "", description: "" }];
-      m.learning_plan_table = [{ ilo: "", clo: "", time_frame: "", topics: "", tla: "", required_reading: "", assessment_activities: "", merge_assessment_with_prev: false }];
-      m.policies_table = [{ number: "1", title: "", description: "" }];
+      m.workload_description = "";
+      if (document.getElementById("meta_workload_description")) document.getElementById("meta_workload_description").value = "";
+      m.prereq_coreq_table = [];
+      m.sdg_table = [];
+      m.learning_plan_table = [getDefaultOrientationRow()];
+      m.policies_table = getDefaultPoliciesTable();
       m.references_table = [{ code: "[1]", reference: "" }];
       m.syllabus_assessment_activities = [{ type: "Summative", code: "", activity: "", description: "", clo_aligned: "", weight_pct: 0, items_midterm: 1, items_finals: 1, items_per_term: 1, is_major_assessment: false, rubric_ref: "" }];
-      blueprint.course_outcomes = [{ co_id: "CLO1", description: "", program_outcomes: "", graduate_outcome_desc: "", performance_indicator: "", iga_aligned: "", target_score_pct: 75.0, target_class_pass_pct: 50.0 }];
+
+      // Automatically pre-populate default Program Graduate Outcomes (PGO) and Performance Indicators (PI)
+      syncClosToActiveProgramStructure(courseObj.pgo_pi || "");
 
       document.getElementById("meta_course_title").value = m.course_title;
       document.getElementById("meta_credit_units").value = m.credit_units;
@@ -5091,6 +5552,7 @@
       document.getElementById("meta_course_description").value = m.course_description;
 
       renderCourseOutcomes();
+      renderBasicDetailsPgoPiBadges();
       renderSyllabusTables();
       renderLiveGradebookAndReports();
 
@@ -5132,6 +5594,34 @@
     if (m.course_code && (m.course_code.includes(" - ") || m.course_code.includes(" – "))) {
       m.course_code = m.course_code.split(" - ")[0].split(" – ")[0].trim();
     }
+    const isCreated = Boolean(currentCourseId || (m.course_code && m.course_title));
+    const courseEl = document.getElementById("meta_course_code");
+    if (courseEl) {
+      courseEl.disabled = isCreated;
+      if (isCreated) {
+        courseEl.style.background = "#f1f5f9";
+        courseEl.style.cursor = "not-allowed";
+        courseEl.title = "Course Code cannot be changed once the subject is created.";
+      }
+    }
+    const titleEl = document.getElementById("meta_course_title");
+    if (titleEl) {
+      titleEl.readOnly = isCreated;
+      if (isCreated) {
+        titleEl.style.background = "#f1f5f9";
+        titleEl.style.cursor = "not-allowed";
+        titleEl.title = "Course Title cannot be changed once the subject is created.";
+      }
+    }
+    const unitsEl = document.getElementById("meta_credit_units");
+    if (unitsEl) {
+      unitsEl.readOnly = isCreated;
+      if (isCreated) {
+        unitsEl.style.background = "#f1f5f9";
+        unitsEl.style.cursor = "not-allowed";
+        unitsEl.title = "Credit Units cannot be changed once the subject is created.";
+      }
+    }
     setVal("meta_course_title", m.course_title || "");
     setVal("meta_credit_units", m.credit_units || "");
     setVal("meta_lec_lab", m.lec_lab || "Lecture");
@@ -5143,6 +5633,7 @@
     try { renderProgramPills(); } catch (e) { console.warn("renderProgramPills:", e); }
     try { renderSectionChips(); } catch (e) { console.warn("renderSectionChips:", e); }
     try { renderScheduleChips(); } catch (e) { console.warn("renderScheduleChips:", e); }
+    try { renderConsultationChips(); } catch (e) { console.warn("renderConsultationChips:", e); }
 
     // Auto-fill faculty_name to account holder if empty
     const acctHolder = window.CURRENT_USER?.full_name || currentUser?.full_name || "";
@@ -5199,16 +5690,16 @@
     }
 
     if (!m.learning_plan_table || !m.learning_plan_table.length) {
-      m.learning_plan_table = [{ ilo: "", clo: "", time_frame: "", topics: "", tla: "", required_reading: "", assessment_activities: "", merge_assessment_with_prev: false }];
+      m.learning_plan_table = [getDefaultOrientationRow()];
     }
     if (!m.policies_table || !m.policies_table.length) {
-      m.policies_table = [{ number: "1", title: "", description: "" }];
+      m.policies_table = getDefaultPoliciesTable();
     }
-    if (!m.prereq_coreq_table || !m.prereq_coreq_table.length) {
-      m.prereq_coreq_table = [{ req_type: "Pre-requisite", course_code: "", course_title: "" }];
+    if (!m.prereq_coreq_table) {
+      m.prereq_coreq_table = [];
     }
-    if (!m.sdg_table || !m.sdg_table.length) {
-      m.sdg_table = [{ sdg: "", description: "" }];
+    if (!m.sdg_table) {
+      m.sdg_table = [];
     }
     if (!m.references_table || !m.references_table.length) {
       m.references_table = [{ code: "[1]", reference: "" }];
@@ -5803,12 +6294,14 @@
 
   function renderPrereqCoreqTable() {
     const m = blueprint.metadata;
-    if (!m.prereq_coreq_table || !m.prereq_coreq_table.length) {
-      m.prereq_coreq_table = [{ req_type: "Pre-requisite", course_code: "", course_title: "" }];
-    }
+    if (!m.prereq_coreq_table) m.prereq_coreq_table = [];
     const progCourses = getProgramCoursesForPartV();
     const tbody = document.getElementById("prereqCoreqTableBody");
     if (!tbody) return;
+    if (!m.prereq_coreq_table.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b; padding:14px; font-size:0.8rem; font-style:italic;">No pre-requisites or co-requisites specified. Click <strong>+ Add Requirement</strong> above if applicable.</td></tr>`;
+      return;
+    }
     tbody.innerHTML = m.prereq_coreq_table.map((row, idx) => {
       const curCode = (row.course_code || "").trim();
       const inCatalog = progCourses.some(c => c.code.toLowerCase() === curCode.toLowerCase());
@@ -5859,7 +6352,7 @@
   }
 
   function removePrereqCoreqRow(idx) {
-    if (!blueprint.metadata.prereq_coreq_table || !blueprint.metadata.prereq_coreq_table.length) return;
+    if (!blueprint.metadata.prereq_coreq_table) return;
     blueprint.metadata.prereq_coreq_table.splice(idx, 1);
     renderPrereqCoreqTable();
     syncPrereqCoreqMetaStrings();
@@ -5869,10 +6362,13 @@
   function renderSdgTable() {
     const m = blueprint.metadata;
     const sdgCatalog = catalogData.sdg_catalog || [];
-    if (!m.sdg_table || !m.sdg_table.length) {
-      m.sdg_table = [{ sdg: "", description: "" }];
-    }
+    if (!m.sdg_table) m.sdg_table = [];
     const tbody = document.getElementById("sdgTableBody");
+    if (!tbody) return;
+    if (!m.sdg_table.length) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#64748b; padding:14px; font-size:0.8rem; font-style:italic;">No SDG alignments specified. Click <strong>+ Add SDG Alignment</strong> above if applicable.</td></tr>`;
+      return;
+    }
     tbody.innerHTML = m.sdg_table.map((row, idx) => {
       const curSdg = row.sdg || "";
       let optsHtml = `<option value="" ${!curSdg ? "selected" : ""}>-- Select SDG --</option>` + sdgCatalog.map(s => `
@@ -5920,9 +6416,10 @@
   }
 
   function removeSdgRow(idx) {
-    if ((blueprint.metadata.sdg_table || []).length <= 1) return;
+    if (!blueprint.metadata.sdg_table) return;
     blueprint.metadata.sdg_table.splice(idx, 1);
     renderSdgTable();
+    queueAutoSave();
   }
 
   function parseCloList(coIdStr) {
@@ -6680,11 +7177,12 @@
   }
 
   function removeSyllabusAssessmentActivityRow(idx) {
-    if ((blueprint.metadata.syllabus_assessment_activities || []).length <= 1) return;
+    if (!blueprint.metadata.syllabus_assessment_activities) return;
     blueprint.metadata.syllabus_assessment_activities.splice(idx, 1);
     renderSyllabusAssessmentActivitiesTable();
     maybeAutoSyncSetupFromSyllabus();
     renderLearningPlanTable();
+    queueAutoSave();
   }
 
   function parseRowClos(val) {
@@ -6939,113 +7437,119 @@
     };
   }
 
+  function escapeRegexForRef(c) {
+    const raw = (c || "").trim().replace(/^[\[\(]+|[\]\)]+$/g, "");
+    return (raw || c || "").trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   function renderLearningPlanHoursCounter() {
-    const el = document.getElementById("learningPlanHoursCounter");
-    if (!el) return;
-    const stats = computeLearningPlanHoursStats();
-    if (!stats) {
-      el.innerHTML = "";
-      return;
-    }
-
-    const midStatusBadge = stats.hasMidterm
-      ? `<span class="badge" style="background:${stats.midtermMet ? '#dcfce7; color:#166534;' : (stats.allocMidterm < stats.targetMidterm ? '#fef3c7; color:#92400e;' : '#e0e7ff; color:#3730a3;')}; padding:4px 8px; font-weight:700;">
-           Midterm: <strong>${stats.allocMidterm}</strong> / ${stats.targetMidterm} hrs ${stats.midtermMet ? '✓ Met' : (stats.allocMidterm < stats.targetMidterm ? `⚠️ -${stats.targetMidterm - stats.allocMidterm}h` : `+${stats.allocMidterm - stats.targetMidterm}h`)}
-         </span>`
-      : '';
-
-    const finalsStatusBadge = `<span class="badge" style="background:${stats.finalsMet ? '#dcfce7; color:#166534;' : (stats.allocFinals < stats.targetFinals ? '#fef3c7; color:#92400e;' : '#e0e7ff; color:#3730a3;')}; padding:4px 8px; font-weight:700;">
-      ${stats.hasMidterm ? 'Final Term' : 'Total Course'}: <strong>${stats.allocFinals}</strong> / ${stats.targetFinals} hrs ${stats.finalsMet ? '✓ Met' : (stats.allocFinals < stats.targetFinals ? `⚠️ -${stats.targetFinals - stats.allocFinals}h` : `+${stats.allocFinals - stats.targetFinals}h`)}
-    </span>`;
-
-    // Compute Term Assessment Weights Audit (matching Class Record weight monitoring)
-    const cats = blueprint.categories || [];
-    const midCats = cats.filter(c => c.term === "Midterm" && (c.assessment_type || "SA").toUpperCase() === "SA");
-    const finCats = cats.filter(c => c.term === "Finals" && (c.assessment_type || "SA").toUpperCase() === "SA");
-    const midSum = midCats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
-    const finSum = finCats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
-    const midOk = Math.abs(midSum - 100) < 0.1;
-    const finOk = Math.abs(finSum - 100) < 0.1;
-
-    let gModel = null;
     try {
-      if (typeof computePart8GradingModel === "function") gModel = computePart8GradingModel();
-    } catch (e) {}
+      const el = document.getElementById("learningPlanHoursCounter");
+      if (!el) return;
+      const stats = computeLearningPlanHoursStats();
+      if (!stats) {
+        el.innerHTML = "";
+        return;
+      }
 
-    let termWeightBadges = "";
-    if (cats.length > 0) {
-      termWeightBadges = `
-        <span class="badge" style="background:${midOk ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
-          Midterm SA: <strong>${midSum.toFixed(0)}%</strong> ${midOk ? '✓ Met' : '(Must be 100%)'}
-        </span>
-        <span class="badge" style="background:${finOk ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
-          Final Term SA: <strong>${finSum.toFixed(0)}%</strong> ${finOk ? '✓ Met' : '(Must be 100%)'}
-        </span>
-      `;
-    } else if (gModel && gModel.sections) {
-      termWeightBadges = gModel.sections.filter(s => s.mode === 'scaled').map(sec => {
-        const okM = Math.abs(sec.midSubtotal - 100) < 0.1;
-        const okF = Math.abs(sec.finSubtotal - 100) < 0.1;
-        return `
-          <span class="badge" style="background:${okM ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
-            ${escapeHtml(sec.title)} Mid: <strong>${sec.midSubtotal.toFixed(0)}%</strong> ${okM ? '✓' : '⚠️'}
+      const midStatusBadge = stats.hasMidterm
+        ? `<span class="badge" style="background:${stats.midtermMet ? '#dcfce7; color:#166534;' : (stats.allocMidterm < stats.targetMidterm ? '#fef3c7; color:#92400e;' : '#e0e7ff; color:#3730a3;')}; padding:4px 8px; font-weight:700;">
+             Midterm: <strong>${stats.allocMidterm}</strong> / ${stats.targetMidterm} hrs ${stats.midtermMet ? '✓ Met' : (stats.allocMidterm < stats.targetMidterm ? `⚠️ -${stats.targetMidterm - stats.allocMidterm}h` : `+${stats.allocMidterm - stats.targetMidterm}h`)}
+           </span>`
+        : '';
+
+      const finalsStatusBadge = `<span class="badge" style="background:${stats.finalsMet ? '#dcfce7; color:#166534;' : (stats.allocFinals < stats.targetFinals ? '#fef3c7; color:#92400e;' : '#e0e7ff; color:#3730a3;')}; padding:4px 8px; font-weight:700;">
+        ${stats.hasMidterm ? 'Final Term' : 'Total Course'}: <strong>${stats.allocFinals}</strong> / ${stats.targetFinals} hrs ${stats.finalsMet ? '✓ Met' : (stats.allocFinals < stats.targetFinals ? `⚠️ -${stats.targetFinals - stats.allocFinals}h` : `+${stats.allocFinals - stats.targetFinals}h`)}
+      </span>`;
+
+      // Compute Term Assessment Weights Audit (matching Class Record weight monitoring)
+      const cats = blueprint.categories || [];
+      const midCats = cats.filter(c => c.term === "Midterm" && (c.assessment_type || "SA").toUpperCase() === "SA");
+      const finCats = cats.filter(c => c.term === "Finals" && (c.assessment_type || "SA").toUpperCase() === "SA");
+      const midSum = midCats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+      const finSum = finCats.reduce((acc, c) => acc + (parseFloat(c.weight_pct) || 0), 0);
+      const midOk = Math.abs(midSum - 100) < 0.1;
+      const finOk = Math.abs(finSum - 100) < 0.1;
+
+      let gModel = null;
+      try {
+        if (typeof computePart8GradingModel === "function") gModel = computePart8GradingModel();
+      } catch (e) {}
+
+      let termWeightBadges = "";
+      if (cats.length > 0) {
+        termWeightBadges = `
+          <span class="badge" style="background:${midOk ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
+            Midterm SA: <strong>${midSum.toFixed(0)}%</strong> ${midOk ? '✓ Met' : '(Must be 100%)'}
           </span>
-          <span class="badge" style="background:${okF ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
-            ${escapeHtml(sec.title)} Fin: <strong>${sec.finSubtotal.toFixed(0)}%</strong> ${okF ? '✓' : '⚠️'}
+          <span class="badge" style="background:${finOk ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
+            Final Term SA: <strong>${finSum.toFixed(0)}%</strong> ${finOk ? '✓ Met' : '(Must be 100%)'}
           </span>
         `;
-      }).join(' ');
+      } else if (gModel && gModel.sections) {
+        termWeightBadges = gModel.sections.filter(s => s.mode === 'scaled').map(sec => {
+          const raw = (typeof sec.rawSum === 'number') ? sec.rawSum : 0;
+          const ok = Math.abs(raw - 100) < 0.1;
+          return `
+            <span class="badge" style="background:${ok ? '#dcfce7; color:#166534;' : '#fee2e2; color:#b91c1c;'}; padding:4px 8px; font-weight:700;">
+              ${escapeHtml(sec.title)}: <strong>${raw.toFixed(0)}%</strong> ${ok ? '✓ Met' : '(Must be 100%)'}
+            </span>
+          `;
+        }).join(' ');
+      }
+
+      let schemeBadge = "";
+      const mMeta = blueprint.metadata || {};
+      const curScheme = mMeta.grading_scheme || "standard";
+      if (curScheme === "term_project") {
+        const midW = parseFloat(mMeta.midterm_weight) || 40;
+        const finW = parseFloat(mMeta.finals_weight) || 40;
+        const projW = parseFloat(mMeta.project_weight) || 20;
+        schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${midW}% Midterm + ${finW}% Final Term + ${projW}% Project</span>`;
+      } else if (curScheme === "lecture_lab") {
+        const lecW = parseFloat(mMeta.lecture_weight) || 75;
+        const labW = parseFloat(mMeta.laboratory_weight) || 25;
+        schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${lecW}% Lecture + ${labW}% Laboratory</span>`;
+      } else if (curScheme === "lecture_major") {
+        const lecW = parseFloat(mMeta.lecture_weight) || 80;
+        const projW = parseFloat(mMeta.project_weight) || 20;
+        schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${lecW}% Lecture + ${projW}% Major Assessment</span>`;
+      } else {
+        schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Class Record Model: 50% Midterm + 50% Final Term</span>`;
+      }
+
+      const totalStatusBadge = `<span class="badge" style="background:${stats.totalMet ? '#15803d; color:#ffffff;' : (stats.totalAllocated < stats.totalRequiredHours ? '#b45309; color:#ffffff;' : '#4338ca; color:#ffffff;')}; padding:4px 10px; font-weight:800;">
+        Semester Total: ${stats.totalAllocated} / ${stats.totalRequiredHours} hrs (${Math.round((stats.totalAllocated / Math.max(1, stats.totalRequiredHours)) * 100)}% ${stats.totalMet ? '✓ Complete' : ''})
+      </span>`;
+
+      el.innerHTML = `
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:0.78rem; font-weight:800; color:#1e293b;">⏱️ Contact Hours Audit:</span>
+            ${midStatusBadge}
+            ${finalsStatusBadge}
+            ${totalStatusBadge}
+          </div>
+          <div style="font-size:0.71rem; color:#64748b;">
+            Basis: <strong>${stats.lecUnits} Lec units</strong> (18h/unit) + <strong>${stats.labUnits} Lab units</strong> (54h/unit) = <strong>${stats.totalRequiredHours} hrs total</strong>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-top:1px dashed #cbd5e1; padding-top:6px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:0.78rem; font-weight:800; color:#1e293b;">⚖️ Term Assessment Weights Audit:</span>
+            ${termWeightBadges}
+            ${schemeBadge}
+          </div>
+          <div style="font-size:0.71rem; color:#64748b;">
+            Monitoring: <strong>Class Record Term Weights</strong> (each term summative assessment total must equal 100%)
+          </div>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      console.error("Error in renderLearningPlanHoursCounter:", err);
     }
-
-    let schemeBadge = "";
-    const mMeta = blueprint.metadata || {};
-    const curScheme = mMeta.grading_scheme || "standard";
-    if (curScheme === "term_project") {
-      const midW = parseFloat(mMeta.midterm_weight) || 40;
-      const finW = parseFloat(mMeta.finals_weight) || 40;
-      const projW = parseFloat(mMeta.project_weight) || 20;
-      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${midW}% Midterm + ${finW}% Final Term + ${projW}% Project</span>`;
-    } else if (curScheme === "lecture_lab") {
-      const lecW = parseFloat(mMeta.lecture_weight) || 75;
-      const labW = parseFloat(mMeta.laboratory_weight) || 25;
-      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${lecW}% Lecture + ${labW}% Laboratory</span>`;
-    } else if (curScheme === "lecture_major") {
-      const lecW = parseFloat(mMeta.lecture_weight) || 80;
-      const projW = parseFloat(mMeta.project_weight) || 20;
-      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Final Grade: ${lecW}% Lecture + ${projW}% Major Assessment</span>`;
-    } else {
-      schemeBadge = `<span class="badge" style="background:#e0f2fe; color:#0369a1; padding:4px 8px; font-weight:700;">Class Record Model: 50% Midterm + 50% Final Term</span>`;
-    }
-
-    const totalStatusBadge = `<span class="badge" style="background:${stats.totalMet ? '#15803d; color:#ffffff;' : (stats.totalAllocated < stats.totalRequiredHours ? '#b45309; color:#ffffff;' : '#4338ca; color:#ffffff;')}; padding:4px 10px; font-weight:800;">
-      Semester Total: ${stats.totalAllocated} / ${stats.totalRequiredHours} hrs (${Math.round((stats.totalAllocated / Math.max(1, stats.totalRequiredHours)) * 100)}% ${stats.totalMet ? '✓ Complete' : ''})
-    </span>`;
-
-    el.innerHTML = `
-      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; margin-bottom:10px; display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <span style="font-size:0.78rem; font-weight:800; color:#1e293b;">⏱️ Contact Hours Audit:</span>
-          ${midStatusBadge}
-          ${finalsStatusBadge}
-          ${totalStatusBadge}
-        </div>
-        <div style="font-size:0.71rem; color:#64748b;">
-          Basis: <strong>${stats.lecUnits} Lec units</strong> (18h/unit) + <strong>${stats.labUnits} Lab units</strong> (54h/unit) = <strong>${stats.totalRequiredHours} hrs total</strong>
-        </div>
-      </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-top:1px dashed #cbd5e1; padding-top:6px;">
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <span style="font-size:0.78rem; font-weight:800; color:#1e293b;">⚖️ Term Assessment Weights Audit:</span>
-          ${termWeightBadges}
-          ${schemeBadge}
-        </div>
-        <div style="font-size:0.71rem; color:#64748b;">
-          Monitoring: <strong>Class Record Term Weights</strong> (each term summative assessment total must equal 100%)
-        </div>
-        </div>
-      </div>
-    `;
   }
 
   // --- PART IX: REFERENCES CHECKBOX SELECTION HELPERS ---
@@ -7069,8 +7573,10 @@
 
     let customText = curReading;
     availableRefs.forEach(r => {
-      const c = (r.code || "").trim();
-      customText = customText.replace(new RegExp(`\\s*\\[?${c}\\]?(?:,\\s*)?`, "gi"), "");
+      const escaped = escapeRegexForRef(r.code);
+      if (escaped) {
+        customText = customText.replace(new RegExp(`\\s*\\[?${escaped}\\]?(?:,\\s*)?`, "gi"), "");
+      }
     });
     customText = customText.trim().replace(/^,\s*|,\s*$/g, "");
 
@@ -7097,8 +7603,10 @@
 
     let customText = curReading;
     availableRefs.forEach(r => {
-      const c = (r.code || "").trim();
-      customText = customText.replace(new RegExp(`\\s*\\[?${c}\\]?(?:,\\s*)?`, "gi"), "");
+      const escaped = escapeRegexForRef(r.code);
+      if (escaped) {
+        customText = customText.replace(new RegExp(`\\s*\\[?${escaped}\\]?(?:,\\s*)?`, "gi"), "");
+      }
     });
     customText = customText.trim().replace(/^,\s*|,\s*$/g, "");
 
@@ -7128,9 +7636,24 @@
     queueAutoSave();
   }
 
+  function getDefaultOrientationRow() {
+    return {
+      ilo: "• Recognize the university VMGO & Institutional Graduate Attributes.\n• Appreciates the significance of PEOs and PGOs of the program.\n• Recognize the rules and regulations of the course and the grading system.",
+      clo: "",
+      time_frame: "1 hour",
+      topics: "• Course Orientation\n• VMGO & IGA of the University\n• PEOs & PGOs of the program\n• Rules and regulations of the course & grading system\n• Presentation of the course outline",
+      tla: "• On-site or online meeting",
+      required_reading: "• USeP Student Handbook (2016 edition)",
+      assessment_activities: "• N/A",
+      merge_assessment_with_prev: false
+    };
+  }
+
   function renderLearningPlanTable() {
     const m = blueprint.metadata;
-    if (!m.learning_plan_table) m.learning_plan_table = [];
+    if (!m.learning_plan_table || !m.learning_plan_table.length) {
+      m.learning_plan_table = [getDefaultOrientationRow()];
+    }
     const tbody = document.getElementById("learningPlanTableBody");
     if (!tbody) return;
 
@@ -7346,7 +7869,11 @@
         </tr>
       `;
     }).join("");
-    renderLearningPlanHoursCounter();
+    try {
+      renderLearningPlanHoursCounter();
+    } catch (e) {
+      console.error("Error updating learning plan hours counter:", e);
+    }
   }
 
   function addLearningPlanRow() {
@@ -7387,17 +7914,17 @@
   }
 
   function removeLearningPlanRow(idx) {
-    if ((blueprint.metadata.learning_plan_table || []).length <= 1) return;
+    if (!blueprint.metadata.learning_plan_table) return;
     blueprint.metadata.learning_plan_table.splice(idx, 1);
     if (blueprint.metadata.learning_plan_table.length > 0) {
       blueprint.metadata.learning_plan_table[0].merge_assessment_with_prev = false;
     }
     renderLearningPlanTable();
+    queueAutoSave();
   }
 
   function renderReferencesTable() {
-    if (typeof renderLearningPlanTable === "function") renderLearningPlanTable();
-    const m = blueprint.metadata;
+    const m = (blueprint && blueprint.metadata) || {};
     if (!m.references_table) m.references_table = [];
     const tbody = document.getElementById("referencesTableBody");
     if (!tbody) return;
@@ -7409,44 +7936,55 @@
           </td>
         </tr>
       `;
-      return;
-    }
-    tbody.innerHTML = m.references_table.map((ref, idx) => `
-      <tr>
-        <td style="width:110px;">
-          <input type="text" value="${escapeHtml(ref.code)}" style="font-weight:700;"
-            onchange="blueprint.metadata.references_table[${idx}].code=this.value; queueAutoSave();" />
-        </td>
-        <td>
-          <div style="display:flex; flex-direction:column; gap:4px;">
-            <textarea rows="2" style="width:100%;" onchange="blueprint.metadata.references_table[${idx}].reference=this.value; queueAutoSave();">${escapeHtml(ref.reference)}</textarea>
-            <div>
-              <button type="button" class="btn btn-outline-primary btn-xs" style="font-size:0.72rem; padding:2px 8px;" onclick="openApaCitationModal(${idx})">
-                📚 APA Citation Generator
-              </button>
+    } else {
+      tbody.innerHTML = m.references_table.map((ref, idx) => `
+        <tr>
+          <td style="width:110px;">
+            <input type="text" value="${escapeHtml(ref.code || '')}" style="font-weight:700;"
+              onchange="blueprint.metadata.references_table[${idx}].code=this.value; queueAutoSave();" />
+          </td>
+          <td>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <textarea rows="2" style="width:100%;" placeholder="Author, A. A. (Year). Title of Book (Edition). Publisher." onchange="blueprint.metadata.references_table[${idx}].reference=this.value; queueAutoSave();">${escapeHtml(ref.reference || '')}</textarea>
+              <div>
+                <button type="button" class="btn btn-outline-primary btn-xs" style="font-size:0.72rem; padding:2px 8px;" onclick="openApaCitationModal(${idx})">
+                  📚 APA Citation Generator
+                </button>
+              </div>
             </div>
-          </div>
-        </td>
-        <td style="width:50px; text-align:center;">
-          <button type="button" class="btn btn-danger btn-sm" onclick="removeReferenceRow(${idx})">&times;</button>
-        </td>
-      </tr>
-    `).join("");
+          </td>
+          <td style="width:50px; text-align:center;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeReferenceRow(${idx})">&times;</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    // Safely update Part IX learning plan references checkboxes after Part X is rendered
+    try {
+      if (typeof renderLearningPlanTable === "function") renderLearningPlanTable();
+    } catch (e) {
+      console.error("Error updating learning plan table from references:", e);
+    }
   }
 
   function addReferenceRow() {
+    if (!blueprint) blueprint = {};
+    if (!blueprint.metadata) blueprint.metadata = {};
     if (!blueprint.metadata.references_table) blueprint.metadata.references_table = [];
     const nextNum = blueprint.metadata.references_table.length + 1;
-    const codeStr = `Ref${String(nextNum).padStart(2, "0")}`;
+    const hasBracketFormat = blueprint.metadata.references_table.some(r => (r.code || "").trim().startsWith("["));
+    const codeStr = hasBracketFormat ? `[${nextNum}]` : `Ref${String(nextNum).padStart(2, "0")}`;
     blueprint.metadata.references_table.push({
       code: codeStr,
-      reference: "Author, A. A. (Year). Title of Book (Edition). Publisher."
+      reference: ""
     });
     renderReferencesTable();
+    queueAutoSave();
   }
 
   function removeReferenceRow(idx) {
-    if (!blueprint.metadata.references_table || !blueprint.metadata.references_table.length) return;
+    if (!blueprint?.metadata?.references_table || !blueprint.metadata.references_table.length) return;
     blueprint.metadata.references_table.splice(idx, 1);
     renderReferencesTable();
     queueAutoSave();
@@ -7464,10 +8002,13 @@
 
   function renderPoliciesTable() {
     const m = blueprint.metadata;
-    if (!m.policies_table || !m.policies_table.length) {
-      m.policies_table = getDefaultPoliciesTable();
-    }
+    if (!m.policies_table) m.policies_table = [];
     const tbody = document.getElementById("policiesTableBody");
+    if (!tbody) return;
+    if (!m.policies_table.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b; padding:14px; font-size:0.8rem; font-style:italic;">No classroom policies defined. Click <strong>+ Add Policy</strong> above if applicable.</td></tr>`;
+      return;
+    }
     tbody.innerHTML = m.policies_table.map((pol, idx) => `
       <tr>
         <td>
@@ -7500,9 +8041,10 @@
   }
 
   function removePolicyRow(idx) {
-    if ((blueprint.metadata.policies_table || []).length <= 1) return;
+    if (!blueprint.metadata.policies_table) return;
     blueprint.metadata.policies_table.splice(idx, 1);
     renderPoliciesTable();
+    queueAutoSave();
   }
 
   function syncMetaFromInputs(doQueue = true) {
@@ -7511,9 +8053,11 @@
     m.university = document.getElementById("meta_university").value;
     m.college = document.getElementById("meta_college").value;
     m.department = document.getElementById("meta_department").value;
-    m.course_code = document.getElementById("meta_course_code").value;
-    m.course_title = document.getElementById("meta_course_title").value;
-    m.credit_units = document.getElementById("meta_credit_units").value;
+    if (!currentCourseId) {
+      m.course_code = document.getElementById("meta_course_code").value;
+      m.course_title = document.getElementById("meta_course_title").value;
+      m.credit_units = document.getElementById("meta_credit_units").value;
+    }
     m.lec_lab = document.getElementById("meta_lec_lab").value;
     m.schedule = document.getElementById("meta_schedule").value;
     m.room = document.getElementById("meta_room").value;
@@ -7854,16 +8398,99 @@
     renderSyllabusAssessmentActivitiesTable();
   }
 
+  function getCourseMappedPgosAndPis(courseCode) {
+    const pgoList = getActivePgoCatalog();
+    const res = {
+      pgoCodes: new Set(),
+      pisByPgo: new Map(),
+      piDescriptions: new Map()
+    };
+
+    const curCode = (courseCode || blueprint?.metadata?.course_code || "").trim().toLowerCase();
+    let courseObj = null;
+    if (curCode) {
+      for (const col of (catalogData.colleges || [])) {
+        for (const dept of (col.departments || [])) {
+          for (const c of (dept.courses || [])) {
+            if (c.code && c.code.toLowerCase() === curCode) {
+              courseObj = c;
+              break;
+            }
+          }
+          if (courseObj) break;
+        }
+        if (courseObj) break;
+      }
+    }
+
+    // 1. Process mappings if available
+    const mappings = (courseObj && courseObj.pgo_pi_mappings) || blueprint?.metadata?.pgo_pi_mappings || [];
+    if (Array.isArray(mappings) && mappings.length > 0) {
+      mappings.forEach(m => {
+        const normPgo = _normalizePgoCode(m.pgo || "", pgoList);
+        if (normPgo) {
+          res.pgoCodes.add(normPgo);
+          if (!res.pisByPgo.has(normPgo)) {
+            res.pisByPgo.set(normPgo, new Set());
+          }
+          const piCode = (m.pi || "").trim().toLowerCase();
+          if (piCode) {
+            res.pisByPgo.get(normPgo).add(piCode);
+          }
+          if (m.pi_description) {
+            res.piDescriptions.set(piCode, m.pi_description);
+          }
+        }
+      });
+    }
+
+    // 2. Process pgo_pi string if available
+    const pgoPiStr = (courseObj && courseObj.pgo_pi) || blueprint?.metadata?.pgo_pi || "";
+    if (pgoPiStr) {
+      const regex = /PGO[- ]?([a-m]|\d{1,2})[- ]+([a-m]\.\d+|\d{1,2}\.\d+)/gi;
+      let match;
+      while ((match = regex.exec(pgoPiStr)) !== null) {
+        const pgoToken = match[1];
+        const piCode = match[2].toLowerCase();
+        const normPgo = _normalizePgoCode(pgoToken, pgoList);
+        if (normPgo) {
+          res.pgoCodes.add(normPgo);
+          if (!res.pisByPgo.has(normPgo)) {
+            res.pisByPgo.set(normPgo, new Set());
+          }
+          res.pisByPgo.get(normPgo).add(piCode);
+        }
+      }
+      if (res.pgoCodes.size === 0) {
+        const pgoOnlyRegex = /PGO[- ]?([a-m]|\d{1,2})\b/gi;
+        let m2;
+        while ((m2 = pgoOnlyRegex.exec(pgoPiStr)) !== null) {
+          const normPgo = _normalizePgoCode(m2[1], pgoList);
+          if (normPgo) res.pgoCodes.add(normPgo);
+        }
+      }
+    }
+
+    return res;
+  }
+
   function onCloPoChange(cloIdx, newPgoCode) {
     const co = blueprint.course_outcomes[cloIdx];
     const pgoList = getActivePgoCatalog();
+    const mappedInfo = getCourseMappedPgosAndPis();
     co.program_outcomes = newPgoCode;
     const pgoEntry = pgoList.find(p => p.pgo_code === newPgoCode);
     if (pgoEntry) {
       co.graduate_outcome_desc = pgoEntry.description;
-      if (pgoEntry.pis && pgoEntry.pis.length) {
-        co.performance_indicator = pgoEntry.pis[0].full_text;
-        co.iga_aligned = _pickIgaForMode(pgoEntry.pis[0], _pickIgaForMode(pgoEntry, co.iga_aligned));
+      let pis = pgoEntry.pis || [];
+      if (mappedInfo.pisByPgo.has(newPgoCode) && mappedInfo.pisByPgo.get(newPgoCode).size > 0) {
+        const allowed = mappedInfo.pisByPgo.get(newPgoCode);
+        const filtered = pis.filter(pi => allowed.has(pi.pi_code.toLowerCase()));
+        if (filtered.length > 0) pis = filtered;
+      }
+      if (pis.length) {
+        co.performance_indicator = pis[0].full_text;
+        co.iga_aligned = _pickIgaForMode(pis[0], _pickIgaForMode(pgoEntry, co.iga_aligned));
       }
     }
     renderCourseOutcomes();
@@ -7903,18 +8530,38 @@
       return;
     }
 
+    const mappedInfo = getCourseMappedPgosAndPis();
+    const selectablePgos = (mappedInfo.pgoCodes.size > 0)
+      ? pgoList.filter(p => mappedInfo.pgoCodes.has(p.pgo_code))
+      : pgoList;
+
     tbody.innerHTML = blueprint.course_outcomes.map((co, i) => {
       const rawPgo = (co.program_outcomes || "").trim();
-      const normPgo = rawPgo ? _normalizePgoCode(rawPgo, pgoList) : "";
+      let normPgo = rawPgo ? _normalizePgoCode(rawPgo, pgoList) : "";
+      if (!normPgo && selectablePgos.length > 0) {
+        normPgo = selectablePgos[0].pgo_code;
+      }
       co.program_outcomes = normPgo;
-      const pgoObj = normPgo ? pgoList.find(p => p.pgo_code === normPgo) : null;
-      const pisForPo = pgoObj ? (pgoObj.pis || []) : [];
+      const pgoObj = normPgo ? pgoList.find(p => p.pgo_code === normPgo) : (selectablePgos[0] || null);
 
-      const poOptionsHtml = `<option value="" ${!normPgo ? "selected" : ""}>-- Select PGO --</option>` + pgoList.map(p => `
+      let pisForPo = pgoObj ? (pgoObj.pis || []) : [];
+      if (normPgo && mappedInfo.pisByPgo.has(normPgo) && mappedInfo.pisByPgo.get(normPgo).size > 0) {
+        const allowedPiCodes = mappedInfo.pisByPgo.get(normPgo);
+        const filteredPis = pisForPo.filter(pi => allowedPiCodes.has(pi.pi_code.toLowerCase()));
+        if (filteredPis.length > 0) {
+          pisForPo = filteredPis;
+        }
+      }
+
+      let poOptionsHtml = `<option value="" ${!normPgo ? "selected" : ""}>-- Select PGO --</option>` + selectablePgos.map(p => `
         <option value="${escapeHtml(p.pgo_code)}" ${p.pgo_code === normPgo ? "selected" : ""}>
           ${escapeHtml(p.short_label || p.pgo_code)}
         </option>
       `).join("");
+
+      if (normPgo && !selectablePgos.some(p => p.pgo_code === normPgo)) {
+        poOptionsHtml = `<option value="${escapeHtml(normPgo)}" selected>${escapeHtml(normPgo)} (Existing)</option>` + poOptionsHtml;
+      }
 
       const curPi = (co.performance_indicator || "").trim();
       const curPiPrefixMatch = curPi.match(/^([a-m]\.\d+|\d{1,2}\.\d+)\b/i);
@@ -7934,6 +8581,15 @@
 
       if (curPi && !matchedInCatalog) {
         piOptionsHtml = `<option value="${escapeHtml(curPi)}" selected>${escapeHtml(curPi)}</option>` + piOptionsHtml;
+      }
+
+      // If no PI is selected yet and we have filtered PIs, auto-select the first mapped PI
+      if (!curPi && pisForPo.length > 0) {
+        co.performance_indicator = pisForPo[0].full_text;
+        co.iga_aligned = _pickIgaForMode(pisForPo[0], _pickIgaForMode(pgoObj, co.iga_aligned));
+        piOptionsHtml = `<option value="">-- Select PI --</option>` + pisForPo.map((pi, idx) => `
+          <option value="${escapeHtml(pi.full_text)}" ${idx === 0 ? "selected" : ""}>${escapeHtml(pi.full_text)}</option>
+        `).join("");
       }
 
       const igaTooltip = igaList.map(g => `${g.code}: ${g.title}`).join(" | ");
@@ -7967,14 +8623,30 @@
   }
 
   function addCourseOutcome() {
-    const nextIdx = blueprint.course_outcomes.length + 1;
+    const nextIdx = (blueprint.course_outcomes?.length || 0) + 1;
+    const pgoList = getActivePgoCatalog();
+    const mappedInfo = getCourseMappedPgosAndPis();
+    const selectablePgos = (mappedInfo.pgoCodes.size > 0)
+      ? pgoList.filter(p => mappedInfo.pgoCodes.has(p.pgo_code))
+      : pgoList;
+    const defaultPgoObj = selectablePgos[0] || pgoList[0];
+    const defaultPgoCode = defaultPgoObj ? defaultPgoObj.pgo_code : "";
+    let defaultPis = defaultPgoObj ? (defaultPgoObj.pis || []) : [];
+    if (defaultPgoCode && mappedInfo.pisByPgo.has(defaultPgoCode) && mappedInfo.pisByPgo.get(defaultPgoCode).size > 0) {
+      const allowed = mappedInfo.pisByPgo.get(defaultPgoCode);
+      const filtered = defaultPis.filter(pi => allowed.has(pi.pi_code.toLowerCase()));
+      if (filtered.length > 0) defaultPis = filtered;
+    }
+    const defaultPiObj = defaultPis[0] || null;
+    const igaVal = defaultPiObj ? _pickIgaForMode(defaultPiObj, _pickIgaForMode(defaultPgoObj, "IGA2")) : "IGA2";
+
     blueprint.course_outcomes.push({
       co_id: `CLO${nextIdx}`,
-      description: "",
-      program_outcomes: "",
-      graduate_outcome_desc: "",
-      performance_indicator: "",
-      iga_aligned: "",
+      description: defaultPiObj ? defaultPiObj.description : (defaultPgoObj ? defaultPgoObj.description : ""),
+      program_outcomes: defaultPgoCode,
+      graduate_outcome_desc: defaultPgoObj ? defaultPgoObj.description : "",
+      performance_indicator: defaultPiObj ? defaultPiObj.full_text : "",
+      iga_aligned: igaVal,
       target_score_pct: 75.0,
       target_class_pass_pct: 50.0
     });
@@ -9293,6 +9965,10 @@
   }
 
   function addCourseAssessmentPlanRow() {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("The CLO Report is inaccessible until the course syllabus is finalized and approved through the official review chain.");
+      return;
+    }
     const list = ensureCourseAssessmentPlan(false);
     const outcomes = (blueprint && blueprint.course_outcomes) || [];
     const cloPlans = {};
@@ -9323,6 +9999,10 @@
   }
 
   function removeCourseAssessmentPlanRow(idx) {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("The CLO Report is inaccessible until the course syllabus is finalized and approved through the official review chain.");
+      return;
+    }
     const list = ensureCourseAssessmentPlan(false);
     if (list.length <= 1) return;
     list.splice(idx, 1);
@@ -9331,6 +10011,10 @@
   }
 
   function syncCourseAssessmentPlanFromSyllabus(force = true) {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("The CLO Report is inaccessible until the course syllabus is finalized and approved through the official review chain.");
+      return;
+    }
     ensureCourseAssessmentPlan(force);
     queueAutoSave();
     renderLiveGradebookAndReports();
@@ -9879,6 +10563,10 @@
   }
 
     async function exportCloReportExcel() {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("The CLO Report is inaccessible because the course syllabus has not been finalized and approved yet.");
+      return;
+    }
     syncMetaFromInputs();
     const res = await fetch("/api/export-clo-report-excel", {
       method: "POST",
@@ -9903,6 +10591,10 @@
   }
 
   async function exportCloReportPdf() {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("The CLO Report is inaccessible because the course syllabus has not been finalized and approved yet.");
+      return;
+    }
     syncMetaFromInputs();
     const res = await fetch("/api/export-clo-report-pdf", {
       method: "POST",
@@ -9927,6 +10619,10 @@
   }
 
   async function exportExcelWorkbook() {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("Class Record is locked until the syllabus is approved through the official review chain.");
+      return;
+    }
     syncMetaFromInputs();
     const res = await fetch("/api/export-excel", {
       method: "POST",
@@ -9954,9 +10650,23 @@
   // DASHBOARD: Student Scores | CLO Attainment vs Standard | PGO -> PI -> CLO
   // ======================================================================
   function setDashTerm(term, btnEl) {
-    dashState.term = term;
-    document.querySelectorAll("#dashTermSeg button").forEach(b => b.classList.remove("active"));
-    if (btnEl) btnEl.classList.add("active");
+    if (term === "All") {
+      dashState.term = "All";
+    } else if (dashState.term === term) {
+      // Free toggle / state release: deselect currently active term back to 'All'
+      dashState.term = "All";
+    } else {
+      dashState.term = term;
+    }
+    const currentActiveTerm = dashState.term;
+    document.querySelectorAll("#dashTermSeg button, #dashTermSegRibbon button").forEach(b => {
+      const bTerm = b.getAttribute("data-term") || b.textContent.trim();
+      if (bTerm === currentActiveTerm) {
+        b.classList.add("active");
+      } else {
+        b.classList.remove("active");
+      }
+    });
     renderDashboard();
   }
 
@@ -10810,13 +11520,19 @@
     checkSyllabusLock();
   }
 
-  // Enforce Class Record Lock Barrier on Tabs 2 & 3 & Grade Freeze
+  // Enforce Class Record Lock Barrier on Tabs 2, 3, 5 & 6 & Grade Freeze
   function checkClassRecordLock() {
     const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
     const b2 = document.getElementById("classRecordLockBannerAssessments");
     const b3 = document.getElementById("classRecordLockBannerGradebook");
+    const b4 = document.getElementById("classRecordLockBannerReceiptAck");
+    const bClo = document.getElementById("classRecordLockBannerCloReport");
+    const bCqi = document.getElementById("classRecordLockBannerCqi");
     if (b2) b2.style.display = isSyllabusApproved ? "none" : "block";
     if (b3) b3.style.display = isSyllabusApproved ? "none" : "block";
+    if (b4) b4.style.display = isSyllabusApproved ? "none" : "block";
+    if (bClo) bClo.style.display = isSyllabusApproved ? "none" : "block";
+    if (bCqi) bCqi.style.display = isSyllabusApproved ? "none" : "block";
 
     // Disable / Dim setup interactive controls if syllabus not approved
     const setupContent = document.getElementById("setupTabContent");
@@ -10852,6 +11568,133 @@
           el.style.cursor = "";
         }
       });
+    }
+
+    // Disable / Dim CLO Report interactive controls if syllabus not approved
+    const cloReportContent = document.getElementById("cloReportTabContent");
+    if (cloReportContent) {
+      cloReportContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
+      cloReportContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
+      cloReportContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
+      cloReportContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+        el.disabled = !isSyllabusApproved;
+        if (!isSyllabusApproved) {
+          el.title = "Locked: Syllabus must be finalized and approved before accessing the CLO Report.";
+          el.style.cursor = "not-allowed";
+        } else {
+          el.removeAttribute("title");
+          el.style.cursor = "";
+        }
+      });
+    }
+
+    // Disable / Dim CQI interactive controls if syllabus not approved
+    const cqiContent = document.getElementById("cqiTabContent");
+    if (cqiContent) {
+      cqiContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
+      cqiContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
+      cqiContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
+      cqiContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+        el.disabled = !isSyllabusApproved;
+        if (!isSyllabusApproved) {
+          el.title = "Locked: Syllabus must be finalized and approved before accessing the CQI Plan.";
+          el.style.cursor = "not-allowed";
+        } else {
+          el.removeAttribute("title");
+          el.style.cursor = "";
+        }
+      });
+    }
+
+    // Disable / Dim Receipt of Scores & Paper interactive controls if syllabus not approved
+    const receiptAckContent = document.getElementById("receiptAckTabContent");
+    if (receiptAckContent) {
+      receiptAckContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
+      receiptAckContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
+      receiptAckContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
+      receiptAckContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+        el.disabled = !isSyllabusApproved;
+        if (!isSyllabusApproved) {
+          el.title = "Locked: Syllabus must be finalized and approved before accessing Receipt of Scores & Paper.";
+          el.style.cursor = "not-allowed";
+        } else {
+          el.removeAttribute("title");
+          el.style.cursor = "";
+        }
+      });
+    }
+
+    // Update ribbon step buttons state for Assessments, Class Record, Receipt of Scores & Paper, CLO Report and CQI Plan
+    const stepBtnAssessments = document.getElementById("stepBtnTabAssessments");
+    const stepBtnGradebook = document.getElementById("stepBtnTabGradebook");
+    const stepBtnReceiptAck = document.getElementById("stepBtnTabReceiptAck");
+
+    if (stepBtnAssessments) {
+      if (!isSyllabusApproved) {
+        stepBtnAssessments.title = "🔒 Locked: Course syllabus must be finalized and approved first.";
+        stepBtnAssessments.style.opacity = "0.65";
+        const lbl = stepBtnAssessments.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "Assessments (FA/SA) 🔒";
+      } else {
+        stepBtnAssessments.title = "Step 2: Course Assessments Setup";
+        stepBtnAssessments.style.opacity = "";
+        const lbl = stepBtnAssessments.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "Assessments (FA/SA)";
+      }
+    }
+    if (stepBtnGradebook) {
+      if (!isSyllabusApproved) {
+        stepBtnGradebook.title = "🔒 Locked: Course syllabus must be finalized and approved first.";
+        stepBtnGradebook.style.opacity = "0.65";
+        const lbl = stepBtnGradebook.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "Class Record 🔒";
+      } else {
+        stepBtnGradebook.title = "Step 3: Class Record & Gradebook";
+        stepBtnGradebook.style.opacity = "";
+        const lbl = stepBtnGradebook.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "Class Record";
+      }
+    }
+    const stepBtnClo = document.getElementById("stepBtnTabCloreport");
+    const stepBtnCqi = document.getElementById("stepBtnTabCqi");
+    if (stepBtnReceiptAck) {
+      if (!isSyllabusApproved) {
+        stepBtnReceiptAck.title = "🔒 Inaccessible: Course syllabus must be finalized and approved first.";
+        stepBtnReceiptAck.style.opacity = "0.65";
+        const lbl = stepBtnReceiptAck.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "Receipt of Scores &amp; Paper 🔒";
+      } else {
+        stepBtnReceiptAck.title = "Step 4: Receipt of Scores & Paper";
+        stepBtnReceiptAck.style.opacity = "";
+        const lbl = stepBtnReceiptAck.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "Receipt of Scores &amp; Paper";
+      }
+    }
+    if (stepBtnClo) {
+      if (!isSyllabusApproved) {
+        stepBtnClo.title = "🔒 Inaccessible: Course syllabus must be finalized and approved first.";
+        stepBtnClo.style.opacity = "0.65";
+        const lbl = stepBtnClo.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "CLO Report (MID-10) 🔒";
+      } else {
+        stepBtnClo.title = "Step 5: CLO Assessment Report (FM-USeP-MID-10)";
+        stepBtnClo.style.opacity = "";
+        const lbl = stepBtnClo.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "CLO Report (MID-10)";
+      }
+    }
+    if (stepBtnCqi) {
+      if (!isSyllabusApproved) {
+        stepBtnCqi.title = "🔒 Inaccessible: Course syllabus must be finalized and approved first.";
+        stepBtnCqi.style.opacity = "0.65";
+        const lbl = stepBtnCqi.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "CQI Plan 🔒";
+      } else {
+        stepBtnCqi.title = "Step 6: Continuous Quality Improvement (CQI) Plan";
+        stepBtnCqi.style.opacity = "";
+        const lbl = stepBtnCqi.querySelector(".step-lbl");
+        if (lbl) lbl.innerHTML = "CQI Plan";
+      }
     }
 
     // Class record grade freeze banner
@@ -11288,6 +12131,156 @@
     renderSubmitCommitteeRows();
   }
 
+  let modalSubmitSigHasDrawn = false;
+  let modalSubmitSigPadActive = false;
+  let modalSubmitSigDataUrl = "";
+
+  function initModalSubmitSigPad() {
+    const canvas = document.getElementById("submitModalSigCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let isDrawing = false;
+    modalSubmitSigHasDrawn = false;
+
+    function getCoords(e) {
+      const r = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = canvas.width / r.width;
+      const scaleY = canvas.height / r.height;
+      return { x: (clientX - r.left) * scaleX, y: (clientY - r.top) * scaleY };
+    }
+
+    function startDraw(e) {
+      isDrawing = true;
+      const pt = getCoords(e);
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pt.y);
+      ctx.strokeStyle = "#1e293b";
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      e.preventDefault();
+    }
+    function draw(e) {
+      if (!isDrawing) return;
+      const pt = getCoords(e);
+      ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+      modalSubmitSigHasDrawn = true;
+      const placeholder = document.getElementById("submitModalSigPlaceholder");
+      if (placeholder) placeholder.style.display = "none";
+      onModalSubmitSignatureAffixed();
+      e.preventDefault();
+    }
+    function stopDraw(e) {
+      if (isDrawing) {
+        isDrawing = false;
+        if (modalSubmitSigHasDrawn) {
+          modalSubmitSigDataUrl = canvas.toDataURL("image/png");
+          onModalSubmitSignatureAffixed();
+        }
+      }
+    }
+
+    canvas.onmousedown = startDraw;
+    canvas.onmousemove = draw;
+    window.addEventListener("mouseup", stopDraw);
+    canvas.ontouchstart = startDraw;
+    canvas.ontouchmove = draw;
+    canvas.ontouchend = stopDraw;
+  }
+
+  function clearModalSubmitSigPad() {
+    const canvas = document.getElementById("submitModalSigCanvas");
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    modalSubmitSigHasDrawn = false;
+    modalSubmitSigDataUrl = "";
+    const placeholder = document.getElementById("submitModalSigPlaceholder");
+    if (placeholder) placeholder.style.display = "block";
+    updateModalSubmitSigGate();
+  }
+
+  function handleModalSubmitSigUpload(inp) {
+    if (!inp.files || !inp.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.getElementById("submitModalSigCanvas");
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const ratio = Math.min((canvas.width - 20) / img.width, (canvas.height - 20) / img.height);
+          const w = img.width * ratio;
+          const h = img.height * ratio;
+          const x = (canvas.width - w) / 2;
+          const y = (canvas.height - h) / 2;
+          ctx.drawImage(img, x, y, w, h);
+          modalSubmitSigHasDrawn = true;
+          modalSubmitSigDataUrl = canvas.toDataURL("image/png");
+          const placeholder = document.getElementById("submitModalSigPlaceholder");
+          if (placeholder) placeholder.style.display = "none";
+          onModalSubmitSignatureAffixed();
+        }
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(inp.files[0]);
+  }
+
+  function enableModalSigRedraw() {
+    modalSubmitSigDataUrl = "";
+    modalSubmitSigHasDrawn = false;
+    const preview = document.getElementById("submitSigAffixedPreview");
+    const canvasCont = document.getElementById("submitSigCanvasContainer");
+    const padControls = document.getElementById("submitSigPadControls");
+    if (preview) preview.style.display = "none";
+    if (canvasCont) canvasCont.style.display = "block";
+    if (padControls) padControls.style.display = "flex";
+    clearModalSubmitSigPad();
+    updateModalSubmitSigGate();
+  }
+
+  function onModalSubmitSignatureAffixed() {
+    const alertEl = document.getElementById("submitSigValidationAlert");
+    if (alertEl) alertEl.style.display = "none";
+    const btn = document.getElementById("btnSubmitSyllabusModal");
+    if (btn) {
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      btn.style.cursor = "pointer";
+      btn.title = "Forward syllabus for committee review";
+    }
+  }
+
+  function updateModalSubmitSigGate() {
+    const hasSig = Boolean(modalSubmitSigDataUrl || (currentUser && (currentUser.signature_data || currentUser.has_signature)));
+    const alertEl = document.getElementById("submitSigValidationAlert");
+    const btn = document.getElementById("btnSubmitSyllabusModal");
+    if (!hasSig && !modalSubmitSigHasDrawn) {
+      if (alertEl) alertEl.style.display = "block";
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = "0.45";
+        btn.style.cursor = "not-allowed";
+        btn.title = "Faculty digital signature is required before submitting";
+      }
+    } else {
+      if (alertEl) alertEl.style.display = "none";
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+        btn.title = "Forward syllabus for committee review";
+      }
+    }
+  }
+
   async function openSubmitSyllabusModal() {
     if (!currentCourseId) return;
     await loadSignatories();
@@ -11318,6 +12311,33 @@
       const isMulti = currentWorkflow && (currentWorkflow.is_multi_authored || (currentWorkflow.authors && currentWorkflow.authors.length > 1));
       coNotice.style.display = isMulti ? "block" : "none";
     }
+
+    // Initialize Signature Verification Gate
+    const userSig = (currentUser && currentUser.signature_data) || "";
+    const preview = document.getElementById("submitSigAffixedPreview");
+    const affixedImg = document.getElementById("submitSigAffixedImg");
+    const canvasCont = document.getElementById("submitSigCanvasContainer");
+    const padControls = document.getElementById("submitSigPadControls");
+
+    if (userSig) {
+      modalSubmitSigDataUrl = userSig;
+      modalSubmitSigHasDrawn = true;
+      if (preview) preview.style.display = "flex";
+      if (affixedImg) affixedImg.src = userSig;
+      if (canvasCont) canvasCont.style.display = "none";
+      if (padControls) padControls.style.display = "none";
+      onModalSubmitSignatureAffixed();
+    } else {
+      modalSubmitSigDataUrl = "";
+      modalSubmitSigHasDrawn = false;
+      if (preview) preview.style.display = "none";
+      if (canvasCont) canvasCont.style.display = "block";
+      if (padControls) padControls.style.display = "flex";
+      initModalSubmitSigPad();
+      clearModalSubmitSigPad();
+      updateModalSubmitSigGate();
+    }
+
     const modal = document.getElementById("submitSyllabusModal");
     if (modal) modal.style.display = "flex";
   }
@@ -11329,6 +12349,25 @@
 
   async function submitSyllabusWithReviewer() {
     if (!currentCourseId) return;
+
+    // Signature Validation Guard: check if faculty signature is affixed or drawn
+    let finalSig = modalSubmitSigDataUrl || (modalSubmitSigHasDrawn ? document.getElementById("submitModalSigCanvas")?.toDataURL("image/png") : "") || (currentUser?.signature_data || "");
+    if (!finalSig) {
+      const alertEl = document.getElementById("submitSigValidationAlert");
+      if (alertEl) {
+        alertEl.style.display = "block";
+        alertEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      const btn = document.getElementById("btnSubmitSyllabusModal");
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = "0.45";
+        btn.style.cursor = "not-allowed";
+      }
+      alert("Submission Blocked: A valid digital faculty signature is required before submitting this syllabus for committee review. Please sign or upload your signature.");
+      return;
+    }
+
     if (submitModalCommitteeState.length < 3) {
       alert("The Syllabus Review Committee must have at least three (3) members per official USeP standard.");
       return;
@@ -11357,7 +12396,8 @@
           committee_members: submitModalCommitteeState,
           assigned_committee: chairMember.username,
           assigned_committee_name: assignedCommName,
-          submission_notes: notes
+          submission_notes: notes,
+          signature_data: finalSig
         })
       });
       const data = await res.json();
@@ -14443,35 +15483,129 @@
     const modal = document.getElementById("adminRoleModal");
     if (!modal) return;
     modal.style.display = "flex";
+    closeAdminFacultyDropdown();
+    const searchInput = document.getElementById("adminRoleFacultySearch");
+    if (searchInput) searchInput.value = "";
+    const select = document.getElementById("adminRoleFacultySelect");
+    if (select) select.value = "";
     await loadAdminFacultyRoster();
   }
 
   function closeAdminRoleModal() {
     const modal = document.getElementById("adminRoleModal");
     if (modal) modal.style.display = "none";
+    closeAdminFacultyDropdown();
+  }
+
+  function openAdminFacultyDropdown() {
+    const dd = document.getElementById("adminRoleFacultyDropdown");
+    if (!dd) return;
+    const q = (document.getElementById("adminRoleFacultySearch")?.value || "").trim();
+    filterAdminFacultyCombobox(q);
+    dd.style.display = "block";
+  }
+
+  function closeAdminFacultyDropdown() {
+    const dd = document.getElementById("adminRoleFacultyDropdown");
+    if (dd) dd.style.display = "none";
+  }
+
+  function toggleAdminFacultyDropdown() {
+    const dd = document.getElementById("adminRoleFacultyDropdown");
+    if (!dd) return;
+    if (dd.style.display === "block") {
+      dd.style.display = "none";
+    } else {
+      openAdminFacultyDropdown();
+      document.getElementById("adminRoleFacultySearch")?.focus();
+    }
+  }
+
+  function filterAdminFacultyCombobox(query) {
+    const dd = document.getElementById("adminRoleFacultyDropdown");
+    if (!dd) return;
+    const q = (query || "").toLowerCase().trim();
+    const filtered = !q ? adminFacultyList : adminFacultyList.filter(f => {
+      const name = (f.full_name || "").toLowerCase();
+      const uname = (f.username || "").toLowerCase();
+      const title = (f.position_title || f.role || "").toLowerCase();
+      return name.includes(q) || uname.includes(q) || title.includes(q);
+    });
+
+    renderAdminFacultyComboboxList(filtered);
+    dd.style.display = "block";
+  }
+
+  function renderAdminFacultyComboboxList(list) {
+    const dd = document.getElementById("adminRoleFacultyDropdown");
+    if (!dd) return;
+    if (!list || !list.length) {
+      dd.innerHTML = `<div style="padding:12px; text-align:center; color:#94a3b8; font-size:0.8rem; font-style:italic;">No matching faculty found</div>`;
+      return;
+    }
+    const curUname = document.getElementById("adminRoleFacultySelect")?.value || "";
+    dd.innerHTML = list.map(f => {
+      const isSel = f.username === curUname;
+      const roleBadge = f.position_title || f.role || "Faculty Member";
+      return `
+        <div onclick="selectAdminFaculty('${escapeHtml(f.username)}')"
+          style="padding:9px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; background:${isSel ? '#eff6ff' : '#ffffff'}; transition:background 0.15s;"
+          onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='${isSel ? '#eff6ff' : '#ffffff'}'">
+          <div>
+            <div style="font-weight:700; font-size:0.84rem; color:#1e293b;">${escapeHtml(f.full_name)}</div>
+            <div style="font-size:0.72rem; color:#64748b;">@${escapeHtml(f.username)}</div>
+          </div>
+          <span class="badge" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:0.68rem; font-weight:600; padding:2px 7px; border-radius:4px;">${escapeHtml(roleBadge)}</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function selectAdminFaculty(uname) {
+    const select = document.getElementById("adminRoleFacultySelect");
+    const searchInput = document.getElementById("adminRoleFacultySearch");
+    if (select) select.value = uname;
+    const f = adminFacultyList.find(x => x.username === uname);
+    if (searchInput && f) {
+      searchInput.value = `${f.full_name} (${f.position_title || f.role || 'Faculty'})`;
+    }
+    closeAdminFacultyDropdown();
+    onAdminSelectFaculty(uname);
   }
 
   async function loadAdminFacultyRoster() {
     const select = document.getElementById("adminRoleFacultySelect");
-    if (!select) return;
-    select.innerHTML = '<option value="">Loading faculty roster...</option>';
+    const searchInput = document.getElementById("adminRoleFacultySearch");
+    if (searchInput && !searchInput.value) searchInput.placeholder = "🔍 Type name, username, or role to search...";
+    if (select) select.innerHTML = '<option value="">Loading faculty roster...</option>';
     try {
       const res = await fetch("/api/admin/faculty-list");
       if (!res.ok) {
-        select.innerHTML = '<option value="">Error loading faculty list</option>';
+        if (select) select.innerHTML = '<option value="">Error loading faculty list</option>';
         return;
       }
       const data = await res.json();
       adminFacultyList = data.faculty || [];
-      select.innerHTML = '<option value="">-- Choose a faculty member --</option>' +
-        adminFacultyList.map(f => {
-          return `<option value="${escapeHtml(f.username)}">${escapeHtml(f.full_name)} (${escapeHtml(f.position_title || f.role)})</option>`;
-        }).join('');
+      if (select) {
+        select.innerHTML = '<option value="">-- Choose a faculty member --</option>' +
+          adminFacultyList.map(f => {
+            return `<option value="${escapeHtml(f.username)}">${escapeHtml(f.full_name)} (${escapeHtml(f.position_title || f.role)})</option>`;
+          }).join('');
+      }
+      renderAdminFacultyComboboxList(adminFacultyList);
     } catch(e) {
       console.error("Failed to load admin faculty list:", e);
-      select.innerHTML = '<option value="">Failed to load roster</option>';
+      if (select) select.innerHTML = '<option value="">Failed to load roster</option>';
     }
   }
+
+  // Click outside listener for faculty combobox
+  document.addEventListener("click", function(e) {
+    const wrap = document.getElementById("adminRoleFacultyComboboxWrapper");
+    if (wrap && !wrap.contains(e.target)) {
+      closeAdminFacultyDropdown();
+    }
+  });
 
   const ADMIN_PROGRAM_MAP = {
     "EE": "Electrical Engineering",
@@ -15571,6 +16705,236 @@
   }
 
   // --- Schedule Picker Modal Handlers ---
+  
+  // =========================================================================
+  // CONSULTATION HOURS MANAGEMENT ENGINE (UI/UX Parity with Class Schedule)
+  // =========================================================================
+  function parseConsultationStringToList(str) {
+    if (!str) return [];
+    return String(str)
+      .split(/\s*(?:\/|;)\s*/)
+      .map(s => s.trim())
+      .filter(s => Boolean(s) && s.toUpperCase() !== "TBA");
+  }
+
+  function renderConsultationChips() {
+    const container = document.getElementById("consultationChipsContainer");
+    if (!container || !blueprint) return;
+    const meta = blueprint.metadata || {};
+    let consults = meta.consultation_blocks;
+    if (!Array.isArray(consults) || consults.length === 0) {
+      consults = parseConsultationStringToList(meta.consultation_hours);
+      meta.consultation_blocks = consults;
+    }
+
+    if (!consults.length) {
+      container.innerHTML = `<span style="color:#94a3b8; font-size:0.74rem; font-style:italic;">No consultation slots added yet (Click "+ Add Consultation" to configure days, time, and room/mode)</span>`;
+      return;
+    }
+
+    container.innerHTML = consults.map((consult, idx) => {
+      const isOnline = consult.toLowerCase().includes("online") || consult.toLowerCase().includes("meet") || consult.toLowerCase().includes("zoom");
+      const bg = isOnline ? "#f0fdf4" : "#eff6ff";
+      const border = isOnline ? "#bbf7d0" : "#bfdbfe";
+      const textCol = isOnline ? "#166534" : "#1e40af";
+      const icon = isOnline ? "💻" : "💬";
+      return `
+        <span class="sched-chip" style="background:${bg}; color:${textCol}; border:1px solid ${border}; border-radius:6px; padding:3px 9px; font-size:0.75rem; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+          <span>${icon} ${escapeHtml(consult)}</span>
+          <button type="button" onclick="removeConsultationChip(${idx})" title="Remove this consultation block"
+            style="background:none; border:none; color:${textCol}; cursor:pointer; font-weight:bold; font-size:0.85rem; padding:0; line-height:1;">&times;</button>
+        </span>
+      `;
+    }).join("");
+  }
+
+  function addConsultationBlock(blockStr) {
+    if (!blueprint || !blueprint.metadata) return;
+    const meta = blueprint.metadata;
+    const block = (blockStr || "").trim();
+    if (!block) return;
+    let consults = meta.consultation_blocks || parseConsultationStringToList(meta.consultation_hours);
+    if (!consults.includes(block)) {
+      consults.push(block);
+    }
+    meta.consultation_blocks = consults;
+    meta.consultation_hours = consults.join(" / ");
+    const inp = document.getElementById("meta_consultation_hours");
+    if (inp) inp.value = meta.consultation_hours;
+    renderConsultationChips();
+    syncMetaFromInputs();
+    queueAutoSave();
+  }
+
+  function removeConsultationChip(idx) {
+    if (!blueprint || !blueprint.metadata) return;
+    const meta = blueprint.metadata;
+    let consults = meta.consultation_blocks || parseConsultationStringToList(meta.consultation_hours);
+    if (idx >= 0 && idx < consults.length) {
+      consults.splice(idx, 1);
+    }
+    meta.consultation_blocks = consults;
+    meta.consultation_hours = consults.join(" / ");
+    const inp = document.getElementById("meta_consultation_hours");
+    if (inp) inp.value = meta.consultation_hours;
+    renderConsultationChips();
+    syncMetaFromInputs();
+    queueAutoSave();
+  }
+
+  function onConsultationManualInput() {
+    if (!blueprint || !blueprint.metadata) return;
+    const inp = document.getElementById("meta_consultation_hours");
+    if (!inp) return;
+    const val = inp.value.trim();
+    blueprint.metadata.consultation_hours = val;
+    blueprint.metadata.consultation_blocks = parseConsultationStringToList(val);
+    renderConsultationChips();
+    syncMetaFromInputs();
+    queueAutoSave(500);
+  }
+
+  function openAddConsultationModal() {
+    const modal = document.getElementById("addConsultationModal");
+    if (!modal) return;
+    modal.style.display = "flex";
+    updateModalConsultPreview();
+  }
+
+  function closeAddConsultationModal() {
+    const modal = document.getElementById("addConsultationModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function setModalConsultDays(dayArr) {
+    document.querySelectorAll(".modal-consult-day").forEach(cb => {
+      cb.checked = dayArr.includes(cb.value);
+    });
+    updateModalConsultPreview();
+  }
+
+  function applyConsultationPreset(days, start, end, mode, room) {
+    setModalConsultDays(days);
+    const startInp = document.getElementById("modal_consult_start");
+    const endInp = document.getElementById("modal_consult_end");
+    const modeInp = document.getElementById("modal_consult_mode");
+    const roomInp = document.getElementById("modal_consult_room");
+    if (startInp) startInp.value = start;
+    if (endInp) endInp.value = end;
+    if (modeInp) modeInp.value = mode;
+    if (roomInp) roomInp.value = room;
+    updateModalConsultPreview();
+  }
+
+  function formatTime12h(t24) {
+    if (!t24) return "";
+    const parts = t24.split(":");
+    let h = parseInt(parts[0], 10);
+    const m = parts[1] || "00";
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    if (h === 0) h = 12;
+    return `${String(h).padStart(2, "0")}:${m} ${ampm}`;
+  }
+
+  function getModalConsultationBlock() {
+    const days = [];
+    document.querySelectorAll(".modal-consult-day:checked").forEach(cb => days.push(cb.value));
+    const dayStr = days.join("");
+    const start = document.getElementById("modal_consult_start")?.value || "";
+    const end = document.getElementById("modal_consult_end")?.value || "";
+    const mode = document.getElementById("modal_consult_mode")?.value || "Face-to-Face";
+    const room = document.getElementById("modal_consult_room")?.value.trim() || "";
+
+    if (!dayStr && !start && !end) {
+      return "Please select days and time above";
+    }
+
+    let timePart = "";
+    if (start && end) {
+      timePart = `${formatTime12h(start)} - ${formatTime12h(end)}`;
+    } else if (start) {
+      timePart = formatTime12h(start);
+    }
+
+    let detailPart = [];
+    if (room) detailPart.push(room);
+    if (mode) detailPart.push(mode);
+    const detailStr = detailPart.length ? ` (${detailPart.join(" / ")})` : "";
+
+    return `${dayStr || "Days TBA"} ${timePart}${detailStr}`.trim();
+  }
+
+  function updateModalConsultPreview() {
+    const txt = getModalConsultationBlock();
+    const prev = document.getElementById("modalConsultPreviewText");
+    if (prev) prev.textContent = txt;
+  }
+
+  function confirmAddConsultationFromModal() {
+    const block = getModalConsultationBlock();
+    if (!block || block === "Please select days and time above") {
+      alert("Please select at least one day or time slot for consultation hours.");
+      return;
+    }
+    addConsultationBlock(block);
+    closeAddConsultationModal();
+  }
+
+  function toggleConsultationPicker() {
+    const c = document.getElementById("consultationPickerContainer");
+    if (c) c.style.display = (c.style.display === "none") ? "block" : "none";
+  }
+
+  function getSelectedConsultationInlineBlock() {
+    const days = [];
+    document.querySelectorAll(".consult-day:checked").forEach(cb => days.push(cb.value));
+    const dayStr = days.join("");
+    const start = document.getElementById("consult_time_start")?.value || "";
+    const end = document.getElementById("consult_time_end")?.value || "";
+    const mode = document.getElementById("consult_mode_select")?.value || "Face-to-Face";
+    const room = document.getElementById("consult_room_input")?.value.trim() || "";
+
+    if (!dayStr && !start && !end) return "";
+    let timePart = "";
+    if (start && end) {
+      timePart = `${formatTime12h(start)} - ${formatTime12h(end)}`;
+    } else if (start) {
+      timePart = formatTime12h(start);
+    }
+    let detailPart = [];
+    if (room) detailPart.push(room);
+    if (mode) detailPart.push(mode);
+    const detailStr = detailPart.length ? ` (${detailPart.join(" / ")})` : "";
+    return `${dayStr || "Days TBA"} ${timePart}${detailStr}`.trim();
+  }
+
+  function updateInlineConsultPickerPreview() {
+    const block = getSelectedConsultationInlineBlock();
+    const prev = document.getElementById("inlineConsultPickerPreview");
+    if (prev) {
+      prev.textContent = block ? `↳ Ready to add: ${block}` : "";
+    }
+  }
+
+  function appendConsultationBlock() {
+    const block = getSelectedConsultationInlineBlock();
+    if (!block) {
+      alert("Please select days and time for consultation hours.");
+      return;
+    }
+    addConsultationBlock(block);
+    clearConsultationPicker();
+  }
+
+  function clearConsultationPicker() {
+    document.querySelectorAll(".consult-day").forEach(cb => cb.checked = false);
+    const roomInp = document.getElementById("consult_room_input");
+    if (roomInp) roomInp.value = "";
+    const prev = document.getElementById("inlineConsultPickerPreview");
+    if (prev) prev.textContent = "";
+  }
+
   function openAddScheduleModal() {
     const modal = document.getElementById("addScheduleModal");
     if (!modal) return;
@@ -16526,10 +17890,18 @@
   }
 
   function printReceiptAckSheet() {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("Receipt of Scores & Paper is inaccessible because the course syllabus has not been finalized and approved yet.");
+      return;
+    }
     window.print();
   }
 
   function exportAcknowledgmentPdf() {
+    if (!currentWorkflow || currentWorkflow.status !== "approved") {
+      alert("Receipt of Scores & Paper is inaccessible because the course syllabus has not been finalized and approved yet.");
+      return;
+    }
     if (!currentCourseId) {
       alert("Please select or load an active course first.");
       return;
@@ -16552,43 +17924,151 @@
       </div>
 
       <div class="form-group" style="margin-bottom:14px;">
-        <label style="font-weight:700; color:#1e293b; font-size:0.82rem; margin-bottom:4px; display:block;">Select Faculty Account <span style="color:#dc2626;">*</span></label>
-        <select id="adminRoleFacultySelect" onchange="onAdminSelectFaculty(this.value)" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; font-weight:600;">
-          <option value="">Loading faculty roster...</option>
-        </select>
+        <label style="font-weight:700; color:#1e293b; font-size:0.82rem; margin-bottom:4px; display:block;">Select Faculty Account (Searchable Combobox) <span style="color:#dc2626;">*</span></label>
+        <div style="position:relative;" id="adminRoleFacultyComboboxWrapper">
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="text" id="adminRoleFacultySearch" placeholder="🔍 Type name, username, or role to search..."
+              autocomplete="off"
+              oninput="filterAdminFacultyCombobox(this.value)"
+              onfocus="openAdminFacultyDropdown()"
+              style="width:100%; padding:9px 36px 9px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; font-weight:600; color:#1e293b; background:#ffffff; box-shadow:0 1px 2px rgba(0,0,0,0.05);" />
+            <button type="button" onclick="toggleAdminFacultyDropdown()" style="position:absolute; right:8px; background:none; border:none; color:#64748b; font-size:0.85rem; cursor:pointer; padding:6px;" title="Toggle faculty list">&#9660;</button>
+          </div>
+          <div id="adminRoleFacultyDropdown" style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; max-height:230px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.15); z-index:1050;">
+            <!-- Populated dynamically by renderAdminFacultyComboboxList -->
+          </div>
+          <!-- Hidden backing select to preserve 100% backward compatibility -->
+          <select id="adminRoleFacultySelect" style="display:none;" onchange="onAdminSelectFaculty(this.value)"></select>
+        </div>
       </div>
 
       <div class="form-group" style="margin-bottom:14px;">
         <label style="font-weight:700; color:#1e293b; font-size:0.82rem; margin-bottom:6px; display:block;">Active Institutional Roles (Select all that apply) <span style="color:#dc2626;">*</span></label>
-        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px 14px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" id="adminRoleCheckFaculty" value="review_committee" checked onchange="updateAdminMultiRoleTitle()" />
-            <span>👨‍🏫 Faculty Member</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" id="adminRoleCheckPh" value="program_head" onchange="toggleAdminPhProgs(this.checked)" />
-            <span>👔 Program Head</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" id="adminRoleCheckQa" value="qa_head" onchange="updateAdminMultiRoleTitle()" />
-            <span>🛡️ College QA Head</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" id="adminRoleCheckAssocDean" value="associate_dean" onchange="updateAdminMultiRoleTitle()" />
-            <span>🏛️ Associate Dean</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" id="adminRoleCheckDean" value="dean" onchange="updateAdminMultiRoleTitle()" />
-            <span>🏛️ College Dean</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" id="adminRoleCheckStaff" value="staff" onchange="updateAdminMultiRoleTitle()" />
-            <span>📋 Academic Staff (Oversight)</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; cursor:pointer;">
-            <input type="checkbox" id="adminRoleCheckAdmin" value="admin" onchange="updateAdminMultiRoleTitle()" />
-            <span>⚙️ Administrator</span>
-          </label>
+        <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <table style="width:100%; border-collapse:collapse; font-size:0.82rem; text-align:left;">
+            <thead>
+              <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0; color:#475569; font-weight:700; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.03em;">
+                <th style="padding:9px 12px; width:44px; text-align:center;">Assign</th>
+                <th style="padding:9px 12px;">Institutional Role</th>
+                <th style="padding:9px 12px; width:125px; text-align:center;">Authority Level</th>
+                <th style="padding:9px 12px;">Role Responsibility</th>
+              </tr>
+            </thead>
+            <tbody id="adminRolesTableBody">
+              <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;">
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <input type="checkbox" id="adminRoleCheckFaculty" value="review_committee" checked onchange="updateAdminMultiRoleTitle()" style="cursor:pointer; width:16px; height:16px;" />
+                </td>
+                <td style="padding:9px 12px; font-weight:600; color:#1e293b; vertical-align:middle;">
+                  <label for="adminRoleCheckFaculty" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0;">
+                    <span style="font-size:1.1rem;">👨‍🏫</span> Faculty Member
+                  </label>
+                </td>
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <span class="badge" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">Instruction</span>
+                </td>
+                <td style="padding:9px 12px; font-size:0.76rem; color:#64748b; vertical-align:middle;">
+                  Course syllabus authoring &amp; peer review committee
+                </td>
+              </tr>
+              <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;">
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <input type="checkbox" id="adminRoleCheckPh" value="program_head" onchange="toggleAdminPhProgs(this.checked)" style="cursor:pointer; width:16px; height:16px;" />
+                </td>
+                <td style="padding:9px 12px; font-weight:600; color:#1e293b; vertical-align:middle;">
+                  <label for="adminRoleCheckPh" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0;">
+                    <span style="font-size:1.1rem;">👔</span> Program Head
+                  </label>
+                </td>
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">Program</span>
+                </td>
+                <td style="padding:9px 12px; font-size:0.76rem; color:#64748b; vertical-align:middle;">
+                  Curriculum alignment &amp; syllabus endorsement
+                </td>
+              </tr>
+              <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;">
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <input type="checkbox" id="adminRoleCheckQa" value="qa_head" onchange="updateAdminMultiRoleTitle()" style="cursor:pointer; width:16px; height:16px;" />
+                </td>
+                <td style="padding:9px 12px; font-weight:600; color:#1e293b; vertical-align:middle;">
+                  <label for="adminRoleCheckQa" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0;">
+                    <span style="font-size:1.1rem;">🛡️</span> College QA Head
+                  </label>
+                </td>
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <span class="badge" style="background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">QA Audit</span>
+                </td>
+                <td style="padding:9px 12px; font-size:0.76rem; color:#64748b; vertical-align:middle;">
+                  Quality standards, CMO audit &amp; compliance
+                </td>
+              </tr>
+              <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;">
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <input type="checkbox" id="adminRoleCheckAssocDean" value="associate_dean" onchange="updateAdminMultiRoleTitle()" style="cursor:pointer; width:16px; height:16px;" />
+                </td>
+                <td style="padding:9px 12px; font-weight:600; color:#1e293b; vertical-align:middle;">
+                  <label for="adminRoleCheckAssocDean" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0;">
+                    <span style="font-size:1.1rem;">🏛️</span> Associate Dean
+                  </label>
+                </td>
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">Executive</span>
+                </td>
+                <td style="padding:9px 12px; font-size:0.76rem; color:#64748b; vertical-align:middle;">
+                  Academic schedule &amp; college review oversight
+                </td>
+              </tr>
+              <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;">
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <input type="checkbox" id="adminRoleCheckDean" value="dean" onchange="updateAdminMultiRoleTitle()" style="cursor:pointer; width:16px; height:16px;" />
+                </td>
+                <td style="padding:9px 12px; font-weight:600; color:#1e293b; vertical-align:middle;">
+                  <label for="adminRoleCheckDean" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0;">
+                    <span style="font-size:1.1rem;">🏛️</span> College Dean
+                  </label>
+                </td>
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">Approval</span>
+                </td>
+                <td style="padding:9px 12px; font-size:0.76rem; color:#64748b; vertical-align:middle;">
+                  Official approval &amp; college syllabus sanction
+                </td>
+              </tr>
+              <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;">
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <input type="checkbox" id="adminRoleCheckStaff" value="staff" onchange="updateAdminMultiRoleTitle()" style="cursor:pointer; width:16px; height:16px;" />
+                </td>
+                <td style="padding:9px 12px; font-weight:600; color:#1e293b; vertical-align:middle;">
+                  <label for="adminRoleCheckStaff" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0;">
+                    <span style="font-size:1.1rem;">📋</span> Academic Staff
+                  </label>
+                </td>
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <span class="badge" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">Oversight</span>
+                </td>
+                <td style="padding:9px 12px; font-size:0.76rem; color:#64748b; vertical-align:middle;">
+                  Administrative oversight &amp; program archives
+                </td>
+              </tr>
+              <tr style="transition:background 0.15s;">
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <input type="checkbox" id="adminRoleCheckAdmin" value="admin" onchange="updateAdminMultiRoleTitle()" style="cursor:pointer; width:16px; height:16px;" />
+                </td>
+                <td style="padding:9px 12px; font-weight:600; color:#1e293b; vertical-align:middle;">
+                  <label for="adminRoleCheckAdmin" style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0;">
+                    <span style="font-size:1.1rem;">⚙️</span> Administrator
+                  </label>
+                </td>
+                <td style="padding:9px 12px; text-align:center; vertical-align:middle;">
+                  <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px;">System</span>
+                </td>
+                <td style="padding:9px 12px; font-size:0.76rem; color:#64748b; vertical-align:middle;">
+                  System configuration &amp; institutional privileges
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -16809,6 +18289,102 @@
       <button type="button" class="btn btn-light" onclick="closeAddScheduleModal()">Cancel</button>
       <button type="button" class="btn btn-primary" onclick="confirmAddScheduleFromModal()" style="font-weight:700; padding:6px 14px;">
         ✓ Confirm &amp; Add to Class Schedule
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Consultation Hours Slot (UI/UX Parity with Class Schedule Builder) -->
+<div class="modal-overlay" id="addConsultationModal" style="display:none;" onclick="if(event.target===this) closeAddConsultationModal();">
+  <div class="modal-box" style="max-width:620px; width:94%;">
+    <div class="modal-header">
+      <h3 style="margin:0; font-size:1.1rem; color:#1e3a8a; display:flex; align-items:center; gap:8px;">
+        <span>🗓️</span> Add Consultation Hours Schedule Block
+      </h3>
+      <button class="modal-close-btn" onclick="closeAddConsultationModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;">
+      <!-- Quick Presets Shelf -->
+      <div style="margin-bottom:14px;">
+        <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:6px; display:block;">
+          ⚡ Quick Consultation Presets (Click to Auto-Fill):
+        </label>
+        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applyConsultationPreset(['M','W','F'], '13:00', '15:00', 'Faculty Room', 'Faculty Room 302')">MWF 01:00 - 03:00 PM (Faculty Room)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applyConsultationPreset(['T','Th'], '10:00', '12:00', 'Department Office', 'EB 201')">TTh 10:00 AM - 12:00 PM (Dept Office)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applyConsultationPreset(['T','Th'], '13:00', '15:00', 'Faculty Room', 'Faculty Room 302')">TTh 01:00 - 03:00 PM (Faculty Room)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applyConsultationPreset(['F'], '09:00', '12:00', 'Online via Google Meet', 'meet.google.com/usep-ee')">Fri 09:00 AM - 12:00 PM (Google Meet)</button>
+          <button type="button" class="btn btn-sm btn-light" style="font-size:0.72rem; padding:3px 7px; border:1px solid #cbd5e1;" onclick="applyConsultationPreset(['M','T','W','Th','F'], '08:00', '17:00', 'College of Engineering', 'Excluding Lunch Break')">Mon-Fri 08:00 AM - 05:00 PM (Office)</button>
+        </div>
+      </div>
+
+      <div style="background:#f1f5f9; height:1px; margin:14px 0;"></div>
+
+      <!-- Custom Day & Time Selection -->
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:0;">Select Days:</label>
+            <div style="display:flex; gap:4px;">
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalConsultDays(['M','W','F'])">MWF</button>
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalConsultDays(['T','Th'])">TTh</button>
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalConsultDays(['M','W'])">MW</button>
+              <button type="button" class="btn btn-xs btn-outline-primary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalConsultDays(['M','T','W','Th','F'])">Mon-Fri</button>
+              <button type="button" class="btn btn-xs btn-outline-secondary" style="padding:1px 5px; font-size:0.68rem;" onclick="setModalConsultDays([])">Clear</button>
+            </div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:8px 12px;">
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-consult-day" value="M" onchange="updateModalConsultPreview()"> Mon</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-consult-day" value="T" onchange="updateModalConsultPreview()"> Tue</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-consult-day" value="W" onchange="updateModalConsultPreview()"> Wed</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-consult-day" value="Th" onchange="updateModalConsultPreview()"> Thu</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-consult-day" value="F" onchange="updateModalConsultPreview()"> Fri</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-consult-day" value="Sa" onchange="updateModalConsultPreview()"> Sat</label>
+            <label style="font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="modal-consult-day" value="Su" onchange="updateModalConsultPreview()"> Sun</label>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">Start Time:</label>
+            <input type="time" id="modal_consult_start" style="width:100%; font-size:0.82rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" value="13:00" onchange="updateModalConsultPreview()" />
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">End Time:</label>
+            <input type="time" id="modal_consult_end" style="width:100%; font-size:0.82rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" value="15:00" onchange="updateModalConsultPreview()" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">Consultation Mode:</label>
+            <select id="modal_consult_mode" style="width:100%; font-size:0.8rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" onchange="updateModalConsultPreview()">
+              <option value="Face-to-Face">Face-to-Face (Office/Faculty Room)</option>
+              <option value="Online Synchronous">Online Synchronous (Google Meet/Zoom)</option>
+              <option value="Hybrid">Hybrid (F2F &amp; Virtual)</option>
+              <option value="By Appointment">By Appointment</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.78rem; color:#334155; margin-bottom:4px; display:block;">Room / Venue / Link Allocation:</label>
+            <input type="text" id="modal_consult_room" placeholder="e.g. Faculty Room 302 or Google Meet Link" style="width:100%; font-size:0.8rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px;" value="Faculty Room 302" oninput="updateModalConsultPreview()" />
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div id="modalConsultPreviewContainer" style="background:#f0fdf4; border:1.5px dashed #86efac; border-radius:6px; padding:10px 14px; display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.1rem;">🗓️</span>
+          <div style="flex:1;">
+            <div style="font-size:0.7rem; font-weight:700; color:#166534; text-transform:uppercase;">Consultation Schedule Preview:</div>
+            <div id="modalConsultPreviewText" style="font-size:0.88rem; font-weight:800; color:#14532d;">MWF 01:00 PM - 03:00 PM (Faculty Room 302 / Face-to-Face)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+      <button type="button" class="btn btn-light" onclick="closeAddConsultationModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="confirmAddConsultationFromModal()" style="font-weight:700; padding:6px 14px;">
+        ✓ Confirm &amp; Add to Consultation Hours
       </button>
     </div>
   </div>

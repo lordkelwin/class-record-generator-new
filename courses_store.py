@@ -709,24 +709,13 @@ def create_course(
         bp.metadata.passing_percentage = 75.0
         bp.metadata.year_level = cat_yr
         bp.metadata.sdg_alignments = cat_sdgs
-        bp.metadata.prereq_coreq_table = [{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}]
-        bp.metadata.sdg_table = [{"sdg": "", "description": ""}]
+        bp.metadata.workload_description = ""
+        bp.metadata.prereq_coreq_table = []
+        bp.metadata.sdg_table = []
         bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""}]
-        bp.metadata.learning_plan_table = [{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}]
+        bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
         bp.metadata.references_table = [{"code": "[1]", "reference": ""}]
-        bp.metadata.policies_table = [{"number": "1", "title": "", "description": ""}]
-        bp.course_outcomes = [
-            CourseOutcome(
-                co_id="CLO1",
-                description="",
-                program_outcomes="",
-                graduate_outcome_desc="",
-                performance_indicator="",
-                iga_aligned="",
-                target_score_pct=75.0,
-                target_class_pass_pct=50.0,
-            )
-        ]
+        bp.metadata.policies_table = get_default_policies_table()
         is_lec_lab = (bp.metadata.lab_units > 0 and bp.metadata.lecture_units > 0) or ("integrated" in str(bp.metadata.credit_units).lower() or "lecture/laboratory" in str(bp.metadata.lec_lab).lower())
         if is_lec_lab:
             bp.metadata.grading_system_type = "lecture_lab"
@@ -793,24 +782,13 @@ def create_course(
         bp.metadata.passing_percentage = 75.0
         bp.metadata.year_level = cust_yr
         bp.metadata.sdg_alignments = cust_sdgs
-        bp.metadata.prereq_coreq_table = [{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}]
-        bp.metadata.sdg_table = [{"sdg": "", "description": ""}]
+        bp.metadata.workload_description = ""
+        bp.metadata.prereq_coreq_table = []
+        bp.metadata.sdg_table = []
         bp.metadata.syllabus_assessment_activities = [{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""}]
-        bp.metadata.learning_plan_table = [{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}]
+        bp.metadata.learning_plan_table = [dict(DEFAULT_ORIENTATION_ROW)]
         bp.metadata.references_table = [{"code": "[1]", "reference": ""}]
-        bp.metadata.policies_table = [{"number": "1", "title": "", "description": ""}]
-        bp.course_outcomes = [
-            CourseOutcome(
-                co_id="CLO1",
-                description="",
-                program_outcomes="",
-                graduate_outcome_desc="",
-                performance_indicator="",
-                iga_aligned="",
-                target_score_pct=75.0,
-                target_class_pass_pct=50.0,
-            )
-        ]
+        bp.metadata.policies_table = get_default_policies_table()
         is_lec_lab = (bp.metadata.lab_units > 0 and bp.metadata.lecture_units > 0) or ("integrated" in str(bp.metadata.credit_units).lower() or "lecture/laboratory" in str(bp.metadata.lec_lab).lower())
         if is_lec_lab:
             bp.metadata.grading_system_type = "lecture_lab"

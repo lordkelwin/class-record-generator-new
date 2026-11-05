@@ -539,6 +539,10 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     if problems:
         raise WorkflowError("Please complete the syllabus before submitting: " + "; ".join(problems))
 
+    # Guard: A valid faculty digital signature is required before submitting for committee review
+    if not user.get("has_signature") and not user.get("signature_data"):
+        raise WorkflowError("A valid faculty digital signature is required before submitting the syllabus for committee review.")
+
     # Committee must have at least three (3) members
     if committee_members is None:
         committee_members = wf.get("committee_members") or []
@@ -558,7 +562,8 @@ def submit(doc: Dict[str, Any], user: Dict[str, Any],
     wf["author_submissions"][user["username"]] = {
         "submitted_at": now_ts,
         "name": user_name,
-        "notes": (submission_notes or "").strip()
+        "notes": (submission_notes or "").strip(),
+        "signature_data": user.get("signature_data") or ""
     }
 
     # Preserve committee members & notes in workflow

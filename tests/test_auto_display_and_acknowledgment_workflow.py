@@ -15,21 +15,18 @@ class TestAutoDisplayAndAcknowledgmentWorkflow(unittest.TestCase):
             corequisites="EE 211L - Circuits Lab",
             sdg_alignments="7: Affordable and Clean Energy; 9: Industry, Innovation, and Infrastructure"
         )
-        # 1. Part IX must contain a single empty row by default
+        # 1. Part IX must contain Course Orientation as row 1 by default
         self.assertEqual(len(bp.metadata.learning_plan_table), 1)
-        self.assertEqual(bp.metadata.learning_plan_table[0]["topics"], "")
+        self.assertIn("Course Orientation", bp.metadata.learning_plan_table[0]["topics"])
 
-        # 2. Part XI policies must be a single empty row
-        self.assertEqual(len(bp.metadata.policies_table), 1)
-        self.assertEqual(bp.metadata.policies_table[0]["title"], "")
+        # 2. Part V student workload is empty by default
+        self.assertEqual(bp.metadata.workload_description, "")
 
-        # 3. Prerequisites must be a single empty row
-        self.assertEqual(len(bp.metadata.prereq_coreq_table), 1)
-        self.assertEqual(bp.metadata.prereq_coreq_table[0]["course_code"], "")
+        # 3. Prerequisites must be completely empty by default
+        self.assertEqual(bp.metadata.prereq_coreq_table, [])
 
-        # 4. SDGs must be a single empty row
-        self.assertEqual(len(bp.metadata.sdg_table), 1)
-        self.assertEqual(bp.metadata.sdg_table[0]["sdg"], "")
+        # 4. SDGs must be completely empty by default
+        self.assertEqual(bp.metadata.sdg_table, [])
 
     def test_create_course_from_catalog(self):
         catalog_sample = {
@@ -57,15 +54,15 @@ class TestAutoDisplayAndAcknowledgmentWorkflow(unittest.TestCase):
 
         # Year level must be populated from catalog
         self.assertEqual(meta["year_level"], "Third Year")
-        # Learning plan table starts with a single empty row
+        # Learning plan table starts with Course Orientation as row 1
         self.assertEqual(len(meta["learning_plan_table"]), 1)
-        self.assertEqual(meta["learning_plan_table"][0]["topics"], "")
-        # Policies table starts with a single empty row
-        self.assertEqual(len(meta["policies_table"]), 1)
-        self.assertEqual(meta["policies_table"][0]["title"], "")
-        # Prerequisites starts with a single empty row
-        self.assertEqual(len(meta["prereq_coreq_table"]), 1)
-        self.assertEqual(meta["prereq_coreq_table"][0]["course_code"], "")
+        self.assertIn("Course Orientation", meta["learning_plan_table"][0]["topics"])
+        # Prerequisites starts completely empty
+        self.assertEqual(meta["prereq_coreq_table"], [])
+        # SDGs starts completely empty
+        self.assertEqual(meta["sdg_table"], [])
+        # Workload description starts completely empty
+        self.assertEqual(meta["workload_description"], "")
         # Clean up created course
         courses_store.delete_course("faculty_tano", res["id"])
 

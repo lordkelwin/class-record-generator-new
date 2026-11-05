@@ -74,10 +74,11 @@ class TestProgramCatalogs(unittest.TestCase):
                     self.assertIsInstance(t, str)
                     self.assertTrue(t.strip())
 
-                # Check unique code per program
+                # Check unique code per program (keyed by code and semester to allow multi-term courses like EE 400 across semesters)
                 course_code = c["code"].strip()
-                self.assertNotIn(course_code, seen_codes, f"Duplicate course code '{course_code}' in {code}")
-                seen_codes.add(course_code)
+                course_key = (course_code, c.get("semester"))
+                self.assertNotIn(course_key, seen_codes, f"Duplicate course code '{course_code}' in {code} for semester {c.get('semester')}")
+                seen_codes.add(course_key)
 
     def test_department_program_structure_alignment(self):
         """Assert each department metadata aligns with program_structures.py."""

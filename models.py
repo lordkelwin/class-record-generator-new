@@ -142,36 +142,11 @@ class CQIPlan:
 
 
 def get_default_prereq_coreq_table() -> List[Dict[str, str]]:
-    return [
-        {"req_type": "Pre-requisite", "course_code": "NAT SCI 2", "course_title": "PHYSICS FOR ENGINEERS"},
-        {"req_type": "Pre-requisite", "course_code": "MATH 121", "course_title": "ENGINEERING CALCULUS 2"},
-        {"req_type": "Co-requisite", "course_code": "EE 211L", "course_title": "ELECTRICAL CIRCUITS 1 LAB"},
-    ]
+    return []
 
 
 def get_default_sdg_table() -> List[Dict[str, str]]:
-    return [
-        {
-            "sdg": "7: Affordable and Clean Energy",
-            "description": (
-                "This course introduces the core concepts of electrical power, energy-storing elements "
-                "(capacitors and inductors), and maximum power transfer. A rigorous understanding of "
-                "voltage, current, and power calculation is the absolute prerequisite for designing, analyzing, "
-                "and optimizing renewable energy systems, smart grids, and energy-efficient electrical "
-                "networks in the future."
-            ),
-        },
-        {
-            "sdg": "9: Industry, Innovation, and Infrastructure",
-            "description": (
-                "Circuit analysis is the fundamental language of all electrical infrastructure and technological "
-                "innovation. By learning to simplify complex multi-source networks and analyze transient "
-                "and steady-state responses, students develop the technical competencies required to "
-                "innovate and maintain resilient industrial power systems, electronics, and communication "
-                "infrastructures."
-            ),
-        },
-    ]
+    return []
 
 
 def get_default_syllabus_assessment_activities() -> List[Dict[str, str]]:
@@ -227,6 +202,34 @@ def get_default_syllabus_assessment_activities() -> List[Dict[str, str]]:
 
 
 def get_default_learning_plan_table() -> List[Dict[str, Any]]:
+    return [
+        {
+            "ilo": (
+                "• Recognize the university VMGO & Institutional Graduate Attributes.\n"
+                "• Appreciates the significance of PEOs and PGOs of the programs.\n"
+                "• Recognize the rules and regulations of the course and the grading system."
+            ),
+            "clo": "",
+            "time_frame": "1 hour",
+            "topics": (
+                "• Course Orientation\n"
+                "• VMGO & IGA of the University\n"
+                "• PEOs & PGOs of the program.\n"
+                "• Rules and regulations of the course & grading system\n"
+                "• Presentation of the course outline"
+            ),
+            "tla": "• On-site or online meeting",
+            "required_reading": "• USeP Student Handbook (2016 edition)",
+            "assessment_activities": "• N/A",
+            "merge_assessment_with_prev": False,
+        }
+    ]
+
+
+
+
+def get_sample_ee211_learning_plan_table() -> List[Dict[str, Any]]:
+    """Returns the full 10-row EE 211 sample learning plan with merged assessment activities."""
     return [
         {
             "ilo": (
@@ -305,8 +308,10 @@ def get_default_learning_plan_table() -> List[Dict[str, Any]]:
             "merge_assessment_with_prev": True,
         },
         {
-            "ilo": "• Demonstrate mastery of foundational circuit analysis and network theorems.",
-            "clo": "CLO1\nCLO2",
+            "ilo": (
+                "• Demonstrate midterm competence on covered course outcomes."
+            ),
+            "clo": "CLO1",
             "time_frame": "3 hours",
             "topics": "MIDTERM EXAMINATION",
             "tla": "• Conduct of Midterm Examination – Independent Assessment",
@@ -577,13 +582,7 @@ class CourseMetadata:
         "circuits with controlled sources and ideal op-amps; fundamentals of capacitors and inductors; analysis of dc-driven "
         "RL, RC, and RLC circuits; sinusoidal steady-state analysis of general RLC circuits."
     )
-    workload_description: str = (
-        "With 18 weeks at 3 contact hours per week (54 contact hours total) the expected student workload is as follows:\n"
-        "• Group Activities for Formative Assessment\n"
-        "• Total of 4 quizzes (2 for both Midterm and Final Term)\n"
-        "• Midterm and Final Examinations\n"
-        "In instances where face-to-face sessions are impractical, online sessions, asynchronous class, or their equivalent will be provided."
-    )
+    workload_description: str = ""
     passing_grade_conditions: str = (
         "Students shall take all assessments and examinations and must have an attendance of not less than 80% in the class. "
         "In case of lacking output or examination, a grade of INC (Incomplete) shall be given in accordance with the existing "
@@ -601,7 +600,7 @@ class CourseMetadata:
     prereq_coreq_table: List[Dict[str, str]] = field(default_factory=get_default_prereq_coreq_table)
     sdg_table: List[Dict[str, str]] = field(default_factory=get_default_sdg_table)
     syllabus_assessment_activities: List[Dict[str, str]] = field(default_factory=get_default_syllabus_assessment_activities)
-    learning_plan_table: List[Dict[str, str]] = field(default_factory=list)
+    learning_plan_table: List[Dict[str, str]] = field(default_factory=get_default_learning_plan_table)
     references_table: List[Dict[str, str]] = field(default_factory=get_default_references_table)
     policies_table: List[Dict[str, str]] = field(default_factory=get_default_policies_table)
     course_assessment_plan: List[Dict[str, Any]] = field(default_factory=list)

@@ -21,7 +21,7 @@ class TestPart9LearningPlanCheckboxesAndMerge(unittest.TestCase):
 
     def test_default_learning_plan_merge_flags(self):
         """Verify default learning plan table contains proper merge_assessment_with_prev flags matching EE 211."""
-        table = models.get_default_learning_plan_table()
+        table = models.get_sample_ee211_learning_plan_table()
         self.assertGreaterEqual(len(table), 10)
 
         # Orientation: not merged, N/A assessment

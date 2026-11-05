@@ -15,6 +15,7 @@ from models import (
     get_default_policies_table,
     get_default_references_table,
     get_default_syllabus_assessment_activities,
+    get_sample_ee211_learning_plan_table,
 )
 
 
@@ -110,6 +111,7 @@ def get_default_blueprint(include_sample_scores: bool = True) -> SyllabusBluepri
         transmutation_base=50,
         passing_percentage=75.0,
         grading_mode="two_term",
+        learning_plan_table=get_sample_ee211_learning_plan_table(),
     )
 
     terms = [
@@ -375,9 +377,6 @@ def parse_sdg_string_to_table(sdg_str: str = "") -> List[Dict[str, str]]:
         match_obj = next((s for s in UN_SDG_CATALOG if s["sdg"].startswith(f"{num_str}:")), None)
         if match_obj and not any(r["sdg"] == match_obj["sdg"] for r in rows):
             rows.append({"sdg": match_obj["sdg"], "description": match_obj["description"]})
-    if not rows and len(UN_SDG_CATALOG) >= 9:
-        rows.append({"sdg": UN_SDG_CATALOG[6]["sdg"], "description": UN_SDG_CATALOG[6]["description"]})
-        rows.append({"sdg": UN_SDG_CATALOG[8]["sdg"], "description": UN_SDG_CATALOG[8]["description"]})
     return rows
 
 
@@ -606,13 +605,14 @@ def get_blank_blueprint(
         corequisites=corequisites,
         contact_hours=contact_hours,
         year_level=year_level or "Second Year",
+        workload_description="",
         sdg_alignments=sdg_alignments,
-        prereq_coreq_table=[{"req_type": "Pre-requisite", "course_code": "", "course_title": ""}],
-        sdg_table=[{"sdg": "", "description": ""}],
+        prereq_coreq_table=[],
+        sdg_table=[],
         syllabus_assessment_activities=[{"type": "Summative", "code": "", "activity": "", "description": "", "clo_aligned": "", "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""}],
-        learning_plan_table=[{"ilo": "", "clo": "", "time_frame": "", "topics": "", "tla": "", "required_reading": "", "assessment_activities": "", "merge_assessment_with_prev": False}],
+        learning_plan_table=[dict(DEFAULT_ORIENTATION_ROW)],
         references_table=[{"code": "[1]", "reference": ""}],
-        policies_table=[{"number": "1", "title": "", "description": ""}],
+        policies_table=get_default_policies_table(),
     )
 
     terms = [
@@ -620,18 +620,7 @@ def get_blank_blueprint(
         TermConfig(term_name="Finals", weight_pct=50.0),
     ]
 
-    clos_to_use = course_outcomes or [
-        CourseOutcome(
-            co_id="CLO1",
-            description="",
-            program_outcomes="",
-            graduate_outcome_desc="",
-            performance_indicator="",
-            iga_aligned="",
-            target_score_pct=75.0,
-            target_class_pass_pct=50.0,
-        )
-    ]
+    clos_to_use = course_outcomes or generate_clos_from_pgo_pi(pgo_pi_str, program_code=program_code)
 
     return SyllabusBlueprint(
         metadata=metadata,

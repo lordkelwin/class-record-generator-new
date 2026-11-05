@@ -1363,7 +1363,7 @@ def api_submit_syllabus(course_id):
     committee_members = data.get("committee_members")
 
     submission_notes = data.get("submission_notes")
-    sig_data = data.get("signature_data") or ""
+    sig_data = (data.get("signature_data") or "").strip()
     if sig_data:
         from auth import _load_users, _save_users, _lock
         with _lock:
@@ -1374,6 +1374,9 @@ def api_submit_syllabus(course_id):
                 _save_users(all_users)
         user["has_signature"] = True
         user["signature_data"] = sig_data
+
+    if not user.get("has_signature") and not user.get("signature_data"):
+        return jsonify({"error": "A valid faculty digital signature is required before submitting the syllabus for committee review."}), 400
 
     try:
 
