@@ -96,9 +96,13 @@ class USePAcknowledgmentPDF(FPDF):
             self.font_narrow = self.font_main
 
         # Cinzel font for official University header
-        if os.path.exists(os.path.join(win_fonts, "Cinzel-Bold.otf")):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cinzel_local = os.path.join(base_dir, "fonts", "Cinzel-Bold.otf")
+        cinzel_win = os.path.join(win_fonts, "Cinzel-Bold.otf")
+        cinzel_path = cinzel_local if os.path.exists(cinzel_local) else cinzel_win
+        if os.path.exists(cinzel_path):
             try:
-                self.add_font("Cinzel", "B", os.path.join(win_fonts, "Cinzel-Bold.otf"))
+                self.add_font("Cinzel", "B", cinzel_path)
                 self.font_cinzel = "Cinzel"
             except Exception:
                 self.font_cinzel = self.font_main

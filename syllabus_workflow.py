@@ -410,11 +410,8 @@ def enforce_locks(stored_doc: Dict[str, Any], incoming_bp: Dict[str, Any]) -> Di
         merged["rubrics"] = copy.deepcopy(locked["rubrics"])
         merged["terms"] = copy.deepcopy(locked["terms"])
 
-    if not is_approved(stored_doc):
-        merged["categories"] = copy.deepcopy(stored_bp.get("categories") or [])
-        merged["students"] = copy.deepcopy(stored_bp.get("students") or [])
-        if "cqi_plan" in stored_bp:
-            merged["cqi_plan"] = copy.deepcopy(stored_bp["cqi_plan"])
+    # Categories, student roster, and CQI plan remain editable
+    pass
     return merged
 
 
@@ -641,7 +638,7 @@ def save_checklist(doc: Dict[str, Any], user: Dict[str, Any], data: Dict[str, An
     user_canonical = auth.LEGACY_USERNAME_ALIASES.get(user["username"], user["username"])
     comm_list = wf.get("committee_members") or []
     comm_canonicals = [auth.LEGACY_USERNAME_ALIASES.get(m.get("username"), m.get("username")) for m in comm_list]
-    is_comm = (user_canonical in comm_canonicals) or ("review_committee" in (user.get("workflow_roles") or [])) or (user.get("role") == "admin")
+    user_roles = set(user.get("workflow_roles") or []); is_comm = (user_canonical in comm_canonicals) or bool(user_roles.intersection({"review_committee", "review_committee_chair"})) or (user.get("role") == "admin") or (user_canonical == auth.LEGACY_USERNAME_ALIASES.get(wf.get("assigned_committee"), wf.get("assigned_committee")))
     if doc.get("owner") == user.get("username") and user.get("role") != "admin":
         raise WorkflowError("Faculty owners cannot evaluate or fill out the checklist for their own course syllabus.")
     if not is_comm:
@@ -833,6 +830,11 @@ def sign(doc: Dict[str, Any], user: Dict[str, Any], decision: str, remarks: str,
         wf["approved_at"] = _now()
         wf["step_entered_at"] = None
         _log(wf, user["username"], "approved", step=step["key"])
+        try:
+            import courses_store
+            courses_store.auto_generate_class_record(doc)
+        except Exception:
+            pass
     return wf
 
 

@@ -29,6 +29,13 @@ _lock = threading.Lock()
 
 
 def _load_students() -> Dict[str, Dict[str, Any]]:
+    try:
+        import db_persistence
+        db_students = db_persistence.load_students_from_db()
+        if db_students:
+            return db_students
+    except Exception:
+        pass
     if not os.path.exists(STUDENTS_FILE):
         return {}
     try:
@@ -40,6 +47,11 @@ def _load_students() -> Dict[str, Dict[str, Any]]:
 
 
 def _save_students(data: Dict[str, Dict[str, Any]]) -> None:
+    try:
+        import db_persistence
+        db_persistence.save_students_dict_to_db(data)
+    except Exception:
+        pass
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(STUDENTS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)

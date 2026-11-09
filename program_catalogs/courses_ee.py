@@ -4399,3 +4399,12 @@ BSEE_COURSES: List[Dict[str, Any]] = [
         ]
     }
 ]
+
+# Synchronize with authoritative records in prospectus/PGO-PI-IGA.accdb
+try:
+    import accdb_curriculum
+    _accdb_courses = accdb_curriculum.query_accdb_bsee_courses()
+    if _accdb_courses:
+        BSEE_COURSES = _accdb_courses
+except Exception:
+    pass

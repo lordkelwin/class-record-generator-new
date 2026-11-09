@@ -90,6 +90,14 @@
       border-color: var(--border);
     }
     .btn-light:hover { background: #e2e8f0; }
+    .syllabus-subnav .btn-light.active,
+    .syllabus-subnav .btn-light:active {
+      background: #dbeafe !important;
+      color: #1d4ed8 !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+      font-weight: 700 !important;
+    }
     .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
     .btn-danger {
       background: #fee2e2;
@@ -1270,10 +1278,10 @@
             📥 Requests for Approval &amp; Institutional Oversight <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
           </button>
         {% else %}
-          <button type="button" class="ribbon-tab active" id="ribbonTabDashboard" onclick="switchRibbon('ribbon-dashboard', 'tab-dashboard')">
+          <button type="button" class="ribbon-tab{% if default_tab == 'dashboard' %} active{% endif %}" id="ribbonTabDashboard" onclick="switchRibbon('ribbon-dashboard', 'tab-dashboard')">
             📊 Dashboard <span id="dashLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
           </button>
-          <button type="button" class="ribbon-tab" id="ribbonTabSyllabus" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">
+          <button type="button" class="ribbon-tab{% if default_tab != 'dashboard' %} active{% endif %}" id="ribbonTabSyllabus" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">
             📝 Syllabus Creator &amp; Class Record <span id="syllabusLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
           </button>
           <button type="button" class="ribbon-tab" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
@@ -1285,7 +1293,7 @@
 
     <!-- Ribbon Command Bands (Level 2) -->
     <!-- 1. DASHBOARD RIBBON BAND -->
-    <div class="ribbon-band active" id="ribbonBandDashboard">
+    <div class="ribbon-band{% if default_tab == 'dashboard' %} active{% endif %}" id="ribbonBandDashboard">
       <div class="ribbon-group">
         <span class="ribbon-group-title">Evaluation Term</span>
         <div class="ribbon-group-content">
@@ -1308,7 +1316,7 @@
     </div>
 
     <!-- 2. SYLLABUS CREATOR RIBBON BAND (With Corresponding Steps & Exports) -->
-    <div class="ribbon-band" id="ribbonBandSyllabus">
+    <div class="ribbon-band{% if default_tab != 'dashboard' %} active{% endif %}" id="ribbonBandSyllabus">
       <div class="ribbon-group">
         <span class="ribbon-group-title">OBE Course Workflow Steps</span>
         <div class="ribbon-group-content ribbon-steps">
@@ -1459,7 +1467,7 @@
   {% endif %}
 
   <!-- DASHBOARD: Student Scores, CLO Attainment vs Standard, PGO -> PI -> CLO Alignment -->
-  <div id="tab-dashboard" class="tab-panel{% if not current_user or current_user.can_access_faculty_tools %} active{% endif %}">
+  <div id="tab-dashboard" class="tab-panel{% if (not current_user or current_user.can_access_faculty_tools) and default_tab == 'dashboard' %} active{% endif %}">
     <div class="card" style="padding:14px 20px;">
       <div class="card-header" style="margin-bottom:0; padding-bottom:0; border-bottom:none;">
         <div>
@@ -1530,7 +1538,7 @@
   </div>
 
   <!-- TAB 1: COURSE METADATA, SYLLABUS CREATOR & CLO-PO-PI ALIGNMENT -->
-  <div id="tab-syllabus" class="tab-panel">
+  <div id="tab-syllabus" class="tab-panel{% if (not current_user or current_user.can_access_faculty_tools) and default_tab != 'dashboard' %} active{% endif %}">
     <!-- Upload & Hybrid Parser Controls (Step 1) -->
     <div class="upload-banner">
       <div>
@@ -1714,11 +1722,13 @@
     <div class="syllabus-subnav" style="position:sticky; top:0; z-index:90; background:#ffffff; border:1.5px solid #bfdbfe; border-radius:10px; padding:10px 14px; margin-bottom:16px; box-shadow:0 3px 8px rgba(0,0,0,0.06); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         <span style="font-size:0.75rem; font-weight:800; color:#1e3a8a; text-transform:uppercase; letter-spacing:0.04em;">📑 Jump to Syllabus Section:</span>
-        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part1CourseInfoCard')">Parts I–IV: Course Info &amp; CLOs</button>
-        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part5PreReqCard')">Part V: Prerequisites &amp; SDGs</button>
-        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part6AssessmentActivitiesCard')">Part VI: Assessment Activities</button>
-        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part7RubricsCard')">Part VII: Measurement System (Rubrics) <span id="quickRubricsCountBadge" class="badge" style="background:#e2e8f0; color:#1e293b; font-weight:700; margin-left:4px; padding:2px 6px; font-size:0.7rem; border-radius:10px;">0</span></button>
-        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part8GradingPlanCard')">Part VIII: Grading Plan</button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part1CourseInfoCard', this)">Parts I–IV: Course Info &amp; CLOs</button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part5PreReqCard', this)">Part V: Prerequisites &amp; SDGs</button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part6AssessmentActivitiesCard', this)">Part VI: Assessment Activities</button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part7RubricsCard', this)">Part VII: Measurement System (Rubrics) <span id="quickRubricsCountBadge" class="badge" style="background:#e2e8f0; color:#1e293b; font-weight:700; margin-left:4px; padding:2px 6px; font-size:0.7rem; border-radius:10px;">0</span></button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part8GradingPlanCard', this)">Part VIII: Grading Plan</button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part9LearningPlanCard', this)">Part IX: Learning Plan</button>
+        <button type="button" class="btn btn-sm btn-light" style="font-size:0.75rem; font-weight:600; padding:4px 10px;" onclick="scrollToSyllabusSection('part10And11PoliciesCard', this)">Part X &amp; XI: References &amp; Policies</button>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
         <button type="button" class="btn btn-outline-primary btn-sm" style="font-size:0.75rem; font-weight:700; padding:4px 10px;" onclick="exportSyllabusPdf()">📄 Generate &amp; Download PDF</button>
@@ -1887,12 +1897,8 @@
           <datalist id="programHeadListPresets"></datalist>
         </div>
         <div class="form-group">
-          <label>Dean (Approver)</label>
-          <input type="text" id="meta_dean_name" list="deanListPresets" oninput="syncMetaFromInputs()" />
-          <datalist id="deanListPresets">
-            <option value="JOIE D. CATAYTAY">Joie D. Cataytay (Dean, College of Engineering)</option>
-            <option value="Joie D. Cataytay">Engr. Joie D. Cataytay, Ph.D. (Dean, College of Engineering)</option>
-          </datalist>
+          <label>Dean (Approver) <span class="badge" style="font-size:0.72rem; margin-left:4px; padding:2px 6px; background:#e0f2fe; color:#0369a1; border-radius:4px; font-weight:700;"><i class="fas fa-lock"></i> Locked</span></label>
+          <input type="text" id="meta_dean_name" value="Engr. Joie D. Cataytay, Ph.D." readonly disabled style="background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#334155; border:1px solid #cbd5e1;" title="The Approver field is locked and permanently defaulted to the Dean." />
         </div>
         <div class="form-group">
           <label>Base-50 Passing Cutoff (75 = 3.00)</label>
@@ -2344,7 +2350,7 @@
     </div>
 
     <!-- PART IX. COURSE LEARNING PLAN TABLE (7-COLUMN TABLE AS PER EE 211.PDF) -->
-    <div class="card">
+    <div class="card" id="part9LearningPlanCard" tabindex="-1">
       <div class="card-header" style="flex-wrap:wrap; gap:10px;">
         <div>
           <h2>Part IX. Course Learning Plan Table (As Per Sample Syllabus FM-USeP-MID-01)</h2>
@@ -2388,8 +2394,8 @@
     </div>
 
     <!-- PART X. COURSE REFERENCES TABLE & PART XI. CLASSROOM AND ASSESSMENT POLICIES TABLE -->
-    <div class="grid-4" style="grid-template-columns: 1fr 1.35fr;">
-      <div class="card">
+    <div class="grid-4" id="part10And11PoliciesCard" tabindex="-1" style="grid-template-columns: 1fr 1.35fr;">
+      <div class="card" id="part10ReferencesCard">
         <div class="card-header">
           <h2>Part X. References / Articles to Read Table</h2>
           <button type="button" class="btn btn-primary btn-sm" onclick="addReferenceRow()">+ Add Reference</button>
@@ -2406,7 +2412,7 @@
         </table>
       </div>
 
-      <div class="card">
+      <div class="card" id="part11PoliciesCard">
         <div class="card-header">
           <h2>Part XI. Classroom &amp; Assessment Policies Table</h2>
           <button class="btn btn-primary btn-sm" onclick="addPolicyRow()">+ Add Policy</button>
@@ -4063,7 +4069,15 @@
       return;
     }
     await loadCoursesList();
-    updateSyllabusStepUI('tab-syllabus');
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqTab = urlParams.get("tab");
+    if (reqTab === "syllabus") {
+      currentSyllabusStep = "tab-syllabus";
+      switchRibbon("ribbon-syllabus", "tab-syllabus");
+    } else if (reqTab === "approvals") {
+      switchRibbon("ribbon-approvals", "tab-approvals");
+    }
+    updateSyllabusStepUI(currentSyllabusStep || 'tab-syllabus');
     startRealtimeSyncEngine();
     loadApprovalRequests();
   }
@@ -4228,13 +4242,24 @@
       currentClassRecordWorkflow = data.class_record_workflow;
       ensureDefaultRubricsExist();
 
-      // If user was viewing requests for approvals and clicked a subject, switch to that subject's dashboard
-      if (currentRibbon === 'ribbon-approvals') {
-        switchRibbon('ribbon-dashboard', 'tab-dashboard');
-      }
-
       // Update active subject bar
       updateActiveSubjectBar();
+
+      // Evaluate course syllabus approval status and Class Record data state immediately upon course load / selection
+      const isDashboardUnlocked = isCurrentCourseDashboardUnlocked();
+      if (!isDashboardUnlocked) {
+        // If Dashboard prerequisites are not met (unfinalized syllabus or empty class record),
+        // bypass Dashboard and route/redirect directly to Syllabus Creator & Class Record (Step 1)
+        if (currentRibbon === 'ribbon-dashboard' || document.getElementById('tab-dashboard')?.classList.contains('active')) {
+          currentSyllabusStep = 'tab-syllabus';
+          switchRibbon('ribbon-syllabus', 'tab-syllabus');
+        }
+      } else {
+        // If dashboard prerequisites are met and user came from approvals, switch to dashboard
+        if (currentRibbon === 'ribbon-approvals') {
+          switchRibbon('ribbon-dashboard', 'tab-dashboard');
+        }
+      }
 
       // Render full studio (Syllabus, Setup, Gradebook, CLO Report, CQI, Dashboard)
       try { renderAll(); } catch (err) { console.error("renderAll failed:", err); }
@@ -4242,7 +4267,7 @@
       try { renderClassRecordWorkflowBar(); } catch (err) { console.error("renderClassRecordWorkflowBar failed:", err); }
       try { checkClassRecordLock(); } catch (err) { console.error("checkClassRecordLock failed:", err); }
       try {
-        if (currentRibbon === 'ribbon-dashboard' || document.getElementById('tab-dashboard')?.classList.contains('active')) {
+        if (isDashboardUnlocked && (currentRibbon === 'ribbon-dashboard' || document.getElementById('tab-dashboard')?.classList.contains('active'))) {
           renderDashboard();
         }
       } catch (err) { console.error("renderDashboard failed:", err); }
@@ -4857,40 +4882,92 @@
     }
   }
 
-  let currentRibbon = 'ribbon-dashboard';
+  const SERVER_DEFAULT_TAB = {{ (default_tab or 'syllabus')|tojson }};
+  let currentRibbon = SERVER_DEFAULT_TAB === 'dashboard' ? 'ribbon-dashboard' : (SERVER_DEFAULT_TAB === 'approvals' ? 'ribbon-approvals' : 'ribbon-syllabus');
   let currentSyllabusStep = 'tab-syllabus';
 
-  function updateRibbonSubjectLocks() {
-    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
-    const isFaculty = Boolean(window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools);
+  function hasActiveCourseRecordedScores() {
+    if (blueprint && Array.isArray(blueprint.students) && blueprint.students.length > 0) {
+      for (const st of blueprint.students) {
+        if (st && st.scores && typeof st.scores === "object") {
+          for (const v of Object.values(st.scores)) {
+            if (v !== null && v !== undefined && v !== "" && !isNaN(Number(v)) && Number(v) > 0) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    if (currentCourse && Boolean(currentCourse.has_recorded_scores)) {
+      return true;
+    }
+    if (currentCourseId && Array.isArray(allCoursesList)) {
+      const match = allCoursesList.find(c => c.id === currentCourseId);
+      if (match && Boolean(match.has_recorded_scores)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
+  function hasAnyRecordedScores() {
+    return hasActiveCourseRecordedScores();
+  }
+
+  function isCurrentCourseDashboardUnlocked() {
+    const hasSubjects = Array.isArray(allCoursesList) && allCoursesList.length > 0;
+    if (!hasSubjects) return false;
+    const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
+    if (!isSyllabusApproved) return false;
+    const hasScores = hasActiveCourseRecordedScores();
+    if (!hasScores) return false;
+    return true;
+  }
+
+  function updateRibbonSubjectLocks() {
     const dashTab = document.getElementById("ribbonTabDashboard");
     const sylTab = document.getElementById("ribbonTabSyllabus");
     const dashLock = document.getElementById("dashLockIcon");
     const sylLock = document.getElementById("syllabusLockIcon");
 
-    if (isFaculty && !hasSubjects) {
-      if (dashTab) {
-        dashTab.classList.add("ribbon-tab-locked");
-        dashTab.setAttribute("title", "Locked: Please create or add a subject first to unlock the Dashboard.");
-      }
-      if (sylTab) {
+    const hasSubjects = Array.isArray(allCoursesList) && allCoursesList.length > 0;
+    const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
+    const hasScores = hasActiveCourseRecordedScores();
+
+    // 1. Syllabus Creator & Class Record lock condition:
+    // Locked until at least one Subject is created in the subject list.
+    if (sylTab) {
+      if (!hasSubjects) {
         sylTab.classList.add("ribbon-tab-locked");
-        sylTab.setAttribute("title", "Locked: Please create or add a subject first to unlock the Syllabus Creator & Class Record.");
-      }
-      if (dashLock) dashLock.style.display = "inline";
-      if (sylLock) sylLock.style.display = "inline";
-    } else {
-      if (dashTab) {
-        dashTab.classList.remove("ribbon-tab-locked");
-        dashTab.removeAttribute("title");
-      }
-      if (sylTab) {
+        sylTab.title = "🔒 Locked: Please create at least one subject in the subject list first.";
+        if (sylLock) sylLock.style.display = "inline-flex";
+      } else {
         sylTab.classList.remove("ribbon-tab-locked");
         sylTab.removeAttribute("title");
+        if (sylLock) sylLock.style.display = "none";
       }
-      if (dashLock) dashLock.style.display = "none";
-      if (sylLock) sylLock.style.display = "none";
+    }
+
+    // 2. Dashboard lock condition:
+    // Locked until course syllabus is approved by Dean AND Class Record has recorded scores.
+    if (dashTab) {
+      if (!hasSubjects) {
+        dashTab.classList.add("ribbon-tab-locked");
+        dashTab.title = "🔒 Locked: Please create at least one subject first. Clicking redirects to Syllabus Creator.";
+        if (dashLock) dashLock.style.display = "inline-flex";
+      } else if (!isSyllabusApproved) {
+        dashTab.classList.add("ribbon-tab-locked");
+        dashTab.title = "🔒 Locked: Course syllabus must be approved by the Dean first. Clicking redirects to Syllabus Creator.";
+        if (dashLock) dashLock.style.display = "inline-flex";
+      } else if (!hasScores) {
+        dashTab.classList.add("ribbon-tab-locked");
+        dashTab.title = "🔒 Locked: Dashboard unlocks after recording at least one student assessment score in the Class Record. Clicking redirects to Syllabus Creator.";
+        if (dashLock) dashLock.style.display = "inline-flex";
+      } else {
+        dashTab.classList.remove("ribbon-tab-locked");
+        dashTab.removeAttribute("title");
+        if (dashLock) dashLock.style.display = "none";
+      }
     }
   }
 
@@ -4900,14 +4977,65 @@
       targetTabId = 'tab-approvals';
     }
 
-    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
-    if (window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools && !hasSubjects) {
-      if (ribbonId !== 'ribbon-approvals') {
-        showLiveToast("You currently have no subjects in your account. You can access Requests for Approval only until you create or add a subject.", "warning");
-        ribbonId = 'ribbon-approvals';
-        targetTabId = 'tab-approvals';
+    const hasSubjects = Array.isArray(allCoursesList) && allCoursesList.length > 0;
+    const hasScores = hasAnyRecordedScores();
+
+    if (ribbonId === 'ribbon-syllabus') {
+      if (!hasSubjects) {
+        if (typeof showToast === "function") {
+          showToast("Syllabus Creator & Class Record is locked. Please create at least one subject in the subject list first.", "warning");
+        } else {
+          alert("Syllabus Creator & Class Record is locked. Please create at least one subject in the subject list first.");
+        }
+        return;
+      }
+      if (targetTabId && targetTabId !== 'tab-syllabus') {
+        const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
+        if (!isSyllabusApproved) {
+          const stepNames = {
+            'tab-assessments': 'Step 2: Assessments Setup',
+            'tab-gradebook': 'Step 3: Class Record',
+            'tab-receipt-ack': 'Step 4: Receipt of Scores & Paper',
+            'tab-cloreport': 'Step 5: CLO Report',
+            'tab-cqi': 'Step 6: CQI Plan'
+          };
+          const name = stepNames[targetTabId] || 'Steps 2 to 6';
+          const msg = `🔒 Locked: ${name} is locked. The course syllabus (Step 1) must receive final approval from the Dean first.`;
+          if (typeof showToast === "function") {
+            showToast(msg, "warning");
+          } else {
+            alert(msg);
+          }
+          targetTabId = 'tab-syllabus';
+        }
       }
     }
+
+    if (ribbonId === 'ribbon-dashboard') {
+      const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
+      const hasScores = hasActiveCourseRecordedScores();
+
+      if (!hasSubjects || !isSyllabusApproved || !hasScores) {
+        let msg = "";
+        if (!hasSubjects) {
+          msg = "🔒 Dashboard is locked: Please create at least one subject in the subject list first. Redirecting to Syllabus Creator...";
+        } else if (!isSyllabusApproved) {
+          msg = "🔒 Dashboard is locked: Course syllabus must receive final approval from the Dean before accessing the Dashboard. Redirecting to Syllabus Creator & Class Record...";
+        } else {
+          msg = "🔒 Dashboard is locked: Class Record has no recorded student assessment scores yet. Redirecting to Syllabus Creator & Class Record...";
+        }
+
+        if (typeof showToast === "function") {
+          showToast(msg, "warning");
+        }
+
+        // Automatic redirect to Syllabus Creator & Class Record (Step 1)
+        currentSyllabusStep = 'tab-syllabus';
+        ribbonId = 'ribbon-syllabus';
+        targetTabId = 'tab-syllabus';
+      }
+    }
+
     currentRibbon = ribbonId;
 
     // 1. Update primary ribbon tabs
@@ -4947,23 +5075,25 @@
   }
 
   function switchSyllabusStep(stepTabId) {
-    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
-    if (window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools && !hasSubjects) {
-      showLiveToast("You currently have no subjects in your account. You can access Requests for Approval only until you create or add a subject.", "warning");
-      switchRibbon('ribbon-approvals', 'tab-approvals');
-      return;
-    }
-    const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
-    if (['tab-assessments', 'tab-gradebook', 'tab-receipt-ack', 'tab-cloreport', 'tab-cqi'].includes(stepTabId) && !isSyllabusApproved) {
+    const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
+    if (stepTabId !== 'tab-syllabus' && !isSyllabusApproved) {
       const stepNames = {
-        'tab-assessments': "Assessments Setup",
-        'tab-gradebook': "Class Record & Gradebook",
-        'tab-receipt-ack': "Receipt of Scores & Paper",
-        'tab-cloreport': "CLO Report",
-        'tab-cqi': "CQI Plan"
+        'tab-assessments': 'Step 2: Course Assessments Setup',
+        'tab-gradebook': 'Step 3: Class Record & Gradebook',
+        'tab-receipt-ack': 'Step 4: Receipt of Scores & Paper',
+        'tab-cloreport': 'Step 5: CLO Assessment Report (FM-USeP-MID-10)',
+        'tab-cqi': 'Step 6: Continuous Quality Improvement (CQI) Plan'
       };
-      const stepName = stepNames[stepTabId] || "Section";
-      showLiveToast(`The ${stepName} is locked until the course syllabus is finalized and approved.`, "warning");
+      const name = stepNames[stepTabId] || 'This step';
+      const msg = `🔒 Locked: ${name} is inaccessible. The course syllabus (Step 1) must receive final approval from the Dean before proceeding to Steps 2 through 6.`;
+      if (typeof showToast === "function") {
+        showToast(msg, "warning");
+      } else {
+        alert(msg);
+      }
+      currentSyllabusStep = 'tab-syllabus';
+      switchRibbon('ribbon-syllabus', 'tab-syllabus');
+      return;
     }
     currentSyllabusStep = stepTabId;
     switchRibbon('ribbon-syllabus', stepTabId);
@@ -5018,18 +5148,19 @@
       }
     } else if (stepTabId === 'tab-gradebook') {
       ctxTitle.textContent = 'Step 3 Actions';
-      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true);
       if (!isSyllabusApproved) {
-        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus must be approved by Dean in Step 1</span>`;
       } else {
+        const isCrLocked = Boolean(currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked);
         ctxActions.innerHTML = `
           <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportExcelWorkbook()" title="Download Full Official USeP Class Record Excel">
             📗 Export Consolidated Class Record (.xlsx)
           </button>
-          <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('rosterFileInput').click()">
+          <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('rosterFileInput').click()" ${isCrLocked ? 'disabled' : ''}>
             📥 Import Roster
           </button>
-          <button type="button" class="btn btn-sm btn-primary" onclick="addStudentRow()">
+          <button type="button" class="btn btn-sm btn-primary" onclick="addStudentRow()" ${isCrLocked ? 'disabled' : ''}>
             + Add Student
           </button>
         `;
@@ -5051,9 +5182,9 @@
       }
     } else if (stepTabId === 'tab-cloreport') {
       ctxTitle.textContent = 'Step 5 Actions';
-      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true);
       if (!isSyllabusApproved) {
-        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus must be approved by Dean in Step 1</span>`;
       } else {
         ctxActions.innerHTML = `
           <button type="button" class="btn btn-sm btn-primary" style="background:#0284c7; color:#fff; border-color:#0369a1; font-weight:700;" onclick="exportCloReportPdf()" title="Export Official FM-USeP-MID-10 PDF">
@@ -5062,16 +5193,16 @@
           <button type="button" class="btn btn-sm btn-success" style="background:#15803d; color:#fff; border-color:#166534; font-weight:700;" onclick="exportCloReportExcel()" title="Export Official FM-USeP-MID-10 Excel">
             📊 Export CLO Report (.xlsx)
           </button>
-          <button type="button" class="btn btn-sm btn-light" onclick="syncCourseAssessmentPlanFromSyllabus(true)">
-            🔄 Re-Sync CAP
+          <button type="button" class="btn btn-sm btn-light" onclick="syncClassRecordSetupFromSyllabus(false)" title="Re-sync CLO alignments from syllabus">
+            🔄 Sync CAP
           </button>
         `;
       }
     } else if (stepTabId === 'tab-cqi') {
       ctxTitle.textContent = 'Step 6 Actions';
-      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+      const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true);
       if (!isSyllabusApproved) {
-        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus not finalized</span>`;
+        ctxActions.innerHTML = `<span style="font-size:0.75rem; color:#92400e; font-weight:700;">🔒 Locked: Syllabus must be approved by Dean in Step 1</span>`;
       } else {
         ctxActions.innerHTML = `
           <button type="button" class="btn btn-sm btn-light" onclick="saveActiveCourseToServer(true)">
@@ -5111,17 +5242,51 @@
   }
 
   function switchTab(tabId, btnEl) {
-    const hasSubjects = Boolean(allCoursesList && allCoursesList.length > 0);
-    if (window.CURRENT_USER && window.CURRENT_USER.can_access_faculty_tools && !hasSubjects && tabId !== "tab-approvals") {
-      showLiveToast("You currently have no subjects in your account. You can access Requests for Approval only until you create or add a subject.", "warning");
-      switchRibbon("ribbon-approvals", "tab-approvals");
-      return;
-    }
+    const hasSubjects = Array.isArray(allCoursesList) && allCoursesList.length > 0;
+    const hasScores = hasAnyRecordedScores();
+
     if (tabId === "tab-dashboard") {
+      const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
+      const hasScores = hasActiveCourseRecordedScores();
+
+      if (!hasSubjects || !isSyllabusApproved || !hasScores) {
+        let msg = "";
+        if (!hasSubjects) {
+          msg = "🔒 Dashboard is locked: Please create at least one subject in the subject list first. Redirecting to Syllabus Creator...";
+        } else if (!isSyllabusApproved) {
+          msg = "🔒 Dashboard is locked: Course syllabus must receive final approval from the Dean before accessing the Dashboard. Redirecting to Syllabus Creator & Class Record...";
+        } else {
+          msg = "🔒 Dashboard is locked: Class Record has no recorded student assessment scores yet. Redirecting to Syllabus Creator & Class Record...";
+        }
+
+        if (typeof showToast === "function") {
+          showToast(msg, "warning");
+        }
+
+        currentSyllabusStep = 'tab-syllabus';
+        switchRibbon("ribbon-syllabus", "tab-syllabus");
+        return;
+      }
       switchRibbon("ribbon-dashboard", "tab-dashboard");
+      return;
     } else if (tabId === "tab-approvals") {
       switchRibbon("ribbon-approvals", "tab-approvals");
     } else if (["tab-syllabus", "tab-assessments", "tab-gradebook", "tab-receipt-ack", "tab-cloreport", "tab-cqi"].includes(tabId)) {
+      if (!hasSubjects) {
+        if (typeof showToast === "function") showToast("Syllabus Creator & Class Record is locked. Please create at least one subject in the subject list first.", "warning");
+        else alert("Syllabus Creator & Class Record is locked. Please create at least one subject in the subject list first.");
+        return;
+      }
+      if (tabId !== "tab-syllabus") {
+        const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
+        if (!isSyllabusApproved) {
+          const msg = "🔒 Locked: This step is locked. The course syllabus (Step 1) must receive final approval from the Dean before accessing Steps 2 through 6.";
+          if (typeof showToast === "function") showToast(msg, "warning");
+          else alert(msg);
+          switchRibbon("ribbon-syllabus", "tab-syllabus");
+          return;
+        }
+      }
       switchRibbon("ribbon-syllabus", tabId);
     } else {
       switchTabPanel(tabId);
@@ -5643,8 +5808,8 @@
     if (!m.faculty_name) m.faculty_name = acctHolder || "Elwin Jay J. Tano";
     setVal("meta_faculty_name", m.faculty_name);
 
-    // Auto-fill dean_name if empty
-    if (!m.dean_name) m.dean_name = "Joie D. Cataytay";
+    // Permanently default approver to Dean
+    m.dean_name = "Engr. Joie D. Cataytay, Ph.D.";
     setVal("meta_dean_name", m.dean_name);
 
     // Auto-fill program_head
@@ -6261,33 +6426,82 @@
     blueprint.metadata.corequisites = coreqs.join("; ") || "None";
   }
 
-  function onPrereqCoreqCourseChange(idx, selectedValue) {
-    if (!blueprint || !blueprint.metadata || !blueprint.metadata.prereq_coreq_table) return;
-    const row = blueprint.metadata.prereq_coreq_table[idx];
-    if (!row) return;
+  function openPrereqCombobox(idx) {
+    document.querySelectorAll(".prereq-combobox-dropdown").forEach(d => {
+      if (d.id !== `prereqDropdown_${idx}`) d.style.display = "none";
+    });
+    const inp = document.getElementById(`prereqCodeInput_${idx}`);
+    filterPrereqCombobox(idx, inp ? inp.value : "");
+    const dd = document.getElementById(`prereqDropdown_${idx}`);
+    if (dd) dd.style.display = "block";
+  }
 
-    if (selectedValue === "__custom__") {
-      const customCode = prompt("Enter custom course code (e.g. MATH 111, GEC 101):", row.course_code || "");
-      if (customCode !== null) {
-        row.course_code = customCode.trim();
-        const customTitle = prompt("Enter course title (optional):", row.course_title || "");
-        if (customTitle !== null) {
-          row.course_title = customTitle.trim();
-        }
-      }
-      renderPrereqCoreqTable();
-      syncPrereqCoreqMetaStrings();
-      queueAutoSave();
-      return;
+  function togglePrereqCombobox(idx) {
+    const dd = document.getElementById(`prereqDropdown_${idx}`);
+    if (!dd) return;
+    if (dd.style.display === "block") {
+      dd.style.display = "none";
+    } else {
+      openPrereqCombobox(idx);
     }
+  }
 
-    row.course_code = selectedValue;
+  function filterPrereqCombobox(idx, query) {
+    const dd = document.getElementById(`prereqDropdown_${idx}`);
+    if (!dd) return;
     const progCourses = getProgramCoursesForPartV();
-    const match = progCourses.find(c => c.code.toLowerCase() === selectedValue.toLowerCase());
-    if (match) {
-      row.course_title = match.title || "";
+    const q = (query || "").trim().toLowerCase();
+
+    const row = blueprint.metadata.prereq_coreq_table[idx];
+    if (row) {
+      row.course_code = query.trim();
+      const match = progCourses.find(c => c.code.toLowerCase() === query.trim().toLowerCase());
+      if (match) {
+        row.course_title = match.title || "";
+        const titleInp = document.getElementById(`prereqTitleInput_${idx}`);
+        if (titleInp) titleInp.value = match.title || "";
+      }
+      syncPrereqCoreqMetaStrings();
     }
-    renderPrereqCoreqTable();
+
+    const filtered = q
+      ? progCourses.filter(c => (c.code || "").toLowerCase().includes(q) || (c.title || "").toLowerCase().includes(q))
+      : progCourses;
+
+    let html = "";
+    if (filtered.length === 0) {
+      html = `<div style="padding:8px 12px; font-size:0.75rem; color:#64748b; font-style:italic;">No matching courses found in curriculum. You can keep "${escapeHtml(query)}" as custom course code.</div>`;
+    } else {
+      html = filtered.map(c => `
+        <div onclick="selectPrereqComboboxItem(${idx}, '${escapeHtml(c.code)}', '${escapeHtml(c.title || '').replace(/'/g, "\\'")}')"
+             style="padding:6px 10px; cursor:pointer; font-size:0.78rem; border-bottom:1px solid #f1f5f9; display:flex; flex-direction:column;"
+             onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background=''">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:700; color:#0284c7;">${escapeHtml(c.code)}</span>
+            <span style="font-size:0.7rem; color:#64748b;">${escapeHtml(c.credit_units || '')}</span>
+          </div>
+          <div style="font-size:0.74rem; color:#334155; margin-top:2px;">${escapeHtml(c.title || '')}</div>
+        </div>
+      `).join("");
+    }
+    dd.innerHTML = html;
+    dd.style.display = "block";
+  }
+
+  function selectPrereqComboboxItem(idx, code, title) {
+    const row = blueprint.metadata.prereq_coreq_table[idx];
+    if (row) {
+      row.course_code = code;
+      row.course_title = title;
+    }
+    const inp = document.getElementById(`prereqCodeInput_${idx}`);
+    if (inp) inp.value = code;
+    const titleInp = document.getElementById(`prereqTitleInput_${idx}`);
+    if (titleInp) titleInp.value = title;
+
+    const dd = document.getElementById(`prereqDropdown_${idx}`);
+    if (dd) dd.style.display = "none";
+
     syncPrereqCoreqMetaStrings();
     queueAutoSave();
   }
@@ -6304,7 +6518,6 @@
     }
     tbody.innerHTML = m.prereq_coreq_table.map((row, idx) => {
       const curCode = (row.course_code || "").trim();
-      const inCatalog = progCourses.some(c => c.code.toLowerCase() === curCode.toLowerCase());
 
       return `
       <tr>
@@ -6314,22 +6527,37 @@
             <option value="Co-requisite" ${row.req_type === "Co-requisite" ? "selected" : ""}>Co-requisite</option>
           </select>
         </td>
-        <td style="width:260px;">
-          <select onchange="onPrereqCoreqCourseChange(${idx}, this.value)" style="width:100%; font-weight:600; font-size:0.79rem; padding:4px 6px;">
-            <option value="">-- Select Course from Program (${escapeHtml(m.program_code || 'Program')}) --</option>
-            ${!inCatalog && curCode ? `<option value="${escapeHtml(curCode)}" selected>${escapeHtml(curCode)}${row.course_title ? ' &ndash; ' + escapeHtml(row.course_title) : ''} (Current / Custom)</option>` : ''}
-            ${progCourses.map(c => `
-              <option value="${escapeHtml(c.code)}" ${c.code.toLowerCase() === curCode.toLowerCase() ? 'selected' : ''}>
-                ${escapeHtml(c.code)} &ndash; ${escapeHtml(c.title)}
-              </option>
-            `).join("")}
-            <option value="__custom__">&#9997; Other / Custom Course...</option>
-          </select>
+        <td style="width:280px; position:relative;">
+          <div class="prereq-combobox-wrapper" id="prereqComboWrap_${idx}" style="position:relative; width:100%;">
+            <div style="position:relative; display:flex; align-items:center;">
+              <input type="text"
+                     id="prereqCodeInput_${idx}"
+                     class="prereq-code-search-input"
+                     value="${escapeHtml(curCode)}"
+                     placeholder="Search Course Code (e.g. EE 211)..."
+                     autocomplete="off"
+                     onfocus="openPrereqCombobox(${idx})"
+                     oninput="filterPrereqCombobox(${idx}, this.value)"
+                     style="width:100%; font-weight:700; font-size:0.8rem; padding:6px 26px 6px 8px; border:1px solid #cbd5e1; border-radius:5px; background:#ffffff; color:#0f172a;" />
+              <button type="button" onclick="togglePrereqCombobox(${idx})"
+                      tabindex="-1"
+                      style="position:absolute; right:4px; background:none; border:none; cursor:pointer; color:#64748b; font-size:0.75rem; padding:2px;">
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </div>
+            <div id="prereqDropdown_${idx}"
+                 class="prereq-combobox-dropdown"
+                 style="display:none; position:absolute; top:calc(100% + 2px); left:0; width:360px; max-height:220px; overflow-y:auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.2); z-index:1060; padding:4px 0;">
+            </div>
+          </div>
         </td>
         <td>
-          <input type="text" value="${escapeHtml(row.course_title)}" placeholder="Course Title (Auto-Filled from Course Code)"
-            onchange="blueprint.metadata.prereq_coreq_table[${idx}].course_title=this.value; syncPrereqCoreqMetaStrings(); queueAutoSave();"
-            style="width:100%; font-size:0.79rem;" />
+          <input type="text"
+                 id="prereqTitleInput_${idx}"
+                 value="${escapeHtml(row.course_title || '')}"
+                 placeholder="Course Title (Auto-Filled from Course Code)"
+                 oninput="blueprint.metadata.prereq_coreq_table[${idx}].course_title=this.value; syncPrereqCoreqMetaStrings(); queueAutoSave();"
+                 style="width:100%; font-size:0.79rem;" />
         </td>
         <td style="text-align:center; width:48px;">
           <button type="button" class="btn btn-danger btn-sm" onclick="removePrereqCoreqRow(${idx})" title="Remove requirement">&times;</button>
@@ -6358,6 +6586,15 @@
     syncPrereqCoreqMetaStrings();
     queueAutoSave();
   }
+
+  // Click outside listener to close any open prereq combobox dropdowns
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.prereq-combobox-wrapper')) {
+      document.querySelectorAll('.prereq-combobox-dropdown').forEach(function(d) {
+        d.style.display = 'none';
+      });
+    }
+  });
 
   function renderSdgTable() {
     const m = blueprint.metadata;
@@ -6423,16 +6660,21 @@
   }
 
   function parseCloList(coIdStr) {
-    const validClos = (blueprint?.course_outcomes || []).map(c => c.co_id.trim());
+    const validClos = (blueprint?.course_outcomes || []).map(c => (c.co_id || "").trim());
     const raw = String(coIdStr || "").trim();
     if (!raw) return [validClos[0] || "CLO1"];
+    const norm = s => String(s || "").replace(/\s+/g, "").toUpperCase();
     const tokens = raw
       .split(/[,;/]+/)
-      .map(s => s.split(":")[0].trim().toUpperCase())
+      .map(s => s.split(":")[0].trim())
       .filter(Boolean);
     const unique = [];
     tokens.forEach(t => {
-      const matched = validClos.find(vc => vc.toUpperCase() === t) || t;
+      const tNorm = norm(t);
+      const matched = validClos.find(vc => {
+        const vcNorm = norm(vc);
+        return vcNorm === tNorm || vcNorm.replace("CO", "CLO") === tNorm.replace("CO", "CLO");
+      }) || t.toUpperCase();
       if (!unique.includes(matched)) unique.push(matched);
     });
     return unique.length ? unique : [validClos[0] || "CLO1"];
@@ -6484,8 +6726,6 @@
   }
 
   function maybeAutoSyncSetupFromSyllabus() {
-    const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
-    if (!isSyllabusApproved) return;
     const autoEl = document.getElementById("autoSyncSyllabusToSetup");
     if (!autoEl || autoEl.checked) {
       syncClassRecordSetupFromSyllabus(false);
@@ -7131,9 +7371,25 @@
     }
   }
 
-  function scrollToSyllabusSection(elementId) {
+  function scrollToSyllabusSection(elementId, btnEl = null) {
     if (!document.getElementById("tab-syllabus").classList.contains("active")) {
       switchTab("tab-syllabus");
+    }
+    const subnav = document.querySelector(".syllabus-subnav");
+    if (subnav) {
+      const jumpButtons = subnav.querySelectorAll("button[onclick*='scrollToSyllabusSection']");
+      jumpButtons.forEach(btn => btn.classList.remove("active"));
+      let activeBtn = btnEl;
+      if (!activeBtn) {
+        jumpButtons.forEach(btn => {
+          if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes("'" + elementId + "'")) {
+            activeBtn = btn;
+          }
+        });
+      }
+      if (activeBtn) {
+        activeBtn.classList.add("active");
+      }
     }
     setTimeout(() => {
       const el = document.getElementById(elementId);
@@ -7141,6 +7397,12 @@
       el.scrollIntoView({ behavior: "smooth", block: "start" });
       el.style.transition = "box-shadow 0.3s ease, border-color 0.3s ease";
       el.style.boxShadow = "0 0 0 4px #2563eb";
+      if (!el.hasAttribute("tabindex")) {
+        el.setAttribute("tabindex", "-1");
+      }
+      if (typeof el.focus === "function") {
+        try { el.focus({ preventScroll: true }); } catch (e) {}
+      }
       setTimeout(() => {
         el.style.boxShadow = "";
       }, 2000);
@@ -8072,7 +8334,7 @@
     m.semester_ay = document.getElementById("meta_semester_ay").value;
     m.faculty_name = document.getElementById("meta_faculty_name").value;
     m.program_head = document.getElementById("meta_program_head").value;
-    m.dean_name = document.getElementById("meta_dean_name").value;
+    m.dean_name = (document.getElementById("meta_dean_name")?.value) || "Engr. Joie D. Cataytay, Ph.D.";
 
     m.version_number = document.getElementById("meta_version_number").value;
     m.version_note = document.getElementById("meta_version_note").value;
@@ -8923,10 +9185,6 @@
   }
 
   function addAssessmentCategory(termName, aType, isMajor) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") {
-      alert("Class Record Setup & Grades are locked until the syllabus is approved through the official review chain.");
-      return;
-    }
     const isMaj = Boolean(isMajor || termName === "Major Assessment");
     const effTerm = isMaj ? "Major Assessment" : (termName || "Midterm");
     const nextNum = (blueprint.categories || []).length + 1;
@@ -8960,10 +9218,6 @@
   }
 
   function removeAssessmentCategory(cIdx) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") {
-      alert("Class Record Setup & Grades are locked until the syllabus is approved through the official review chain.");
-      return;
-    }
     if (blueprint.categories.length <= 1) return;
     blueprint.categories.splice(cIdx, 1);
     renderCategories();
@@ -8971,10 +9225,6 @@
   }
 
   function addAssessmentItem(cIdx) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") {
-      alert("Class Record Setup & Grades are locked until the syllabus is approved through the official review chain.");
-      return;
-    }
     const cat = blueprint.categories[cIdx];
     const nextItem = (cat.items?.length || 0) + 1;
     const defaultCo = blueprint.course_outcomes[0]?.co_id || "CLO1";
@@ -8991,10 +9241,6 @@
   }
 
   function removeAssessmentItem(cIdx, iIdx) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") {
-      alert("Class Record Setup & Grades are locked until the syllabus is approved through the official review chain.");
-      return;
-    }
     const cat = blueprint.categories[cIdx];
     if (cat.items.length <= 1) return;
     cat.items.splice(iIdx, 1);
@@ -9139,29 +9385,25 @@
 
   function renderLiveGradebookAndReports() {
     if (!blueprint) return;
+    if ((!blueprint.categories || !blueprint.categories.length) && blueprint.metadata?.syllabus_assessment_activities?.length) {
+      syncClassRecordSetupFromSyllabus(false);
+    }
     const tbl = document.getElementById("liveGradebookTable");
-    const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
-    const isCrLocked = (currentClassRecordWorkflow && Boolean(currentClassRecordWorkflow.is_locked)) || !isSyllabusApproved;
+    const isCrLocked = Boolean(currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked);
     const btnAddSt = document.getElementById("btnCrAddStudent");
     if (btnAddSt) {
       btnAddSt.disabled = isCrLocked;
-      btnAddSt.title = !isSyllabusApproved
-        ? "Class record is locked until syllabus is approved"
-        : (isCrLocked ? "Class record is locked during sign-off / finalization" : "+ Add Student");
+      btnAddSt.title = isCrLocked ? "Class record is locked during sign-off / finalization" : "+ Add Student";
     }
     const btnImpRoster = document.getElementById("btnCrImportRoster");
     if (btnImpRoster) {
       btnImpRoster.disabled = isCrLocked;
-      btnImpRoster.title = !isSyllabusApproved
-        ? "Class record is locked until syllabus is approved"
-        : (isCrLocked ? "Class record is locked during sign-off / finalization" : "Import Roster");
+      btnImpRoster.title = isCrLocked ? "Class record is locked during sign-off / finalization" : "Import Roster";
     }
     const rosterInp = document.getElementById("rosterFileInput");
     if (rosterInp) {
       rosterInp.disabled = isCrLocked;
-      rosterInp.title = !isSyllabusApproved
-        ? "Class record is locked until syllabus is approved"
-        : "Import Roster";
+      rosterInp.title = "Import Roster";
     }
 
     // Determine terms present in course
@@ -9399,9 +9641,13 @@
       let rowCells = `
         <td>${sIdx + 1}</td>
         <td><input type="text" style="width:95px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.student_id)}" oninput="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(800);" onchange="blueprint.students[${sIdx}].student_id=this.value; queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
-        <td><input type="text" style="width:170px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}" value="${escapeHtml(st.last_name || '')}, ${escapeHtml(st.first_name || '')}"
-          oninput="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(800);"
-          onchange="const p=this.value.split(','); blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); queueAutoSave(150);" ${isCrLocked ? 'disabled' : ''} /></td>
+        <td>
+          <input type="text" style="width:170px; ${isCrLocked ? 'background:#f8fafc; cursor:not-allowed;' : ''}"
+            value="${escapeHtml((st.last_name || st.first_name) ? ((st.last_name || '') + (st.first_name ? ', ' + st.first_name : '')) : (st.name || st.full_name || st.student_id || ''))}"
+            oninput="const p=this.value.split(','); if(p.length>1){blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); blueprint.students[${sIdx}].name=this.value.trim();} else {blueprint.students[${sIdx}].name=this.value.trim(); const parts=this.value.trim().split(' '); blueprint.students[${sIdx}].last_name=parts.length>1?parts[parts.length-1]:this.value.trim(); blueprint.students[${sIdx}].first_name=parts.length>1?parts.slice(0,-1).join(' '):'';} queueAutoSave(800);"
+            onchange="const p=this.value.split(','); if(p.length>1){blueprint.students[${sIdx}].last_name=(p[0]||'').trim(); blueprint.students[${sIdx}].first_name=(p[1]||'').trim(); blueprint.students[${sIdx}].name=this.value.trim();} else {blueprint.students[${sIdx}].name=this.value.trim(); const parts=this.value.trim().split(' '); blueprint.students[${sIdx}].last_name=parts.length>1?parts[parts.length-1]:this.value.trim(); blueprint.students[${sIdx}].first_name=parts.length>1?parts.slice(0,-1).join(' '):'';} queueAutoSave(150);"
+            ${isCrLocked ? 'disabled' : ''} />
+        </td>
       `;
 
       const termGrades = {};
@@ -9576,8 +9822,16 @@
       });
 
       return `<tr id="stRow_${sIdx}">${rowCells}</tr>`;
-    }).join("") : `<tr><td colspan="100" style="text-align:center; padding:28px; color:#64748b; font-size:0.9rem;">
-        No students in class roster yet. Click <strong>+ Add Student</strong> or <strong>Import Students CSV</strong> below to populate the class record.
+    }).join("") : `<tr><td colspan="100" style="text-align:center; padding:36px 20px; background:#f8fafc; color:#475569;">
+        <div style="font-size:1.8rem; margin-bottom:8px;">📋</div>
+        <div style="font-size:1rem; font-weight:700; color:#1e293b; margin-bottom:6px;">No Students Enrolled in Class Record Yet</div>
+        <div style="font-size:0.84rem; color:#64748b; margin-bottom:14px; max-width:550px; margin-left:auto; margin-right:auto;">
+          Enrolled student records from the database will populate automatically. You can also manually add students or import a roster (.csv / .xlsx) below.
+        </div>
+        <div style="display:flex; justify-content:center; gap:10px;">
+          <button type="button" class="btn btn-sm btn-primary" onclick="addStudentRow()">+ Add Student Row</button>
+          <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('rosterFileInput').click()">📥 Import Roster File</button>
+        </div>
       </td></tr>`;
 
     tbl.innerHTML = thead + `<tbody>${rowsHtml}</tbody>`;
@@ -10294,7 +10548,7 @@
   }
 
   function liveCalculateStudentRow(sIdx, itemId, cloId, val) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") return;
+    if (currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked) return;
     if (!blueprint || !blueprint.students || !blueprint.students[sIdx]) return;
     const st = blueprint.students[sIdx];
     if (!st.scores) st.scores = {};
@@ -10439,7 +10693,7 @@
     queueAutoSave(800);
   }
   function updateStudentCloScore(sIdx, itemId, cloId, val) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") return;
+    if (currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked) return;
     if (!blueprint.students[sIdx].scores) blueprint.students[sIdx].scores = {};
 
     const maxPts = getItemCloMaxScore(itemId, cloId);
@@ -10478,16 +10732,18 @@
   }
 
   function addStudentRow() {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") {
-      alert("Class Record is locked until the syllabus is approved through the official review chain.");
+    if (currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked) {
+      alert("Class record is locked during official sign-off.");
       return;
     }
     const nextIdx = (blueprint.students?.length || 0) + 1;
+    blueprint.students = blueprint.students || [];
     blueprint.students.push({
       student_id: `2026-${1000 + nextIdx}`,
       last_name: "Student",
       first_name: `#${nextIdx}`,
-      program_year: blueprint.metadata.section || "EE 2A",
+      name: `Student, #${nextIdx}`,
+      program_year: blueprint.metadata?.section || "EE 2A",
       scores: {}
     });
     renderLiveGradebookAndReports();
@@ -10495,8 +10751,8 @@
   }
 
   function removeStudentRow(sIdx) {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") {
-      alert("Class Record is locked until the syllabus is approved through the official review chain.");
+    if (currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked) {
+      alert("Class record is locked during official sign-off.");
       return;
     }
     blueprint.students.splice(sIdx, 1);
@@ -10505,8 +10761,8 @@
   }
 
   async function uploadStudentRoster() {
-    if (!currentWorkflow || currentWorkflow.status !== "approved") {
-      alert("Class Record is locked until the syllabus is approved through the official review chain.");
+    if (currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked) {
+      alert("Class record is locked during official sign-off.");
       return;
     }
     const inp = document.getElementById("rosterFileInput");
@@ -10516,15 +10772,26 @@
     }
     const fd = new FormData();
     fd.append("file", inp.files[0]);
-    const res = await fetch("/api/import-roster", { method: "POST", body: fd });
-    const data = await res.json();
-    if (data.error) {
-      alert(data.error);
-      return;
+    const cid = currentCourseId || (blueprint && blueprint.metadata && blueprint.metadata.course_id);
+    const targetUrl = cid ? `/api/courses/${cid}/roster/import` : "/api/import-roster";
+    try {
+      const res = await fetch(targetUrl, { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      if (data.students) {
+        blueprint.students = data.students;
+      } else if (cid) {
+        await loadCourse(cid);
+        return;
+      }
+      renderLiveGradebookAndReports();
+      queueAutoSave();
+    } catch (err) {
+      alert("Failed to upload student roster: " + err);
     }
-    blueprint.students = data.students;
-    renderLiveGradebookAndReports();
-    queueAutoSave();
   }
 
   function renderTransmutationTable() {
@@ -10751,6 +11018,27 @@
       const b4 = document.getElementById("dashCloAttain"); if (b4) b4.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:18px 0; text-align:center;">No CLO attainment data available.</div>';
       const b5 = document.getElementById("dashAlignMap"); if (b5) b5.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:18px 0; text-align:center;">No outcome alignment map available.</div>';
       const b6 = document.getElementById("dashAlignTable"); if (b6) b6.innerHTML = '<tr><td style="color:#64748b; font-size:0.85rem; padding:18px; text-align:center;">No outcome alignment matrix available.</td></tr>';
+      return;
+    }
+    if (!hasAnyRecordedScores()) {
+      const dt = document.getElementById("dashTitle"); if (dt) dt.textContent = "Class Dashboard — Analytics Locked";
+      const ds = document.getElementById("dashSubtitle"); if (ds) ds.textContent = "Class analytics and outcome attainment distributions will unlock after at least one student assessment score is recorded in the Class Record.";
+      const kpis = document.getElementById("dashKpis");
+      if (kpis) {
+        kpis.innerHTML = `
+          <div class="kpi" style="border-left-color:#eab308;"><div class="k-label">Dashboard Status</div><div class="k-value" style="font-size:1.15rem; color:#854d0e;">🔒 Awaiting Scores</div><div class="k-sub">No assessment scores recorded yet</div></div>
+          <div class="kpi" style="border-left-color:#64748b;"><div class="k-label">Students Enrolled</div><div class="k-value">${(blueprint && blueprint.students ? blueprint.students.length : 0)}</div><div class="k-sub">Roster initialized</div></div>
+          <div class="kpi" style="border-left-color:#64748b;"><div class="k-label">Assessments</div><div class="k-value">${(blueprint && blueprint.categories ? blueprint.categories.reduce((a,c) => a + (c.items||[]).length, 0) : 0)}</div><div class="k-sub">Items configured</div></div>
+          <div class="kpi" style="border-left-color:#b45309;"><div class="k-label">Class Avg</div><div class="k-value">—</div><div class="k-sub">Awaiting score entry</div></div>
+          <div class="kpi" style="border-left-color:#15803d;"><div class="k-label">Attainment</div><div class="k-value">—</div><div class="k-sub">Awaiting score entry</div></div>
+        `;
+      }
+      const b1 = document.getElementById("dashAssessBars"); if (b1) b1.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:22px; text-align:center; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px;">🔒 <strong>Assessment Analytics Locked</strong><br>Enter student scores in the Class Record to generate performance distribution charts.</div>';
+      const b2 = document.getElementById("dashStudentProfile"); if (b2) b2.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:22px; text-align:center; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px;">🔒 <strong>Student Profiles Locked</strong><br>Awaiting student score entries.</div>';
+      const b3 = document.getElementById("dashHeatmap"); if (b3) b3.innerHTML = '<tr><td style="color:#64748b; font-size:0.85rem; padding:22px; text-align:center; background:#f8fafc;">🔒 <strong>Score Heatmap Locked</strong>: Please enter student scores in the Class Record to visualize heatmaps.</td></tr>';
+      const b4 = document.getElementById("dashCloAttain"); if (b4) b4.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:22px; text-align:center; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px;">🔒 <strong>CLO Attainment Locked</strong>: Attainment graphs will generate automatically once scores are entered.</div>';
+      const b5 = document.getElementById("dashAlignMap"); if (b5) b5.innerHTML = '<div style="color:#64748b; font-size:0.85rem; padding:22px; text-align:center; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px;">🔒 <strong>Outcome Alignment Map Locked</strong>: Awaiting score recordings.</div>';
+      const b6 = document.getElementById("dashAlignTable"); if (b6) b6.innerHTML = '<tr><td style="color:#64748b; font-size:0.85rem; padding:22px; text-align:center; background:#f8fafc;">🔒 Outcome alignment matrix locked until scores are recorded.</td></tr>';
       return;
     }
     if (!gradebookCache) { renderLiveGradebookAndReports(); return; }
@@ -11522,183 +11810,254 @@
 
   // Enforce Class Record Lock Barrier on Tabs 2, 3, 5 & 6 & Grade Freeze
   function checkClassRecordLock() {
-    const isSyllabusApproved = currentWorkflow && (currentWorkflow.status === "approved");
+    const isCrLocked = Boolean(currentClassRecordWorkflow && currentClassRecordWorkflow.is_locked);
+    const isSyllabusApproved = Boolean(currentWorkflow && (currentWorkflow.status === "approved" || currentWorkflow.approved === true));
     const b2 = document.getElementById("classRecordLockBannerAssessments");
     const b3 = document.getElementById("classRecordLockBannerGradebook");
     const b4 = document.getElementById("classRecordLockBannerReceiptAck");
     const bClo = document.getElementById("classRecordLockBannerCloReport");
     const bCqi = document.getElementById("classRecordLockBannerCqi");
-    if (b2) b2.style.display = isSyllabusApproved ? "none" : "block";
-    if (b3) b3.style.display = isSyllabusApproved ? "none" : "block";
-    if (b4) b4.style.display = isSyllabusApproved ? "none" : "block";
-    if (bClo) bClo.style.display = isSyllabusApproved ? "none" : "block";
-    if (bCqi) bCqi.style.display = isSyllabusApproved ? "none" : "block";
 
-    // Disable / Dim setup interactive controls if syllabus not approved
     const setupContent = document.getElementById("setupTabContent");
-    if (setupContent) {
-      setupContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
-      setupContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
-      setupContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
-      setupContent.querySelectorAll("input, select, textarea, button").forEach(el => {
-        el.disabled = !isSyllabusApproved;
-        if (!isSyllabusApproved) {
-          el.title = "Locked: Syllabus must be approved through the review chain before setting up assessments.";
-          el.style.cursor = "not-allowed";
-        } else {
-          el.removeAttribute("title");
-          el.style.cursor = "";
-        }
-      });
-    }
-
-    // Disable / Dim gradebook interactive controls if syllabus not approved
     const gradebookContent = document.getElementById("gradebookTabContent");
-    if (gradebookContent) {
-      gradebookContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
-      gradebookContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
-      gradebookContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
-      gradebookContent.querySelectorAll("input, select, textarea, button").forEach(el => {
-        el.disabled = !isSyllabusApproved;
-        if (!isSyllabusApproved) {
-          el.title = "Locked: Syllabus must be approved through the review chain before entering student scores.";
-          el.style.cursor = "not-allowed";
-        } else {
-          el.removeAttribute("title");
-          el.style.cursor = "";
-        }
-      });
-    }
-
-    // Disable / Dim CLO Report interactive controls if syllabus not approved
     const cloReportContent = document.getElementById("cloReportTabContent");
-    if (cloReportContent) {
-      cloReportContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
-      cloReportContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
-      cloReportContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
-      cloReportContent.querySelectorAll("input, select, textarea, button").forEach(el => {
-        el.disabled = !isSyllabusApproved;
-        if (!isSyllabusApproved) {
-          el.title = "Locked: Syllabus must be finalized and approved before accessing the CLO Report.";
-          el.style.cursor = "not-allowed";
-        } else {
-          el.removeAttribute("title");
-          el.style.cursor = "";
-        }
-      });
-    }
-
-    // Disable / Dim CQI interactive controls if syllabus not approved
     const cqiContent = document.getElementById("cqiTabContent");
-    if (cqiContent) {
-      cqiContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
-      cqiContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
-      cqiContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
-      cqiContent.querySelectorAll("input, select, textarea, button").forEach(el => {
-        el.disabled = !isSyllabusApproved;
-        if (!isSyllabusApproved) {
-          el.title = "Locked: Syllabus must be finalized and approved before accessing the CQI Plan.";
-          el.style.cursor = "not-allowed";
-        } else {
-          el.removeAttribute("title");
-          el.style.cursor = "";
-        }
-      });
-    }
-
-    // Disable / Dim Receipt of Scores & Paper interactive controls if syllabus not approved
     const receiptAckContent = document.getElementById("receiptAckTabContent");
-    if (receiptAckContent) {
-      receiptAckContent.style.opacity = isSyllabusApproved ? "1" : "0.5";
-      receiptAckContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";
-      receiptAckContent.style.userSelect = isSyllabusApproved ? "auto" : "none";
-      receiptAckContent.querySelectorAll("input, select, textarea, button").forEach(el => {
-        el.disabled = !isSyllabusApproved;
-        if (!isSyllabusApproved) {
-          el.title = "Locked: Syllabus must be finalized and approved before accessing Receipt of Scores & Paper.";
+
+    if (!isSyllabusApproved) {
+      // 1. Strictly lock Steps 2 to 6 when Syllabus is not approved by Dean
+      if (b2) b2.style.display = "block";
+      if (b3) b3.style.display = "block";
+      if (b4) b4.style.display = "block";
+      if (bClo) bClo.style.display = "block";
+      if (bCqi) bCqi.style.display = "block";
+
+      if (setupContent) {
+        setupContent.style.opacity = isCrLocked ? "0.6" : "1";
+        setupContent.style.pointerEvents = isCrLocked ? "none" : "auto";
+        setupContent.style.opacity = "0.6";
+        setupContent.style.pointerEvents = "none";
+        setupContent.style.userSelect = "none";
+        setupContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = isCrLocked;
+          el.disabled = true;
+          el.title = "Locked: Course syllabus must be finalized and approved by the Dean in Step 1.";
           el.style.cursor = "not-allowed";
-        } else {
+        });
+      }
+
+      if (gradebookContent) {
+        gradebookContent.style.opacity = isCrLocked ? "0.85" : "1";
+        gradebookContent.style.opacity = "0.6";
+        gradebookContent.style.pointerEvents = "none";
+        gradebookContent.style.userSelect = "none";
+        gradebookContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = true;
+          el.title = "Locked: Course syllabus must be finalized and approved by the Dean in Step 1.";
+          el.style.cursor = "not-allowed";
+        });
+      }
+
+      if (receiptAckContent) {
+        receiptAckContent.style.opacity = "0.5";
+        receiptAckContent.style.pointerEvents = "none";
+        receiptAckContent.style.userSelect = "none";
+        receiptAckContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = true;
+          el.title = "Locked: Course syllabus must be finalized and approved by the Dean in Step 1.";
+          el.style.cursor = "not-allowed";
+        });
+      }
+
+      if (cloReportContent) {
+        cloReportContent.style.opacity = "0.6";
+        cloReportContent.style.pointerEvents = "none";
+        cloReportContent.style.userSelect = "none";
+        cloReportContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = true;
+          el.title = "Locked: Course syllabus must be finalized and approved by the Dean in Step 1.";
+          el.style.cursor = "not-allowed";
+        });
+      }
+
+      if (cqiContent) {
+        cqiContent.style.opacity = "0.6";
+        cqiContent.style.pointerEvents = "none";
+        cqiContent.style.userSelect = "none";
+        cqiContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = true;
+          el.title = "Locked: Course syllabus must be finalized and approved by the Dean in Step 1.";
+          el.style.cursor = "not-allowed";
+        });
+      }
+    } else {
+      // 2. Syllabus is Approved by Dean -> Unlock Steps 2 to 6 (subject to class record freeze if isCrLocked)
+      if (b2) b2.style.display = isCrLocked ? "block" : "none";
+      if (b3) b3.style.display = isCrLocked ? "block" : "none";
+      if (b4) b4.style.display = isCrLocked ? "block" : "none";
+      if (bClo) bClo.style.display = isCrLocked ? "block" : "none";
+      if (bCqi) bCqi.style.display = isCrLocked ? "block" : "none";
+
+      if (setupContent) {
+        setupContent.style.opacity = isCrLocked ? "0.6" : "1";
+        setupContent.style.pointerEvents = isCrLocked ? "none" : "auto";
+        setupContent.style.userSelect = isCrLocked ? "none" : "auto";
+        setupContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = isCrLocked;
+          if (isCrLocked) {
+            el.title = "Locked: Class record is under official sign-off / review.";
+            el.style.cursor = "not-allowed";
+          } else {
+            el.removeAttribute("title");
+            el.style.cursor = "";
+          }
+        });
+      }
+
+      if (gradebookContent) {
+        gradebookContent.style.opacity = isCrLocked ? "0.85" : "1";
+        gradebookContent.style.pointerEvents = "auto";
+        gradebookContent.style.userSelect = "auto";
+        gradebookContent.querySelectorAll("input.score-input").forEach(el => {
+          el.disabled = isCrLocked;
+          if (isCrLocked) {
+            el.title = "Locked: Student scores are frozen during institutional sign-off.";
+            el.style.cursor = "not-allowed";
+          } else {
+            el.removeAttribute("title");
+            el.style.cursor = "";
+          }
+        });
+        gradebookContent.querySelectorAll("button, select").forEach(el => {
+          el.disabled = isCrLocked;
+          if (isCrLocked) {
+            el.title = "Locked: Class record is frozen.";
+            el.style.cursor = "not-allowed";
+          } else {
+            el.removeAttribute("title");
+            el.style.cursor = "";
+          }
+        });
+      }
+
+      if (receiptAckContent) {
+        receiptAckContent.style.opacity = "1";
+        receiptAckContent.style.pointerEvents = "auto";
+        receiptAckContent.style.userSelect = "auto";
+        receiptAckContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = false;
           el.removeAttribute("title");
           el.style.cursor = "";
-        }
-      });
+        });
+      }
+
+      if (cloReportContent) {
+        cloReportContent.style.opacity = "1";
+        cloReportContent.style.pointerEvents = "auto";
+        cloReportContent.style.userSelect = "auto";
+        cloReportContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = false;
+          el.removeAttribute("title");
+          el.style.cursor = "";
+        });
+      }
+
+      if (cqiContent) {
+        cqiContent.style.opacity = "1";
+        cqiContent.style.pointerEvents = "auto";
+        cqiContent.style.userSelect = "auto";
+        cqiContent.querySelectorAll("input, select, textarea, button").forEach(el => {
+          el.disabled = false;
+          el.removeAttribute("title");
+          el.style.cursor = "";
+        });
+      }
     }
 
     // Update ribbon step buttons state for Assessments, Class Record, Receipt of Scores & Paper, CLO Report and CQI Plan
     const stepBtnAssessments = document.getElementById("stepBtnTabAssessments");
     const stepBtnGradebook = document.getElementById("stepBtnTabGradebook");
     const stepBtnReceiptAck = document.getElementById("stepBtnTabReceiptAck");
+    const stepBtnClo = document.getElementById("stepBtnTabCloreport");
+    const stepBtnCqi = document.getElementById("stepBtnTabCqi");
 
     if (stepBtnAssessments) {
       if (!isSyllabusApproved) {
-        stepBtnAssessments.title = "🔒 Locked: Course syllabus must be finalized and approved first.";
+        stepBtnAssessments.title = "🔒 Inaccessible: Course syllabus (Step 1) must be finalized and approved by the Dean first.";
         stepBtnAssessments.style.opacity = "0.65";
+        stepBtnAssessments.style.cursor = "not-allowed";
         const lbl = stepBtnAssessments.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "Assessments (FA/SA) 🔒";
       } else {
         stepBtnAssessments.title = "Step 2: Course Assessments Setup";
         stepBtnAssessments.style.opacity = "";
+        stepBtnAssessments.style.cursor = "";
         const lbl = stepBtnAssessments.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "Assessments (FA/SA)";
       }
     }
     if (stepBtnGradebook) {
       if (!isSyllabusApproved) {
-        stepBtnGradebook.title = "🔒 Locked: Course syllabus must be finalized and approved first.";
+        stepBtnGradebook.title = "🔒 Inaccessible: Course syllabus (Step 1) must be finalized and approved by the Dean first.";
         stepBtnGradebook.style.opacity = "0.65";
+        stepBtnGradebook.style.cursor = "not-allowed";
         const lbl = stepBtnGradebook.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "Class Record 🔒";
       } else {
         stepBtnGradebook.title = "Step 3: Class Record & Gradebook";
         stepBtnGradebook.style.opacity = "";
+        stepBtnGradebook.style.cursor = "";
         const lbl = stepBtnGradebook.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "Class Record";
       }
     }
-    const stepBtnClo = document.getElementById("stepBtnTabCloreport");
-    const stepBtnCqi = document.getElementById("stepBtnTabCqi");
     if (stepBtnReceiptAck) {
       if (!isSyllabusApproved) {
-        stepBtnReceiptAck.title = "🔒 Inaccessible: Course syllabus must be finalized and approved first.";
+        stepBtnReceiptAck.title = "🔒 Inaccessible: Course syllabus (Step 1) must be finalized and approved by the Dean first.";
         stepBtnReceiptAck.style.opacity = "0.65";
+        stepBtnReceiptAck.style.cursor = "not-allowed";
         const lbl = stepBtnReceiptAck.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "Receipt of Scores &amp; Paper 🔒";
       } else {
         stepBtnReceiptAck.title = "Step 4: Receipt of Scores & Paper";
         stepBtnReceiptAck.style.opacity = "";
+        stepBtnReceiptAck.style.cursor = "";
         const lbl = stepBtnReceiptAck.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "Receipt of Scores &amp; Paper";
       }
     }
     if (stepBtnClo) {
       if (!isSyllabusApproved) {
-        stepBtnClo.title = "🔒 Inaccessible: Course syllabus must be finalized and approved first.";
+        stepBtnClo.title = "🔒 Inaccessible: Course syllabus (Step 1) must be finalized and approved by the Dean first.";
         stepBtnClo.style.opacity = "0.65";
+        stepBtnClo.style.cursor = "not-allowed";
         const lbl = stepBtnClo.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "CLO Report (MID-10) 🔒";
       } else {
         stepBtnClo.title = "Step 5: CLO Assessment Report (FM-USeP-MID-10)";
         stepBtnClo.style.opacity = "";
+        stepBtnClo.style.cursor = "";
         const lbl = stepBtnClo.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "CLO Report (MID-10)";
       }
     }
     if (stepBtnCqi) {
       if (!isSyllabusApproved) {
-        stepBtnCqi.title = "🔒 Inaccessible: Course syllabus must be finalized and approved first.";
+        stepBtnCqi.title = "🔒 Inaccessible: Course syllabus (Step 1) must be finalized and approved by the Dean first.";
         stepBtnCqi.style.opacity = "0.65";
+        stepBtnCqi.style.cursor = "not-allowed";
         const lbl = stepBtnCqi.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "CQI Plan 🔒";
       } else {
         stepBtnCqi.title = "Step 6: Continuous Quality Improvement (CQI) Plan";
         stepBtnCqi.style.opacity = "";
+        stepBtnCqi.style.cursor = "";
         const lbl = stepBtnCqi.querySelector(".step-lbl");
         if (lbl) lbl.innerHTML = "CQI Plan";
       }
     }
 
     // Class record grade freeze banner
-    const isCrLocked = currentClassRecordWorkflow && Boolean(currentClassRecordWorkflow.is_locked);
     const crFreezeBanner = document.getElementById("classRecordFrozenBanner");
     if (crFreezeBanner) {
       crFreezeBanner.style.display = (isSyllabusApproved && isCrLocked) ? "block" : "none";
@@ -14953,8 +15312,28 @@
     const commEl = document.getElementById("evalCommitteeMembersSummary");
     if (commEl) {
       const commList = (currentWorkflow?.committee_members && currentWorkflow.committee_members.length) ? currentWorkflow.committee_members : [];
-      const hasAny = commList.some(m => m.name || m.username);
-      commEl.textContent = hasAny ? commList.map(m => `${m.name || m.username} (${m.role})`).join(" • ") : "--Select Faculty--";
+      const signatures = currentWorkflow?.signatures || [];
+      if (!commList.length) {
+        commEl.innerHTML = "<em>--No committee assigned--</em>";
+      } else {
+        commEl.innerHTML = commList.map(m => {
+          const mUname = (m.username || "").toLowerCase();
+          const sig = signatures.find(s => (s.username || "").toLowerCase() === mUname && (s.step === "committee_members" || s.step === "committee_chair"));
+          const isSigned = Boolean(sig);
+          const sigImg = isSigned && sig.signature_data
+            ? `<img src="${sig.signature_data}" alt="Signature" style="max-height:36px; max-width:120px; object-fit:contain; vertical-align:middle; margin-left:6px;" />`
+            : "";
+          const statusBadge = isSigned
+            ? `<span class="badge" style="background:#16a34a; color:#fff; font-size:0.68rem; margin-left:6px;">✓ Signed (${new Date(sig.signed_at).toLocaleDateString()})</span>`
+            : `<span class="badge" style="background:#ea580c; color:#fff; font-size:0.68rem; margin-left:6px;">⏳ Pending Review</span>`;
+          return `<div style="margin-bottom:6px; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+            <strong>${escapeHtml(m.name || m.username)}</strong>
+            <span style="font-size:0.75rem; color:#475569;">(${escapeHtml(m.role || 'Member')})</span>
+            ${statusBadge}
+            ${sigImg}
+          </div>`;
+        }).join("");
+      }
     }
 
     // 1. Part I Core Statements
@@ -15861,12 +16240,34 @@
     // Action buttons
     if (actionButtons) {
       let btnsHtml = "";
-      if (wf.can_submit && (wf.status === "draft" || isReturned)) {
-        btnsHtml += `
-          <button class="btn btn-warning btn-sm" style="font-weight:700; color:#78350f; background:#fef3c7; border:1px solid #fde68a;" onclick="openSubmitClassRecordModal()">
-            🔒 Finalize &amp; Submit Class Record
-          </button>
-        `;
+      const canSubmitRole = wf.can_submit || (wf.status === "draft" || isReturned);
+      const ackStats = wf.assessment_ack_stats;
+      const meetsAck = Boolean(wf.is_ack_threshold_met || (ackStats && ackStats.meets_threshold));
+
+      if (wf.status === "draft" || isReturned) {
+        if (meetsAck) {
+          btnsHtml += `
+            <button class="btn btn-warning btn-sm" style="font-weight:700; color:#78350f; background:#fef3c7; border:1px solid #fde68a;" onclick="openSubmitClassRecordModal()">
+              🔒 Finalize &amp; Submit Class Record
+            </button>
+            <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; padding:6px 10px; font-size:0.75rem; font-weight:700;">
+              ✓ Ack Ready: ${(ackStats ? ackStats.students_acknowledged : 1)}/${(ackStats ? ackStats.total_students : 1)} Signed
+            </span>
+          `;
+        } else {
+          const ackedCount = ackStats ? ackStats.students_acknowledged : 0;
+          const totCount = ackStats ? ackStats.total_students : (blueprint.students ? blueprint.students.length : 0);
+          const pendCount = ackStats ? ackStats.pending_count : totCount;
+          const pendNames = ackStats && ackStats.pending_students ? ackStats.pending_students.join(", ") : "";
+          btnsHtml += `
+            <button class="btn btn-warning btn-sm" disabled style="opacity:0.65; cursor:not-allowed; font-weight:700; color:#78350f; background:#fef3c7; border:1px solid #fde68a;" title="Locked: Student assessment acknowledgment required before submission (${ackedCount}/${totCount} acknowledged, ${pendCount} pending).">
+              🔒 Finalize &amp; Submit Class Record
+            </button>
+            <span class="badge" style="background:#fffbeb; color:#b45309; border:1px solid #fcd34d; padding:6px 10px; font-size:0.75rem; font-weight:700;" title="Pending students: ${escapeHtml(pendNames)}">
+              ⏳ Ack Progress: ${ackedCount}/${totCount} signed (${pendCount} pending)
+            </span>
+          `;
+        }
       }
       if (wf.can_sign) {
         btnsHtml += `
@@ -16019,6 +16420,17 @@
   }
 
   function openSubmitClassRecordModal() {
+    const crWf = currentClassRecordWorkflow || (window.activeCourseDoc && window.activeCourseDoc.class_record_workflow);
+    const ackStats = crWf && crWf.assessment_ack_stats;
+    if (ackStats && !ackStats.meets_threshold) {
+      const msg = `Cannot finalize: Student assessment acknowledgment has not reached the required threshold (${ackStats.students_acknowledged}/${ackStats.total_students} signed, ${ackStats.pending_count} pending).`;
+      if (typeof showToast === "function") {
+        showToast(msg, "warning");
+      } else {
+        alert(msg);
+      }
+      return;
+    }
     const modal = document.getElementById("modalSubmitClassRecord");
     if (!modal) return;
     modal.style.display = "flex";

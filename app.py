@@ -53,6 +53,13 @@ from auth import install_auth, current_user
 
 import courses_store
 
+# Authoritative BSEE curriculum sync directly from PGO-PI-IGA.accdb via SQL
+try:
+    import accdb_curriculum
+    accdb_curriculum.sync_accdb_to_catalog_and_db()
+except Exception as _e:
+    logging.getLogger(__name__).warning(f"Could not sync accdb curriculum on startup: {_e}")
+
 
 
 
@@ -63,6 +70,13 @@ app = Flask(__name__)
 
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # 25 MB upload limit
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+@app.after_request
+def add_cache_control_headers(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 from functools import wraps
 
@@ -97,6 +111,11 @@ EXPORTS_DIR = os.path.join(BASE_DIR, "exports")
 os.makedirs(os.path.join(BASE_DIR, "samples"), exist_ok=True)
 
 os.makedirs(EXPORTS_DIR, exist_ok=True)
+try:
+    import db_persistence
+    db_persistence.migrate_all_from_json()
+except Exception as _e:
+    print(f"Database migration notice: {_e}")
 
 
 
@@ -113,10 +132,41 @@ def inject_current_user():
     return dict(current_user=current_user())
 
 @app.route("/")
-
 def index():
+    user = current_user()
+    default_tab = "syllabus"
+    if user:
+        if not user.get("can_access_faculty_tools", True):
+            default_tab = "approvals"
+        else:
+            username = user.get("username", "")
+            courses_data = courses_store.list_courses(username, user.get("full_name") or "")
+            courses = courses_data.get("courses", [])
+            has_unlocked_dashboard = any(bool(c.get("is_approved") and c.get("has_recorded_scores")) for c in courses)
+            req_tab = request.args.get("tab")
+            if req_tab == "dashboard":
+                default_tab = "dashboard" if has_unlocked_dashboard else "syllabus"
+            elif req_tab in {"syllabus", "approvals"}:
+                default_tab = req_tab
+            else:
+                default_tab = "dashboard" if has_unlocked_dashboard else "syllabus"
+    return render_template("index.html", default_tab=default_tab)
 
-    return render_template("index.html")
+
+@app.route("/dashboard")
+def dashboard_view():
+    user = current_user()
+    if not user:
+        return redirect(url_for("auth_login", next="/dashboard"))
+    if not user.get("can_access_faculty_tools", True):
+        return redirect(url_for("index", tab="approvals"))
+    username = user.get("username", "")
+    courses_data = courses_store.list_courses(username, user.get("full_name") or "")
+    courses = courses_data.get("courses", [])
+    has_unlocked_dashboard = any(bool(c.get("is_approved") and c.get("has_recorded_scores")) for c in courses)
+    if not has_unlocked_dashboard:
+        return redirect(url_for("index", tab="syllabus"))
+    return redirect(url_for("index", tab="dashboard"))
 
 
 
@@ -580,6 +630,42 @@ def api_export_syllabus_pdf():
 
 
 
+def check_syllabus_approved_for_step(doc, step_num=2):
+    """
+    Validates sequential step-gating: Steps 2 through 6 remain strictly locked
+    until the Course Syllabus (Step 1) receives final approval from the Dean.
+    Returns (jsonify(...), 403) error response if locked, or None if unlocked/allowed.
+    """
+    if not doc or not isinstance(doc, dict):
+        return None
+    user = current_user()
+    if user and user.get("role") == "admin":
+        return None
+    wf = doc.get("workflow")
+    if not wf:
+        return None
+    import syllabus_workflow
+    if not syllabus_workflow.is_approved(doc):
+        # Step 3 roster additions allowed during FM-USeP-MID-07 student acknowledgment phase
+        if step_num == 3 and wf.get("status") == "for_student_acknowledgment":
+            return None
+        step_names = {
+            2: "Step 2: Course Assessments Setup",
+            3: "Step 3: Class Record & Gradebook",
+            4: "Step 4: Receipt of Scores & Paper",
+            5: "Step 5: CLO Assessment Report (FM-USeP-MID-10)",
+            6: "Step 6: Continuous Quality Improvement (CQI) Plan",
+        }
+        name = step_names.get(step_num, f"Step {step_num}")
+        return jsonify({
+            "error": f"Sequential Gating Locked: {name} is locked. The course syllabus (Step 1) must receive final approval from the Dean before accessing or modifying subsequent steps.",
+            "is_locked": True,
+            "step": step_num,
+            "requires_dean_approval": True,
+        }), 403
+    return None
+
+
 @app.route("/api/export-clo-report-pdf", methods=["POST"])
 @faculty_tools_required
 def api_export_clo_report_pdf():
@@ -595,6 +681,10 @@ def api_export_clo_report_pdf():
         if course_doc:
             doc = course_doc
 
+    if doc:
+        err = check_syllabus_approved_for_step(doc, 5)
+        if err:
+            return err
     pdf_bytes = generate_clo_report_pdf_bytes(bp, doc=doc)
 
     safe_code = re.sub(r'[\\/*?:"<>|]+', "_", bp.metadata.course_code.strip()) or "Course"
@@ -628,6 +718,10 @@ def api_export_clo_report_excel():
         if course_doc:
             doc = course_doc
 
+    if doc:
+        err = check_syllabus_approved_for_step(doc, 5)
+        if err:
+            return err
     excel_bytes = generate_clo_evaluation_excel_bytes(bp, doc=doc)
 
     safe_code = re.sub(r'[\\/*?:"<>|]+', "_", bp.metadata.course_code.strip()) or "Course"
@@ -663,6 +757,12 @@ def api_export_excel():
 
 
 
+    course_id = data.get("course_id")
+    doc = data.get("doc") or (courses_store.find_course(course_id) if course_id else None)
+    if doc:
+        err = check_syllabus_approved_for_step(doc, 3)
+        if err:
+            return err
     bp = SyllabusBlueprint.from_dict(data["blueprint"])
 
     xlsx_bytes = generate_class_record_workbook(bp)
@@ -726,6 +826,29 @@ def api_export_excel():
 # MULTI-SUBJECT MANAGEMENT APIS (Grouped by School Year & Semester)
 
 # ======================================================================
+
+
+@app.route("/api/dashboard/status", methods=["GET"])
+def api_dashboard_status():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    username = user.get("username", "")
+    courses_data = courses_store.list_courses(username, user.get("full_name") or "")
+    courses = courses_data.get("courses", [])
+    has_subjects = len(courses) > 0
+    has_scores = bool(courses_data.get("has_recorded_scores") or courses_data.get("has_any_recorded_scores"))
+    has_approved = any(bool(c.get("is_approved")) for c in courses)
+    is_dashboard_unlocked = any(bool(c.get("is_approved") and c.get("has_recorded_scores")) for c in courses)
+    return jsonify({
+        "success": True,
+        "has_subjects": has_subjects,
+        "has_recorded_scores": has_scores,
+        "has_approved_syllabus": has_approved,
+        "is_syllabus_unlocked": has_subjects,
+        "is_dashboard_unlocked": is_dashboard_unlocked,
+        "total_subjects": len(courses),
+    })
 
 @app.route("/api/courses", methods=["GET"])
 
@@ -967,6 +1090,14 @@ def api_update_course(course_id):
     username = user["username"] if user else "default"
 
     data = request.get_json(silent=True) or {}
+
+    existing_doc = courses_store.find_course(course_id)
+    if existing_doc:
+        step_target = request.args.get("step") or data.get("step") or data.get("target_step")
+        if step_target and str(step_target) in ["2", "3", "4", "5", "6"]:
+            err = check_syllabus_approved_for_step(existing_doc, int(step_target))
+            if err:
+                return err
 
     updated = courses_store.save_course(username, course_id, data)
 
@@ -1497,7 +1628,7 @@ def api_get_evaluation_form(course_id):
 
     wf = syllabus_workflow.get_workflow(doc)
 
-    can_edit = (syllabus_workflow.user_can_act(user, doc) and wf.get("status") == "for_committee_review") or (user.get("role") == "admin")
+    can_edit = (syllabus_workflow.user_can_act(user, doc) and wf.get("status") in ("for_committee_review", "for_committee_chair")) or (user.get("role") == "admin")
 
     return jsonify({
 
@@ -1721,6 +1852,9 @@ def api_export_course_clo_report_excel(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 5)
+    if err:
+        return err
     bp_dict = doc.get("blueprint") or {}
     bp = SyllabusBlueprint.from_dict(bp_dict)
     excel_bytes = generate_clo_evaluation_excel_bytes(bp, doc=doc)
@@ -1739,6 +1873,9 @@ def api_export_course_clo_report_pdf(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 5)
+    if err:
+        return err
     bp_dict = doc.get("blueprint") or {}
     bp = SyllabusBlueprint.from_dict(bp_dict)
     pdf_bytes = generate_clo_report_pdf_bytes(bp, doc=doc)
@@ -1953,6 +2090,9 @@ def api_course_roster_import(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 3)
+    if err:
+        return err
 
     bp = doc.get("blueprint") or {}
     students = bp.get("students") or []
@@ -2112,6 +2252,9 @@ def api_course_roster_add_student(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 3)
+    if err:
+        return err
 
     data = request.get_json(silent=True) or {}
     sid = str(data.get("student_id") or "").strip()
@@ -2206,6 +2349,9 @@ def api_course_roster_remove_student(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 3)
+    if err:
+        return err
 
     data = request.get_json(silent=True) or {}
     sid = str(data.get("student_id") or "").strip()
@@ -2576,6 +2722,9 @@ def api_submit_class_record(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Subject '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 3)
+    if err:
+        return err
     data = request.get_json(silent=True) or {}
     notes = (data.get("notes") or data.get("submission_notes") or "").strip()
     sig_data = data.get("signature_data") or user.get("signature_data") or ""
@@ -2600,6 +2749,9 @@ def api_sign_class_record(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Subject '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 3)
+    if err:
+        return err
     data = request.get_json(silent=True) or {}
     decision = (data.get("decision") or "approve").strip().lower()
     remarks = (data.get("remarks") or "").strip()
@@ -2627,6 +2779,9 @@ def api_request_class_record_revision(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Subject '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 3)
+    if err:
+        return err
     data = request.get_json(silent=True) or {}
     reason = (data.get("reason") or data.get("revision_reason") or "").strip()
     try:
@@ -3411,6 +3566,9 @@ def api_get_course_assessment_acknowledgments(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 4)
+    if err:
+        return err
 
     bp = doc.get("blueprint") or {}
     students = bp.get("students") or []
@@ -3443,6 +3601,9 @@ def api_student_acknowledge_assessment(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    err = check_syllabus_approved_for_step(doc, 4)
+    if err:
+        return err
 
     bp = doc.get("blueprint") or {}
     students = bp.get("students") or []

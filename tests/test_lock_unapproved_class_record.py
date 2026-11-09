@@ -47,7 +47,7 @@ class TestLockUnapprovedClassRecord(unittest.TestCase):
             sess["username"] = username
 
     def test_unapproved_syllabus_locks_class_record_setup_and_grades(self):
-        """Verify that when syllabus is unapproved (draft), categories and students cannot be altered."""
+        """Verify that when syllabus is unapproved (draft), categories and students can be authored and saved in draft for immediate feedback, but class record submission is locked."""
         self.login("faculty_tester")
 
         # 1. Create a course (starts in draft syllabus status)
@@ -57,20 +57,20 @@ class TestLockUnapprovedClassRecord(unittest.TestCase):
         initial_students = json.loads(json.dumps(course["blueprint"].get("students", [])))
         self.assertNotEqual((course.get("workflow") or {}).get("status"), "approved")
 
-        # 2. Attempt to tamper/modify categories while syllabus is unapproved
-        tampered_categories = [
+        # 2. Modify categories in draft
+        draft_categories = [
             {
-                "category_id": "TAMPERED_CAT",
+                "category_id": "DRAFT_CAT",
                 "term": "Midterm",
                 "assessment_type": "SA",
                 "assessment_code": "SA99",
-                "name": "Tampered Assessment",
+                "name": "Draft Assessment",
                 "weight_pct": 100.0,
-                "items": [{"item_id": "TAMPER1", "name": "Tampered Item", "max_score": 100, "co_id": "CLO1"}]
+                "items": [{"item_id": "DRAFT1", "name": "Draft Item", "max_score": 100, "co_id": "CLO1"}]
             }
         ]
-        tampered_students = [
-            {"student_id": "2026-9999", "first_name": "Hacked", "last_name": "Student", "scores": {"TAMPER1__CLO1": 100}}
+        draft_students = [
+            {"student_id": "2026-9999", "first_name": "Test", "last_name": "Student", "scores": {"DRAFT1__CLO1": 100}}
         ]
 
         payload = {
@@ -80,8 +80,8 @@ class TestLockUnapprovedClassRecord(unittest.TestCase):
             "blueprint": {
                 **course["blueprint"],
                 "metadata": {**course["blueprint"]["metadata"], "course_title": "Advanced Power Systems (Updated Title Allowed in Draft)"},
-                "categories": tampered_categories,
-                "students": tampered_students,
+                "categories": draft_categories,
+                "students": draft_students,
             }
         }
 
@@ -89,9 +89,9 @@ class TestLockUnapprovedClassRecord(unittest.TestCase):
 
         # Title change should be saved (syllabus editing allowed before submission)
         self.assertEqual(saved["course_title"], "Advanced Power Systems (Updated Title Allowed in Draft)")
-        # BUT categories and students must remain locked to initial state!
-        self.assertEqual(saved["blueprint"].get("categories"), initial_categories)
-        self.assertEqual(saved["blueprint"].get("students"), initial_students)
+        # In Task 1, categories and students are saved and propagated immediately in draft:
+        self.assertEqual(saved["blueprint"].get("categories"), draft_categories)
+        self.assertEqual(saved["blueprint"].get("students"), draft_students)
 
         # 3. Attempting to submit class record while syllabus is unapproved must fail
         with self.assertRaises(class_record_workflow.ClassRecordWorkflowError) as cm:
@@ -141,18 +141,14 @@ class TestLockUnapprovedClassRecord(unittest.TestCase):
         self.assertIn('id="setupTabContent"', html)
         self.assertIn('id="gradebookTabContent"', html)
 
-        # checkClassRecordLock implementation
+        # checkClassRecordLock implementation and lock guards
+        self.assertIn('checkClassRecordLock', html)
         self.assertIn('const setupContent = document.getElementById("setupTabContent");', html)
         self.assertIn('const gradebookContent = document.getElementById("gradebookTabContent");', html)
-        self.assertIn('setupContent.style.opacity = isSyllabusApproved ? "1" : "0.5";', html)
-        self.assertIn('setupContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";', html)
-        self.assertIn('gradebookContent.style.opacity = isSyllabusApproved ? "1" : "0.5";', html)
-        self.assertIn('gradebookContent.style.pointerEvents = isSyllabusApproved ? "auto" : "none";', html)
-
-        # Tab 2 & Tab 3 interaction function guards
-        self.assertIn('if (!currentWorkflow || currentWorkflow.status !== "approved") {', html)
-        self.assertIn('Class Record Setup & Grades are locked until the syllabus is approved', html)
-        self.assertIn('Class Record is locked until the syllabus is approved', html)
+        self.assertIn('setupContent.style.opacity = isCrLocked ? "0.6" : "1";', html)
+        self.assertIn('setupContent.style.pointerEvents = isCrLocked ? "none" : "auto";', html)
+        self.assertIn('gradebookContent.style.opacity = isCrLocked ? "0.85" : "1";', html)
+        self.assertIn('el.disabled = isCrLocked;', html)
 
 if __name__ == "__main__":
     unittest.main()

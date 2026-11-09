@@ -170,6 +170,82 @@ def user_can_sign_class_record(user: Optional[Dict[str, Any]], doc: Dict[str, An
 
     return False
 
+
+def get_assessment_acknowledgment_stats(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Computes student assessment receipt and score acknowledgment metrics for Class Record finalization.
+    Under university policy, students must acknowledge receipt of their graded assessments
+    before faculty can finalize and submit the Class Record for institutional sign-off.
+    """
+    import math
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+    categories = bp.get("categories") or []
+
+    all_items: List[Dict[str, Any]] = []
+    for cat in categories:
+        if not isinstance(cat, dict):
+            continue
+        for it in cat.get("items") or []:
+            if isinstance(it, dict) and it.get("item_id"):
+                all_items.append(it)
+
+    total_students = len(students)
+    total_items = len(all_items)
+    total_possible = total_students * total_items
+
+    if total_students == 0 or total_items == 0:
+        return {
+            "total_students": total_students,
+            "total_items": total_items,
+            "total_possible_acks": total_possible,
+            "total_confirmed_acks": 0,
+            "students_acknowledged": 0,
+            "percentage": 0.0,
+            "min_required": 1 if total_students > 0 else 0,
+            "meets_threshold": False,
+            "pending_count": total_students,
+            "pending_students": [s.get("name") or s.get("student_id") for s in students],
+        }
+
+    students_acknowledged = 0
+    total_confirmed_acks = 0
+    pending_students = []
+
+    for st in students:
+        acks = st.get("assessment_acknowledgments") or {}
+        st_confirmed = 0
+        for it in all_items:
+            it_id = it.get("item_id")
+            it_ack = acks.get(it_id) or {}
+            if isinstance(it_ack, dict) and it_ack.get("acknowledged"):
+                st_confirmed += 1
+                total_confirmed_acks += 1
+
+        if st_confirmed > 0:
+            students_acknowledged += 1
+        else:
+            s_name = st.get("name") or f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", ") or st.get("student_id")
+            pending_students.append(s_name)
+
+    pct = round((students_acknowledged / total_students * 100.0), 1) if total_students > 0 else 0.0
+    min_required = max(1, math.ceil(total_students * 0.80)) if total_students > 0 else 0
+    meets_threshold = (students_acknowledged >= min_required) and (total_confirmed_acks > 0)
+    pending_count = total_students - students_acknowledged
+
+    return {
+        "total_students": total_students,
+        "total_items": total_items,
+        "total_possible_acks": total_possible,
+        "total_confirmed_acks": total_confirmed_acks,
+        "students_acknowledged": students_acknowledged,
+        "percentage": pct,
+        "min_required": min_required,
+        "meets_threshold": meets_threshold,
+        "pending_count": pending_count,
+        "pending_students": pending_students,
+    }
+
 def submit_class_record(doc: Dict[str, Any], user: Dict[str, Any], notes: str = "", signature_data: str = "") -> Dict[str, Any]:
     """Faculty in charge finalizes and submits class record for institutional sign-off."""
     cr_wf = get_class_record_workflow(doc)
@@ -195,6 +271,18 @@ def submit_class_record(doc: Dict[str, Any], user: Dict[str, Any], notes: str = 
     students = bp.get("students") or []
     if not students:
         raise ClassRecordWorkflowError("Cannot submit an empty class record. Please input student scores first.")
+
+    # Validation: Student Assessment Acknowledgment gating
+    ack_stats = get_assessment_acknowledgment_stats(doc)
+    if not ack_stats["meets_threshold"]:
+        pending_desc = ", ".join(ack_stats["pending_students"][:3])
+        if len(ack_stats["pending_students"]) > 3:
+            pending_desc += f" and {len(ack_stats['pending_students']) - 3} more"
+        raise ClassRecordWorkflowError(
+            f"Cannot finalize and submit class record: Student assessment acknowledgment has not reached the required threshold "
+            f"({ack_stats['students_acknowledged']}/{ack_stats['total_students']} acknowledged, {ack_stats['percentage']}%. "
+            f"Minimum required: {ack_stats['min_required']} students; {ack_stats['pending_count']} pending: {pending_desc})."
+        )
 
     now_ts = _now()
     sig_data = signature_data or user.get("signature_data") or ""
@@ -344,11 +432,16 @@ def public_cr_view(doc: Dict[str, Any], user: Optional[Dict[str, Any]] = None) -
     is_owner = (owner == username)
     is_admin = bool(user and user.get("role") == "admin")
 
-    can_submit = (is_owner or is_admin) and (status in EDITABLE_CR_STATUSES)
+    ack_stats = get_assessment_acknowledgment_stats(doc)
+    is_ack_threshold_met = bool(ack_stats.get("meets_threshold"))
+
+    can_submit = (is_owner or is_admin) and (status in EDITABLE_CR_STATUSES) and is_ack_threshold_met
     can_sign = user_can_sign_class_record(user, doc) if user else False
     can_request_revision = (is_owner or is_admin) and (status == "finalized")
 
     return {
+        "assessment_ack_stats": ack_stats,
+        "is_ack_threshold_met": is_ack_threshold_met,
         "status": status,
         "status_label": status_label(status),
         "is_locked": status in LOCKED_CR_STATUSES,

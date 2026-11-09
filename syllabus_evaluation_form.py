@@ -262,9 +262,41 @@ class OfficialEvalPDF(FPDF):
         self.set_margins(11.0, 12.0, 11.0)
         self.course_meta = course_meta
 
+        # Detect Windows / Local TrueType & OpenType fonts for exact match with Controlled Document
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        win_fonts = "C:/Windows/Fonts"
+        self.has_ttf = False
+        arial_path = os.path.join(win_fonts, "arial.ttf")
+        arialbd_path = os.path.join(win_fonts, "arialbd.ttf")
+        if os.path.exists(arial_path) and os.path.exists(arialbd_path):
+            try:
+                self.add_font("Arial", "", arial_path)
+                self.add_font("Arial", "B", arialbd_path)
+                if os.path.exists(os.path.join(win_fonts, "ariali.ttf")):
+                    self.add_font("Arial", "I", os.path.join(win_fonts, "ariali.ttf"))
+                self.font_main = "Arial"
+                self.has_ttf = True
+            except Exception:
+                self.font_main = "Helvetica"
+        else:
+            self.font_main = "Helvetica"
+
+        # Cinzel Bold font for official University header
+        cinzel_local = os.path.join(base_dir, "fonts", "Cinzel-Bold.otf")
+        cinzel_win = os.path.join(win_fonts, "Cinzel-Bold.otf")
+        cinzel_path = cinzel_local if os.path.exists(cinzel_local) else cinzel_win
+        if os.path.exists(cinzel_path):
+            try:
+                self.add_font("Cinzel", "B", cinzel_path)
+                self.font_cinzel = "Cinzel"
+            except Exception:
+                self.font_cinzel = self.font_main
+        else:
+            self.font_cinzel = self.font_main
+
     def draw_footer_bar(self, page_num: int):
         self.set_xy(11.0, 310.0)
-        self.set_font("Helvetica", "I", 8.5)
+        self.set_font(getattr(self, "font_main", "Helvetica"), "I", 8.5)
         acad_unit = self.course_meta.get("academic_unit") or "College of Engineering"
         self.cell(145.0, 6.0, acad_unit, border=0, align="L")
         self.cell(49.0, 6.0, f"Page {page_num} of 5", border=0, align="R")
@@ -363,13 +395,13 @@ def generate_syllabus_evaluation_pdf(doc: Dict[str, Any], user_info: Optional[Di
 
     # University text
     pdf.set_xy(x0 + 30.6, y + 2.5)
-    pdf.set_font("Helvetica", "", 8.0)
+    pdf.set_font(pdf.font_main, "", 8.0)
     pdf.cell(99.8, 4.0, "Republic of the Philippines", align="C")
     pdf.set_xy(x0 + 30.6, y + 6.8)
-    pdf.set_font("Helvetica", "B", 8.8)
+    pdf.set_font(pdf.font_cinzel, "B", 10.5)
     pdf.cell(99.8, 4.5, "University of Southeastern Philippines", align="C")
     pdf.set_xy(x0 + 30.6, y + 11.5)
-    pdf.set_font("Helvetica", "", 7.5)
+    pdf.set_font(pdf.font_main, "", 7.5)
     pdf.cell(99.8, 3.8, "Iñigo St., Bo. Obrero, Davao City 8000", align="C")
     pdf.set_xy(x0 + 30.6, y + 15.3)
     pdf.cell(99.8, 3.8, "Telephone: (082) 227-8192", align="C")

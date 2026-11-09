@@ -378,6 +378,9 @@
             <button type="button" id="btnViewByStatus" onclick="switchStudentCourseView('status')" style="padding:6px 12px; font-size:0.78rem; font-weight:600; border:none; cursor:pointer; background:#f8fafc; color:#475569; transition:all 0.15s;">
               📋 By Status
             </button>
+            <button type="button" id="btnViewPerformance" onclick="switchStudentCourseView('perf')" style="padding:6px 12px; font-size:0.78rem; font-weight:600; border:none; cursor:pointer; background:#f8fafc; color:#475569; transition:all 0.15s;">
+              📊 Performance Dashboard
+            </button>
           </div>
         </div>
       </div>
@@ -1066,37 +1069,43 @@
       localStorage.setItem("usep_student_view_mode", mode);
       const termView = document.getElementById("studentCoursesByTermView");
       const statusView = document.getElementById("studentCoursesByStatusView");
+      const perfView = document.getElementById("studentPerformanceInlineView");
       const btnTerm = document.getElementById("btnViewByTerm");
       const btnStatus = document.getElementById("btnViewByStatus");
+      const btnPerf = document.getElementById("btnViewPerformance");
+
+      [btnTerm, btnStatus, btnPerf].forEach(b => {
+        if (b) {
+          b.style.background = "#f8fafc";
+          b.style.color = "#475569";
+          b.style.fontWeight = "600";
+        }
+      });
 
       if (mode === "term") {
         if (termView) termView.style.display = "block";
         if (statusView) statusView.style.display = "none";
-        if (btnTerm) {
-          btnTerm.style.background = "#0f766e";
-          btnTerm.style.color = "#ffffff";
-          btnTerm.style.fontWeight = "700";
-        }
-        if (btnStatus) {
-          btnStatus.style.background = "#f8fafc";
-          btnStatus.style.color = "#475569";
-          btnStatus.style.fontWeight = "600";
-        }
-      } else {
+        if (perfView) perfView.style.display = "none";
+        if (btnTerm) { btnTerm.style.background = "#0f766e"; btnTerm.style.color = "#ffffff"; btnTerm.style.fontWeight = "700"; }
+      } else if (mode === "status") {
         if (termView) termView.style.display = "none";
         if (statusView) statusView.style.display = "block";
-        if (btnTerm) {
-          btnTerm.style.background = "#f8fafc";
-          btnTerm.style.color = "#475569";
-          btnTerm.style.fontWeight = "600";
-        }
-        if (btnStatus) {
-          btnStatus.style.background = "#0f766e";
-          btnStatus.style.color = "#ffffff";
-          btnStatus.style.fontWeight = "700";
+        if (perfView) perfView.style.display = "none";
+        if (btnStatus) { btnStatus.style.background = "#0f766e"; btnStatus.style.color = "#ffffff"; btnStatus.style.fontWeight = "700"; }
+      } else if (mode === "perf") {
+        if (termView) termView.style.display = "none";
+        if (statusView) statusView.style.display = "none";
+        if (perfView) perfView.style.display = "block";
+        if (btnPerf) { btnPerf.style.background = "#0f766e"; btnPerf.style.color = "#ffffff"; btnPerf.style.fontWeight = "700"; }
+        if (!currentPerfCourseId) {
+          const firstBtn = document.querySelector("[onclick*='openPerformanceDashboardModal']");
+          if (firstBtn) {
+            const m = firstBtn.getAttribute("onclick")?.match(/openPerformanceDashboardModal\('([^']+)'\)/);
+            if (m && m[1]) openPerformanceDashboardModal(m[1]);
+          }
         }
       }
-      applyAllCourseFilters();
+      if (mode !== "perf") applyAllCourseFilters();
     }
 
     function onTermFilterChange(term) {
@@ -1228,10 +1237,14 @@
 
     async function openPerformanceDashboardModal(courseId) {
       currentPerfCourseId = courseId;
-      const modal = document.getElementById("performanceModalBackdrop");
+      switchStudentCourseView("perf");
       const body = document.getElementById("perfModalBody");
-      modal.style.display = "flex";
       body.innerHTML = '<div style="text-align:center; padding:35px; color:#64748b;"><div style="font-size:1.8rem; margin-bottom:8px;">⏳</div>Loading your performance records...</div>';
+
+      const perfCard = document.getElementById("studentPerformanceInlineView");
+      if (perfCard) {
+        perfCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
 
       try {
         const res = await fetch(`/api/student/courses/${encodeURIComponent(courseId)}/performance`);
@@ -1245,7 +1258,8 @@
     }
 
     function closePerformanceDashboardModal() {
-      document.getElementById("performanceModalBackdrop").style.display = "none";
+      switchStudentCourseView("term");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function renderPerformanceDashboard(data) {
@@ -2008,26 +2022,33 @@
     </div>
   </div>
 
-  <!-- Student Performance Monitoring Dashboard Modal -->
-  <div class="sp-modal-backdrop" id="performanceModalBackdrop" style="display:none;">
-    <div class="sp-modal" style="width:95%; max-width:960px; max-height:92vh; display:flex; flex-direction:column;">
-      <div style="padding:14px 18px; background:#0f766e; color:#ffffff; border-radius:9px 9px 0 0; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <h3 style="margin:0; font-size:1.05rem; font-weight:700;" id="perfModalTitle">Academic Performance Dashboard</h3>
-          <div style="font-size:0.76rem; opacity:0.9;" id="perfModalSubtitle">Course Academic Standing &amp; CLO Competency Attainment</div>
+    <!-- VIEW 3: INLINE ACADEMIC PERFORMANCE MONITORING DASHBOARD -->
+    <div id="studentPerformanceInlineView" style="display:none; margin-bottom:24px;">
+      <div class="sp-card" style="border:1.5px solid #0f766e; box-shadow:0 10px 25px -5px rgba(15, 118, 110, 0.12); border-radius:10px; overflow:hidden;">
+        <div style="padding:16px 20px; background:#0f766e; color:#ffffff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h3 style="margin:0; font-size:1.15rem; font-weight:700; display:flex; align-items:center; gap:8px;" id="perfModalTitle">
+              <span>📊</span> Academic Performance Dashboard
+            </h3>
+            <div style="font-size:0.78rem; opacity:0.9; margin-top:2px;" id="perfModalSubtitle">
+              Course Academic Standing &amp; CLO Competency Attainment
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button type="button" class="btn-sp btn-sp-outline" style="background:#ffffff; color:#0f766e; font-size:0.76rem; border:none; font-weight:700; cursor:pointer;" onclick="closePerformanceDashboardModal()">
+              ← Back to Enrolled Courses
+            </button>
+          </div>
         </div>
-        <button onclick="closePerformanceDashboardModal()" style="background:none; border:none; color:#ffffff; font-size:1.3rem; cursor:pointer; line-height:1;">&times;</button>
-      </div>
 
-      <div style="padding:18px; overflow-y:auto; flex:1;" id="perfModalBody">
-        <div style="text-align:center; padding:30px; color:#64748b;">Loading performance data...</div>
-      </div>
-
-      <div style="padding:12px 18px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end;">
-        <button type="button" class="btn-sp btn-sp-outline" onclick="closePerformanceDashboardModal()">Close Dashboard</button>
+        <div style="padding:20px;" id="perfModalBody">
+          <div style="text-align:center; padding:35px; color:#64748b;">
+            <div style="font-size:1.8rem; margin-bottom:8px;">⏳</div>
+            Select a subject above or choose "Performance" from any course card to view your live grades and CLO competency analytics.
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
 </body>
 </html>

@@ -208,6 +208,13 @@ def derive_email(username: str, full_name: str = "") -> str:
 
 
 def _load_users() -> dict:
+    try:
+        import db_persistence
+        db_users = db_persistence.load_users_from_db()
+        if db_users:
+            return db_users
+    except Exception:
+        pass
     if not os.path.exists(USERS_FILE):
         return {}
     try:
@@ -233,6 +240,11 @@ def _load_users() -> dict:
 
 
 def _save_users(users: dict) -> None:
+    try:
+        import db_persistence
+        db_persistence.save_users_dict_to_db(users)
+    except Exception:
+        pass
     os.makedirs(DATA_DIR, exist_ok=True)
     tmp = USERS_FILE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -893,6 +905,11 @@ def delete_user(username):
 
         del_user_obj = users.pop(target_key)
         _save_users(users)
+        try:
+            import db_persistence
+            db_persistence.delete_user_from_db(target_key)
+        except Exception:
+            pass
 
         # Mark as deleted to prevent auto-recreation on reboot
         del_set = _load_deleted_users()

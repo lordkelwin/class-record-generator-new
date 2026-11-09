@@ -15,7 +15,7 @@ from program_structures import (
 
 # Import complete, verified official course catalogs for all 9 programs
 from program_catalogs import (
-    BSEE_COURSES,
+    BSEE_COURSES as _FALLBACK_BSEE_COURSES,
     BSCE_COURSES,
     BSECE_COURSES,
     BSME_COURSES,
@@ -25,6 +25,13 @@ from program_catalogs import (
     BSGE_COURSES,
     BSMINE_COURSES,
 )
+
+# Fetch primary BSEE curriculum data directly from PGO-PI-IGA.accdb via direct SQL
+try:
+    from accdb_curriculum import query_accdb_bsee_courses
+    BSEE_COURSES = query_accdb_bsee_courses()
+except Exception:
+    BSEE_COURSES = _FALLBACK_BSEE_COURSES
 
 # ==============================================================================
 # 1. PROGRAM GRADUATE OUTCOMES (PGO a - PGO m) & PERFORMANCE INDICATORS (PIs)

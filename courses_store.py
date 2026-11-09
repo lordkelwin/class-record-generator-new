@@ -157,6 +157,29 @@ def get_doc_authors(doc: Dict[str, Any]) -> List[Dict[str, Any]]:
     return cleaned_authors
 
 
+def has_recorded_scores(doc: Dict[str, Any]) -> bool:
+    """Returns True if the course document contains at least one recorded student assessment score > 0."""
+    if not doc or not isinstance(doc, dict):
+        return False
+    bp = doc.get("blueprint") or {}
+    students = bp.get("students") or []
+    for st in students:
+        if not isinstance(st, dict):
+            continue
+        scores = st.get("scores") or {}
+        if not isinstance(scores, dict):
+            continue
+        for v in scores.values():
+            if v is not None and v != "":
+                try:
+                    num = float(v)
+                    if num > 0:
+                        return True
+                except (ValueError, TypeError):
+                    continue
+    return False
+
+
 def _summary_from_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     bp_dict = doc.get("blueprint", {})
     meta = bp_dict.get("metadata", {})
@@ -205,6 +228,7 @@ def _summary_from_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
         "is_approved": (doc.get("workflow") or {}).get("status") == "approved",
         "is_locked": (doc.get("workflow") or {}).get("status") not in {"draft", "returned"},
         "signatures_count": len((doc.get("workflow") or {}).get("signatures", [])),
+        "has_recorded_scores": has_recorded_scores(doc),
     }
 
 
@@ -328,10 +352,13 @@ def list_courses(username: str, faculty_name: str = "") -> Dict[str, Any]:
             "courses": c_list,
         })
 
+    has_any_scores = any(bool(c.get("has_recorded_scores")) for c in courses_list)
     return {
         "courses": courses_list,
         "groups": groups,
         "total": len(courses_list),
+        "has_recorded_scores": has_any_scores,
+        "has_any_recorded_scores": has_any_scores,
     }
 
 
@@ -421,7 +448,609 @@ def _sync_cqi_plan(doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     return doc
 
 
+def sync_blueprint_assessments_from_activities(bp_dict: Dict[str, Any]) -> None:
+    """
+    Ensures blueprint categories and items are synchronized with syllabus_assessment_activities
+    if categories is missing or empty.
+    """
+    if not isinstance(bp_dict, dict):
+        return
+    categories = bp_dict.get("categories") or []
+    has_items = any(bool(c.get("items")) for c in categories if isinstance(c, dict))
+    meta = bp_dict.get("metadata") or {}
+    activities = meta.get("syllabus_assessment_activities") or []
+    valid_activities = [a for a in activities if isinstance(a, dict) and ((a.get("code") or "").strip() or (a.get("activity") or "").strip())]
+    if has_items or not valid_activities:
+        return
+
+    co_options = [c.get("co_id") for c in (bp_dict.get("course_outcomes") or []) if c.get("co_id")]
+    if not co_options:
+        co_options = ["CLO1"]
+
+    new_categories = []
+    for idx, act in enumerate(valid_activities):
+        if not isinstance(act, dict):
+            continue
+        act_name = act.get("activity") or "Assessment Activity"
+        code = (act.get("code") or f"A{idx+1}").upper()
+        try:
+            wt = float(act.get("weight_pct") or 0.0)
+        except (ValueError, TypeError):
+            wt = 0.0
+        is_maj = bool(act.get("is_major_assessment"))
+        scope = str(act.get("major_scope") or "independent").lower()
+        aligned_str = str(act.get("clo_aligned") or ", ".join(co_options)).strip()
+        aligned_clos = [c.strip().upper() for c in re.split(r"[,;/]+", aligned_str) if c.strip()]
+        if not aligned_clos:
+            aligned_clos = [co_options[0].upper()]
+
+        def _make_clo_pts(pts):
+            each = round(pts / max(1, len(aligned_clos)), 2)
+            return {c: each for c in aligned_clos}
+
+        if is_maj:
+            if scope == "both_terms":
+                for t_name, prefix in [("Midterm", "MID"), ("Finals", "FIN")]:
+                    item_id = f"{prefix}_{code}"
+                    new_categories.append({
+                        "category_id": f"{prefix}_MAJ_{code}",
+                        "term": t_name,
+                        "is_major_assessment": True,
+                        "major_scope": "both_terms",
+                        "assessment_type": "SA",
+                        "assessment_code": code,
+                        "name": f"{act_name} ({t_name})",
+                        "lec_lab": act.get("lec_lab") or "Lecture",
+                        "weight_pct": wt,
+                        "items": [{
+                            "item_id": item_id,
+                            "name": f"{act_name} ({t_name})",
+                            "max_score": 50.0,
+                            "co_id": ", ".join(aligned_clos),
+                            "weight_pct": wt,
+                            "clo_points": _make_clo_pts(50.0)
+                        }]
+                    })
+            else:
+                term_name = "Major Assessment" if scope == "independent" else ("Finals" if scope == "finals" else "Midterm")
+                new_categories.append({
+                    "category_id": f"MAJ_{code}",
+                    "term": term_name,
+                    "is_major_assessment": True,
+                    "major_scope": scope,
+                    "assessment_type": "SA",
+                    "assessment_code": code,
+                    "name": act_name,
+                    "lec_lab": act.get("lec_lab") or "Lecture",
+                    "weight_pct": wt,
+                    "items": [{
+                        "item_id": code,
+                        "name": act_name,
+                        "max_score": 50.0,
+                        "co_id": ", ".join(aligned_clos),
+                        "weight_pct": wt,
+                        "clo_points": _make_clo_pts(50.0)
+                    }]
+                })
+        else:
+            a_type = "FA" if str(act.get("type", "")).lower().startswith("form") or code.startswith("FA") else "SA"
+            for t_name, prefix in [("Midterm", "MID"), ("Finals", "FIN")]:
+                cat_code = f"{prefix}_{code}"
+                new_categories.append({
+                    "category_id": f"{prefix}_{code}",
+                    "term": t_name,
+                    "is_major_assessment": False,
+                    "assessment_type": a_type,
+                    "assessment_code": code,
+                    "name": f"{act_name} ({t_name})",
+                    "lec_lab": act.get("lec_lab") or "Lecture",
+                    "weight_pct": wt,
+                    "items": [{
+                        "item_id": f"{code}_{1 if t_name == 'Midterm' else 2}",
+                        "name": f"{act_name} ({t_name})",
+                        "max_score": 30.0,
+                        "co_id": ", ".join(aligned_clos),
+                        "weight_pct": wt if a_type == "SA" else 100.0,
+                        "clo_points": _make_clo_pts(30.0)
+                    }]
+                })
+    bp_dict["categories"] = new_categories
+
+
+def get_standard_categories_and_items(
+    course_code: str = "",
+    lec_lab: str = "Lecture",
+    credit_units: str = "3.0 Units",
+    clos: Optional[List[str]] = None
+) -> List[Dict[str, Any]]:
+    """
+    Generates standard USeP OBE assessment categories and items aligned with course syllabus/grading system.
+    Supports Lecture and Lecture/Laboratory grading modes.
+    """
+    if not clos:
+        clos = ["CLO1", "CLO2"]
+    co_str = ", ".join(clos)
+
+    def _clo_pts(pts: float) -> Dict[str, float]:
+        each = round(pts / max(1, len(clos)), 2)
+        return {c: each for c in clos}
+
+    is_lec_lab = (
+        "lab" in str(lec_lab).lower() or
+        "integrated" in str(credit_units).lower() or
+        "lecture/lab" in str(lec_lab).lower()
+    )
+
+    categories: List[Dict[str, Any]] = []
+
+    # MIDTERM PERIOD
+    categories.append({
+        "category_id": "MID_FA1",
+        "term": "Midterm",
+        "assessment_type": "FA",
+        "assessment_code": "FA1",
+        "name": "Formative Assessment 1 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "is_major_assessment": False,
+        "items": [{
+            "item_id": "A1",
+            "name": f"FA1 Group Activity 1 ({co_str})",
+            "max_score": 100.0,
+            "co_id": co_str,
+            "weight_pct": 100.0,
+            "clo_points": _clo_pts(100.0)
+        }]
+    })
+    categories.append({
+        "category_id": "MID_FA2",
+        "term": "Midterm",
+        "assessment_type": "FA",
+        "assessment_code": "FA2",
+        "name": "Formative Assessment 2 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "is_major_assessment": False,
+        "items": [{
+            "item_id": "A2",
+            "name": f"FA2 Group Activity 2 ({co_str})",
+            "max_score": 100.0,
+            "co_id": co_str,
+            "weight_pct": 100.0,
+            "clo_points": _clo_pts(100.0)
+        }]
+    })
+    categories.append({
+        "category_id": "MID_SA1",
+        "term": "Midterm",
+        "assessment_type": "SA",
+        "assessment_code": "SA1",
+        "name": "Summative Assessment 1 (Quizzes)",
+        "lec_lab": "Lecture",
+        "weight_pct": 40.0,
+        "is_major_assessment": False,
+        "items": [
+            {
+                "item_id": "Q1",
+                "name": f"Quiz 1 ({co_str})",
+                "max_score": 30.0,
+                "co_id": co_str,
+                "weight_pct": 20.0,
+                "clo_points": _clo_pts(30.0)
+            },
+            {
+                "item_id": "Q2",
+                "name": f"Quiz 2 ({co_str})",
+                "max_score": 30.0,
+                "co_id": co_str,
+                "weight_pct": 20.0,
+                "clo_points": _clo_pts(30.0)
+            }
+        ]
+    })
+    categories.append({
+        "category_id": "MID_SA2",
+        "term": "Midterm",
+        "assessment_type": "SA",
+        "assessment_code": "SA2",
+        "name": "Summative Assessment 2 (Term Examination)",
+        "lec_lab": "Lecture",
+        "weight_pct": 60.0,
+        "is_major_assessment": False,
+        "items": [{
+            "item_id": "MTE",
+            "name": f"Midterm Examination ({co_str})",
+            "max_score": 60.0,
+            "co_id": co_str,
+            "weight_pct": 60.0,
+            "clo_points": _clo_pts(60.0)
+        }]
+    })
+
+    if is_lec_lab:
+        categories.append({
+            "category_id": "MID_LAB_FA1",
+            "term": "Midterm",
+            "assessment_type": "FA",
+            "assessment_code": "FA1",
+            "name": "Laboratory Activity / Experiment 1",
+            "lec_lab": "Laboratory",
+            "weight_pct": 0.0,
+            "is_major_assessment": False,
+            "items": [{
+                "item_id": "LA1",
+                "name": f"Lab Activity 1 ({co_str})",
+                "max_score": 100.0,
+                "co_id": co_str,
+                "weight_pct": 100.0,
+                "clo_points": _clo_pts(100.0)
+            }]
+        })
+        categories.append({
+            "category_id": "MID_LAB_SA1",
+            "term": "Midterm",
+            "assessment_type": "SA",
+            "assessment_code": "SA1",
+            "name": "Laboratory Performance Tasks",
+            "lec_lab": "Laboratory",
+            "weight_pct": 50.0,
+            "is_major_assessment": False,
+            "items": [{
+                "item_id": "LPT1",
+                "name": f"Midterm Lab Performance Task ({co_str})",
+                "max_score": 50.0,
+                "co_id": co_str,
+                "weight_pct": 50.0,
+                "clo_points": _clo_pts(50.0)
+            }]
+        })
+        categories.append({
+            "category_id": "MID_LAB_SA2",
+            "term": "Midterm",
+            "assessment_type": "SA",
+            "assessment_code": "SA2",
+            "name": "Midterm Practical Examination",
+            "lec_lab": "Laboratory",
+            "weight_pct": 50.0,
+            "is_major_assessment": False,
+            "items": [{
+                "item_id": "MLE",
+                "name": f"Midterm Practical Exam ({co_str})",
+                "max_score": 50.0,
+                "co_id": co_str,
+                "weight_pct": 50.0,
+                "clo_points": _clo_pts(50.0)
+            }]
+        })
+
+    # FINALS PERIOD
+    categories.append({
+        "category_id": "FIN_FA1",
+        "term": "Finals",
+        "assessment_type": "FA",
+        "assessment_code": "FA1",
+        "name": "Formative Assessment 1 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "is_major_assessment": False,
+        "items": [{
+            "item_id": "A3",
+            "name": f"FA1 Group Activity 3 ({co_str})",
+            "max_score": 100.0,
+            "co_id": co_str,
+            "weight_pct": 100.0,
+            "clo_points": _clo_pts(100.0)
+        }]
+    })
+    categories.append({
+        "category_id": "FIN_FA2",
+        "term": "Finals",
+        "assessment_type": "FA",
+        "assessment_code": "FA2",
+        "name": "Formative Assessment 2 (Group Activity)",
+        "lec_lab": "Lecture",
+        "weight_pct": 0.0,
+        "is_major_assessment": False,
+        "items": [{
+            "item_id": "A4",
+            "name": f"FA2 Group Activity 4 ({co_str})",
+            "max_score": 100.0,
+            "co_id": co_str,
+            "weight_pct": 100.0,
+            "clo_points": _clo_pts(100.0)
+        }]
+    })
+    categories.append({
+        "category_id": "FIN_SA1",
+        "term": "Finals",
+        "assessment_type": "SA",
+        "assessment_code": "SA1",
+        "name": "Summative Assessment 1 (Quizzes)",
+        "lec_lab": "Lecture",
+        "weight_pct": 40.0,
+        "is_major_assessment": False,
+        "items": [
+            {
+                "item_id": "Q3",
+                "name": f"Quiz 3 ({co_str})",
+                "max_score": 30.0,
+                "co_id": co_str,
+                "weight_pct": 20.0,
+                "clo_points": _clo_pts(30.0)
+            },
+            {
+                "item_id": "Q4",
+                "name": f"Quiz 4 ({co_str})",
+                "max_score": 30.0,
+                "co_id": co_str,
+                "weight_pct": 20.0,
+                "clo_points": _clo_pts(30.0)
+            }
+        ]
+    })
+    categories.append({
+        "category_id": "FIN_SA2",
+        "term": "Finals",
+        "assessment_type": "SA",
+        "assessment_code": "SA2",
+        "name": "Summative Assessment 2 (Term Examination)",
+        "lec_lab": "Lecture",
+        "weight_pct": 60.0,
+        "is_major_assessment": False,
+        "items": [{
+            "item_id": "FTE",
+            "name": f"Final Term Examination ({co_str})",
+            "max_score": 60.0,
+            "co_id": co_str,
+            "weight_pct": 60.0,
+            "clo_points": _clo_pts(60.0)
+        }]
+    })
+
+    if is_lec_lab:
+        categories.append({
+            "category_id": "FIN_LAB_FA1",
+            "term": "Finals",
+            "assessment_type": "FA",
+            "assessment_code": "FA1",
+            "name": "Laboratory Activity / Experiment 2",
+            "lec_lab": "Laboratory",
+            "weight_pct": 0.0,
+            "is_major_assessment": False,
+            "items": [{
+                "item_id": "LA2",
+                "name": f"Lab Activity 2 ({co_str})",
+                "max_score": 100.0,
+                "co_id": co_str,
+                "weight_pct": 100.0,
+                "clo_points": _clo_pts(100.0)
+            }]
+        })
+        categories.append({
+            "category_id": "FIN_LAB_SA1",
+            "term": "Finals",
+            "assessment_type": "SA",
+            "assessment_code": "SA1",
+            "name": "Laboratory Performance Tasks",
+            "lec_lab": "Laboratory",
+            "weight_pct": 50.0,
+            "is_major_assessment": False,
+            "items": [{
+                "item_id": "LPT2",
+                "name": f"Final Lab Performance Task ({co_str})",
+                "max_score": 50.0,
+                "co_id": co_str,
+                "weight_pct": 50.0,
+                "clo_points": _clo_pts(50.0)
+            }]
+        })
+        categories.append({
+            "category_id": "FIN_LAB_SA2",
+            "term": "Finals",
+            "assessment_type": "SA",
+            "assessment_code": "SA2",
+            "name": "Final Practical Examination",
+            "lec_lab": "Laboratory",
+            "weight_pct": 50.0,
+            "is_major_assessment": False,
+            "items": [{
+                "item_id": "FLE",
+                "name": f"Final Practical Exam ({co_str})",
+                "max_score": 50.0,
+                "co_id": co_str,
+                "weight_pct": 50.0,
+                "clo_points": _clo_pts(50.0)
+            }]
+        })
+
+    return categories
+
+
+def auto_generate_class_record(doc: Dict[str, Any], force: bool = False) -> bool:
+    """
+    Automatically synchronizes and generates the Class Record matrix when:
+      (a) Syllabus is approved through official review chain by Dean.
+    
+    Sequential Step-Gating:
+      Steps 2-6 remain strictly locked until syllabus is approved by the Dean.
+      Therefore, class record auto-generation is gated on syllabus Dean approval.
+    """
+    if not doc or not isinstance(doc, dict):
+        return False
+
+    import syllabus_workflow
+    if not force and not syllabus_workflow.is_approved(doc):
+        return False
+
+    bp = doc.get("blueprint")
+    if not isinstance(bp, dict):
+        return False
+
+    meta = bp.get("metadata") or {}
+    course_code = (doc.get("course_code") or meta.get("course_code") or "EE 211").strip()
+    sec = (doc.get("section") or meta.get("section") or "1A").strip()
+    prog_code = (doc.get("program") or meta.get("program_code") or "EE").strip()
+    lec_lab = meta.get("lec_lab") or doc.get("lec_lab") or "Lecture"
+    credit_units = meta.get("credit_units") or "3.0 Units"
+    cid = doc.get("id") or doc.get("course_id") or ""
+
+    clos = [c.get("co_id") for c in (bp.get("course_outcomes") or []) if isinstance(c, dict) and c.get("co_id")]
+    if not clos:
+        clos = ["CLO1", "CLO2"]
+
+    # 1. Ensure categories & items exist
+    categories = bp.get("categories") or []
+    has_items = any(bool(c.get("items")) for c in categories if isinstance(c, dict))
+    if not has_items:
+        sync_blueprint_assessments_from_activities(bp)
+        categories = bp.get("categories") or []
+        has_items = any(bool(c.get("items")) for c in categories if isinstance(c, dict))
+
+    if not has_items:
+        bp["categories"] = get_standard_categories_and_items(course_code, lec_lab, credit_units, clos)
+        categories = bp["categories"]
+        # Also populate syllabus_assessment_activities if placeholder
+        acts = meta.get("syllabus_assessment_activities") or []
+        if not acts or all(not (a.get("code") or a.get("activity")) for a in acts if isinstance(a, dict)):
+            meta["syllabus_assessment_activities"] = [
+                {"type": "Formative", "code": "FA1", "activity": "Group Activity / Assignment", "description": "Formative exercises and group problem solving", "clo_aligned": ", ".join(clos), "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""},
+                {"type": "Formative", "code": "FA2", "activity": "Worksheet / Simulation Exercise", "description": "Laboratory / simulation worksheets and exercises", "clo_aligned": ", ".join(clos), "weight_pct": 0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""},
+                {"type": "Summative", "code": "SA1", "activity": "Summative Quizzes", "description": "Closed-book quizzes assessing module competencies", "clo_aligned": ", ".join(clos), "weight_pct": 40.0, "items_midterm": 2, "items_finals": 2, "items_per_term": 2, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""},
+                {"type": "Summative", "code": "SA2", "activity": "Term Examination", "description": "Midterm and final term examinations", "clo_aligned": ", ".join(clos), "weight_pct": 60.0, "items_midterm": 1, "items_finals": 1, "items_per_term": 1, "is_major_assessment": False, "major_scope": "independent", "lec_lab": "Lecture", "rubric_ref": ""},
+            ]
+
+    # Extract all item keys (e.g. Q1__CLO1, MTE__CLO1, etc.)
+    all_items: List[Dict[str, Any]] = []
+    item_keys: List[str] = []
+    for cat in categories:
+        if not isinstance(cat, dict):
+            continue
+        for it in cat.get("items") or []:
+            if isinstance(it, dict) and it.get("item_id"):
+                all_items.append(it)
+                item_id = it.get("item_id")
+                co_str = str(it.get("co_id") or "")
+                aligned_clos = [c.strip().upper() for c in re.split(r"[,;/]+", co_str) if c.strip()]
+                if aligned_clos:
+                    for c in aligned_clos:
+                        item_keys.append(f"{item_id}__{c}")
+                else:
+                    item_keys.append(item_id)
+
+    # 2. Populate enrolled students from Database & Syllabus Acknowledgments
+    students = bp.setdefault("students", [])
+
+    def _norm(s: str) -> str:
+        return re.sub(r"[^A-Za-z0-9]", "", str(s or "")).lower()
+
+    existing_by_id = {}
+    existing_by_name = {}
+    for st in students:
+        sid = str(st.get("student_id") or "").strip()
+        if sid:
+            existing_by_id[_norm(sid)] = st
+        sname = str(st.get("name") or f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", ")).strip().lower()
+        if sname:
+            existing_by_name[sname] = st
+
+    # Fetch from SQLite app_students if students list is empty (initial setup)
+    if not students:
+        try:
+            import db_persistence
+            enrolled_db_students = db_persistence.get_enrolled_students_for_course(cid, sec, prog_code)
+            for en in enrolled_db_students:
+                students.append(en)
+                sid = str(en.get("student_id") or "").strip()
+                if sid:
+                    existing_by_id[_norm(sid)] = en
+                sname = str(en.get("name") or "").strip().lower()
+                if sname:
+                    existing_by_name[sname] = en
+        except Exception as _e:
+            logger.debug("Error querying enrolled students in auto_generate_class_record: %s", _e)
+
+    # Also merge syllabus acknowledgments if any
+    wf = doc.get("workflow") or {}
+    acks = doc.get("student_acknowledgments") or wf.get("student_acknowledgments") or []
+    for ack in acks:
+        if not isinstance(ack, dict):
+            continue
+        ack_sid = str(ack.get("student_id") or "").strip()
+        ack_name = str(ack.get("student_name") or ack.get("name") or "").strip()
+        if not ack_sid and not ack_name:
+            continue
+
+        st_match = None
+        if ack_sid and _norm(ack_sid) in existing_by_id:
+            st_match = existing_by_id[_norm(ack_sid)]
+        elif ack_name and ack_name.lower() in existing_by_name:
+            st_match = existing_by_name[ack_name.lower()]
+
+        if not st_match:
+            if "," in ack_name:
+                parts = [p.strip() for p in ack_name.split(",", 1)]
+                last_name = parts[0]
+                first_name = parts[1]
+                mi = ""
+                m_mi = re.search(r"\s+([A-Za-z])\.?$", first_name)
+                if m_mi:
+                    mi = m_mi.group(1)
+                    first_name = first_name[:m_mi.start()].strip()
+            else:
+                parts = ack_name.rsplit(" ", 1)
+                if len(parts) == 2:
+                    first_name = parts[0].strip()
+                    last_name = parts[1].strip()
+                    mi = ""
+                else:
+                    first_name = ack_name
+                    last_name = ""
+                    mi = ""
+
+            st_match = {
+                "student_id": ack_sid or f"2026-{len(students)+1:04d}",
+                "last_name": last_name,
+                "first_name": first_name,
+                "middle_initial": mi,
+                "name": ack_name or f"{last_name}, {first_name}".strip(", "),
+                "email": ack.get("email") or "",
+                "program_year": sec,
+                "scores": {},
+                "assessment_acknowledgments": {},
+            }
+            students.append(st_match)
+            if ack_sid:
+                existing_by_id[_norm(ack_sid)] = st_match
+            if ack_name:
+                existing_by_name[ack_name.lower()] = st_match
+
+    # Bind assessment columns for all students
+    for st in students:
+        sc = st.setdefault("scores", {})
+        for k in item_keys:
+            if k not in sc:
+                sc[k] = None
+
+    return True
+
+
 def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
+    safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
+    try:
+        import db_persistence
+        db_doc = db_persistence.load_course_from_db(safe_id)
+        if db_doc:
+            bp = db_doc.get("blueprint")
+            if isinstance(bp, dict):
+                if "rubrics" not in bp:
+                    bp["rubrics"] = []
+                sync_blueprint_assessments_from_activities(bp)
+            _sync_student_acknowledgments_from_store(db_doc)
+            _sync_cqi_plan(db_doc)
+            auto_generate_class_record(db_doc)
+            return db_doc
+    except Exception:
+        pass
     user_dir = _get_user_courses_dir(username)
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
     fp = os.path.join(user_dir, f"{safe_id}.json")
@@ -434,6 +1063,7 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
                     bp["rubrics"] = []
                 _sync_student_acknowledgments_from_store(doc)
                 _sync_cqi_plan(doc)
+                auto_generate_class_record(doc)
                 return doc
         except Exception:
             pass
@@ -447,6 +1077,7 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
         if u_lower == (doc.get("owner") or "").lower() or u_lower in author_unames or username == "admin":
             _sync_student_acknowledgments_from_store(doc)
             _sync_cqi_plan(doc)
+            auto_generate_class_record(doc)
             return doc
     return None
 
@@ -487,12 +1118,8 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
     bp_dict = syllabus_workflow.enforce_locks(temp_doc, bp_dict)
     _sync_cqi_plan({"blueprint": bp_dict})
 
-    # Enforce syllabus approval barrier for Grades (students scores)
-    is_syllabus_approved = (wf or {}).get("status") == "approved"
-    if existing and not is_syllabus_approved:
-        old_bp = existing.get("blueprint") or {}
-        if "students" in old_bp:
-            bp_dict["students"] = old_bp["students"]
+    # Allow students and score entries to persist freely during course setup & operation
+    pass
 
     # Enforce class record grade locks (freeze student scores when under sign-off or finalized)
     cr_wf = existing.get("class_record_workflow") or payload.get("class_record_workflow") or class_record_workflow.default_class_record_workflow(username)
@@ -594,6 +1221,17 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
         "class_record_workflow": cr_wf,
         "student_acknowledgments": acks,
     }
+
+    # Synchronize activities to categories if categories empty
+    sync_blueprint_assessments_from_activities(bp_dict)
+    auto_generate_class_record(doc)
+
+    # Save to SQLite
+    try:
+        import db_persistence
+        db_persistence.save_course_to_db(doc)
+    except Exception as _e:
+        logger.warning("Error saving course to SQLite: %s", _e)
 
     for attempt in range(5):
         try:
@@ -837,6 +1475,13 @@ def duplicate_course(username: str, course_id: str, new_section: str = "", clear
         for st in bp_dict.get("students", []):
             st["scores"] = {}
 
+    auto_generate_class_record(new_doc)
+    try:
+        import db_persistence
+        db_persistence.save_course_to_db(new_doc)
+    except Exception:
+        pass
+
     user_dir = _get_user_courses_dir(username)
     fp = os.path.join(user_dir, f"{new_id}.json")
     with open(fp, "w", encoding="utf-8") as f:
@@ -846,6 +1491,13 @@ def duplicate_course(username: str, course_id: str, new_section: str = "", clear
 
 
 def delete_course(username_or_course_id: str, course_id: Optional[str] = None) -> bool:
+    target_id_for_db = course_id if course_id is not None else username_or_course_id
+    safe_db_id = re.sub(r"[^A-Za-z0-9_-]+", "", target_id_for_db)
+    try:
+        import db_persistence
+        db_persistence.delete_course_from_db(safe_db_id)
+    except Exception:
+        pass
     if course_id is None:
         target_id = username_or_course_id
         safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", target_id)
@@ -889,6 +1541,21 @@ def delete_course(username_or_course_id: str, course_id: Optional[str] = None) -
 def find_course(course_id: str) -> Optional[Dict[str, Any]]:
     """Finds a course by course_id across all user workspaces."""
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", course_id)
+    try:
+        import db_persistence
+        db_doc = db_persistence.load_course_from_db(safe_id)
+        if db_doc:
+            bp = db_doc.get("blueprint")
+            if isinstance(bp, dict):
+                if "rubrics" not in bp:
+                    bp["rubrics"] = []
+                sync_blueprint_assessments_from_activities(bp)
+            _sync_student_acknowledgments_from_store(db_doc)
+            _sync_cqi_plan(db_doc)
+            auto_generate_class_record(db_doc)
+            return db_doc
+    except Exception:
+        pass
     if not os.path.exists(COURSES_BASE_DIR):
         return None
     for uname in os.listdir(COURSES_BASE_DIR):
@@ -905,6 +1572,7 @@ def find_course(course_id: str) -> Optional[Dict[str, Any]]:
                             bp["rubrics"] = sample_syllabus.get_default_rubrics()
                         _sync_student_acknowledgments_from_store(doc)
                         _sync_cqi_plan(doc)
+                        auto_generate_class_record(doc)
                         return doc
                 except Exception:
                     continue
@@ -914,6 +1582,7 @@ def find_course(course_id: str) -> Optional[Dict[str, Any]]:
 def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     """Saves an entire course document back to its owner's storage, syncing authors."""
     _sync_cqi_plan(doc)
+    auto_generate_class_record(doc)
     owner = doc.get("owner") or "default"
     user_dir = _get_user_courses_dir(owner)
     safe_id = re.sub(r"[^A-Za-z0-9_-]+", "", doc["id"])
@@ -925,6 +1594,14 @@ def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     if "metadata" in bp:
         bp["metadata"]["authors"] = authors
     _sync_student_acknowledgments_from_store(doc)
+    bp_doc = doc.get("blueprint")
+    if isinstance(bp_doc, dict):
+        sync_blueprint_assessments_from_activities(bp_doc)
+    try:
+        import db_persistence
+        db_persistence.save_course_to_db(doc)
+    except Exception as _e:
+        logger.warning("Error saving course doc to SQLite: %s", _e)
     for attempt in range(5):
         try:
             with open(fp, "w", encoding="utf-8") as f:
