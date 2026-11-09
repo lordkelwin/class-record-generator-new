@@ -20,10 +20,17 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 from werkzeug.security import check_password_hash, generate_password_hash
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-STUDENTS_FILE = os.path.join(DATA_DIR, "students.json")
-COURSES_BASE_DIR = os.path.join(DATA_DIR, "courses")
+try:
+    import config
+    BASE_DIR = config.BASE_DIR
+    DATA_DIR = config.DATA_DIR
+    STUDENTS_FILE = config.STUDENTS_JSON_PATH
+    COURSES_BASE_DIR = config.COURSES_DIR
+except Exception:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+    STUDENTS_FILE = os.environ.get("STUDENTS_JSON_PATH", os.path.join(DATA_DIR, "students.json"))
+    COURSES_BASE_DIR = os.environ.get("COURSES_DIR", os.path.join(DATA_DIR, "courses"))
 
 _lock = threading.Lock()
 

@@ -16,12 +16,21 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-DB_PATH = os.path.join(DATA_DIR, "academic_catalog.db")
-USERS_JSON_PATH = os.path.join(DATA_DIR, "users.json")
-STUDENTS_JSON_PATH = os.path.join(DATA_DIR, "students.json")
-COURSES_BASE_DIR = os.path.join(DATA_DIR, "courses")
+try:
+    import config
+    BASE_DIR = config.BASE_DIR
+    DATA_DIR = config.DATA_DIR
+    DB_PATH = config.DATABASE_PATH
+    USERS_JSON_PATH = config.USERS_JSON_PATH
+    STUDENTS_JSON_PATH = config.STUDENTS_JSON_PATH
+    COURSES_BASE_DIR = config.COURSES_DIR
+except Exception:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+    DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(DATA_DIR, "academic_catalog.db"))
+    USERS_JSON_PATH = os.environ.get("USERS_JSON_PATH", os.path.join(DATA_DIR, "users.json"))
+    STUDENTS_JSON_PATH = os.environ.get("STUDENTS_JSON_PATH", os.path.join(DATA_DIR, "students.json"))
+    COURSES_BASE_DIR = os.environ.get("COURSES_DIR", os.path.join(DATA_DIR, "courses"))
 
 
 def get_db_connection() -> sqlite3.Connection:

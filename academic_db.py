@@ -11,9 +11,15 @@ import re
 import sqlite3
 from typing import Any, Dict, List, Optional
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-DB_PATH = os.path.join(DATA_DIR, "academic_catalog.db")
+try:
+    import config
+    BASE_DIR = config.BASE_DIR
+    DATA_DIR = config.DATA_DIR
+    DB_PATH = config.DATABASE_PATH
+except Exception:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+    DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(DATA_DIR, "academic_catalog.db"))
 
 
 def remove_honorific(name: str) -> str:

@@ -21,9 +21,15 @@ from models import CourseOutcome, CourseMetadata, SyllabusBlueprint, get_default
 from sample_syllabus import get_default_blueprint, get_blank_blueprint, build_learning_plan_from_topics
 from catalog_data import get_full_catalog
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-COURSES_BASE_DIR = os.path.join(DATA_DIR, "courses")
+try:
+    import config
+    BASE_DIR = config.BASE_DIR
+    DATA_DIR = config.DATA_DIR
+    COURSES_BASE_DIR = config.COURSES_DIR
+except Exception:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+    COURSES_BASE_DIR = os.environ.get("COURSES_DIR", os.path.join(DATA_DIR, "courses"))
 
 
 def _get_user_courses_dir(username: str) -> str:

@@ -1,3 +1,4 @@
+import config
 import copy
 import syllabus_workflow
 import class_record_workflow
@@ -76,6 +77,12 @@ def add_cache_control_headers(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+    origin = request.headers.get("Origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, _csrf"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     return response
 
 from functools import wraps
@@ -3696,9 +3703,32 @@ def api_student_acknowledge_assessment(course_id):
 
 
 if __name__ == "__main__":
-
     if not os.path.exists(SAMPLE_PDF_PATH):
+        try:
+            generate_sample_syllabus_pdf(SAMPLE_PDF_PATH)
+        except Exception as _pdf_err:
+            logging.getLogger(__name__).warning(f"Could not generate sample PDF: {_pdf_err}")
 
-        generate_sample_syllabus_pdf(SAMPLE_PDF_PATH)
+    host = config.HOST
+    port = config.PORT
+    debug = config.DEBUG
+    local_ip = config.get_local_ip()
 
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    print("=" * 72)
+    print("  USeP OBE Syllabus-to-Class Record Generator - Local Server")
+    print("=" * 72)
+    print("  Server is active and ready for Client User Acceptance Testing (UAT):")
+    print()
+    print(f"  👉 Local Machine (This PC):")
+    print(f"     http://localhost:{port}")
+    print(f"     http://127.0.0.1:{port}")
+    print()
+    print(f"  👉 Network / LAN Access (Same Wi-Fi or Local Network):")
+    print(f"     http://{local_ip}:{port}")
+    print()
+    print("  Default Faculty & Admin Credentials:")
+    print("     Admin Username   : admin")
+    print("     Admin Password   : admin123")
+    print("=" * 72)
+
+    app.run(host=host, port=port, debug=debug)

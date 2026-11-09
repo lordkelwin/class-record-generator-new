@@ -17,9 +17,17 @@ from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ACCDB_PATH = os.path.join(BASE_DIR, "prospectus", "PGO-PI-IGA.accdb")
-CONN_STR = f"DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={ACCDB_PATH};"
+try:
+    import config
+    ACCDB_PATH = config.ACCDB_PATH
+    CONN_STR = config.ACCDB_CONN_STR
+except Exception:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    ACCDB_PATH = os.environ.get("ACCDB_PATH", os.path.join(BASE_DIR, "prospectus", "PGO-PI-IGA.accdb"))
+    CONN_STR = os.environ.get(
+        "ACCDB_CONN_STR",
+        f"DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={ACCDB_PATH};"
+    )
 
 _CACHED_BSEE_COURSES: Optional[List[Dict[str, Any]]] = None
 
@@ -39,7 +47,13 @@ def query_accdb_bsee_courses(force_refresh: bool = False) -> List[Dict[str, Any]
         _CACHED_BSEE_COURSES = BSEE_COURSES
         return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
 
-    import pyodbc
+    try:
+        import pyodbc
+    except ImportError:
+        logger.warning("pyodbc is not installed. Falling back to program_catalogs.")
+        from program_catalogs.courses_ee import BSEE_COURSES
+        _CACHED_BSEE_COURSES = BSEE_COURSES
+        return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
 
     try:
         conn = pyodbc.connect(CONN_STR, autocommit=True)

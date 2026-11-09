@@ -22,10 +22,17 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-USERS_FILE = os.path.join(DATA_DIR, "users.json")
-SECRET_KEY_FILE = os.path.join(DATA_DIR, "secret_key")
+try:
+    import config
+    BASE_DIR = config.BASE_DIR
+    DATA_DIR = config.DATA_DIR
+    USERS_FILE = config.USERS_JSON_PATH
+    SECRET_KEY_FILE = config.SECRET_KEY_FILE
+except Exception:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+    USERS_FILE = os.environ.get("USERS_JSON_PATH", os.path.join(DATA_DIR, "users.json"))
+    SECRET_KEY_FILE = os.environ.get("SECRET_KEY_FILE", os.path.join(DATA_DIR, "secret_key"))
 
 DELETED_USERS_FILE = os.path.join(DATA_DIR, "deleted_users.json")
 
