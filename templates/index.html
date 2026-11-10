@@ -808,6 +808,12 @@
     }
 
     /* Active Subject Bar */
+    .active-subject-bar.hidden {
+      display: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+    }
     .active-subject-bar {
       background: #ffffff;
       border: 1px solid var(--border);
@@ -1200,6 +1206,415 @@
       }
     }
 
+    /* ==================== CURRICULUM FLOWCHART & DEPENDENCY MAP ==================== */
+    .flowchart-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .flowchart-header-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .flowchart-title-area h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .flowchart-title-area p {
+      margin: 4px 0 0;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .flowchart-kpis {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .fc-kpi-chip {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 90px;
+    }
+    .fc-kpi-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+    .fc-kpi-lbl {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-top: 2px;
+    }
+    .flowchart-viewport {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 80vh;
+      position: relative;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .flowchart-canvas {
+      position: relative;
+      min-width: max-content;
+      min-height: 600px;
+      padding: 24px;
+      display: flex;
+      gap: 20px;
+      transform-origin: top left;
+      transition: transform 0.15s ease-out;
+    }
+    .flowchart-svg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .flowchart-term-column {
+      flex: 0 0 250px;
+      width: 250px;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      z-index: 20;
+      transition: all 0.2s ease;
+    }
+    .flowchart-term-column.filtered-out {
+      display: none !important;
+    }
+    .flowchart-term-header {
+      background: #f1f5f9;
+      border-bottom: 2px solid #cbd5e1;
+      padding: 10px 12px;
+      border-radius: 8px 8px 0 0;
+      text-align: center;
+    }
+    .flowchart-term-header .term-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin: 0;
+    }
+    .flowchart-term-header .term-sub {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .flowchart-term-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      background: #fafafa;
+      border-radius: 0 0 8px 8px;
+    }
+    .flowchart-node {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.16s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      user-select: none;
+    }
+    .flowchart-node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(30, 58, 138, 0.14);
+      border-color: #2563eb;
+    }
+    .flowchart-node.fc-node-active {
+      border-color: #b45309 !important;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+      background: #fffbeb !important;
+      transform: translateY(-2px) scale(1.02);
+      z-index: 30;
+    }
+    .flowchart-node.fc-node-prereq {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35) !important;
+      background: #eff6ff !important;
+      transform: translateY(-2px);
+      z-index: 28;
+    }
+    .flowchart-node.fc-node-coreq {
+      border-color: #7c3aed !important;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35) !important;
+      background: #f5f3ff !important;
+      transform: translateY(-2px);
+      z-index: 28;
+    }
+    .flowchart-node.fc-node-postreq {
+      border-color: #d97706 !important;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.35) !important;
+      background: #fffbeb !important;
+      transform: translateY(-2px);
+      z-index: 28;
+    }
+    .flowchart-node.fc-node-dimmed {
+      opacity: 0.20 !important;
+      filter: grayscale(40%);
+    }
+    .flowchart-node-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .flowchart-node-code {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #1e3a8a;
+      letter-spacing: -0.2px;
+    }
+    .flowchart-node-units {
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .flowchart-node-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 5px;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 32px;
+    }
+    .flowchart-node-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px dashed #e2e8f0;
+    }
+    .flowchart-node-reqs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .fc-req-pill {
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .fc-req-pill.prereq {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .fc-req-pill.coreq {
+      background: #f5f3ff;
+      color: #6d28d9;
+      border: 1px solid #ddd6fe;
+    }
+    .fc-node-role-badge {
+      display: none;
+      position: absolute;
+      top: -8px;
+      right: 8px;
+      font-size: 0.62rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .flowchart-node.fc-node-active .fc-node-role-badge {
+      display: inline-block;
+      background: #b45309;
+      color: #ffffff;
+    }
+    .flowchart-node.fc-node-prereq .fc-node-role-badge {
+      display: inline-block;
+      background: #2563eb;
+      color: #ffffff;
+    }
+    .flowchart-node.fc-node-coreq .fc-node-role-badge {
+      display: inline-block;
+      background: #7c3aed;
+      color: #ffffff;
+    }
+    .flowchart-node.fc-node-postreq .fc-node-role-badge {
+      display: inline-block;
+      background: #d97706;
+      color: #ffffff;
+    }
+    .fc-edge-path {
+      transition: stroke 0.18s, stroke-width 0.18s, opacity 0.18s;
+    }
+    .fc-edge-path.dimmed {
+      opacity: 0.05 !important;
+    }
+    .fc-edge-path.highlighted-pre {
+      stroke: #2563eb !important;
+      stroke-width: 3.5px !important;
+      opacity: 1 !important;
+      filter: drop-shadow(0 0 3px rgba(37, 99, 235, 0.45));
+    }
+    .fc-edge-path.highlighted-coreq {
+      stroke: #7c3aed !important;
+      stroke-width: 3.5px !important;
+      stroke-dasharray: 6,4 !important;
+      opacity: 1 !important;
+      filter: drop-shadow(0 0 3px rgba(124, 58, 237, 0.45));
+    }
+    .fc-edge-path.highlighted-post {
+      stroke: #ea580c !important;
+      stroke-width: 3.5px !important;
+      opacity: 1 !important;
+      filter: drop-shadow(0 0 3px rgba(234, 88, 12, 0.45));
+    }
+
+    /* Course Details Modal Styles */
+    .course-modal-box {
+      max-width: 760px;
+      width: 100%;
+    }
+    .course-meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .course-meta-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .course-desc-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid var(--maroon);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-size: 0.90rem;
+      line-height: 1.55;
+      color: #1e293b;
+      margin-bottom: 18px;
+    }
+    .course-req-section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+    }
+    .course-req-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .course-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .course-link-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.80rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+    .course-link-chip:hover {
+      background: #eff6ff;
+      border-color: #2563eb;
+      color: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    .course-link-chip.chip-prereq {
+      border-color: #93c5fd;
+      background: #eff6ff;
+    }
+    .course-link-chip.chip-coreq {
+      border-color: #ddd6fe;
+      background: #f5f3ff;
+      color: #6d28d9;
+    }
+    .course-link-chip.chip-postreq {
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #c2410c;
+    }
+    .course-pi-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.80rem;
+      margin-top: 6px;
+    }
+    .course-pi-table th {
+      background: #f1f5f9;
+      padding: 6px 10px;
+      text-align: left;
+      font-weight: 700;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .course-pi-table td {
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    .ied-badge-i { background: #dbeafe; color: #1e40af; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+    .ied-badge-e { background: #dcfce7; color: #15803d; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+    .ied-badge-d { background: #fef3c7; color: #b45309; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+
 </style>
 </head>
 <body>
@@ -1277,12 +1692,18 @@
           <button type="button" class="ribbon-tab active" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
             📥 Requests for Approval &amp; Institutional Oversight <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
           </button>
+          <button type="button" class="ribbon-tab" id="ribbonTabCurriculum" onclick="switchRibbon('ribbon-curriculum', 'tab-curriculum')">
+            🗺️ Prerequisite Flowchart &amp; Curriculum Map
+          </button>
         {% else %}
           <button type="button" class="ribbon-tab{% if default_tab == 'dashboard' %} active{% endif %}" id="ribbonTabDashboard" onclick="switchRibbon('ribbon-dashboard', 'tab-dashboard')">
             📊 Dashboard <span id="dashLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
           </button>
           <button type="button" class="ribbon-tab{% if default_tab != 'dashboard' %} active{% endif %}" id="ribbonTabSyllabus" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">
             📝 Syllabus Creator &amp; Class Record <span id="syllabusLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
+          </button>
+          <button type="button" class="ribbon-tab" id="ribbonTabCurriculum" onclick="switchRibbon('ribbon-curriculum', 'tab-curriculum')">
+            🗺️ Prerequisite Flowchart &amp; Curriculum Map
           </button>
           <button type="button" class="ribbon-tab" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
             📥 Requests for Approval <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
@@ -1424,11 +1845,87 @@
       </div>
       {% endif %}
     </div>
-  </nav>
+  
+    <!-- 4. CURRICULUM PREREQUISITE FLOWCHART RIBBON BAND -->
+    <div class="ribbon-band" id="ribbonBandCurriculum">
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Curriculum Program</span>
+        <div class="ribbon-group-content">
+          <select id="curriculumProgramSelect" class="form-control-sm" style="padding:5px 9px; border-radius:6px; border:1.5px solid #cbd5e1; font-weight:700; color:#1e293b; background:#ffffff; font-size:0.82rem;" onchange="onCurriculumProgramChange(this.value)">
+            <option value="BSEE" selected>BSEE – Electrical Engineering (PGO-PI-IGA.accdb)</option>
+            <option value="BSCE">BSCE – Civil Engineering</option>
+            <option value="BSECE">BSECE – Electronics Engineering</option>
+            <option value="BSME">BSME – Mechanical Engineering</option>
+            <option value="BSABE">BSABE – Agricultural &amp; Biosystems</option>
+            <option value="BSGE">BSGE – Geodetic Engineering</option>
+            <option value="BSGeo">BSGeo – Geology</option>
+            <option value="BSMinE">BSMinE – Mining Engineering</option>
+            <option value="BSSE">BSSE – Sanitary Engineering</option>
+          </select>
+          <span class="badge" id="curriculumSourceBadge" style="background:#0284c7; color:#fff; font-size:0.75rem; padding:4px 8px; border-radius:6px; font-weight:700;">Direct accdb</span>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Year &amp; Term Filter</span>
+        <div class="ribbon-group-content">
+          <select id="curriculumYearFilter" class="form-control-sm" style="padding:5px 9px; border-radius:6px; border:1px solid #cbd5e1; font-weight:600; color:#334155; font-size:0.80rem;" onchange="filterFlowchartByYear(this.value)">
+            <option value="ALL">All Academic Years</option>
+            <option value="First Year">First Year</option>
+            <option value="Second Year">Second Year</option>
+            <option value="Third Year">Third Year</option>
+            <option value="Fourth Year">Fourth Year</option>
+          </select>
+          <select id="curriculumConnectorMode" class="form-control-sm" style="padding:5px 9px; border-radius:6px; border:1px solid #cbd5e1; font-weight:600; color:#334155; font-size:0.80rem;" onchange="setFlowchartConnectorMode(this.value)">
+            <option value="spotlight" selected>Interactive Spotlight (Hover / Select)</option>
+            <option value="all">Show All Dependency Lines</option>
+            <option value="prereq_only">Show Pre-requisite Lines Only</option>
+            <option value="coreq_only">Show Co-requisite Lines Only</option>
+            <option value="hidden">Hide All Lines</option>
+          </select>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Course Finder</span>
+        <div class="ribbon-group-content">
+          <input type="text" id="flowchartSearchInput" placeholder="🔍 Search code / title..." oninput="searchFlowchartCourses(this.value)" style="padding:5px 9px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.82rem; width:190px;" />
+          <button type="button" class="btn btn-light btn-sm" onclick="clearFlowchartSearch()" title="Clear Search">✕</button>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Dependency Connectors Legend</span>
+        <div class="ribbon-group-content" style="gap:6px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#2563eb; background:#eff6ff; padding:3px 8px; border-radius:5px; border:1px solid #bfdbfe;">
+            ───► Pre-requisite (Solid)
+          </span>
+          <span style="font-size:0.75rem; font-weight:700; color:#7c3aed; background:#f5f3ff; padding:3px 8px; border-radius:5px; border:1px solid #ddd6fe;">
+            - - ► Co-requisite (Dashed)
+          </span>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Canvas Controls</span>
+        <div class="ribbon-group-content">
+          <button type="button" class="btn btn-light btn-sm" onclick="resetFlowchartView()" title="Reset view and clear filters" style="font-weight:700;">
+            🔄 Reset
+          </button>
+          <button type="button" class="btn btn-light btn-sm" onclick="zoomFlowchart(1.1)" title="Zoom In">
+            ➕ Zoom In
+          </button>
+          <button type="button" class="btn btn-light btn-sm" onclick="zoomFlowchart(0.9)" title="Zoom Out">
+            ➖ Zoom Out
+          </button>
+        </div>
+      </div>
+    </div>
+</nav>
 
   {% if not current_user or current_user.can_access_faculty_tools %}
   <!-- Active Subject Status Bar -->
-  <div class="active-subject-bar" id="activeSubjectBar">
+  <div class="active-subject-bar{% if default_tab not in ['dashboard', 'syllabus'] %} hidden{% endif %}" id="activeSubjectBar"{% if default_tab not in ['dashboard', 'syllabus'] %} style="display:none;"{% endif %}>
     <div class="asb-left">
       <button class="btn btn-light btn-sm" onclick="toggleSidebar()" title="Toggle Subjects Sidebar">
         &#9776; Subjects (<span id="asbCountBadge">0</span>)
@@ -2809,6 +3306,87 @@
   </div>
 
   <!-- TAB: REQUESTS FOR APPROVAL (WORKFLOW PORTAL) -->
+  
+  <!-- ==================== CURRICULUM FLOWCHART & DEPENDENCY MAP TAB ==================== -->
+  <div id="tab-curriculum" class="tab-panel">
+    <div class="flowchart-wrapper">
+      <div class="flowchart-header-card">
+        <div class="flowchart-title-area">
+          <h2>
+            <span>🗺️</span>
+            <span id="fcHeaderProgramTitle">Bachelor of Science in Electrical Engineering (BSEE)</span>
+          </h2>
+          <p id="fcHeaderSubtitle">
+            Authoritative Prerequisite Flowchart &amp; Co-requisite Dependency Map (<span id="fcHeaderSource">PGO-PI-IGA.accdb</span>)
+          </p>
+        </div>
+        <div class="flowchart-kpis">
+          <div class="fc-kpi-chip">
+            <span class="fc-kpi-val" id="fcKpiCourses">0</span>
+            <span class="fc-kpi-lbl">Total Courses</span>
+          </div>
+          <div class="fc-kpi-chip">
+            <span class="fc-kpi-val" id="fcKpiUnits">0.0</span>
+            <span class="fc-kpi-lbl">Credit Units</span>
+          </div>
+          <div class="fc-kpi-chip">
+            <span class="fc-kpi-val" id="fcKpiPrereqs" style="color:#2563eb;">0</span>
+            <span class="fc-kpi-lbl">Prerequisites</span>
+          </div>
+          <div class="fc-kpi-chip">
+            <span class="fc-kpi-val" id="fcKpiCoreqs" style="color:#7c3aed;">0</span>
+            <span class="fc-kpi-lbl">Co-requisites</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 16px; font-size:0.84rem; color:#1e40af; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.1rem;">💡</span>
+          <span><strong>Interactive Guide:</strong> Click any course card to inspect its full description &amp; PGO-PI-IGA alignment. Hover to spotlight its prerequisites (<span style="color:#2563eb; font-weight:700;">solid arrows</span>) and dependent post-requisites (<span style="color:#ea580c; font-weight:700;">amber arrows</span>).</span>
+        </div>
+        <div style="font-size:0.80rem; color:#475569;">
+          Hold <strong>Shift + Scroll</strong> to pan horizontally across academic terms.
+        </div>
+      </div>
+
+      <div class="flowchart-viewport" id="flowchartViewport">
+        <div class="flowchart-canvas" id="flowchartCanvas">
+          <!-- Dynamic SVG connector overlay layer -->
+          <svg class="flowchart-svg-layer" id="flowchartSvg" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-prereq" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#3b82f6" />
+              </marker>
+              <marker id="arrow-coreq" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#8b5cf6" />
+              </marker>
+              <marker id="arrow-highlight-pre" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+              </marker>
+              <marker id="arrow-highlight-coreq" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed" />
+              </marker>
+              <marker id="arrow-highlight-post" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#ea580c" />
+              </marker>
+            </defs>
+            <g id="flowchartSvgEdgesGroup"></g>
+          </svg>
+
+          <!-- Columns container for all Year Levels and Semesters -->
+          <div id="flowchartColumnsContainer" style="display:flex; gap:20px; position:relative; z-index:20;">
+            <!-- Populated dynamically via JS -->
+            <div style="padding:40px; color:#64748b; font-size:0.95rem; text-align:center; width:100%;">
+              ⏳ Loading Curriculum Flowchart from PGO-PI-IGA.accdb...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <div id="tab-approvals" class="tab-panel{% if current_user and not current_user.can_access_faculty_tools %} active{% endif %}">
     <!-- Header Card -->
     <div class="card" style="background:linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); color:#ffffff; padding:18px 22px; border-radius:12px; margin-bottom:16px; box-shadow:0 4px 12px rgba(30,58,138,0.18);">
@@ -3110,6 +3688,101 @@
 </div><!-- /.app-shell -->
 
 <!-- Modal: Create / Add New Subject (From Catalog, Custom, or PDF) -->
+
+<!-- ==================== MODAL: COURSE BASIC DESCRIPTION & DEPENDENCY INSPECTOR ==================== -->
+<div class="modal-overlay" id="courseDescriptionModal" style="display:none;" onclick="if(event.target===this) closeCourseDetailsModal();">
+  <div class="modal-box course-modal-box">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="badge" id="modalCourseCodeBadge" style="background:#1e3a8a; color:#ffffff; font-size:1.0rem; padding:4px 10px; border-radius:6px; font-weight:800;">EE 211</span>
+        <div>
+          <h3 id="modalCourseTitleText" style="margin:0; font-size:1.15rem; color:#0f172a;">Course Title</h3>
+          <div style="font-size:0.75rem; color:#64748b;" id="modalCourseProgramSubtitle">Bachelor of Science in Electrical Engineering</div>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeCourseDetailsModal()" title="Close Window">&times;</button>
+    </div>
+
+    <div class="modal-body" style="padding:18px 22px; max-height:75vh; overflow-y:auto;">
+      <!-- Metadata Pills Bar -->
+      <div class="course-meta-pills" id="modalCourseMetaPills">
+        <span class="course-meta-pill" id="modalPillYearSem">Year &middot; Term</span>
+        <span class="course-meta-pill" id="modalPillUnits">Units</span>
+        <span class="course-meta-pill" id="modalPillHours">Contact Hours</span>
+        <span class="course-meta-pill" id="modalPillLecLab">Type</span>
+        <span class="course-meta-pill" id="modalPillSource" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">PGO-PI-IGA.accdb</span>
+      </div>
+
+      <!-- Authoritative Course Description -->
+      <div class="course-req-title">
+        <span>📖</span> Authoritative Course Description
+      </div>
+      <div class="course-desc-box" id="modalCourseDescriptionText">
+        Course description text...
+      </div>
+
+      <!-- Pre-requisites & Co-requisites & Post-requisites -->
+      <div class="course-req-section">
+        <div class="course-req-title" style="color:#1d4ed8;">
+          <span>⬆️</span> Pre-requisite(s) (Must be completed prior):
+        </div>
+        <div class="course-chip-list" id="modalPrereqsChipList">
+          <!-- Clickable chips or 'None' -->
+        </div>
+      </div>
+
+      <div class="course-req-section">
+        <div class="course-req-title" style="color:#6d28d9;">
+          <span>↔️</span> Co-requisite(s) (Concurrent enrollment):
+        </div>
+        <div class="course-chip-list" id="modalCoreqsChipList">
+          <!-- Clickable chips or 'None' -->
+        </div>
+      </div>
+
+      <div class="course-req-section">
+        <div class="course-req-title" style="color:#c2410c;">
+          <span>⬇️</span> Subsequent Post-requisite(s) (Courses requiring this course):
+        </div>
+        <div class="course-chip-list" id="modalPostreqsChipList">
+          <!-- Clickable chips or 'None' -->
+        </div>
+      </div>
+
+      <!-- Aligned PGO-PI-IGA (IED) Summary -->
+      <div class="course-req-section" id="modalPgoPiSection">
+        <div class="course-req-title" style="color:#0f172a;">
+          <span>🎯</span> Aligned Program Outcomes &amp; Performance Indicators (PGO-PI-IGA)
+        </div>
+        <div id="modalPgoPiContainer">
+          <!-- Rendered table or summary -->
+        </div>
+      </div>
+
+      <!-- Course Outline Topics & SDGs -->
+      <div class="course-req-section" id="modalTopicsSection" style="margin-bottom:0;">
+        <div class="course-req-title" style="color:#0f172a;">
+          <span>📑</span> Course Topics &amp; Sustainable Development Goals (SDGs)
+        </div>
+        <div id="modalSdgsBadge" style="margin-bottom:8px;"></div>
+        <ol id="modalTopicsList" style="margin:0; padding-left:20px; font-size:0.82rem; color:#334155; line-height:1.5;">
+          <!-- Topic items -->
+        </ol>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center;">
+      <button type="button" class="btn btn-outline-primary btn-sm" id="btnModalLocateFlowchart" onclick="locateCourseFromModal()" style="font-weight:700;">
+        🎯 Locate in Flowchart
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeCourseDetailsModal()">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-overlay" id="newSubjectModal" style="display:none;" onclick="if(event.target===this) closeNewSubjectModal();">
   <div class="modal-box">
     <div class="modal-header">
@@ -4076,7 +4749,10 @@
       switchRibbon("ribbon-syllabus", "tab-syllabus");
     } else if (reqTab === "approvals") {
       switchRibbon("ribbon-approvals", "tab-approvals");
+    } else if (reqTab === "curriculum") {
+      switchRibbon("ribbon-curriculum", "tab-curriculum");
     }
+    syncActiveSubjectBarVisibility();
     updateSyllabusStepUI(currentSyllabusStep || 'tab-syllabus');
     startRealtimeSyncEngine();
     loadApprovalRequests();
@@ -4290,7 +4966,27 @@
     }
   }
 
+    function syncActiveSubjectBarVisibility() {
+    const asb = document.getElementById("activeSubjectBar");
+    const isSubjectRibbon = (currentRibbon === "ribbon-dashboard" || currentRibbon === "ribbon-syllabus");
+    if (asb) {
+      if (isSubjectRibbon) {
+        asb.style.display = "flex";
+        asb.classList.remove("hidden");
+      } else {
+        asb.style.display = "none";
+        asb.classList.add("hidden");
+      }
+    }
+    const hero = document.getElementById("noSubjectHero");
+    if (hero) {
+      const hasNoSubjects = !Array.isArray(allCoursesList) || allCoursesList.length === 0;
+      hero.style.display = (isSubjectRibbon && hasNoSubjects) ? "block" : "none";
+    }
+  }
+
   function updateActiveSubjectBar() {
+    syncActiveSubjectBarVisibility();
     if (!blueprint) {
       const c1 = document.getElementById("asbCode"); if (c1) c1.textContent = "—";
       const c2 = document.getElementById("asbSec"); if (c2) c2.textContent = "—";
@@ -4883,7 +5579,7 @@
   }
 
   const SERVER_DEFAULT_TAB = {{ (default_tab or 'syllabus')|tojson }};
-  let currentRibbon = SERVER_DEFAULT_TAB === 'dashboard' ? 'ribbon-dashboard' : (SERVER_DEFAULT_TAB === 'approvals' ? 'ribbon-approvals' : 'ribbon-syllabus');
+  let currentRibbon = SERVER_DEFAULT_TAB === 'dashboard' ? 'ribbon-dashboard' : (SERVER_DEFAULT_TAB === 'approvals' ? 'ribbon-approvals' : (SERVER_DEFAULT_TAB === 'curriculum' ? 'ribbon-curriculum' : 'ribbon-syllabus'));
   let currentSyllabusStep = 'tab-syllabus';
 
   function hasActiveCourseRecordedScores() {
@@ -4972,7 +5668,7 @@
   }
 
   function switchRibbon(ribbonId, targetTabId) {
-    if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && ribbonId !== 'ribbon-approvals') {
+    if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && ribbonId !== 'ribbon-approvals' && ribbonId !== 'ribbon-curriculum') {
       ribbonId = 'ribbon-approvals';
       targetTabId = 'tab-approvals';
     }
@@ -5038,11 +5734,14 @@
 
     currentRibbon = ribbonId;
 
+    syncActiveSubjectBarVisibility();
+
     // 1. Update primary ribbon tabs
     document.querySelectorAll('.ribbon-tab').forEach(b => b.classList.remove('active'));
     const tabMap = {
       'ribbon-dashboard': 'ribbonTabDashboard',
       'ribbon-syllabus': 'ribbonTabSyllabus',
+      'ribbon-curriculum': 'ribbonTabCurriculum',
       'ribbon-approvals': 'tabBtnApprovals'
     };
     const activeTabBtn = document.getElementById(tabMap[ribbonId]);
@@ -5053,6 +5752,7 @@
     const bandMap = {
       'ribbon-dashboard': 'ribbonBandDashboard',
       'ribbon-syllabus': 'ribbonBandSyllabus',
+      'ribbon-curriculum': 'ribbonBandCurriculum',
       'ribbon-approvals': 'ribbonBandApprovals'
     };
     const activeBand = document.getElementById(bandMap[ribbonId]);
@@ -5063,6 +5763,7 @@
     if (!tabToShow) {
       if (ribbonId === 'ribbon-dashboard') tabToShow = 'tab-dashboard';
       else if (ribbonId === 'ribbon-syllabus') tabToShow = currentSyllabusStep || 'tab-syllabus';
+      else if (ribbonId === 'ribbon-curriculum') tabToShow = 'tab-curriculum';
       else if (ribbonId === 'ribbon-approvals') tabToShow = 'tab-approvals';
     }
 
@@ -5221,7 +5922,10 @@
     const targetPanel = document.getElementById(tabId);
     if (targetPanel) targetPanel.classList.add("active");
 
-    if (tabId === "tab-approvals") {
+    if (tabId === "tab-curriculum") {
+      stopReceiptAckPolling();
+      if (typeof initCurriculumFlowchart === 'function') initCurriculumFlowchart();
+    } else if (tabId === "tab-approvals") {
       stopReceiptAckPolling();
       loadApprovalRequests(true);
     } else if (tabId === "tab-receipt-ack") {
@@ -5269,6 +5973,9 @@
       }
       switchRibbon("ribbon-dashboard", "tab-dashboard");
       return;
+    } else if (tabId === "tab-curriculum") {
+      stopReceiptAckPolling();
+      if (typeof initCurriculumFlowchart === 'function') initCurriculumFlowchart();
     } else if (tabId === "tab-approvals") {
       switchRibbon("ribbon-approvals", "tab-approvals");
     } else if (["tab-syllabus", "tab-assessments", "tab-gradebook", "tab-receipt-ack", "tab-cloreport", "tab-cqi"].includes(tabId)) {
@@ -18320,6 +19027,596 @@
     }
     window.open(`/api/courses/${encodeURIComponent(currentCourseId)}/export-acknowledgment-pdf`, "_blank");
   }
+
+
+
+/* ==================== CURRICULUM PREREQUISITE FLOWCHART CONTROLLER ==================== */
+let flowchartData = null;
+let flowchartCoursesMap = {};
+let flowchartActiveProgram = 'BSEE';
+let flowchartYearFilter = 'ALL';
+let flowchartConnectorMode = 'spotlight'; // 'spotlight', 'all', 'prereq_only', 'coreq_only', 'hidden'
+let flowchartZoomLevel = 1.0;
+let flowchartHoveredNode = null;
+let flowchartSelectedNode = null;
+
+async function initCurriculumFlowchart() {
+  const progSelect = document.getElementById('curriculumProgramSelect');
+  const desiredProgram = progSelect ? progSelect.value : 'BSEE';
+  if (!flowchartData || flowchartActiveProgram !== desiredProgram) {
+    await loadCurriculumFlowchart(desiredProgram);
+  } else {
+    setTimeout(() => renderFlowchartConnectors(), 70);
+  }
+}
+
+async function onCurriculumProgramChange(programCode) {
+  flowchartActiveProgram = programCode || 'BSEE';
+  const badge = document.getElementById('curriculumSourceBadge');
+  if (badge) {
+    const isDirectAccdb = (flowchartActiveProgram === 'BSEE' || flowchartActiveProgram === 'EE');
+    badge.textContent = isDirectAccdb ? 'Direct accdb' : 'academic_catalog.db';
+    badge.style.background = isDirectAccdb ? '#0284c7' : '#475569';
+  }
+  await loadCurriculumFlowchart(flowchartActiveProgram);
+}
+
+async function loadCurriculumFlowchart(programCode) {
+  const container = document.getElementById('flowchartColumnsContainer');
+  if (container) {
+    container.innerHTML = '<div style="padding:40px; color:#64748b; font-size:0.95rem; text-align:center; width:100%;">⏳ Loading Curriculum Flowchart &amp; Dependency Graph...</div>';
+  }
+
+  try {
+    const res = await fetch(`/api/curriculum/flowchart?program=${encodeURIComponent(programCode || 'BSEE')}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    flowchartData = data;
+    flowchartCoursesMap = {};
+    (data.courses || []).forEach(c => {
+      if (c && c.code) {
+        flowchartCoursesMap[c.code.trim().toUpperCase()] = c;
+      }
+    });
+
+    // Update Header and KPIs
+    const titleEl = document.getElementById('fcHeaderProgramTitle');
+    if (titleEl) titleEl.textContent = data.program_title || programCode;
+    const srcEl = document.getElementById('fcHeaderSource');
+    if (srcEl) srcEl.textContent = data.source || 'PGO-PI-IGA.accdb';
+
+    const kpiCourses = document.getElementById('fcKpiCourses');
+    if (kpiCourses) kpiCourses.textContent = data.stats?.total_courses || (data.courses?.length || 0);
+    const kpiUnits = document.getElementById('fcKpiUnits');
+    if (kpiUnits) kpiUnits.textContent = data.stats?.total_credit_units || '0.0';
+    const kpiPrereqs = document.getElementById('fcKpiPrereqs');
+    if (kpiPrereqs) kpiPrereqs.textContent = data.stats?.prerequisite_links || 0;
+    const kpiCoreqs = document.getElementById('fcKpiCoreqs');
+    if (kpiCoreqs) kpiCoreqs.textContent = data.stats?.corequisite_links || 0;
+
+    renderFlowchartColumns();
+    // Render connectors after DOM elements are settled
+    setTimeout(() => {
+      renderFlowchartConnectors();
+    }, 90);
+  } catch (err) {
+    console.error('Error loading curriculum flowchart:', err);
+    if (container) {
+      container.innerHTML = `<div style="padding:30px; color:#dc2626; font-size:0.95rem; text-align:center; width:100%;">
+        ❌ Failed to load curriculum flowchart: ${escapeHtml(err.message || String(err))}
+        <br><button class="btn btn-sm btn-outline-primary" style="margin-top:10px;" onclick="loadCurriculumFlowchart(flowchartActiveProgram)">Retry</button>
+      </div>`;
+    }
+  }
+}
+
+function renderFlowchartColumns() {
+  const container = document.getElementById('flowchartColumnsContainer');
+  if (!container || !flowchartData) return;
+
+  const terms = flowchartData.terms || [];
+  if (terms.length === 0) {
+    container.innerHTML = '<div style="padding:40px; color:#64748b; font-size:0.95rem; text-align:center; width:100%;">No curriculum courses found for this program.</div>';
+    return;
+  }
+
+  let html = '';
+  terms.forEach(term => {
+    const isFiltered = (flowchartYearFilter !== 'ALL' && term.year !== flowchartYearFilter);
+    const colClass = isFiltered ? 'flowchart-term-column filtered-out' : 'flowchart-term-column';
+
+    html += `
+      <div class="${colClass}" id="termCol-${term.key}" data-year="${escapeHtml(term.year)}" data-sem="${escapeHtml(term.semester)}">
+        <div class="flowchart-term-header">
+          <div class="term-title">${escapeHtml(term.label)}</div>
+          <div class="term-sub">${term.course_count} Courses &bull; ${term.total_units} Units</div>
+        </div>
+        <div class="flowchart-term-body">
+    `;
+
+    (term.courses || []).forEach(c => {
+      const codeClean = c.code.trim();
+      const codeAttr = escapeHtml(codeClean);
+      const titleAttr = escapeHtml(c.title || '');
+      const unitsLabel = escapeHtml(c.credit_units ? c.credit_units.split('–')[0].trim() : '3.0 U');
+      const hasPrereqs = Array.isArray(c.prerequisites) && c.prerequisites.length > 0;
+      const hasCoreqs = Array.isArray(c.corequisites) && c.corequisites.length > 0;
+
+      let badgesHtml = '';
+      if (hasPrereqs) {
+        badgesHtml += `<span class="fc-req-pill prereq" title="Prerequisites: ${escapeHtml(c.prerequisites.join(', '))}">Pre: ${c.prerequisites.length}</span>`;
+      }
+      if (hasCoreqs) {
+        badgesHtml += `<span class="fc-req-pill coreq" title="Co-requisites: ${escapeHtml(c.corequisites.join(', '))}">Co: ${c.corequisites.length}</span>`;
+      }
+
+      html += `
+        <div class="flowchart-node" id="node-${codeAttr}" data-code="${codeAttr}" onclick="openCourseDetailsModal('${codeAttr}')" onmouseenter="highlightCourseDependencies('${codeAttr}')" onmouseleave="clearHighlightCourseDependencies()">
+          <span class="fc-node-role-badge" id="roleBadge-${codeAttr}">ACTIVE</span>
+          <div class="flowchart-node-head">
+            <span class="flowchart-node-code">${codeAttr}</span>
+            <span class="flowchart-node-units">${unitsLabel}</span>
+          </div>
+          <div class="flowchart-node-title" title="${titleAttr}">${titleAttr}</div>
+          <div class="flowchart-node-foot">
+            <div class="flowchart-node-reqs">${badgesHtml}</div>
+            <button type="button" class="btn btn-link btn-sm" style="font-size:0.68rem; padding:0; text-decoration:none; color:#1e3a8a; font-weight:700;" onclick="event.stopPropagation(); openCourseDetailsModal('${codeAttr}')">Details &rarr;</button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderFlowchartConnectors() {
+  const svg = document.getElementById('flowchartSvg');
+  const edgesGroup = document.getElementById('flowchartSvgEdgesGroup');
+  const canvas = document.getElementById('flowchartCanvas');
+  if (!svg || !edgesGroup || !canvas || !flowchartData) return;
+
+  // Clear previous edge paths
+  edgesGroup.innerHTML = '';
+
+  const edges = flowchartData.edges || [];
+  const canvasRect = canvas.getBoundingClientRect();
+
+  // Resize SVG layer to match canvas dimensions
+  svg.setAttribute('width', canvas.scrollWidth || 2800);
+  svg.setAttribute('height', canvas.scrollHeight || 1200);
+
+  edges.forEach(edge => {
+    const srcEl = document.getElementById('node-' + edge.source);
+    const tgtEl = document.getElementById('node-' + edge.target);
+
+    // If either node is not rendered or in a filtered column, skip
+    if (!srcEl || !tgtEl) return;
+    if (srcEl.closest('.filtered-out') || tgtEl.closest('.filtered-out')) return;
+
+    const sRect = srcEl.getBoundingClientRect();
+    const tRect = tgtEl.getBoundingClientRect();
+
+    // Coordinates relative to canvas
+    const scale = flowchartZoomLevel || 1.0;
+    const x1 = (sRect.right - canvasRect.left) / scale;
+    const y1 = (sRect.top + sRect.height / 2 - canvasRect.top) / scale;
+
+    const x2 = (tRect.left - canvasRect.left) / scale;
+    const y2 = (tRect.top + tRect.height / 2 - canvasRect.top) / scale;
+
+    const isPrereq = (edge.type === 'prerequisite');
+    let pathD = '';
+
+    if (x2 > x1 + 10) {
+      // Smooth left-to-right cubic curve
+      const dx = Math.max(30, (x2 - x1) * 0.42);
+      pathD = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+    } else {
+      // Co-requisites or same-column connections
+      const offset = 35;
+      pathD = `M ${x1} ${y1} C ${x1 + offset} ${y1}, ${x2 - offset} ${y2}, ${x2} ${y2}`;
+    }
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', pathD);
+    path.setAttribute('class', `fc-edge-path edge-${edge.type}`);
+    path.setAttribute('data-id', edge.id);
+    path.setAttribute('data-source', edge.source);
+    path.setAttribute('data-target', edge.target);
+    path.setAttribute('data-type', edge.type);
+    path.setAttribute('fill', 'none');
+
+    // Default styles per mode
+    if (isPrereq) {
+      path.setAttribute('stroke', '#3b82f6');
+      path.setAttribute('stroke-width', '1.8');
+      path.setAttribute('marker-end', 'url(#arrow-prereq)');
+    } else {
+      path.setAttribute('stroke', '#8b5cf6');
+      path.setAttribute('stroke-width', '1.8');
+      path.setAttribute('stroke-dasharray', '5,4');
+      path.setAttribute('marker-end', 'url(#arrow-coreq)');
+    }
+
+    // Apply visibility per connector mode
+    applyEdgeModeVisibility(path, edge.type);
+
+    edgesGroup.appendChild(path);
+  });
+}
+
+function applyEdgeModeVisibility(pathEl, edgeType) {
+  if (flowchartConnectorMode === 'hidden') {
+    pathEl.style.opacity = '0';
+  } else if (flowchartConnectorMode === 'spotlight') {
+    pathEl.style.opacity = '0.12';
+    pathEl.style.strokeWidth = '1.4px';
+  } else if (flowchartConnectorMode === 'prereq_only') {
+    pathEl.style.opacity = (edgeType === 'prerequisite') ? '0.75' : '0';
+  } else if (flowchartConnectorMode === 'coreq_only') {
+    pathEl.style.opacity = (edgeType === 'corequisite') ? '0.85' : '0';
+  } else {
+    // 'all'
+    pathEl.style.opacity = '0.65';
+    pathEl.style.strokeWidth = '1.8px';
+  }
+}
+
+function setFlowchartConnectorMode(mode) {
+  flowchartConnectorMode = mode || 'spotlight';
+  document.querySelectorAll('.fc-edge-path').forEach(path => {
+    applyEdgeModeVisibility(path, path.getAttribute('data-type'));
+  });
+}
+
+function highlightCourseDependencies(courseCode) {
+  if (!flowchartData || !courseCode) return;
+  const targetUpper = courseCode.trim().toUpperCase();
+  const course = flowchartCoursesMap[targetUpper];
+  if (!course) return;
+
+  flowchartHoveredNode = targetUpper;
+
+  const prereqCodes = new Set((course.prerequisites || []).map(p => p.trim().toUpperCase()));
+  const coreqCodes = new Set((course.corequisites || []).map(co => co.trim().toUpperCase()));
+  const postreqCodes = new Set((course.postrequisites || []).map(po => po.trim().toUpperCase()));
+
+  // 1. Highlight / Dim Nodes
+  document.querySelectorAll('.flowchart-node').forEach(node => {
+    const code = node.getAttribute('data-code')?.trim().toUpperCase();
+    const roleBadge = node.querySelector('.fc-node-role-badge');
+
+    node.classList.remove('fc-node-active', 'fc-node-prereq', 'fc-node-coreq', 'fc-node-postreq', 'fc-node-dimmed');
+
+    if (code === targetUpper) {
+      node.classList.add('fc-node-active');
+      if (roleBadge) roleBadge.textContent = 'SELECTED';
+    } else if (prereqCodes.has(code)) {
+      node.classList.add('fc-node-prereq');
+      if (roleBadge) roleBadge.textContent = 'PREREQUISITE';
+    } else if (coreqCodes.has(code)) {
+      node.classList.add('fc-node-coreq');
+      if (roleBadge) roleBadge.textContent = 'CO-REQUISITE';
+    } else if (postreqCodes.has(code)) {
+      node.classList.add('fc-node-postreq');
+      if (roleBadge) roleBadge.textContent = 'REQUIRED BY';
+    } else {
+      node.classList.add('fc-node-dimmed');
+    }
+  });
+
+  // 2. Highlight / Dim SVG Edges
+  document.querySelectorAll('.fc-edge-path').forEach(path => {
+    const src = path.getAttribute('data-source')?.trim().toUpperCase();
+    const tgt = path.getAttribute('data-target')?.trim().toUpperCase();
+    const type = path.getAttribute('data-type');
+
+    path.classList.remove('dimmed', 'highlighted-pre', 'highlighted-coreq', 'highlighted-post');
+
+    // Incoming Prerequisite link (src -> active)
+    if (tgt === targetUpper && prereqCodes.has(src)) {
+      path.classList.add('highlighted-pre');
+      path.setAttribute('marker-end', 'url(#arrow-highlight-pre)');
+    }
+    // Co-requisite link (src <-> active)
+    else if ((tgt === targetUpper && coreqCodes.has(src)) || (src === targetUpper && coreqCodes.has(tgt))) {
+      path.classList.add('highlighted-coreq');
+      path.setAttribute('marker-end', 'url(#arrow-highlight-coreq)');
+    }
+    // Outgoing Post-requisite link (active -> tgt)
+    else if (src === targetUpper && postreqCodes.has(tgt)) {
+      path.classList.add('highlighted-post');
+      path.setAttribute('marker-end', 'url(#arrow-highlight-post)');
+    }
+    else {
+      path.classList.add('dimmed');
+    }
+  });
+}
+
+function clearHighlightCourseDependencies() {
+  flowchartHoveredNode = null;
+  if (flowchartSelectedNode) {
+    highlightCourseDependencies(flowchartSelectedNode);
+    return;
+  }
+
+  // Restore all nodes
+  document.querySelectorAll('.flowchart-node').forEach(node => {
+    node.classList.remove('fc-node-active', 'fc-node-prereq', 'fc-node-coreq', 'fc-node-postreq', 'fc-node-dimmed');
+  });
+
+  // Restore all SVG paths
+  document.querySelectorAll('.fc-edge-path').forEach(path => {
+    path.classList.remove('dimmed', 'highlighted-pre', 'highlighted-coreq', 'highlighted-post');
+    const type = path.getAttribute('data-type');
+    path.setAttribute('marker-end', type === 'prerequisite' ? 'url(#arrow-prereq)' : 'url(#arrow-coreq)');
+    applyEdgeModeVisibility(path, type);
+  });
+}
+
+function filterFlowchartByYear(yearLevel) {
+  flowchartYearFilter = yearLevel || 'ALL';
+  document.querySelectorAll('.flowchart-term-column').forEach(col => {
+    const colYear = col.getAttribute('data-year');
+    if (flowchartYearFilter === 'ALL' || colYear === flowchartYearFilter) {
+      col.classList.remove('filtered-out');
+    } else {
+      col.classList.add('filtered-out');
+    }
+  });
+  setTimeout(() => renderFlowchartConnectors(), 50);
+}
+
+function searchFlowchartCourses(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) {
+    document.querySelectorAll('.flowchart-node').forEach(n => n.classList.remove('fc-node-dimmed', 'fc-node-active'));
+    return;
+  }
+  document.querySelectorAll('.flowchart-node').forEach(node => {
+    const code = (node.getAttribute('data-code') || '').toLowerCase();
+    const title = (node.querySelector('.flowchart-node-title')?.textContent || '').toLowerCase();
+    if (code.includes(q) || title.includes(q)) {
+      node.classList.remove('fc-node-dimmed');
+      node.classList.add('fc-node-active');
+    } else {
+      node.classList.add('fc-node-dimmed');
+      node.classList.remove('fc-node-active');
+    }
+  });
+}
+
+function clearFlowchartSearch() {
+  const input = document.getElementById('flowchartSearchInput');
+  if (input) input.value = '';
+  document.querySelectorAll('.flowchart-node').forEach(n => n.classList.remove('fc-node-dimmed', 'fc-node-active'));
+}
+
+function zoomFlowchart(factor) {
+  flowchartZoomLevel = Math.max(0.6, Math.min(1.6, flowchartZoomLevel * factor));
+  const canvas = document.getElementById('flowchartCanvas');
+  if (canvas) {
+    canvas.style.transform = `scale(${flowchartZoomLevel})`;
+  }
+  setTimeout(() => renderFlowchartConnectors(), 80);
+}
+
+function resetFlowchartView() {
+  flowchartZoomLevel = 1.0;
+  flowchartYearFilter = 'ALL';
+  flowchartSelectedNode = null;
+  flowchartHoveredNode = null;
+
+  const yFilter = document.getElementById('curriculumYearFilter');
+  if (yFilter) yFilter.value = 'ALL';
+  filterFlowchartByYear('ALL');
+
+  const cMode = document.getElementById('curriculumConnectorMode');
+  if (cMode) cMode.value = 'spotlight';
+  setFlowchartConnectorMode('spotlight');
+
+  clearFlowchartSearch();
+  clearHighlightCourseDependencies();
+
+  const canvas = document.getElementById('flowchartCanvas');
+  if (canvas) canvas.style.transform = 'scale(1.0)';
+
+  const viewport = document.getElementById('flowchartViewport');
+  if (viewport) viewport.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+
+  setTimeout(() => renderFlowchartConnectors(), 60);
+}
+
+/* ==================== COURSE BASIC DESCRIPTION MODAL CONTROLLER ==================== */
+let modalActiveCourseCode = '';
+
+async function openCourseDetailsModal(courseCode, programCode) {
+  if (!courseCode) return;
+  const targetCode = courseCode.trim();
+  modalActiveCourseCode = targetCode;
+
+  const prog = programCode || flowchartActiveProgram || 'BSEE';
+  let course = flowchartCoursesMap[targetCode.toUpperCase()];
+
+  if (!course) {
+    try {
+      const res = await fetch(`/api/curriculum/course-details?course_code=${encodeURIComponent(targetCode)}&program=${encodeURIComponent(prog)}`);
+      if (res.ok) {
+        course = await res.json();
+      }
+    } catch (e) {
+      console.warn('Failed to fetch course details from API:', e);
+    }
+  }
+
+  if (!course) {
+    if (typeof showToast === 'function') showToast(`Course details for '${targetCode}' could not be loaded.`, 'error');
+    return;
+  }
+
+  // Populate Header
+  const codeBadge = document.getElementById('modalCourseCodeBadge');
+  if (codeBadge) codeBadge.textContent = course.code;
+  const titleText = document.getElementById('modalCourseTitleText');
+  if (titleText) titleText.textContent = course.title || 'Course Details';
+  const progSub = document.getElementById('modalCourseProgramSubtitle');
+  if (progSub) progSub.textContent = (prog === 'BSEE' || prog === 'EE') ? 'Bachelor of Science in Electrical Engineering (BSEE)' : prog;
+
+  // Metadata Pills
+  const pYearSem = document.getElementById('modalPillYearSem');
+  if (pYearSem) pYearSem.textContent = `${course.year_level || 'Year Level'} • ${course.semester || 'Semester'}`;
+  const pUnits = document.getElementById('modalPillUnits');
+  if (pUnits) pUnits.textContent = course.credit_units || '3.0 Units';
+  const pHours = document.getElementById('modalPillHours');
+  if (pHours) pHours.textContent = course.hours || 'Contact Hours';
+  const pLecLab = document.getElementById('modalPillLecLab');
+  if (pLecLab) pLecLab.textContent = course.lec_lab || 'Lecture';
+  const pSource = document.getElementById('modalPillSource');
+  if (pSource) pSource.textContent = (prog === 'BSEE' || prog === 'EE') ? 'Synced with PGO-PI-IGA.accdb' : 'academic_catalog.db';
+
+  // Course Description
+  const descEl = document.getElementById('modalCourseDescriptionText');
+  if (descEl) {
+    descEl.textContent = course.description || 'No formal description recorded in catalog.';
+  }
+
+  // Render clickable course chips helper
+  function renderCourseChips(containerId, list, chipClass) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!list || list.length === 0) {
+      container.innerHTML = '<span style="font-size:0.80rem; color:#94a3b8; font-style:italic;">None</span>';
+      return;
+    }
+    let html = '';
+    list.forEach(cCode => {
+      const cClean = cCode.trim();
+      const meta = flowchartCoursesMap[cClean.toUpperCase()];
+      const titleHint = meta ? ` - ${escapeHtml(meta.title)}` : '';
+      html += `
+        <button type="button" class="course-link-chip ${chipClass}" onclick="openCourseDetailsModal('${escapeHtml(cClean)}')" title="${escapeHtml(cClean)}${titleHint}">
+          <span>📌 ${escapeHtml(cClean)}</span>
+        </button>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  renderCourseChips('modalPrereqsChipList', course.prerequisites, 'chip-prereq');
+  renderCourseChips('modalCoreqsChipList', course.corequisites, 'chip-coreq');
+  renderCourseChips('modalPostreqsChipList', course.postrequisites, 'chip-postreq');
+
+  // PGO-PI (IED) Summary Section
+  const pgoPiSec = document.getElementById('modalPgoPiSection');
+  const pgoPiContainer = document.getElementById('modalPgoPiContainer');
+  const mappings = course.pgo_pi_mappings || [];
+
+  if (pgoPiContainer) {
+    if (mappings.length > 0) {
+      if (pgoPiSec) pgoPiSec.style.display = 'block';
+      let tableHtml = `
+        <table class="course-pi-table">
+          <thead>
+            <tr>
+              <th style="width:18%;">Program Outcome</th>
+              <th style="width:14%;">Indicator (PI)</th>
+              <th style="width:46%;">Competency Description</th>
+              <th style="width:10%; text-align:center;">IED</th>
+              <th style="width:12%;">IGAs</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      mappings.forEach(m => {
+        const iedClass = m.ied === 'I' ? 'ied-badge-i' : (m.ied === 'E' ? 'ied-badge-e' : 'ied-badge-d');
+        tableHtml += `
+          <tr>
+            <td><strong>${escapeHtml(m.pgo || '')}</strong><br><small style="color:#64748b;">${escapeHtml(m.pgo_keyword || '')}</small></td>
+            <td><code>${escapeHtml(m.pi || '')}</code></td>
+            <td>${escapeHtml(m.pi_description || '')}</td>
+            <td style="text-align:center;"><span class="${iedClass}">[${escapeHtml(m.ied || 'I')}]</span></td>
+            <td><small>${escapeHtml(m.igas || 'IGA1')}</small></td>
+          </tr>
+        `;
+      });
+      tableHtml += `</tbody></table>`;
+      pgoPiContainer.innerHTML = tableHtml;
+    } else if (course.pgo_pi) {
+      if (pgoPiSec) pgoPiSec.style.display = 'block';
+      pgoPiContainer.innerHTML = `<div style="font-size:0.85rem; color:#1e293b; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">${escapeHtml(course.pgo_pi)}</div>`;
+    } else {
+      if (pgoPiSec) pgoPiSec.style.display = 'none';
+    }
+  }
+
+  // Topics and SDGs
+  const topicsList = document.getElementById('modalTopicsList');
+  const sdgsBadge = document.getElementById('modalSdgsBadge');
+  const topics = course.topics || [];
+
+  if (sdgsBadge) {
+    sdgsBadge.innerHTML = `<span style="font-size:0.75rem; font-weight:700; color:#166534; background:#dcfce7; border:1px solid #bbf7d0; padding:3px 8px; border-radius:5px;">🌱 ${escapeHtml(course.sdgs || 'SDG 4: Quality Education')}</span>`;
+  }
+
+  if (topicsList) {
+    if (topics.length > 0) {
+      topicsList.innerHTML = topics.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+    } else {
+      topicsList.innerHTML = '<li style="color:#94a3b8; font-style:italic;">Standard topic syllabus outline compiled upon syllabus approval.</li>';
+    }
+  }
+
+  // Show Modal
+  const modal = document.getElementById('courseDescriptionModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCourseDetailsModal() {
+  const modal = document.getElementById('courseDescriptionModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function locateCourseFromModal() {
+  closeCourseDetailsModal();
+  if (!modalActiveCourseCode) return;
+
+  if (flowchartYearFilter !== 'ALL') {
+    const yFilter = document.getElementById('curriculumYearFilter');
+    if (yFilter) yFilter.value = 'ALL';
+    filterFlowchartByYear('ALL');
+  }
+
+  const node = document.getElementById('node-' + modalActiveCourseCode);
+  if (node) {
+    node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    flowchartSelectedNode = modalActiveCourseCode.toUpperCase();
+    highlightCourseDependencies(modalActiveCourseCode);
+  }
+}
+
+// Global click-outside listener and Esc key dismiss for Course Details Modal
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('courseDescriptionModal');
+    if (modal && modal.style.display !== 'none') {
+      closeCourseDetailsModal();
+    }
+  }
+});
+
+// Re-render connectors on window resize
+window.addEventListener('resize', () => {
+  if (document.getElementById('tab-curriculum')?.classList.contains('active')) {
+    renderFlowchartConnectors();
+  }
+});
 
 </script>
 

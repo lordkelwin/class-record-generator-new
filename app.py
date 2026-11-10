@@ -153,7 +153,7 @@ def index():
             req_tab = request.args.get("tab")
             if req_tab == "dashboard":
                 default_tab = "dashboard" if has_unlocked_dashboard else "syllabus"
-            elif req_tab in {"syllabus", "approvals"}:
+            elif req_tab in {"syllabus", "approvals", "curriculum"}:
                 default_tab = req_tab
             else:
                 default_tab = "dashboard" if has_unlocked_dashboard else "syllabus"
@@ -234,6 +234,27 @@ def api_db_search_courses():
     query = request.args.get("q", "").strip()
     prog = request.args.get("program")
     return jsonify(academic_db.search_courses(query, prog))
+
+
+@app.route("/api/curriculum/flowchart", methods=["GET"])
+def api_curriculum_flowchart():
+    import curriculum_flowchart
+    program = request.args.get("program", "BSEE")
+    data = curriculum_flowchart.get_curriculum_flowchart_data(program)
+    return jsonify(data)
+
+
+@app.route("/api/curriculum/course-details", methods=["GET"])
+def api_curriculum_course_details():
+    import curriculum_flowchart
+    code = request.args.get("course_code") or request.args.get("code")
+    program = request.args.get("program", "BSEE")
+    if not code:
+        return jsonify({"error": "course_code is required"}), 400
+    details = curriculum_flowchart.get_course_details(code, program)
+    if not details:
+        return jsonify({"error": f"Course '{code}' not found"}), 404
+    return jsonify(details)
 
 
 
