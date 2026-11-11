@@ -257,6 +257,54 @@ def api_curriculum_course_details():
     return jsonify(details)
 
 
+@app.route("/api/curriculum/pgo-pi-list", methods=["GET"])
+def api_curriculum_pgo_pi_list():
+    import accdb_curriculum
+    tree = accdb_curriculum.get_accdb_pgo_pi_tree()
+    return jsonify(tree)
+
+
+@app.route("/api/curriculum/advisor", methods=["GET", "POST"], strict_slashes=False)
+@app.route("/api/curriculum/advisor/", methods=["GET", "POST"], strict_slashes=False)
+@app.route("/curriculum/advisor", methods=["GET", "POST"], strict_slashes=False)
+@app.route("/curriculum/advisor/", methods=["GET", "POST"], strict_slashes=False)
+def api_curriculum_advisor():
+    import curriculum_advisor
+    if request.method == "GET":
+        query = str(request.args.get("query") or "").strip()
+        program = str(request.args.get("program") or "BSEE").strip() or "BSEE"
+        history = []
+    else:
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            payload = request.form.to_dict() if request.form else {}
+        query = str(payload.get("query") or request.args.get("query") or "").strip()
+        program = str(payload.get("program") or request.args.get("program") or "BSEE").strip() or "BSEE"
+        history = payload.get("history")
+        if not isinstance(history, list):
+            history = []
+
+    if not query:
+        return jsonify({
+            "success": True,
+            "intent": "empty_query",
+            "advice_markdown": "Please enter a question about your curriculum, prerequisites, or failed course scenario (e.g., *'What courses can I take next semester if I failed EE 211?'*).",
+            "highlight_action": {"blocked": [], "eligible": [], "retake": []}
+        }), 200
+
+    try:
+        res = curriculum_advisor.query_curriculum_guide_agent(query, program_code=program, history=history)
+    except Exception as exc:
+        app.logger.exception("Curriculum advisor endpoint failure: %s", exc)
+        res = {
+            "success": True,
+            "intent": "engine_fallback",
+            "advice_markdown": "⚠️ I couldn't analyze that question right now. Please mention a specific course code (e.g., *'What happens if I fail EE 211?'*).",
+            "highlight_action": {"blocked": [], "eligible": [], "retake": []}
+        }
+    return jsonify(res)
+
+
 
 
 
@@ -660,7 +708,7 @@ def api_export_syllabus_pdf():
 
 def check_syllabus_approved_for_step(doc, step_num=2):
     """
-    Validates sequential step-gating: Steps 2 through 6 remain strictly locked
+    Validates sequential step-gating: Steps 2 through 7 remain strictly locked
     until the Course Syllabus (Step 1) receives final approval from the Dean.
     Returns (jsonify(...), 403) error response if locked, or None if unlocked/allowed.
     """
@@ -678,11 +726,13 @@ def check_syllabus_approved_for_step(doc, step_num=2):
         if step_num == 3 and wf.get("status") == "for_student_acknowledgment":
             return None
         step_names = {
+            "tos": "Step 5: Table of Specifications (TOS)",
             2: "Step 2: Course Assessments Setup",
             3: "Step 3: Class Record & Gradebook",
             4: "Step 4: Receipt of Scores & Paper",
-            5: "Step 5: CLO Assessment Report (FM-USeP-MID-10)",
-            6: "Step 6: Continuous Quality Improvement (CQI) Plan",
+            5: "Step 5: Table of Specifications (TOS)",
+            6: "Step 6: CLO Assessment Report (FM-USeP-MID-10)",
+            7: "Step 7: Continuous Quality Improvement (CQI) Plan",
         }
         name = step_names.get(step_num, f"Step {step_num}")
         return jsonify({
@@ -710,7 +760,7 @@ def api_export_clo_report_pdf():
             doc = course_doc
 
     if doc:
-        err = check_syllabus_approved_for_step(doc, 5)
+        err = check_syllabus_approved_for_step(doc, 6)
         if err:
             return err
     pdf_bytes = generate_clo_report_pdf_bytes(bp, doc=doc)
@@ -747,7 +797,7 @@ def api_export_clo_report_excel():
             doc = course_doc
 
     if doc:
-        err = check_syllabus_approved_for_step(doc, 5)
+        err = check_syllabus_approved_for_step(doc, 6)
         if err:
             return err
     excel_bytes = generate_clo_evaluation_excel_bytes(bp, doc=doc)
@@ -1122,7 +1172,7 @@ def api_update_course(course_id):
     existing_doc = courses_store.find_course(course_id)
     if existing_doc:
         step_target = request.args.get("step") or data.get("step") or data.get("target_step")
-        if step_target and str(step_target) in ["2", "3", "4", "5", "6"]:
+        if step_target and str(step_target) in ["2", "3", "4", "5", "6", "7"]:
             err = check_syllabus_approved_for_step(existing_doc, int(step_target))
             if err:
                 return err
@@ -1875,12 +1925,350 @@ def api_export_evaluation_pdf(course_id):
 
 
 
+
+
+# ======================================================================
+# TABLE OF SPECIFICATIONS (TOS) & TOS TEST REVIEW APIS (FM-USeP-MID-03 & FM-USeP-MID-04)
+# ======================================================================
+
+@app.route("/api/courses/<course_id>/tos", methods=["GET"])
+def api_get_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    # Prerequisite Gating Lock: Syllabus must be approved by Dean
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    term = (request.args.get("term") or "midterm").lower()
+    if term not in ["midterm", "final"]:
+        term = "midterm"
+
+    import tos_workflow
+    tos = tos_workflow.get_course_tos(doc, term)
+    perms = tos_workflow.get_tos_permissions(doc, term, user)
+
+    return jsonify({
+        "tos": tos,
+        "permissions": perms,
+        "term": term,
+    })
+
+
+@app.route("/api/courses/<course_id>/tos/sync", methods=["POST"])
+@faculty_tools_required
+def api_sync_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    term = (data.get("term") or "midterm").lower()
+    if term not in ["midterm", "final"]:
+        term = "midterm"
+
+    import tos_workflow
+    try:
+        updated_tos = tos_workflow.sync_tos_from_syllabus(doc, term, user)
+        courses_store.save_course_doc(doc)
+        perms = tos_workflow.get_tos_permissions(doc, term, user)
+        return jsonify({
+            "success": True,
+            "message": f"Successfully synchronized {term.title()} TOS from approved syllabus.",
+            "tos": updated_tos,
+            "permissions": perms,
+            "term": term,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/tos", methods=["PUT"])
+@faculty_tools_required
+def api_save_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    term = (data.get("term") or "midterm").lower()
+    tos_payload = data.get("tos") or {}
+
+    import tos_workflow
+    try:
+        updated_tos = tos_workflow.save_tos_draft(doc, term, tos_payload, user)
+        courses_store.save_course_doc(doc)
+        perms = tos_workflow.get_tos_permissions(doc, term, user)
+        return jsonify({
+            "success": True,
+            "message": f"{term.title()} TOS draft saved successfully.",
+            "tos": updated_tos,
+            "permissions": perms,
+            "term": term,
+        })
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/tos/submit", methods=["POST"])
+@faculty_tools_required
+def api_submit_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    term = (data.get("term") or "midterm").lower()
+    signature_data = data.get("signature_data")
+
+    import tos_workflow
+    try:
+        updated_tos = tos_workflow.submit_tos_to_committee(doc, term, user, signature_data)
+        courses_store.save_course_doc(doc)
+        perms = tos_workflow.get_tos_permissions(doc, term, user)
+        return jsonify({
+            "success": True,
+            "message": f"{term.title()} TOS submitted to Review Committee with faculty digital signature.",
+            "tos": updated_tos,
+            "permissions": perms,
+            "term": term,
+        })
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/tos/review", methods=["POST"])
+def api_review_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    term = (data.get("term") or "midterm").lower()
+    comments = data.get("comments", "")
+    recommendation = data.get("recommendation", "approved_without_revision")
+    signature_data = data.get("signature_data")
+    decision = data.get("decision", "approved")
+    remarks = data.get("remarks", "")
+
+    import tos_workflow
+    try:
+        updated_tos = tos_workflow.review_tos_committee(
+            doc, term, user, comments=comments, recommendation=recommendation,
+            signature_data=signature_data, decision=decision, remarks=remarks
+        )
+        courses_store.save_course_doc(doc)
+        perms = tos_workflow.get_tos_permissions(doc, term, user)
+        return jsonify({
+            "success": True,
+            "message": f"TOS Review recorded ({decision}).",
+            "tos": updated_tos,
+            "permissions": perms,
+            "term": term,
+        })
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/tos/endorse", methods=["POST"])
+def api_endorse_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    term = (data.get("term") or "midterm").lower()
+    signature_data = data.get("signature_data")
+    decision = data.get("decision", "approved")
+    remarks = data.get("remarks", "")
+
+    import tos_workflow
+    try:
+        updated_tos = tos_workflow.endorse_tos_chair(
+            doc, term, user, signature_data=signature_data, decision=decision, remarks=remarks
+        )
+        courses_store.save_course_doc(doc)
+        perms = tos_workflow.get_tos_permissions(doc, term, user)
+        return jsonify({
+            "success": True,
+            "message": f"TOS Endorsement recorded ({decision}).",
+            "tos": updated_tos,
+            "permissions": perms,
+            "term": term,
+        })
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/tos/qa-review", methods=["POST"])
+def api_qa_review_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    term = (data.get("term") or "midterm").lower()
+    signature_data = data.get("signature_data")
+    decision = data.get("decision", "approved")
+    remarks = data.get("remarks", "")
+
+    import tos_workflow
+    try:
+        updated_tos = tos_workflow.signoff_tos_qa(
+            doc, term, user, signature_data=signature_data, decision=decision, remarks=remarks
+        )
+        courses_store.save_course_doc(doc)
+        perms = tos_workflow.get_tos_permissions(doc, term, user)
+        return jsonify({
+            "success": True,
+            "message": f"TOS QA Verification recorded ({decision}).",
+            "tos": updated_tos,
+            "permissions": perms,
+            "term": term,
+        })
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/tos/approve", methods=["POST"])
+def api_approve_course_tos(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    term = (data.get("term") or "midterm").lower()
+    signature_data = data.get("signature_data")
+    decision = data.get("decision", "approved")
+    remarks = data.get("remarks", "")
+
+    import tos_workflow
+    try:
+        updated_tos = tos_workflow.approve_tos_dean(
+            doc, term, user, signature_data=signature_data, decision=decision, remarks=remarks
+        )
+        courses_store.save_course_doc(doc)
+        perms = tos_workflow.get_tos_permissions(doc, term, user)
+        return jsonify({
+            "success": True,
+            "message": f"TOS officially approved and locked by College Dean.",
+            "tos": updated_tos,
+            "permissions": perms,
+            "term": term,
+        })
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/courses/<course_id>/tos/export-pdf", methods=["GET"])
+def api_export_tos_pdf(course_id):
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    term = (request.args.get("term") or "midterm").lower()
+    import tos_pdf_generator
+    try:
+        pdf_bytes = tos_pdf_generator.generate_tos_pdf_bytes(doc, term)
+        c_code = (doc.get("course_code") or "Course").replace(" ", "_")
+        filename = f"{c_code}_{term.title()}_FM-USeP-MID-03_Table_of_Specifications.pdf"
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            as_attachment=True,
+            download_name=filename,
+            mimetype="application/pdf",
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate TOS PDF: {str(e)}"}), 500
+
+
+@app.route("/api/courses/<course_id>/tos/export-review-pdf", methods=["GET"])
+def api_export_tos_review_pdf(course_id):
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "tos")
+    if err:
+        return err
+
+    term = (request.args.get("term") or "midterm").lower()
+    import tos_pdf_generator
+    try:
+        pdf_bytes = tos_pdf_generator.generate_tos_review_form_pdf_bytes(doc, term)
+        c_code = (doc.get("course_code") or "Course").replace(" ", "_")
+        filename = f"{c_code}_{term.title()}_FM-USeP-MID-04_TOS_Test_Review_Form.pdf"
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            as_attachment=True,
+            download_name=filename,
+            mimetype="application/pdf",
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate TOS Test Review Form PDF: {str(e)}"}), 500
+
+
+
 @app.route("/api/courses/<course_id>/export-clo-report-excel", methods=["GET"])
 def api_export_course_clo_report_excel(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
-    err = check_syllabus_approved_for_step(doc, 5)
+    err = check_syllabus_approved_for_step(doc, 6)
     if err:
         return err
     bp_dict = doc.get("blueprint") or {}
@@ -1901,7 +2289,7 @@ def api_export_course_clo_report_pdf(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
-    err = check_syllabus_approved_for_step(doc, 5)
+    err = check_syllabus_approved_for_step(doc, 6)
     if err:
         return err
     bp_dict = doc.get("blueprint") or {}

@@ -1054,6 +1054,8 @@ def get_course(username: str, course_id: str) -> Optional[Dict[str, Any]]:
             _sync_student_acknowledgments_from_store(db_doc)
             _sync_cqi_plan(db_doc)
             auto_generate_class_record(db_doc)
+            if isinstance(bp, dict) and "tos" in bp:
+                db_doc["tos"] = bp["tos"]
             return db_doc
     except Exception:
         pass
@@ -1597,6 +1599,8 @@ def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     authors = get_doc_authors(doc)
     doc["authors"] = authors
     bp = doc.get("blueprint") or {}
+    if "tos" in doc and isinstance(bp, dict):
+        bp["tos"] = doc["tos"]
     if "metadata" in bp:
         bp["metadata"]["authors"] = authors
     _sync_student_acknowledgments_from_store(doc)

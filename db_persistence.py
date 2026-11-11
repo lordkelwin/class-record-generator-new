@@ -974,6 +974,8 @@ def load_course_from_db(course_id: str) -> Optional[Dict[str, Any]]:
             "workflow": wf,
             "class_record_workflow": cr_wf
         }
+        if isinstance(bp, dict) and "tos" in bp:
+            doc["tos"] = bp["tos"]
         return doc
     finally:
         conn.close()

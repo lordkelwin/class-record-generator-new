@@ -113,11 +113,31 @@ def get_curriculum_flowchart_data(program_code: str = "BSEE") -> Dict[str, Any]:
         lec_lab = c.get("lec_lab") or ("Lecture and Laboratory" if (lec_units and lab_units) else ("Laboratory" if lab_units else "Lecture"))
         hours_str = c.get("hours") or c.get("contact_hours") or f"{lec_units + (lab_units * 3)} Hours/Week"
 
+        # Year Level Requirement / Standing based on curriculum data
+        yr_req = c.get("year_level_requirement") or c.get("standing_requirement") or c.get("standing")
+        if not yr_req:
+            pr_lower = (c.get("prereqs") or c.get("prerequisites") or "").lower()
+            if "fourth year standing" in pr_lower or "4th year standing" in pr_lower or "graduating" in pr_lower:
+                yr_req = "4th Year Standing"
+            elif "third year standing" in pr_lower or "3rd year standing" in pr_lower:
+                yr_req = "3rd Year Standing"
+            elif "second year standing" in pr_lower or "2nd year standing" in pr_lower:
+                yr_req = "2nd Year Standing"
+            elif yr_label == "Fourth Year":
+                yr_req = "4th Year Standing"
+            elif yr_label == "Third Year":
+                yr_req = "3rd Year Standing"
+            elif yr_label == "Second Year":
+                yr_req = "2nd Year Standing"
+            else:
+                yr_req = "1st Year Standing / Regular Standing"
+
         course_item = {
             "code": c_code,
             "title": c_title,
             "year_level": yr_label,
             "semester": sem_label,
+            "year_level_requirement": yr_req,
             "credit_units": credit_units,
             "lecture_units": lec_units,
             "lab_units": lab_units,
@@ -128,7 +148,7 @@ def get_curriculum_flowchart_data(program_code: str = "BSEE") -> Dict[str, Any]:
             "postrequisites": [],
             "description": (c.get("description") or "").strip(),
             "pgo_pi": c.get("pgo_pi") or "",
-            "pgo_pi_mappings": c.get("pgo_pi_mappings") or [],
+            "pgo_pi_mappings": c.get("pgo_pi_mappings") or (accdb_curriculum.parse_pgo_pi_string(c.get("pgo_pi") or "") if c.get("pgo_pi") else []),
             "topics": c.get("topics") or [],
             "sdgs": c.get("sdgs") or "SDG 4: Quality Education",
         }
@@ -235,6 +255,8 @@ def get_curriculum_flowchart_data(program_code: str = "BSEE") -> Dict[str, Any]:
             "courses": matching
         })
 
+    pgo_list = accdb_curriculum.get_accdb_pgo_pi_tree()
+
     return {
         "program_code": prog_clean,
         "program_title": program_title,
@@ -242,11 +264,13 @@ def get_curriculum_flowchart_data(program_code: str = "BSEE") -> Dict[str, Any]:
         "terms": terms,
         "courses": courses_list,
         "edges": edges,
+        "pgo_list": pgo_list,
         "stats": {
             "total_courses": len(courses_list),
             "total_credit_units": round(total_credit_units, 1),
             "prerequisite_links": len(seen_prereq_edges),
-            "corequisite_links": len(seen_coreq_edges)
+            "corequisite_links": len(seen_coreq_edges),
+            "pgo_count": len(pgo_list),
         }
     }
 

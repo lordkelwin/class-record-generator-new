@@ -512,7 +512,7 @@ def install_auth(app) -> None:
         if endpoint in PUBLIC_ENDPOINTS or path.startswith("/student/login") or path.startswith("/static") or path == "/api/roster-template.csv":
             return None
         user = current_user()
-        is_api = path.startswith("/api/")
+        is_api = path.startswith("/api/") or path.startswith("/curriculum/advisor")
         if not user:
             if is_api:
                 return jsonify({"error": "Authentication required. Please sign in again."}), 401
@@ -526,6 +526,8 @@ def install_auth(app) -> None:
                 path.startswith("/student")
                 or path.startswith("/api/student")
                 or path.startswith("/api/courses/")
+                or path.startswith("/api/curriculum")
+                or path.startswith("/curriculum")
             ):
                 return None
             return redirect(url_for("student_dashboard"))

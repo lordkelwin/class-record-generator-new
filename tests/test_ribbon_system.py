@@ -41,10 +41,12 @@ class TestRibbonSystem(unittest.TestCase):
         self.assertIn('id="ribbonBandSyllabus"', content)
         self.assertIn('id="ribbonBandApprovals"', content)
 
-        # 5 Corresponding Steps in Syllabus Creator Ribbon
+        # 7 Corresponding Steps in Syllabus Creator Ribbon
         self.assertIn('id="stepBtnTabSyllabus"', content)
         self.assertIn('id="stepBtnTabAssessments"', content)
         self.assertIn('id="stepBtnTabGradebook"', content)
+        self.assertIn('id="stepBtnTabReceiptAck"', content)
+        self.assertIn('id="stepBtnTabTos"', content)
         self.assertIn('id="stepBtnTabCloreport"', content)
         self.assertIn('id="stepBtnTabCqi"', content)
 
@@ -57,6 +59,52 @@ class TestRibbonSystem(unittest.TestCase):
         # Dynamic step actions container
         self.assertIn('id="ribbonContextTitle"', content)
         self.assertIn('id="ribbonStepActions"', content)
+
+    def test_stepper_order_and_sequential_numbering(self):
+        """Test stepper ordering and sequential 1 to 7 badge numbering."""
+        with open("templates/index.html", "r", encoding="utf-8") as f:
+            content = f.read()
+
+        m = re.search(r'<div class="ribbon-group-content ribbon-steps">(.*?)</div>\s*</div>', content, re.DOTALL)
+        self.assertIsNotNone(m, "ribbon-steps container must exist")
+        steps_html = m.group(1)
+
+        # Check order of button IDs
+        expected_ids = [
+            "stepBtnTabSyllabus",
+            "stepBtnTabAssessments",
+            "stepBtnTabGradebook",
+            "stepBtnTabReceiptAck",
+            "stepBtnTabTos",
+            "stepBtnTabCloreport",
+            "stepBtnTabCqi"
+        ]
+
+        pos = -1
+        for btn_id in expected_ids:
+            btn_pos = steps_html.find(f'id="{btn_id}"')
+            self.assertNotEqual(btn_pos, -1, f"Button {btn_id} not found in ribbon-steps")
+            self.assertGreater(btn_pos, pos, f"Button {btn_id} must appear after previous step")
+            pos = btn_pos
+
+        # Check sequential badge numbers
+        matches = re.findall(r'<button[^>]+id="([^"]+)"[^>]*>.*?<span class="step-num">([^<]+)</span>', steps_html, re.DOTALL)
+        expected_badges = [
+            ("stepBtnTabSyllabus", "1"),
+            ("stepBtnTabAssessments", "2"),
+            ("stepBtnTabGradebook", "3"),
+            ("stepBtnTabReceiptAck", "4"),
+            ("stepBtnTabTos", "5"),
+            ("stepBtnTabCloreport", "6"),
+            ("stepBtnTabCqi", "7")
+        ]
+        self.assertEqual(len(matches), 7)
+        for i, (btn_id, num) in enumerate(expected_badges):
+            self.assertEqual(matches[i][0], btn_id)
+            self.assertEqual(matches[i][1].strip(), num)
+
+        # Verify TOS routes to tab-tos
+        self.assertIn('onclick="switchSyllabusStep(\'tab-tos\')"', steps_html)
 
     def test_exports_in_relevant_parts(self):
         """Export buttons must be present in the relevant sections/cards."""
@@ -71,15 +119,16 @@ class TestRibbonSystem(unittest.TestCase):
 
         # Step 3 (tab-gradebook) has export class record button
         tab_gb_idx = content.find('id="tab-gradebook"')
-        tab_clo_idx = content.find('id="tab-cloreport"')
-        tab_gb_block = content[tab_gb_idx:tab_clo_idx]
+        tab_receipt_idx = content.find('id="tab-receipt-ack"')
+        tab_gb_block = content[tab_gb_idx:tab_receipt_idx]
         self.assertIn("exportExcelWorkbook()", tab_gb_block, "Step 3 must have Export Class Record button")
 
-        # Step 4 (tab-cloreport) has CLO export buttons
+        # Step 6 (tab-cloreport) has CLO export buttons
         tab_cqi_idx = content.find('id="tab-cqi"')
+        tab_clo_idx = content.find('id="tab-cloreport"')
         tab_clo_block = content[tab_clo_idx:tab_cqi_idx]
-        self.assertIn("exportCloReportPdf()", tab_clo_block, "Step 4 must have Export CLO Report PDF")
-        self.assertIn("exportCloReportExcel()", tab_clo_block, "Step 4 must have Export CLO Report Excel")
+        self.assertIn("exportCloReportPdf()", tab_clo_block, "Step 6 must have Export CLO Report PDF")
+        self.assertIn("exportCloReportExcel()", tab_clo_block, "Step 6 must have Export CLO Report Excel")
 
     def test_javascript_ribbon_functions(self):
         """JavaScript ribbon switching functions must be present."""
@@ -107,6 +156,7 @@ class TestRibbonSystem(unittest.TestCase):
         self.assertIn('id="tabBtnApprovals"', html)
         self.assertIn('id="stepBtnTabSyllabus"', html)
         self.assertIn('id="stepBtnTabGradebook"', html)
+        self.assertIn('id="stepBtnTabTos"', html)
 
 if __name__ == "__main__":
     unittest.main()
