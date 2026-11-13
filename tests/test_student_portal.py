@@ -80,11 +80,19 @@ class TestStudentPortal(unittest.TestCase):
 
     def setUp(self):
         self.client = app.test_client()
+        courses_store.save_course("admin", self.course_id, self.course_doc)
+        all_sts = student_store._load_students()
+        for sid in ["2024-99001", "2024-99002"]:
+            if sid in all_sts and "syllabus_acknowledgments" in all_sts[sid]:
+                all_sts[sid]["syllabus_acknowledgments"].pop(self.course_id, None)
+        student_store._save_students(all_sts)
         doc = courses_store.find_course(self.course_id)
         if doc:
             doc["student_acknowledgments"] = []
             if "workflow" in doc and isinstance(doc["workflow"], dict):
                 doc["workflow"]["student_acknowledgments"] = []
+            if "blueprint" in doc and isinstance(doc["blueprint"], dict):
+                doc["blueprint"]["student_acknowledgments"] = []
             courses_store.save_course_doc(doc)
 
     def test_student_discovery_from_roster(self):

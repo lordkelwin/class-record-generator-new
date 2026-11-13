@@ -22,9 +22,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T00:56:06",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
-    "last_login": "2026-11-09T16:19:01"
+    "last_login": "2026-11-12T19:02:21"
   },
   "faculty_tano": {
     "username": "faculty_tano",
@@ -45,9 +45,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T15:27:35",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
-    "last_login": "2026-11-09T15:20:40",
+    "last_login": "2026-11-13T10:51:50",
     "has_signature": true
   },
   "qahead_ce": {
@@ -69,7 +69,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T15:27:35",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": "2026-10-24T09:32:36",
     "has_signature": true
@@ -94,9 +94,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T15:27:35",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
-    "last_login": "2026-11-08T14:38:27",
+    "last_login": "2026-11-12T12:09:05",
     "has_signature": true
   },
   "faculty_ramos": {
@@ -114,13 +114,14 @@
     "department": null,
     "college": "COLLEGE OF ENGINEERING",
     "position_title": "Faculty Member",
-    "signature_data": null,
+    "signature_data": "data:image/png;base64,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",
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
-    "last_login": null
+    "last_login": "2026-11-12T09:34:40",
+    "has_signature": true
   },
   "faculty_mabunga": {
     "username": "faculty_mabunga",
@@ -141,7 +142,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -162,7 +163,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -185,7 +186,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -208,7 +209,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -232,7 +233,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -255,7 +256,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -276,7 +277,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -297,7 +298,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -320,7 +321,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -343,7 +344,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -366,7 +367,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -389,7 +390,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -412,7 +413,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -433,7 +434,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -456,7 +457,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -479,7 +480,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -503,7 +504,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -524,7 +525,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -547,7 +548,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -571,7 +572,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -594,7 +595,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -615,7 +616,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -638,7 +639,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -661,7 +662,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -684,7 +685,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -708,7 +709,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -732,7 +733,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -755,7 +756,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -778,7 +779,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -801,7 +802,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -824,7 +825,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -847,7 +848,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -870,7 +871,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -891,7 +892,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -912,7 +913,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -933,7 +934,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -957,7 +958,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -980,7 +981,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1003,7 +1004,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1024,7 +1025,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1047,7 +1048,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1070,7 +1071,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1093,7 +1094,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1116,7 +1117,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1139,7 +1140,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1162,7 +1163,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1185,7 +1186,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1208,7 +1209,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1231,7 +1232,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1254,7 +1255,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1275,7 +1276,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1296,7 +1297,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1317,7 +1318,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1338,7 +1339,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1359,7 +1360,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1380,7 +1381,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1401,7 +1402,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": "2026-10-24T20:10:28"
   },
@@ -1422,7 +1423,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1443,7 +1444,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1464,7 +1465,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1485,7 +1486,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1506,7 +1507,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1529,9 +1530,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
-    "last_login": "2026-11-08T14:28:07",
+    "last_login": "2026-11-12T09:33:57",
     "has_signature": true
   },
   "faculty_claro": {
@@ -1554,9 +1555,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
-    "last_login": "2026-11-08T14:29:47",
+    "last_login": "2026-11-12T09:35:03",
     "has_signature": true
   },
   "faculty_arenga": {
@@ -1578,7 +1579,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": "2026-10-30T08:08:49",
     "has_signature": true
@@ -1603,9 +1604,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
-    "last_login": "2026-11-08T14:30:40",
+    "last_login": "2026-11-12T09:36:34",
     "has_signature": true
   },
   "faculty_tongson": {
@@ -1629,7 +1630,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1653,7 +1654,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   },
@@ -1676,7 +1677,7 @@
     "can_access_faculty_tools": false,
     "is_staff": false,
     "created_at": "2026-10-24T11:36:22",
-    "updated_at": "2026-11-09T16:19:01.151761",
+    "updated_at": "2026-11-13T10:51:09.080645",
     "must_change_password": false,
     "last_login": null
   }

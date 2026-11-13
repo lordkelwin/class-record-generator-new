@@ -46,10 +46,11 @@ def remove_honorific(name: str) -> str:
 
 
 def get_connection() -> sqlite3.Connection:
-    """Returns a SQLite connection configured with sqlite3.Row factory."""
+    """Returns a SQLite connection configured with sqlite3.Row factory and WAL mode."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL;")
     return conn
 
 

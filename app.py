@@ -25,7 +25,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from flask import Flask, render_template, request, jsonify, send_file, Response, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, send_file, Response, session, redirect, url_for, flash, make_response
 
 
 
@@ -60,6 +60,13 @@ try:
     accdb_curriculum.sync_accdb_to_catalog_and_db()
 except Exception as _e:
     logging.getLogger(__name__).warning(f"Could not sync accdb curriculum on startup: {_e}")
+
+# Automatic sync & backfill of all enrolled students into Student Portal authentication store
+try:
+    import student_store
+    student_store.sync_all_course_students_to_store()
+except Exception as _e:
+    logging.getLogger(__name__).warning(f"Could not sync student store on startup: {_e}")
 
 
 
@@ -708,11 +715,15 @@ def api_export_syllabus_pdf():
 
 def check_syllabus_approved_for_step(doc, step_num=2):
     """
-    Validates sequential step-gating: Steps 2 through 7 remain strictly locked
+    Validates sequential step-gating: Steps 2 through 8 remain strictly locked
     until the Course Syllabus (Step 1) receives final approval from the Dean.
     Returns (jsonify(...), 403) error response if locked, or None if unlocked/allowed.
+    Student roster and enrollment actions are strictly exempt from sequential gating.
     """
     if not doc or not isinstance(doc, dict):
+        return None
+    # Student roster and enrollment management are 100% exempt from sequential gating at ALL stages
+    if str(step_num).lower() in ("roster", "student", "students", "enrollment", "acknowledgment", "acknowledgement"):
         return None
     user = current_user()
     if user and user.get("role") == "admin":
@@ -722,17 +733,16 @@ def check_syllabus_approved_for_step(doc, step_num=2):
         return None
     import syllabus_workflow
     if not syllabus_workflow.is_approved(doc):
-        # Step 3 roster additions allowed during FM-USeP-MID-07 student acknowledgment phase
-        if step_num == 3 and wf.get("status") == "for_student_acknowledgment":
-            return None
         step_names = {
-            "tos": "Step 5: Table of Specifications (TOS)",
+            "gantt": "Step 3: Course Delivery Gantt Chart",
+            "tos": "Step 6: Table of Specifications (TOS)",
             2: "Step 2: Course Assessments Setup",
-            3: "Step 3: Class Record & Gradebook",
-            4: "Step 4: Receipt of Scores & Paper",
-            5: "Step 5: Table of Specifications (TOS)",
-            6: "Step 6: CLO Assessment Report (FM-USeP-MID-10)",
-            7: "Step 7: Continuous Quality Improvement (CQI) Plan",
+            3: "Step 3: Course Delivery Gantt Chart",
+            4: "Step 4: Class Record & Gradebook",
+            5: "Step 5: Receipt of Scores & Paper",
+            6: "Step 6: Table of Specifications (TOS)",
+            7: "Step 7: CLO Assessment Report (FM-USeP-MID-10)",
+            8: "Step 8: Continuous Quality Improvement (CQI) Plan",
         }
         name = step_names.get(step_num, f"Step {step_num}")
         return jsonify({
@@ -1171,11 +1181,14 @@ def api_update_course(course_id):
 
     existing_doc = courses_store.find_course(course_id)
     if existing_doc:
-        step_target = request.args.get("step") or data.get("step") or data.get("target_step")
-        if step_target and str(step_target) in ["2", "3", "4", "5", "6", "7"]:
-            err = check_syllabus_approved_for_step(existing_doc, int(step_target))
-            if err:
-                return err
+        step_target = request.args.get("target_step") or request.args.get("step") or data.get("target_step")
+        if step_target and str(step_target) in ["2", "3", "4", "5", "6", "7", "8", "gantt", "tos"]:
+            is_roster_or_step1 = bool(data.get("is_roster_update") or data.get("is_student_update"))
+            if not is_roster_or_step1:
+                target_val = int(step_target) if str(step_target).isdigit() else str(step_target)
+                err = check_syllabus_approved_for_step(existing_doc, target_val)
+                if err:
+                    return err
 
     updated = courses_store.save_course(username, course_id, data)
 
@@ -1928,6 +1941,79 @@ def api_export_evaluation_pdf(course_id):
 
 
 # ======================================================================
+# COURSE DELIVERY GANTT CHART (IDEAL VS. ACTUAL TIMELINE) APIS (STEP 3)
+# ======================================================================
+
+@app.route("/api/courses/<course_id>/gantt", methods=["GET"])
+def api_get_course_gantt(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    # Prerequisite Gating Lock: Syllabus must be approved by Dean in Step 1
+    err = check_syllabus_approved_for_step(doc, "gantt")
+    if err:
+        return err
+
+    import gantt_workflow
+    gantt_data = gantt_workflow.get_course_gantt(doc)
+    return jsonify({
+        "success": True,
+        "gantt": gantt_data,
+    })
+
+
+@app.route("/api/courses/<course_id>/gantt", methods=["PUT"])
+@faculty_tools_required
+def api_save_course_gantt(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "gantt")
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    gantt_payload = data.get("gantt") or data
+
+    import gantt_workflow
+    updated_gantt = gantt_workflow.save_course_gantt(doc, gantt_payload)
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "message": "Course Delivery Gantt Chart updated successfully.",
+        "gantt": updated_gantt,
+    })
+
+
+@app.route("/api/courses/<course_id>/gantt/sync", methods=["POST"])
+@faculty_tools_required
+def api_sync_course_gantt(course_id):
+    user = current_user()
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    err = check_syllabus_approved_for_step(doc, "gantt")
+    if err:
+        return err
+
+    import gantt_workflow
+    synced_gantt = gantt_workflow.sync_gantt_from_syllabus(doc)
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "message": "Course Delivery Gantt Chart synchronized from syllabus learning plan.",
+        "gantt": synced_gantt,
+    })
+
+
+# ======================================================================
 # TABLE OF SPECIFICATIONS (TOS) & TOS TEST REVIEW APIS (FM-USeP-MID-03 & FM-USeP-MID-04)
 # ======================================================================
 
@@ -2385,6 +2471,28 @@ def api_course_student_acknowledgment(course_id):
         doc["student_acknowledgments"] = acks
         if "workflow" in doc and isinstance(doc["workflow"], dict):
             doc["workflow"]["student_acknowledgments"] = acks
+        if "blueprint" in doc and isinstance(doc["blueprint"], dict):
+            doc["blueprint"]["student_acknowledgments"] = acks
+
+        if student_id:
+            try:
+                import student_store
+                all_sts = student_store._load_students()
+                st_entry = all_sts.get(student_id)
+                if not st_entry:
+                    for k, v in all_sts.items():
+                        if student_store._normalize_id(k) == student_id or str(v.get("student_id") or "").lower() == student_id.lower():
+                            st_entry = v
+                            break
+                if st_entry:
+                    syl_acks = st_entry.setdefault("syllabus_acknowledgments", {})
+                    syl_acks[course_id] = new_ack
+                    if sig_data:
+                        st_entry["signature_data"] = sig_data
+                        st_entry["signature_updated_at"] = now_ts
+                    student_store._save_students(all_sts)
+            except Exception as _e:
+                logger.debug("Error updating student_store in student-acknowledgment POST: %s", _e)
 
 
         import syllabus_workflow
@@ -2407,13 +2515,17 @@ def api_course_student_acknowledgment(course_id):
             msg_suffix = " 80% threshold reached: Automatically endorsed to Dean for approval!"
 
         courses_store.save_course_doc(doc)
-        return jsonify({
+        resp = jsonify({
             "success": True,
             "message": f"Syllabus acknowledgment recorded for {student_name}! {msg_suffix}".strip(),
             "acknowledgments": acks,
             "total_acknowledged": len(acks),
             "workflow": doc.get("workflow"),
         })
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+        return resp
 
     # Combined roster view mapping each enrolled student to acknowledgment status, signature, and comments
     ack_by_id = {str(a.get("student_id") or "").strip().lower(): a for a in acks if a.get("student_id")}
@@ -2462,7 +2574,7 @@ def api_course_student_acknowledgment(course_id):
 
     total_ack = len([r for r in roster if r.get("is_acknowledged")])
 
-    return jsonify({
+    resp = jsonify({
         "course_id": course_id,
         "course_code": doc.get("course_code"),
         "course_title": doc.get("course_title"),
@@ -2475,6 +2587,10 @@ def api_course_student_acknowledgment(course_id):
         "total_students": len(roster),
         "total_acknowledged": total_ack,
     })
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 import student_store
@@ -2506,9 +2622,6 @@ def api_course_roster_import(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
-    err = check_syllabus_approved_for_step(doc, 3)
-    if err:
-        return err
 
     bp = doc.get("blueprint") or {}
     students = bp.get("students") or []
@@ -2625,6 +2738,7 @@ def api_course_roster_import(course_id):
             full_name=item.get("name") or "",
             email=item.get("email") or "",
             program_year=item.get("program_year") or "",
+            course_id=course_id,
         )
 
         if sid_norm in existing_by_id:
@@ -2668,9 +2782,6 @@ def api_course_roster_add_student(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
-    err = check_syllabus_approved_for_step(doc, 3)
-    if err:
-        return err
 
     data = request.get_json(silent=True) or {}
     sid = str(data.get("student_id") or "").strip()
@@ -2706,6 +2817,7 @@ def api_course_roster_add_student(course_id):
         email=email,
         program_year=prog,
         middle_name=middle,
+        course_id=course_id,
     )
 
     existing = None
@@ -2736,10 +2848,13 @@ def api_course_roster_add_student(course_id):
         msg = f"Student '{sid}' ({full}) successfully enrolled in this course."
 
     bp["students"] = students
+    removed = bp.get("removed_student_ids") or []
+    bp["removed_student_ids"] = [x for x in removed if str(x).strip().lower() != sid.lower()]
+    bp["class_record_initialized"] = True
     doc["blueprint"] = bp
     courses_store.save_course_doc(doc)
 
-    return jsonify({
+    resp = jsonify({
         "success": True,
         "message": msg,
         "total_students": len(students),
@@ -2753,6 +2868,10 @@ def api_course_roster_add_student(course_id):
             "email": email,
         }
     })
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/api/courses/<course_id>/roster/remove-student", methods=["POST"])
@@ -2765,9 +2884,6 @@ def api_course_roster_remove_student(course_id):
     doc = courses_store.find_course(course_id)
     if not doc:
         return jsonify({"error": f"Course '{course_id}' not found."}), 404
-    err = check_syllabus_approved_for_step(doc, 3)
-    if err:
-        return err
 
     data = request.get_json(silent=True) or {}
     sid = str(data.get("student_id") or "").strip()
@@ -2779,24 +2895,51 @@ def api_course_roster_remove_student(course_id):
     students = [s for s in students if str(s.get("student_id") or "").strip().lower() != sid.lower()]
 
     bp["students"] = students
+    bp["class_record_initialized"] = True
+    removed_list = bp.setdefault("removed_student_ids", [])
+    if sid.lower() not in [str(x).strip().lower() for x in removed_list]:
+        removed_list.append(sid)
     doc["blueprint"] = bp
+
+    # Also clean up student_acknowledgments in doc and workflow
+    if "student_acknowledgments" in doc and isinstance(doc["student_acknowledgments"], list):
+        doc["student_acknowledgments"] = [a for a in doc["student_acknowledgments"] if str(a.get("student_id") or "").strip().lower() != sid.lower()]
+    wf = doc.get("workflow") or {}
+    if isinstance(wf, dict) and "student_acknowledgments" in wf and isinstance(wf["student_acknowledgments"], list):
+        wf["student_acknowledgments"] = [a for a in wf["student_acknowledgments"] if str(a.get("student_id") or "").strip().lower() != sid.lower()]
+
+    # Disenroll from student_store & SQLite persistence
+    try:
+        import student_store
+        student_store.disenroll_student_from_course(sid, course_id)
+    except Exception as _e:
+        logger.debug("Error disenrolling student in api_course_roster_remove_student: %s", _e)
+
     courses_store.save_course_doc(doc)
 
-    return jsonify({
+    resp = jsonify({
         "success": True,
         "message": f"Student '{sid}' removed from course roster.",
         "total_students": len(students),
     })
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/student/login", methods=["GET", "POST"], endpoint="student_login")
 def student_login():
+    if request.args.get("signed_out"):
+        session.clear()
+        session.modified = True
+
     user = current_user()
-    if user and user.get("role") == "student":
+    if user and user.get("role") == "student" and not request.args.get("signed_out"):
         return redirect(url_for("student_dashboard"))
 
     error = None
-    success = None
+    success = "You have been signed out from the Student Portal." if request.args.get("signed_out") else None
     student_id = ""
     next_url = request.args.get("next") or ""
 
@@ -2814,7 +2957,6 @@ def student_login():
             session["role"] = "student"
             session["email"] = st.get("email") or f"{st['student_id']}@usep.edu.ph"
             session["has_signature"] = bool(st.get("signature_data"))
-            session["signature_data"] = st.get("signature_data", "")
             auth.get_csrf_token()
 
             if next_url and next_url.startswith("/student"):
@@ -2823,14 +2965,29 @@ def student_login():
         else:
             error = err_msg or "Authentication failed. Please verify your Student ID and Last Name."
 
-    return render_template("student_login.html", error=error, success=success, student_id=student_id, next_url=next_url)
+    resp = make_response(render_template("student_login.html", error=error, success=success, student_id=student_id, next_url=next_url))
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/student/logout", methods=["GET", "POST"], endpoint="student_logout")
 def student_logout():
     session.clear()
-    flash("You have been signed out from the Student Portal.", "info")
-    return redirect(url_for("student_login"))
+    session.modified = True
+    cookie_name = app.config.get("SESSION_COOKIE_NAME", "session")
+    resp = make_response(redirect(url_for("student_login", signed_out=1)))
+    resp.delete_cookie(cookie_name, path="/")
+    resp.delete_cookie(cookie_name, path="/student")
+    resp.delete_cookie("session", path="/")
+    resp.delete_cookie("session")
+    resp.set_cookie(cookie_name, "", expires=0, max_age=0, path="/")
+    resp.set_cookie("session", "", expires=0, max_age=0, path="/")
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/student", methods=["GET"])
@@ -2850,9 +3007,17 @@ def student_dashboard():
         preview_st = {"student_id": "Faculty Preview", "full_name": user.get("full_name"), "program_year": "Faculty Studio Oversight", "signature_data": user.get("signature_data", "")}
         return render_template("student_dashboard.html", student=preview_st, pending=[], acknowledged=[], in_review=[], stats={"total": 0, "pending_count": 0, "acknowledged_count": 0, "in_review_count": 0, "terms_count": 0}, groups=[], terms=[])
 
+    st_obj = dict(cdata.get("student") or {})
+    if user.get("full_name") and user.get("full_name") != sid:
+        st_obj["full_name"] = user.get("full_name")
+    elif not st_obj.get("full_name") or st_obj.get("full_name") == sid:
+        st_obj["full_name"] = user.get("student_name") or sid
+    st_obj.setdefault("student_id", sid)
+    st_obj.setdefault("signature_data", user.get("signature_data", ""))
+
     return render_template(
         "student_dashboard.html",
-        student=cdata["student"] or {"student_id": sid, "full_name": user.get("full_name") or sid, "signature_data": user.get("signature_data", "")},
+        student=st_obj,
         pending=cdata["pending"],
         acknowledged=cdata["acknowledged"],
         in_review=cdata["in_review"],
@@ -2904,14 +3069,17 @@ def api_student_sign_acknowledgment():
     if not ok:
         return jsonify({"error": msg}), 400
 
-    session["signature_data"] = sig_data
     session["has_signature"] = True
 
-    return jsonify({
+    resp = jsonify({
         "success": True,
         "message": msg,
         "acknowledgment": ack_rec
     })
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.route("/api/student/save-signature", methods=["POST"])
@@ -2928,7 +3096,6 @@ def api_student_save_signature():
     sid = user.get("student_id") or user.get("username")
     saved = student_store.save_student_signature(sid, sig_data)
     if saved:
-        session["signature_data"] = sig_data
         session["has_signature"] = True
         return jsonify({"success": True, "message": "Electronic signature saved successfully!"})
 

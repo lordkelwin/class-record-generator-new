@@ -13,9 +13,12 @@ import json
 import os
 import re
 import uuid
+import logging
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from models import CourseOutcome, CourseMetadata, SyllabusBlueprint, get_default_cqi_indicators
 from sample_syllabus import get_default_blueprint, get_blank_blueprint, build_learning_plan_from_topics
@@ -418,6 +421,26 @@ def _sync_student_acknowledgments_from_store(doc: Optional[Dict[str, Any]]) -> O
                             }
                         elif it_id in cur_acks and not cur_acks[it_id].get("signature_data"):
                             cur_acks[it_id]["signature_data"] = ack_val.get("signature_data") or matched_profile.get("signature_data", "")
+
+        # Also sync syllabus acknowledgment from student profiles into doc['student_acknowledgments']
+        acks = list(doc.get("student_acknowledgments") or (doc.get("workflow") or {}).get("student_acknowledgments") or (bp.get("student_acknowledgments") if isinstance(bp, dict) else None) or [])
+        acks_by_sid = {str(a.get("student_id") or "").strip().lower(): a for a in acks if a.get("student_id")}
+        acks_updated = False
+        for sid_key, prof in all_students.items():
+            s_syl_acks = prof.get("syllabus_acknowledgments") or {}
+            if cid in s_syl_acks:
+                st_ack = s_syl_acks[cid]
+                prof_sid = str(prof.get("student_id") or sid_key).strip().lower()
+                if prof_sid not in acks_by_sid:
+                    acks.append(st_ack)
+                    acks_by_sid[prof_sid] = st_ack
+                    acks_updated = True
+        if acks_updated or not doc.get("student_acknowledgments"):
+            doc["student_acknowledgments"] = acks
+            if "workflow" in doc and isinstance(doc["workflow"], dict):
+                doc["workflow"]["student_acknowledgments"] = acks
+            if "blueprint" in doc and isinstance(doc["blueprint"], dict):
+                doc["blueprint"]["student_acknowledgments"] = acks
     except Exception:
         pass
 
@@ -959,21 +982,30 @@ def auto_generate_class_record(doc: Dict[str, Any], force: bool = False) -> bool
         if sname:
             existing_by_name[sname] = st
 
-    # Fetch from SQLite app_students if students list is empty (initial setup)
-    if not students:
-        try:
-            import db_persistence
-            enrolled_db_students = db_persistence.get_enrolled_students_for_course(cid, sec, prog_code)
-            for en in enrolled_db_students:
-                students.append(en)
-                sid = str(en.get("student_id") or "").strip()
-                if sid:
-                    existing_by_id[_norm(sid)] = en
-                sname = str(en.get("name") or "").strip().lower()
-                if sname:
-                    existing_by_name[sname] = en
-        except Exception as _e:
-            logger.debug("Error querying enrolled students in auto_generate_class_record: %s", _e)
+    # Fetch from SQLite app_students if students list is empty (initial setup ONLY)
+    is_cr_init = bool(bp.get("class_record_initialized") or doc.get("class_record_initialized") or bp.get("students_initialized"))
+    removed_sids = set(str(x).strip().lower() for x in (bp.get("removed_student_ids") or []))
+
+    if not is_cr_init:
+        if not students:
+            try:
+                import db_persistence
+                enrolled_db_students = db_persistence.get_enrolled_students_for_course(cid, sec, prog_code, exclude_student_ids=removed_sids)
+                for en in enrolled_db_students:
+                    en_sid = str(en.get("student_id") or "").strip().lower()
+                    if en_sid and en_sid in removed_sids:
+                        continue
+                    students.append(en)
+                    sid = str(en.get("student_id") or "").strip()
+                    if sid:
+                        existing_by_id[_norm(sid)] = en
+                    sname = str(en.get("name") or "").strip().lower()
+                    if sname:
+                        existing_by_name[sname] = en
+            except Exception as _e:
+                logger.debug("Error querying enrolled students in auto_generate_class_record: %s", _e)
+        bp["class_record_initialized"] = True
+        doc["class_record_initialized"] = True
 
     # Also merge syllabus acknowledgments if any
     wf = doc.get("workflow") or {}
@@ -985,6 +1017,8 @@ def auto_generate_class_record(doc: Dict[str, Any], force: bool = False) -> bool
         ack_name = str(ack.get("student_name") or ack.get("name") or "").strip()
         if not ack_sid and not ack_name:
             continue
+        if ack_sid.lower() in removed_sids:
+            continue
 
         st_match = None
         if ack_sid and _norm(ack_sid) in existing_by_id:
@@ -992,7 +1026,8 @@ def auto_generate_class_record(doc: Dict[str, Any], force: bool = False) -> bool
         elif ack_name and ack_name.lower() in existing_by_name:
             st_match = existing_by_name[ack_name.lower()]
 
-        if not st_match:
+        # Only create and append a new student from acknowledgment if class record has not been initialized yet
+        if not st_match and not is_cr_init:
             if "," in ack_name:
                 parts = [p.strip() for p in ack_name.split(",", 1)]
                 last_name = parts[0]
@@ -1140,7 +1175,27 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
 
     # Merge and preserve student assessment score & paper acknowledgments
     # so that faculty saves or auto-saves never wipe out student acknowledgments!
+    # Detect explicitly removed students to prevent ghost data resurrection
     existing_students = (existing.get("blueprint") or {}).get("students") or []
+    current_students = bp_dict.get("students")
+    if current_students is not None:
+        bp_dict["class_record_initialized"] = True
+        new_sids = set(str(s.get("student_id") or "").strip().lower() for s in current_students if s.get("student_id"))
+        removed_sids_list = bp_dict.setdefault("removed_student_ids", [])
+        # Never mark an enrolled student as removed
+        bp_dict["removed_student_ids"] = [x for x in removed_sids_list if str(x).strip().lower() not in new_sids]
+        removed_sids_list = bp_dict["removed_student_ids"]
+        for st in existing_students:
+            s_id = str(st.get("student_id") or "").strip().lower()
+            if s_id and s_id not in new_sids:
+                if s_id not in removed_sids_list:
+                    removed_sids_list.append(s_id)
+                try:
+                    import student_store
+                    student_store.disenroll_student_from_course(s_id, safe_id)
+                except Exception:
+                    pass
+
     existing_ack_map = {}
     for st in existing_students:
         s_id = str(st.get("student_id") or "").strip().lower()
@@ -1210,8 +1265,14 @@ def save_course(username: str, course_id: str, payload: Dict[str, Any]) -> Dict[
         bp_dict["metadata"]["authors"] = cleaned_authors
 
     acks = payload.get("student_acknowledgments") or existing.get("student_acknowledgments") or (wf.get("student_acknowledgments") if isinstance(wf, dict) else None) or []
+    removed_sids_set = set(str(x).strip().lower() for x in bp_dict.get("removed_student_ids", []))
+    if removed_sids_set:
+        acks = [a for a in acks if str(a.get("student_id") or "").strip().lower() not in removed_sids_set]
     if isinstance(wf, dict) and "student_acknowledgments" not in wf and acks:
         wf["student_acknowledgments"] = acks
+    elif isinstance(wf, dict) and "student_acknowledgments" in wf and removed_sids_set:
+        wf["student_acknowledgments"] = [a for a in wf["student_acknowledgments"] if str(a.get("student_id") or "").strip().lower() not in removed_sids_set]
+    bp_dict["student_acknowledgments"] = acks
 
     doc = {
         "id": safe_id,
@@ -1589,6 +1650,24 @@ def find_course(course_id: str) -> Optional[Dict[str, Any]]:
 
 def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     """Saves an entire course document back to its owner's storage, syncing authors."""
+    bp = doc.get("blueprint") or {}
+    removed_sids_set = set(str(x).strip().lower() for x in bp.get("removed_student_ids", []))
+    if removed_sids_set:
+        if "student_acknowledgments" in doc and isinstance(doc["student_acknowledgments"], list):
+            doc["student_acknowledgments"] = [a for a in doc["student_acknowledgments"] if str(a.get("student_id") or "").strip().lower() not in removed_sids_set]
+        wf = doc.get("workflow") or {}
+        if isinstance(wf, dict) and "student_acknowledgments" in wf and isinstance(wf["student_acknowledgments"], list):
+            wf["student_acknowledgments"] = [a for a in wf["student_acknowledgments"] if str(a.get("student_id") or "").strip().lower() not in removed_sids_set]
+
+    acks = doc.get("student_acknowledgments") or (doc.get("workflow") or {}).get("student_acknowledgments") or (bp.get("student_acknowledgments") if isinstance(bp, dict) else None) or []
+    if acks:
+        doc["student_acknowledgments"] = acks
+        wf = doc.setdefault("workflow", {})
+        if isinstance(wf, dict):
+            wf["student_acknowledgments"] = acks
+        if isinstance(bp, dict):
+            bp["student_acknowledgments"] = acks
+
     _sync_cqi_plan(doc)
     auto_generate_class_record(doc)
     owner = doc.get("owner") or "default"
@@ -1604,6 +1683,11 @@ def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
     if "metadata" in bp:
         bp["metadata"]["authors"] = authors
     _sync_student_acknowledgments_from_store(doc)
+    try:
+        import student_store
+        student_store.sync_course_roster_students(doc)
+    except Exception as _e:
+        logger.debug("Error syncing course roster students to store: %s", _e)
     bp_doc = doc.get("blueprint")
     if isinstance(bp_doc, dict):
         sync_blueprint_assessments_from_activities(bp_doc)

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: usep_obe_app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5000
+      - DEBUG=false
+      - DATA_DIR=/app/data
+      - SECRET_KEY=${SECRET_KEY:-}
+    volumes:
+      # Persistent storage volumes: guarantees user accounts, courses,
+      # student grades, TOS signatures, and timelines persist across redeployments
+      - usep_data:/app/data
+      - usep_signatures:/app/static/signatures
+
+volumes:
+  usep_data:
+    driver: local
+  usep_signatures:
+    driver: local

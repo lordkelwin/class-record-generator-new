@@ -18,7 +18,7 @@ from functools import wraps
 
 from flask import (
     Blueprint, abort, flash, jsonify, redirect, render_template, request,
-    session, url_for,
+    session, url_for, current_app, make_response,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -406,9 +406,18 @@ def current_user():
     if not username:
         return None
     if session.get("role") == "student":
+        sid = session.get("student_id") or username
+        sig_data = ""
+        try:
+            import student_store
+            prof = student_store.get_student_profile(sid)
+            if prof:
+                sig_data = prof.get("signature_data", "")
+        except Exception:
+            pass
         return {
             "username": username,
-            "student_id": session.get("student_id") or username,
+            "student_id": sid,
             "full_name": session.get("student_name") or username,
             "role": "student",
             "workflow_roles": ["student"],
@@ -416,8 +425,8 @@ def current_user():
             "email": session.get("email") or f"{username}@usep.edu.ph",
             "college": session.get("college", "COLLEGE OF ENGINEERING"),
             "program_codes": session.get("program_codes", ["*"]),
-            "has_signature": bool(session.get("has_signature")),
-            "signature_data": session.get("signature_data", ""),
+            "has_signature": bool(sig_data or session.get("has_signature")),
+            "signature_data": sig_data,
             "must_change_password": False,
             "is_staff": False,
             "is_pure_staff": False,
@@ -582,13 +591,18 @@ def _safe_next(target: str) -> str:
 # --------------------------------------------------------------------------
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    if request.args.get("signed_out"):
+        session.clear()
+        session.modified = True
+
     curr = current_user()
-    if curr:
+    if curr and not request.args.get("signed_out"):
         if curr.get("role") == "student":
             return redirect(url_for("student_dashboard"))
         return redirect(url_for("index"))
 
     error = None
+    info = "You have been signed out." if request.args.get("signed_out") else None
     username = ""
     if request.method == "POST":
         _check_csrf()
@@ -631,21 +645,35 @@ def login():
                 session["role"] = "student"
                 session["email"] = st_obj.get("email") or f"{st_obj['student_id']}@usep.edu.ph"
                 session["has_signature"] = bool(st_obj.get("signature_data"))
-                session["signature_data"] = st_obj.get("signature_data", "")
                 get_csrf_token()
                 return redirect(url_for("student_dashboard"))
 
             _register_failure(key)
             error = "Invalid username or password."
 
-    return render_template("login.html", error=error, username=username)
+    resp = make_response(render_template("login.html", error=error, info=info, username=username))
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @auth_bp.route("/logout", methods=["GET", "POST"])
 def logout():
     session.clear()
-    flash("You have been signed out.", "info")
-    return redirect(url_for("auth.login"))
+    session.modified = True
+    cookie_name = current_app.config.get("SESSION_COOKIE_NAME", "session")
+    resp = make_response(redirect(url_for("auth.login", signed_out=1)))
+    resp.delete_cookie(cookie_name, path="/")
+    resp.delete_cookie(cookie_name, path="/student")
+    resp.delete_cookie("session", path="/")
+    resp.delete_cookie("session")
+    resp.set_cookie(cookie_name, "", expires=0, max_age=0, path="/")
+    resp.set_cookie("session", "", expires=0, max_age=0, path="/")
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @auth_bp.route("/account/password", methods=["GET", "POST"])

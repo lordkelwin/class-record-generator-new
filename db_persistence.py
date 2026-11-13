@@ -210,6 +210,16 @@ def init_db() -> None:
         cur.execute("CREATE INDEX IF NOT EXISTS idx_scg_cid ON student_course_grades(course_id);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_srs_cid ON syllabus_reviews_and_signatures(course_id);")
 
+        # Dynamic schema migrations
+        try:
+            cur.execute("ALTER TABLE course_records ADD COLUMN student_acknowledgments_json TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cur.execute("ALTER TABLE app_students ADD COLUMN syllabus_acknowledgments TEXT;")
+        except sqlite3.OperationalError:
+            pass
+
         conn.commit()
     finally:
         conn.close()
@@ -433,6 +443,7 @@ def load_students_from_db() -> Dict[str, Dict[str, Any]]:
                 "signature_updated_at": r["signature_updated_at"],
                 "enrolled_courses": json.loads(r["enrolled_courses"] or "[]"),
                 "assessment_acknowledgments": json.loads(r["assessment_acknowledgments"] or "{}"),
+                "syllabus_acknowledgments": json.loads(r["syllabus_acknowledgments"] or "{}") if ("syllabus_acknowledgments" in r.keys() and r["syllabus_acknowledgments"]) else {},
                 "created_at": r["created_at"],
                 "updated_at": r["updated_at"],
             }
@@ -452,6 +463,46 @@ def delete_student_from_db(student_id: str) -> bool:
         deleted = cur.rowcount > 0
         conn.commit()
         return deleted
+    finally:
+        conn.close()
+
+
+def disenroll_student_from_course_db(student_id: str, course_id: str) -> bool:
+    """
+    Disenrolls a student from a course in SQLite:
+    1. Deletes student's row from student_course_grades for this course_id.
+    2. Updates app_students to remove course_id from enrolled_courses.
+    3. Explicitly commits the SQLite transaction.
+    """
+    init_db()
+    sid = str(student_id or "").strip()
+    cid = str(course_id or "").strip()
+    if not sid or not cid:
+        return False
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        # 1. Delete from student_course_grades
+        cur.execute("""
+            DELETE FROM student_course_grades 
+            WHERE course_id = ? AND (student_id = ? OR student_id = ?)
+        """, (cid, sid, sid.lower()))
+
+        # 2. Update enrolled_courses in app_students
+        cur.execute("SELECT student_id, enrolled_courses FROM app_students WHERE student_id = ? OR student_id = ?", (sid, sid.lower()))
+        rows = cur.fetchall()
+        for r in rows:
+            r_sid = r["student_id"]
+            try:
+                enrolled = json.loads(r["enrolled_courses"] or "[]")
+            except Exception:
+                enrolled = []
+            new_enrolled = [c for c in enrolled if str(c).strip().lower() != cid.lower()]
+            cur.execute("UPDATE app_students SET enrolled_courses = ? WHERE student_id = ?", (json.dumps(new_enrolled), r_sid))
+
+        conn.commit()
+        return True
     finally:
         conn.close()
 
@@ -477,8 +528,8 @@ def save_students_dict_to_db(students_dict: Dict[str, Dict[str, Any]], purge_mis
                     student_id, username, password_hash, full_name,
                     first_name, last_name, email, program_year,
                     signature_data, signature_updated_at, enrolled_courses,
-                    assessment_acknowledgments, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    assessment_acknowledgments, syllabus_acknowledgments, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(student_id) DO UPDATE SET
                     username = excluded.username,
                     password_hash = excluded.password_hash,
@@ -491,6 +542,7 @@ def save_students_dict_to_db(students_dict: Dict[str, Dict[str, Any]], purge_mis
                     signature_updated_at = excluded.signature_updated_at,
                     enrolled_courses = excluded.enrolled_courses,
                     assessment_acknowledgments = excluded.assessment_acknowledgments,
+                    syllabus_acknowledgments = excluded.syllabus_acknowledgments,
                     updated_at = excluded.updated_at
             """, (
                 student_id,
@@ -505,6 +557,7 @@ def save_students_dict_to_db(students_dict: Dict[str, Dict[str, Any]], purge_mis
                 s.get("signature_updated_at"),
                 json.dumps(s.get("enrolled_courses") or []),
                 json.dumps(s.get("assessment_acknowledgments") or {}),
+                json.dumps(s.get("syllabus_acknowledgments") or {}),
                 s.get("created_at") or now_iso,
                 now_iso
             ))
@@ -554,6 +607,13 @@ def save_course_to_db(doc: Dict[str, Any]) -> None:
     now_iso = datetime.now().isoformat()
     created_at = doc.get("created_at") or now_iso
 
+    # Ensure student_acknowledgments is preserved in workflow, blueprint, and doc
+    acks = doc.get("student_acknowledgments") or wf.get("student_acknowledgments") or bp.get("student_acknowledgments") or []
+    if acks:
+        doc["student_acknowledgments"] = acks
+        wf["student_acknowledgments"] = acks
+        bp["student_acknowledgments"] = acks
+
     conn = get_db_connection()
     try:
         cur = conn.cursor()
@@ -587,6 +647,11 @@ def save_course_to_db(doc: Dict[str, Any]) -> None:
             json.dumps(bp), json.dumps(wf), json.dumps(cr_wf),
             created_at, now_iso
         ))
+
+        try:
+            cur.execute("UPDATE course_records SET student_acknowledgments_json = ? WHERE course_id = ?", (json.dumps(acks), cid))
+        except Exception:
+            pass
 
         # 2. Sync assessment_categories and assessment_items
         cur.execute("DELETE FROM assessment_items WHERE course_id = ?", (cid,))
@@ -712,7 +777,7 @@ def save_course_to_db(doc: Dict[str, Any]) -> None:
         conn.close()
 
 
-def get_enrolled_students_for_course(course_id: str, section: str = "", program_code: str = "") -> List[Dict[str, Any]]:
+def get_enrolled_students_for_course(course_id: str, section: str = "", program_code: str = "", exclude_student_ids: Optional[Any] = None) -> List[Dict[str, Any]]:
     """
     Queries SQLite database (app_students joined with student_course_grades)
     to fetch all students enrolled in or associated with this course and section.
@@ -790,6 +855,10 @@ def get_enrolled_students_for_course(course_id: str, section: str = "", program_
             sid = str(r["student_id"] or "").strip()
             if not sid:
                 continue
+
+            if exclude_student_ids and str(sid).strip().lower() in [str(x).strip().lower() for x in exclude_student_ids]:
+                continue
+
             norm_id = _norm(sid)
             scores = {}
             if r["scores_json"]:
@@ -843,6 +912,8 @@ def get_enrolled_students_for_course(course_id: str, section: str = "", program_
             sid = str(gr["student_id"] or "").strip()
             if not sid:
                 continue
+            if exclude_student_ids and str(sid).strip().lower() in [str(x).strip().lower() for x in exclude_student_ids]:
+                continue
             norm_id = _norm(sid)
             if norm_id in enrolled_students:
                 if gr["scores_json"]:
@@ -868,11 +939,13 @@ def get_enrolled_students_for_course(course_id: str, section: str = "", program_
             sid = str(s_prof.get("student_id") or s_norm).strip()
             if not sid:
                 continue
+            if exclude_student_ids and str(sid).strip().lower() in [str(x).strip().lower() for x in exclude_student_ids]:
+                continue
             norm_id = _norm(sid)
             c_enrolled = s_prof.get("enrolled_courses") or []
             py = str(s_prof.get("program_year") or "").strip()
             matches_course = (cid in c_enrolled)
-            if not matches_course and sec_variants:
+            if not matches_course and sec_variants and (c_enrolled is None or len(c_enrolled) == 0):
                 matches_course = any(v.lower() == py.lower() or v.lower() in py.lower() for v in sec_variants)
 
             if matches_course:
@@ -951,12 +1024,24 @@ def load_course_from_db(course_id: str) -> Optional[Dict[str, Any]]:
                     })
                 bp["categories"] = cats
 
-        # 2. Populate enrolled students from database if blueprint has no students yet
+        # 2. Populate enrolled students from database if blueprint has no students yet and not yet initialized
         existing_sts = bp.setdefault("students", [])
-        if not existing_sts:
+        is_initialized = bool(bp.get("class_record_initialized") or bp.get("students_initialized"))
+        if not existing_sts and not is_initialized:
             enrolled = get_enrolled_students_for_course(row["course_id"], row["section"], row["program_code"])
             if enrolled:
                 bp["students"] = enrolled
+                bp["class_record_initialized"] = True
+
+        # 3. Restore student_acknowledgments
+        acks = []
+        try:
+            if "student_acknowledgments_json" in row.keys() and row["student_acknowledgments_json"]:
+                acks = json.loads(row["student_acknowledgments_json"])
+        except Exception:
+            pass
+        if not acks:
+            acks = wf.get("student_acknowledgments") or bp.get("student_acknowledgments") or []
 
         doc = {
             "id": row["course_id"],
@@ -972,7 +1057,8 @@ def load_course_from_db(course_id: str) -> Optional[Dict[str, Any]]:
             "updated_at": row["updated_at"],
             "blueprint": bp,
             "workflow": wf,
-            "class_record_workflow": cr_wf
+            "class_record_workflow": cr_wf,
+            "student_acknowledgments": acks
         }
         if isinstance(bp, dict) and "tos" in bp:
             doc["tos"] = bp["tos"]

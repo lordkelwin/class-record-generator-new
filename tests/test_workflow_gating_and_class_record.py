@@ -175,25 +175,21 @@ class TestWorkflowGatingAndClassRecord(unittest.TestCase):
         self.assertEqual(res_step2.status_code, 403)
         self.assertIn("Sequential Gating Locked", res_step2.get_json()["error"])
 
-        # Step 3: Roster Add Student
+        # Student roster and enrollment management are 100% exempt from sequential gating at ALL stages
         res_add_st = self.client.post(f"/api/courses/{TEST_COURSE_ID}/roster/add-student", json={
             "student_id": f"{TEST_PREFIX}S01",
             "last_name": "Reyes",
             "first_name": "Carlo",
         })
-        self.assertEqual(res_add_st.status_code, 403)
+        self.assertEqual(res_add_st.status_code, 200)
 
-        # Step 3: Roster Remove Student
+        # Roster Remove Student is also exempt
         res_rem_st = self.client.post(f"/api/courses/{TEST_COURSE_ID}/roster/remove-student", json={
             "student_id": f"{TEST_PREFIX}S01",
         })
-        self.assertEqual(res_rem_st.status_code, 403)
+        self.assertEqual(res_rem_st.status_code, 200)
 
-        # Step 3: Roster Import
-        res_imp = self.client.post(f"/api/courses/{TEST_COURSE_ID}/roster/import")
-        self.assertEqual(res_imp.status_code, 403)
-
-        # Step 3: Class Record Submit
+        # Step 4: Class Record Submit (strictly gated)
         res_cr_sub = self.client.post(f"/api/courses/{TEST_COURSE_ID}/class-record/submit", json={"notes": "test"})
         self.assertEqual(res_cr_sub.status_code, 403)
 

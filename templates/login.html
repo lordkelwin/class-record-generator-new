@@ -6,6 +6,8 @@
   <p class="auth-sub">Syllabus Creator &amp; Class Record Generator<br />Sign in with your faculty account</p>
 
   {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+  {% if info %}<div class="alert alert-info">{{ info }}</div>{% endif %}
+  {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
 
   <form method="post" autocomplete="on">
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />

@@ -905,6 +905,7 @@ def public_view(doc: Dict[str, Any]) -> Dict[str, Any]:
         "history": wf.get("history", [])[-30:],
         "revision_reason": wf.get("revision_reason", ""),
         "student_ack_stats": get_student_acknowledgment_stats(doc),
+        "student_acknowledgments": doc.get("student_acknowledgments") or wf.get("student_acknowledgments") or (doc.get("blueprint") or {}).get("student_acknowledgments") or [],
         "revision_request": wf.get("revision_request"),
         "is_revision_pending": wf.get("status") in REVISION_STATUSES,
         "steps": [{"key": s["key"], "label": s["label"], "action_label": s["action_label"], "role": s["role"]} for s in WORKFLOW_STEPS],

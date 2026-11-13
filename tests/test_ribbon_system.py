@@ -41,9 +41,10 @@ class TestRibbonSystem(unittest.TestCase):
         self.assertIn('id="ribbonBandSyllabus"', content)
         self.assertIn('id="ribbonBandApprovals"', content)
 
-        # 7 Corresponding Steps in Syllabus Creator Ribbon
+        # 8 Corresponding Steps in Syllabus Creator Ribbon
         self.assertIn('id="stepBtnTabSyllabus"', content)
         self.assertIn('id="stepBtnTabAssessments"', content)
+        self.assertIn('id="stepBtnTabGantt"', content)
         self.assertIn('id="stepBtnTabGradebook"', content)
         self.assertIn('id="stepBtnTabReceiptAck"', content)
         self.assertIn('id="stepBtnTabTos"', content)
@@ -61,7 +62,7 @@ class TestRibbonSystem(unittest.TestCase):
         self.assertIn('id="ribbonStepActions"', content)
 
     def test_stepper_order_and_sequential_numbering(self):
-        """Test stepper ordering and sequential 1 to 7 badge numbering."""
+        """Test stepper ordering and sequential 1 to 8 badge numbering."""
         with open("templates/index.html", "r", encoding="utf-8") as f:
             content = f.read()
 
@@ -73,6 +74,7 @@ class TestRibbonSystem(unittest.TestCase):
         expected_ids = [
             "stepBtnTabSyllabus",
             "stepBtnTabAssessments",
+            "stepBtnTabGantt",
             "stepBtnTabGradebook",
             "stepBtnTabReceiptAck",
             "stepBtnTabTos",
@@ -92,13 +94,14 @@ class TestRibbonSystem(unittest.TestCase):
         expected_badges = [
             ("stepBtnTabSyllabus", "1"),
             ("stepBtnTabAssessments", "2"),
-            ("stepBtnTabGradebook", "3"),
-            ("stepBtnTabReceiptAck", "4"),
-            ("stepBtnTabTos", "5"),
-            ("stepBtnTabCloreport", "6"),
-            ("stepBtnTabCqi", "7")
+            ("stepBtnTabGantt", "3"),
+            ("stepBtnTabGradebook", "4"),
+            ("stepBtnTabReceiptAck", "5"),
+            ("stepBtnTabTos", "6"),
+            ("stepBtnTabCloreport", "7"),
+            ("stepBtnTabCqi", "8")
         ]
-        self.assertEqual(len(matches), 7)
+        self.assertEqual(len(matches), 8)
         for i, (btn_id, num) in enumerate(expected_badges):
             self.assertEqual(matches[i][0], btn_id)
             self.assertEqual(matches[i][1].strip(), num)

@@ -18,7 +18,13 @@ import re
 import threading
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+import logging
 from werkzeug.security import check_password_hash, generate_password_hash
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_STUDENT_PASSWORD = "student123"
+DEFAULT_PASSWORDS = {"student123", "student", "usep", "1234", "123456", "12345678", "password", "pass"}
 
 try:
     import config
@@ -32,36 +38,136 @@ except Exception:
     STUDENTS_FILE = os.environ.get("STUDENTS_JSON_PATH", os.path.join(DATA_DIR, "students.json"))
     COURSES_BASE_DIR = os.environ.get("COURSES_DIR", os.path.join(DATA_DIR, "courses"))
 
-_lock = threading.Lock()
+_lock = threading.RLock()
+
+
+def normalize_student_id(raw_id: str) -> str:
+    """
+    Normalizes student identifiers:
+      - Trims whitespace and surrounding quotes
+      - Strips institutional email domain (e.g., '2024-00101@usep.edu.ph' -> '2024-00101')
+      - Collapses internal spaces around hyphens (e.g., '2024 - 00101' -> '2024-00101')
+    """
+    if not raw_id:
+        return ""
+    s = str(raw_id).strip().strip('"\'')
+    if "@" in s:
+        s = s.split("@")[0].strip()
+    s = re.sub(r"\s*-\s*", "-", s)
+    return s.strip()
+
+
+def _get_all_courses() -> List[Dict[str, Any]]:
+    """
+    Retrieves all course documents across BOTH:
+      1. SQLite database (db_persistence.list_all_courses_from_db())
+      2. File-based storage (data/courses/ JSON files)
+    Deduplicates by course_id / id.
+    """
+    courses_map: Dict[str, Dict[str, Any]] = {}
+
+    # 1. Load from SQLite database
+    try:
+        import db_persistence
+        db_courses = db_persistence.list_all_courses_from_db()
+        for c in db_courses:
+            cid = c.get("course_id") or c.get("id")
+            if cid:
+                courses_map[cid] = c
+    except Exception as e:
+        logger.debug("Could not read courses from SQLite in student_store: %s", e)
+
+    # 2. Load from disk JSON files
+    if os.path.exists(COURSES_BASE_DIR):
+        for root, _, files in os.walk(COURSES_BASE_DIR):
+            for fn in files:
+                if not fn.endswith(".json"):
+                    continue
+                fp = os.path.join(root, fn)
+                try:
+                    with open(fp, "r", encoding="utf-8") as f:
+                        doc = json.load(f)
+                    cid = doc.get("course_id") or doc.get("id") or fn[:-5]
+                    if cid:
+                        if cid not in courses_map:
+                            courses_map[cid] = doc
+                        else:
+                            # Prefer document with richer student roster
+                            existing_sts = courses_map[cid].get("blueprint", {}).get("students", [])
+                            file_sts = doc.get("blueprint", {}).get("students", [])
+                            if len(file_sts) > len(existing_sts):
+                                courses_map[cid] = doc
+                except Exception:
+                    continue
+
+    return list(courses_map.values())
 
 
 def _load_students() -> Dict[str, Dict[str, Any]]:
+    """Loads all students from both SQLite and JSON, merging them safely."""
+    merged: Dict[str, Dict[str, Any]] = {}
+    if os.path.exists(STUDENTS_FILE):
+        try:
+            with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    merged.update(data)
+        except Exception:
+            pass
+
     try:
         import db_persistence
         db_students = db_persistence.load_students_from_db()
-        if db_students:
-            return db_students
+        if db_students and isinstance(db_students, dict):
+            for sid, s in db_students.items():
+                if sid not in merged:
+                    merged[sid] = s
+                else:
+                    for k, v in s.items():
+                        if v is not None and v != "":
+                            merged[sid][k] = v
     except Exception:
         pass
-    if not os.path.exists(STUDENTS_FILE):
-        return {}
-    try:
-        with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data if isinstance(data, dict) else {}
-    except Exception:
-        return {}
+
+    # Ensure baseline fields exist
+    for sid, rec in merged.items():
+        rec.setdefault("student_id", sid)
+        rec.setdefault("username", sid)
+        rec.setdefault("status", "active")
+        rec.setdefault("is_active", 1)
+        rec.setdefault("email", f"{sid.lower()}@usep.edu.ph")
+        if not rec.get("password_hash"):
+            rec["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+
+    return merged
 
 
 def _save_students(data: Dict[str, Dict[str, Any]]) -> None:
     try:
         import db_persistence
         db_persistence.save_students_dict_to_db(data)
-    except Exception:
-        pass
-    os.makedirs(DATA_DIR, exist_ok=True)
-    with open(STUDENTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.debug("Error saving students to db: %s", e)
+    with _lock:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        import time
+        for attempt in range(5):
+            try:
+                temp_file = f"{STUDENTS_FILE}.tmp.{os.getpid()}"
+                with open(temp_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                os.replace(temp_file, STUDENTS_FILE)
+                break
+            except Exception as ex:
+                if attempt == 4:
+                    # Last resort fallback: direct write
+                    try:
+                        with open(STUDENTS_FILE, "w", encoding="utf-8") as f:
+                            json.dump(data, f, indent=2, ensure_ascii=False)
+                    except Exception as fatal_ex:
+                        logger.warning("Could not write students file: %s", fatal_ex)
+                else:
+                    time.sleep(0.05 * (attempt + 1))
 
 
 import unicodedata
@@ -72,135 +178,253 @@ def _clean(s: str) -> str:
 
 
 def _normalize_id(sid: str) -> str:
-    return str(sid or "").strip()
+    return normalize_student_id(sid)
+
+
+def sync_course_roster_students(doc: Dict[str, Any]) -> int:
+    """
+    Synchronizes all students from a specific course document's roster into the student store.
+    Guarantees active credentials, student ID/email binding, and enrolled course linkage.
+    """
+    if not doc or not isinstance(doc, dict):
+        return 0
+    cid = doc.get("id") or doc.get("course_id") or ""
+    bp = doc.get("blueprint") or {}
+    meta = bp.get("metadata") or {}
+    sec = doc.get("section") or meta.get("section") or ""
+    prog = meta.get("program_name") or "Engineering"
+    roster = bp.get("students") or []
+    if not roster:
+        return 0
+
+    count = 0
+    with _lock:
+        students = _load_students()
+        for st in roster:
+            sid = normalize_student_id(str(st.get("student_id") or ""))
+            if not sid:
+                continue
+            last_n = (st.get("last_name") or "").strip()
+            first_n = (st.get("first_name") or "").strip()
+            name = (st.get("name") or "").strip()
+            if not last_n and name:
+                parts = [p.strip() for p in name.split(",", 1)]
+                last_n = parts[0] if parts else ""
+                first_n = parts[1] if len(parts) > 1 else ""
+            full_n = f"{last_n}, {first_n}".strip(", ") if (last_n or first_n) else (name or sid)
+            py = st.get("program_year") or sec or prog
+
+            rec = students.get(sid, {})
+            rec["student_id"] = sid
+            rec["username"] = rec.get("username") or sid
+            if full_n and not rec.get("full_name"):
+                rec["full_name"] = full_n
+            if last_n and not rec.get("last_name"):
+                rec["last_name"] = last_n
+            if first_n and not rec.get("first_name"):
+                rec["first_name"] = first_n
+            if py and not rec.get("program_year"):
+                rec["program_year"] = py
+            if not rec.get("email"):
+                rec["email"] = f"{sid.lower()}@usep.edu.ph"
+            if not rec.get("password_hash"):
+                rec["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+            rec.setdefault("status", "active")
+            rec.setdefault("is_active", 1)
+            rec.setdefault("signature_data", "")
+            rec.setdefault("created_at", datetime.now().isoformat(timespec="seconds"))
+
+            enrolled = rec.get("enrolled_courses") or []
+            if cid and cid not in enrolled:
+                enrolled.append(cid)
+            rec["enrolled_courses"] = enrolled
+
+            students[sid] = rec
+            count += 1
+        _save_students(students)
+    return count
+
+
+def disenroll_student_from_course(student_id: str, course_id: str) -> bool:
+    """
+    Disenrolls a student from a specific course:
+    - Removes course_id from the student's enrolled_courses list in student_store & SQLite.
+    - Removes assessment_acknowledgments for that course.
+    - Cascades removal from student_course_grades in SQLite.
+    """
+    sid = normalize_student_id(str(student_id or "").strip())
+    cid = str(course_id or "").strip()
+    if not sid or not cid:
+        return False
+
+    with _lock:
+        students = _load_students()
+        target_keys = []
+        for k, prof in students.items():
+            k_sid = normalize_student_id(str(prof.get("student_id") or k).strip())
+            if k_sid == sid or k == sid:
+                target_keys.append(k)
+
+        for k in target_keys:
+            rec = students[k]
+            enrolled = [c for c in (rec.get("enrolled_courses") or []) if str(c).strip().lower() != cid.lower()]
+            rec["enrolled_courses"] = enrolled
+            if "assessment_acknowledgments" in rec and isinstance(rec["assessment_acknowledgments"], dict):
+                rec["assessment_acknowledgments"].pop(cid, None)
+            students[k] = rec
+
+        _save_students(students)
+
+    try:
+        import db_persistence
+        db_persistence.disenroll_student_from_course_db(sid, cid)
+    except Exception as _e:
+        logger.debug("Error in db_persistence.disenroll_student_from_course_db: %s", _e)
+
+    return True
 
 
 def sync_all_course_students_to_store() -> int:
     """
-    Scans all courses in data/courses/ and registers every student into data/students.json,
-    linking enrolled_courses so that any enrolled student can sign in seamlessly.
+    Scans all courses across BOTH SQLite database and file-based storage,
+    registers every student into data/students.json and SQLite app_students,
+    initializes default credentials, active flags, and links enrolled courses.
     """
-    if not os.path.exists(COURSES_BASE_DIR):
-        return 0
+    all_courses = _get_all_courses()
     synced = 0
     with _lock:
         students = _load_students()
-        for root, _, files in os.walk(COURSES_BASE_DIR):
-            for fn in files:
-                if not fn.endswith(".json"):
+        for doc in all_courses:
+            cid = doc.get("id") or doc.get("course_id") or ""
+            bp = doc.get("blueprint") or {}
+            meta = bp.get("metadata") or {}
+            sec = doc.get("section") or meta.get("section") or ""
+            prog = meta.get("program_name") or "Engineering"
+            roster = bp.get("students") or []
+            for st in roster:
+                sid = normalize_student_id(str(st.get("student_id") or ""))
+                if not sid:
                     continue
-                fp = os.path.join(root, fn)
-                try:
-                    with open(fp, "r", encoding="utf-8") as f:
-                        doc = json.load(f)
-                    cid = doc.get("id") or doc.get("course_id") or fn[:-5]
-                    bp = doc.get("blueprint") or {}
-                    meta = bp.get("metadata") or {}
-                    sec = doc.get("section") or meta.get("section") or ""
-                    prog = meta.get("program_name") or "Engineering"
-                    roster = bp.get("students") or []
-                    for st in roster:
-                        sid = str(st.get("student_id") or "").strip()
-                        if not sid:
-                            continue
-                        last_n = (st.get("last_name") or "").strip()
-                        first_n = (st.get("first_name") or "").strip()
-                        name = (st.get("name") or "").strip()
-                        if not last_n and name:
-                            parts = [p.strip() for p in name.split(",", 1)]
-                            last_n = parts[0] if parts else ""
-                            first_n = parts[1] if len(parts) > 1 else ""
-                        full_n = f"{last_n}, {first_n}".strip(", ") if (last_n or first_n) else (name or sid)
-                        py = st.get("program_year") or sec or prog
+                last_n = (st.get("last_name") or "").strip()
+                first_n = (st.get("first_name") or "").strip()
+                name = (st.get("name") or "").strip()
+                if not last_n and name:
+                    parts = [p.strip() for p in name.split(",", 1)]
+                    last_n = parts[0] if parts else ""
+                    first_n = parts[1] if len(parts) > 1 else ""
+                full_n = f"{last_n}, {first_n}".strip(", ") if (last_n or first_n) else (name or sid)
+                py = st.get("program_year") or sec or prog
 
-                        rec = students.get(sid, {})
-                        rec["student_id"] = sid
-                        if full_n and not rec.get("full_name"):
-                            rec["full_name"] = full_n
-                        if last_n and not rec.get("last_name"):
-                            rec["last_name"] = last_n
-                        if first_n and not rec.get("first_name"):
-                            rec["first_name"] = first_n
-                        if py and not rec.get("program_year"):
-                            rec["program_year"] = py
-                        if not rec.get("email"):
-                            rec["email"] = f"{sid.lower()}@usep.edu.ph"
-                        if "password_hash" not in rec:
-                            rec["password_hash"] = ""
-                        if "signature_data" not in rec:
-                            rec["signature_data"] = ""
-                        if "created_at" not in rec:
-                            rec["created_at"] = datetime.now().isoformat(timespec="seconds")
+                rec = students.get(sid, {})
+                rec["student_id"] = sid
+                rec["username"] = rec.get("username") or sid
+                if full_n and not rec.get("full_name"):
+                    rec["full_name"] = full_n
+                if last_n and not rec.get("last_name"):
+                    rec["last_name"] = last_n
+                if first_n and not rec.get("first_name"):
+                    rec["first_name"] = first_n
+                if py and not rec.get("program_year"):
+                    rec["program_year"] = py
+                if not rec.get("email"):
+                    rec["email"] = f"{sid.lower()}@usep.edu.ph"
+                if not rec.get("password_hash"):
+                    rec["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+                rec.setdefault("status", "active")
+                rec.setdefault("is_active", 1)
+                rec.setdefault("signature_data", "")
+                rec.setdefault("created_at", datetime.now().isoformat(timespec="seconds"))
 
-                        enrolled = rec.get("enrolled_courses") or []
-                        if cid not in enrolled:
-                            enrolled.append(cid)
-                        rec["enrolled_courses"] = enrolled
+                enrolled = rec.get("enrolled_courses") or []
+                if cid and cid not in enrolled:
+                    enrolled.append(cid)
+                rec["enrolled_courses"] = enrolled
 
-                        students[sid] = rec
-                        synced += 1
-                except Exception:
-                    continue
+                students[sid] = rec
+                synced += 1
+
+        # Guarantee active status and default credentials for all students
+        for sid, rec in students.items():
+            if not rec.get("password_hash"):
+                rec["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+            rec.setdefault("status", "active")
+            rec.setdefault("is_active", 1)
+            rec.setdefault("username", sid)
+            rec.setdefault("email", f"{sid.lower()}@usep.edu.ph")
+
         _save_students(students)
     return synced
 
 
 def find_student_in_course_rosters(student_id: str) -> Optional[Dict[str, Any]]:
     """
-    Searches across all courses in COURSES_BASE_DIR to find if this student_id
-    or name is present in any course roster. Returns student info if found.
+    Searches across ALL courses (SQLite database and data/courses/ files)
+    to find if this student_id, email, or name is present in any course roster.
+    Returns student info including all enrolled_courses if found.
     """
-    input_str = (student_id or "").strip()
-    if not input_str or not os.path.exists(COURSES_BASE_DIR):
+    raw_input = (student_id or "").strip()
+    if not raw_input:
         return None
-    input_norm = _clean(input_str)
-    input_digits = re.sub(r"\D", "", input_str)
+    norm_input = normalize_student_id(raw_input)
+    clean_input = _clean(norm_input)
+    digits_input = re.sub(r"\D", "", norm_input)
+    input_lower = raw_input.lower()
 
-    for root, _, files in os.walk(COURSES_BASE_DIR):
-        for fn in files:
-            if not fn.endswith(".json"):
-                continue
-            fp = os.path.join(root, fn)
-            try:
-                with open(fp, "r", encoding="utf-8") as f:
-                    doc = json.load(f)
-                bp = doc.get("blueprint") or {}
-                students = bp.get("students") or []
-                for st in students:
-                    curr_sid = str(st.get("student_id") or "").strip()
-                    curr_sid_norm = _clean(curr_sid)
-                    curr_digits = re.sub(r"\D", "", curr_sid)
-                    last_n = (st.get("last_name") or "").strip()
-                    first_n = (st.get("first_name") or "").strip()
-                    name = (st.get("name") or "").strip()
-                    if not last_n and name:
-                        parts = [p.strip() for p in name.split(",", 1)]
-                        last_n = parts[0] if parts else ""
-                        first_n = parts[1] if len(parts) > 1 else ""
-                    full_name = f"{last_n}, {first_n}".strip(", ") if (last_n or first_n) else (name or curr_sid)
+    all_courses = _get_all_courses()
+    matched_student = None
+    enrolled_cids = []
 
-                    matched = False
-                    if curr_sid_norm and input_norm and curr_sid_norm == input_norm:
-                        matched = True
-                    elif curr_digits and input_digits and len(curr_digits) >= 4 and curr_digits == input_digits:
-                        matched = True
-                    elif last_n and _clean(last_n) == input_norm:
-                        matched = True
-                    elif full_name and _clean(full_name) == input_norm:
-                        matched = True
+    for doc in all_courses:
+        cid = doc.get("course_id") or doc.get("id") or ""
+        bp = doc.get("blueprint") or {}
+        students = bp.get("students") or []
+        for st in students:
+            curr_sid = normalize_student_id(str(st.get("student_id") or ""))
+            curr_clean = _clean(curr_sid)
+            curr_digits = re.sub(r"\D", "", curr_sid)
+            last_n = (st.get("last_name") or "").strip()
+            first_n = (st.get("first_name") or "").strip()
+            name = (st.get("name") or "").strip()
+            st_email = str(st.get("email") or "").strip().lower()
 
-                    if matched:
-                        prog_year = st.get("program_year") or bp.get("metadata", {}).get("section") or "Engineering"
-                        return {
-                            "student_id": curr_sid or input_str,
-                            "full_name": full_name,
-                            "last_name": last_n,
-                            "first_name": first_n,
-                            "program_year": prog_year,
-                            "email": st.get("email") or f"{curr_sid.lower()}@usep.edu.ph",
-                        }
-            except Exception:
-                continue
+            if not last_n and name:
+                parts = [p.strip() for p in name.split(",", 1)]
+                last_n = parts[0] if parts else ""
+                first_n = parts[1] if len(parts) > 1 else ""
+            full_name = f"{last_n}, {first_n}".strip(", ") if (last_n or first_n) else (name or curr_sid)
+
+            matched = False
+            if curr_sid and norm_input and curr_sid.lower() == norm_input.lower():
+                matched = True
+            elif curr_clean and clean_input and curr_clean == clean_input:
+                matched = True
+            elif curr_digits and digits_input and len(curr_digits) >= 4 and curr_digits == digits_input:
+                matched = True
+            elif input_lower and st_email and input_lower == st_email:
+                matched = True
+            elif last_n and _clean(last_n) == clean_input:
+                matched = True
+            elif full_name and _clean(full_name) == clean_input:
+                matched = True
+
+            if matched:
+                if cid and cid not in enrolled_cids:
+                    enrolled_cids.append(cid)
+                if not matched_student:
+                    prog_year = st.get("program_year") or bp.get("metadata", {}).get("section") or doc.get("section") or "Engineering"
+                    matched_student = {
+                        "student_id": curr_sid or norm_input,
+                        "full_name": full_name,
+                        "last_name": last_n,
+                        "first_name": first_n,
+                        "program_year": prog_year,
+                        "email": st.get("email") or f"{curr_sid.lower()}@usep.edu.ph",
+                        "enrolled_courses": enrolled_cids,
+                    }
+
+    if matched_student:
+        matched_student["enrolled_courses"] = enrolled_cids
+        return matched_student
     return None
 
 
@@ -213,9 +437,11 @@ def register_or_update_student(
     program_year: str = "",
     signature_data: str = "",
     middle_name: str = "",
+    course_id: str = "",
+    password: str = "",
 ) -> Dict[str, Any]:
-    """Registers or updates a student profile in data/students.json."""
-    sid = _normalize_id(student_id)
+    """Registers or updates a student profile in data/students.json and SQLite app_students."""
+    sid = normalize_student_id(student_id)
     if not sid:
         return {}
 
@@ -235,17 +461,31 @@ def register_or_update_student(
         st = students.get(sid, {})
         st.update({
             "student_id": sid,
+            "username": st.get("username") or sid,
             "full_name": full_name or st.get("full_name") or sid,
             "last_name": last_name or st.get("last_name") or "",
             "first_name": first_name or st.get("first_name") or "",
             "middle_name": middle_name or st.get("middle_name") or "",
             "program_year": program_year or st.get("program_year") or "",
             "email": email or st.get("email") or f"{sid.lower()}@usep.edu.ph",
+            "status": "active",
+            "is_active": 1,
         })
+        if password:
+            st["password_hash"] = generate_password_hash(password)
+        elif not st.get("password_hash"):
+            st["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+
         if signature_data:
             st["signature_data"] = signature_data
         if "created_at" not in st:
             st["created_at"] = datetime.now().isoformat(timespec="seconds")
+
+        enrolled = st.get("enrolled_courses") or []
+        if course_id and course_id not in enrolled:
+            enrolled.append(course_id)
+        st["enrolled_courses"] = enrolled
+
         students[sid] = st
         _save_students(students)
         return st
@@ -253,30 +493,44 @@ def register_or_update_student(
 
 def get_or_register_student(student_id: str, last_name_guess: str = "") -> Optional[Dict[str, Any]]:
     """
-    Retrieves student from data/students.json or auto-registers from course rosters.
+    Retrieves student from data/students.json / SQLite or auto-registers from course rosters.
     """
-    input_str = (student_id or "").strip()
-    if not input_str:
+    raw_input = (student_id or "").strip()
+    if not raw_input:
         return None
-    input_norm = _clean(input_str)
-    input_digits = re.sub(r"\D", "", input_str)
+    norm_sid = normalize_student_id(raw_input)
+    clean_input = _clean(norm_sid)
+    digits_input = re.sub(r"\D", "", norm_sid)
+    input_lower = raw_input.lower()
 
     with _lock:
         students = _load_students()
         # Direct lookup by ID
-        if input_str in students:
-            return students[input_str]
-        # Digit matching or name matching in existing students
+        if norm_sid in students:
+            return students[norm_sid]
+        if raw_input in students:
+            return students[raw_input]
+
+        # Search by digits, clean, email, username, or name in existing students
         for sid, st in students.items():
+            s_norm = normalize_student_id(sid)
+            s_clean = _clean(sid)
             s_digits = re.sub(r"\D", "", sid)
-            if (s_digits and input_digits and len(s_digits) >= 4 and s_digits == input_digits) or \
-               (_clean(sid) == input_norm) or \
-               (st.get("last_name") and _clean(st["last_name"]) == input_norm) or \
-               (st.get("full_name") and _clean(st["full_name"]) == input_norm):
+            st_email = str(st.get("email") or "").strip().lower()
+            st_user = str(st.get("username") or "").strip().lower()
+
+            if s_norm.lower() == norm_sid.lower():
+                return st
+            if s_digits and digits_input and len(s_digits) >= 4 and s_digits == digits_input:
+                return st
+            if input_lower and (input_lower == st_email or input_lower == st_user):
+                return st
+            if (st.get("last_name") and _clean(st["last_name"]) == clean_input) or \
+               (st.get("full_name") and _clean(st["full_name"]) == clean_input):
                 return st
 
-        # Search across course rosters
-        roster_st = find_student_in_course_rosters(input_str)
+        # Not yet in store: Search across ALL course rosters (SQLite + JSON)
+        roster_st = find_student_in_course_rosters(raw_input)
         if not roster_st:
             return None
 
@@ -286,13 +540,17 @@ def get_or_register_student(student_id: str, last_name_guess: str = "") -> Optio
 
         new_st = {
             "student_id": actual_sid,
+            "username": actual_sid,
             "full_name": roster_st["full_name"],
             "last_name": roster_st["last_name"] or last_name_guess.strip(),
             "first_name": roster_st["first_name"],
             "program_year": roster_st["program_year"],
             "email": roster_st["email"],
-            "password_hash": "",
+            "status": "active",
+            "is_active": 1,
+            "password_hash": generate_password_hash(DEFAULT_STUDENT_PASSWORD),
             "signature_data": "",
+            "enrolled_courses": roster_st.get("enrolled_courses") or [],
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "last_login": datetime.now().isoformat(timespec="seconds"),
         }
@@ -303,21 +561,27 @@ def get_or_register_student(student_id: str, last_name_guess: str = "") -> Optio
 
 def verify_student_login(student_id: str, secret_or_lastname: str) -> Tuple[bool, Optional[Dict[str, Any]], str]:
     """
-    Verifies student credentials.
-    Supports:
+    Verifies student credentials with comprehensive normalization:
       - Student ID + Last Name (for easy first-time login)
-      - Student ID + Custom Password (if student set one)
-      - Flexible matching: Last Name, First Name, Full Name, Student ID, or standard keywords
+      - Student ID + Default Password ("student123", "student", etc.)
+      - Student ID + Custom Password (stored hash or plain text)
+      - Flexible identifier matching: YYYY-NNNNN, YYYYNNNNN, email, or username
       - Unicode & accent resilient (e.g. Añana == Anana)
-      - Format resilient: 2025-01881 or 202501881
+      - Does not falsely block students whose courses are active or unfinalized
     """
-    sid_input = (student_id or "").strip()
+    raw_sid = (student_id or "").strip()
     secret = (secret_or_lastname or "").strip()
 
-    if not sid_input:
+    if not raw_sid:
         return False, None, "Please enter your Student ID Number."
 
-    st = get_or_register_student(sid_input, last_name_guess=secret)
+    st = get_or_register_student(raw_sid, last_name_guess=secret)
+    if not st:
+        # One more attempt: try searching with unhyphenated digits or email
+        digits = re.sub(r"\D", "", raw_sid)
+        if digits and len(digits) >= 4:
+            st = get_or_register_student(digits, last_name_guess=secret)
+
     if not st:
         return (
             False,
@@ -326,30 +590,56 @@ def verify_student_login(student_id: str, secret_or_lastname: str) -> Tuple[bool
             "Please verify your Student ID or check with your instructor.",
         )
 
-    actual_sid = st["student_id"]
+    # Check account active status (ensure never falsely locked)
+    is_active = st.get("is_active", 1)
+    status_str = str(st.get("status", "active")).lower()
+    if is_active in (0, False, "0", "false") or status_str in ("inactive", "disabled", "suspended"):
+        return False, None, "Your student account is currently deactivated. Please contact your department administrator."
 
-    # 1. If password hash is set, check password
-    pw_hash = st.get("password_hash")
+    actual_sid = st["student_id"]
+    pw_hash = st.get("password_hash") or ""
+
+    # Case 1: Stored password verification (hashed or legacy plain text)
     if pw_hash and secret:
-        if check_password_hash(pw_hash, secret):
+        try:
+            if check_password_hash(pw_hash, secret):
+                _record_student_login(actual_sid)
+                return True, st, ""
+        except Exception:
+            pass
+        if pw_hash == secret:
+            st["password_hash"] = generate_password_hash(secret)
+            _save_students({actual_sid: st})
             _record_student_login(actual_sid)
             return True, st, ""
 
-    # 2. If secret is blank, accept login
+    # Case 2: Blank secret (allowed for initial portal entry if last name/password not required)
     if not secret:
+        if not pw_hash:
+            st["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+            _save_students({actual_sid: st})
         _record_student_login(actual_sid)
         return True, st, ""
 
-    # 3. Resilient name/ID matching
+    # Case 3: Default universal passwords
+    sec_lower = secret.strip().lower()
+    sec_clean = _clean(secret)
+    if sec_lower in DEFAULT_PASSWORDS or sec_clean in DEFAULT_PASSWORDS:
+        if not pw_hash:
+            st["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+            _save_students({actual_sid: st})
+        _record_student_login(actual_sid)
+        return True, st, ""
+
+    # Case 4: Resilient name / ID matching
     st_last = _clean(st.get("last_name"))
     st_first = _clean(st.get("first_name"))
     full_name_clean = _clean(st.get("full_name"))
-    sec_clean = _clean(secret)
     sid_clean = _clean(actual_sid)
     sid_digits = re.sub(r"\D", "", actual_sid)
     sec_digits = re.sub(r"\D", "", secret)
 
-    name_tokens = [w for w in full_name_clean.replace(",", " ").split() if w]
+    name_tokens = [w for w in full_name_clean.replace(",", " ").split() if len(w) >= 2]
     is_match = (
         (st_last and sec_clean == st_last)
         or (st_first and sec_clean == st_first)
@@ -358,18 +648,23 @@ def verify_student_login(student_id: str, secret_or_lastname: str) -> Tuple[bool
         or (sec_clean in name_tokens)
         or (sid_clean and sec_clean == sid_clean)
         or (sid_digits and len(sid_digits) >= 4 and sec_digits == sid_digits)
-        or sec_clean in {"1234", "123456", "12345678", "usep", "student", "password", "pass"}
     )
+
     if is_match:
+        if not pw_hash:
+            st["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
+            _save_students({actual_sid: st})
         _record_student_login(actual_sid)
         return True, st, ""
 
-    # If last name wasn't set on roster, accept and set it
+    # If last name wasn't set on roster, accept secret as last name
     if not st_last and secret:
         with _lock:
             students = _load_students()
             if actual_sid in students:
                 students[actual_sid]["last_name"] = secret
+                if not students[actual_sid].get("password_hash"):
+                    students[actual_sid]["password_hash"] = generate_password_hash(DEFAULT_STUDENT_PASSWORD)
                 _save_students(students)
         _record_student_login(actual_sid)
         return True, st, ""
@@ -377,7 +672,7 @@ def verify_student_login(student_id: str, secret_or_lastname: str) -> Tuple[bool
     return (
         False,
         None,
-        "Verification failed. Please enter your registered Last Name or Student ID.",
+        "Verification failed. Please enter your registered Last Name, Student ID, or default password (student123).",
     )
 
 
@@ -412,7 +707,7 @@ def get_student_profile(student_id: str) -> Optional[Dict[str, Any]]:
 
 def find_courses_for_student(student_id: str) -> Dict[str, Any]:
     """
-    Scans all course files to locate all courses where this student is enrolled.
+    Scans ALL courses (SQLite database and data/courses/ files) to locate all courses where this student is enrolled.
     Categorizes them into:
       - pending: QA approved syllabus, awaiting student signature
       - acknowledged: already signed by student
@@ -427,105 +722,108 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
     acknowledged_list = []
     in_review_list = []
 
-    if not os.path.exists(COURSES_BASE_DIR):
-        return {
-            "student": st_profile,
-            "pending": [],
-            "acknowledged": [],
-            "in_review": [],
-            "stats": {"total": 0, "pending_count": 0, "acknowledged_count": 0, "in_review_count": 0},
-        }
-
+    all_courses = _get_all_courses()
     seen_course_ids = set()
 
-    for root, _, files in os.walk(COURSES_BASE_DIR):
-        for fn in files:
-            if not fn.endswith(".json"):
+    for doc in all_courses:
+        try:
+            cid = doc.get("course_id") or doc.get("id")
+            if not cid or cid in seen_course_ids:
                 continue
-            fp = os.path.join(root, fn)
-            try:
-                with open(fp, "r", encoding="utf-8") as f:
-                    doc = json.load(f)
 
-                cid = doc.get("course_id") or fn[:-5]
-                if cid in seen_course_ids:
-                    continue
+            bp = doc.get("blueprint") or {}
+            students = bp.get("students") or []
 
-                bp = doc.get("blueprint") or {}
-                students = bp.get("students") or []
+            matched_st = None
+            sid_digits_in = re.sub(r"\D", "", sid_lower)
+            for st in students:
+                curr_sid = normalize_student_id(str(st.get("student_id") or "")).lower()
+                curr_digits = re.sub(r"\D", "", curr_sid)
+                if curr_sid == sid_lower or (curr_digits and sid_digits_in and len(curr_digits) >= 4 and curr_digits == sid_digits_in):
+                    matched_st = st
+                    break
 
-                matched_st = None
-                sid_digits_in = re.sub(r"\D", "", sid_lower)
-                for st in students:
-                    curr_sid = str(st.get("student_id") or "").strip().lower()
-                    curr_digits = re.sub(r"\D", "", curr_sid)
-                    if curr_sid == sid_lower or (curr_digits and sid_digits_in and len(curr_digits) >= 4 and curr_digits == sid_digits_in):
-                        matched_st = st
-                        break
-
-                if not matched_st:
-                    continue
-
-                seen_course_ids.add(cid)
-
-                # Check acknowledgment records
-                acks = doc.get("student_acknowledgments") or (doc.get("workflow") or {}).get("student_acknowledgments") or []
-                ack_record = None
-                for a in acks:
-                    if str(a.get("student_id") or "").strip().lower() == sid_lower:
-                        ack_record = a
-                        break
-
-                wf = doc.get("workflow") or {}
-                status = wf.get("status") or "draft"
-                # QA approved check (Counter-signed by QA, awaiting student ack or Dean approval)
-                is_qa_approved = (
-                    status.lower() in {"for_student_acknowledgment", "for_dean_approval", "approved"}
-                    or wf.get("step") == 5
-                    or wf.get("qa_approved_at") is not None
-                    or any(s.get("step") == "qa_head" for s in wf.get("signatures", []))
-                )
-
-                meta = bp.get("metadata") or {}
-                sem_ay_raw = doc.get("semester_ay") or meta.get("semester_ay") or ""
-                import courses_store
-                school_year, semester, group_label = courses_store.parse_semester_ay(sem_ay_raw)
-
-                status_category = "acknowledged" if ack_record is not None else ("pending" if is_qa_approved else "in_review")
-
-                course_item = {
-                    "course_id": cid,
-                    "course_code": doc.get("course_code") or meta.get("course_code") or "Course",
-                    "course_title": doc.get("course_title") or meta.get("course_title") or "Untitled",
-                    "credit_units": doc.get("credit_units") or meta.get("credit_units") or "3 Units",
-                    "section": doc.get("section") or meta.get("section") or "",
-                    "semester_ay": sem_ay_raw,
-                    "school_year": school_year,
-                    "semester": semester,
-                    "group_label": group_label,
-                    "faculty_name": doc.get("faculty_name") or meta.get("faculty_name") or "Faculty Instructor",
-                    "schedule": doc.get("class_schedule") or meta.get("class_schedule") or "TBA",
-                    "course_description": doc.get("course_description") or meta.get("course_description") or "",
-                    "workflow_status": status,
-                    "is_qa_approved": is_qa_approved,
-                    "has_acknowledged": ack_record is not None,
-                    "acknowledged_at": ack_record.get("acknowledged_at") if ack_record else None,
-                    "signature_data": ack_record.get("signature_data") if ack_record else None,
-                    "comment": ack_record.get("comment", "") if ack_record else "",
-                    "total_enrolled": len(students),
-                    "total_acknowledged": len(acks),
-                    "status_category": status_category,
-                }
-
-                if ack_record is not None:
-                    acknowledged_list.append(course_item)
-                elif is_qa_approved:
-                    pending_list.append(course_item)
-                else:
-                    in_review_list.append(course_item)
-
-            except Exception:
+            if not matched_st:
                 continue
+
+            if not st_profile.get("full_name"):
+                st_name = matched_st.get("name") or ""
+                if not st_name and (matched_st.get("first_name") or matched_st.get("last_name")):
+                    fn = (matched_st.get("first_name") or "").strip()
+                    ln = (matched_st.get("last_name") or "").strip()
+                    st_name = f"{fn} {ln}".strip() if (fn and ln) else (ln or fn)
+                st_profile["student_id"] = sid
+                st_profile["full_name"] = st_name or sid
+                st_profile["first_name"] = matched_st.get("first_name") or ""
+                st_profile["last_name"] = matched_st.get("last_name") or ""
+                st_profile["program_year"] = matched_st.get("program_year") or ""
+                st_profile["email"] = matched_st.get("email") or f"{sid.lower()}@usep.edu.ph"
+
+            seen_course_ids.add(cid)
+
+            # Check acknowledgment records
+            acks = doc.get("student_acknowledgments") or (doc.get("workflow") or {}).get("student_acknowledgments") or (bp.get("student_acknowledgments") if isinstance(bp, dict) else None) or []
+            ack_record = None
+            for a in acks:
+                if str(a.get("student_id") or "").strip().lower() == sid_lower:
+                    ack_record = a
+                    break
+
+            if ack_record is None and st_profile:
+                st_syl_acks = st_profile.get("syllabus_acknowledgments") or {}
+                if cid in st_syl_acks:
+                    ack_record = st_syl_acks[cid]
+
+            wf = doc.get("workflow") or {}
+            status = wf.get("status") or "draft"
+            # QA approved check (Counter-signed by QA, awaiting student ack or Dean approval)
+            is_qa_approved = (
+                status.lower() in {"for_student_acknowledgment", "for_dean_approval", "approved"}
+                or wf.get("step") == 5
+                or wf.get("qa_approved_at") is not None
+                or any(s.get("step") == "qa_head" for s in wf.get("signatures", []))
+            )
+
+            meta = bp.get("metadata") or {}
+            sem_ay_raw = doc.get("semester_ay") or meta.get("semester_ay") or ""
+            import courses_store
+            school_year, semester, group_label = courses_store.parse_semester_ay(sem_ay_raw)
+
+            status_category = "acknowledged" if ack_record is not None else ("pending" if is_qa_approved else "in_review")
+
+            course_item = {
+                "course_id": cid,
+                "course_code": doc.get("course_code") or meta.get("course_code") or "Course",
+                "course_title": doc.get("course_title") or meta.get("course_title") or "Untitled",
+                "credit_units": doc.get("credit_units") or meta.get("credit_units") or "3 Units",
+                "section": doc.get("section") or meta.get("section") or "",
+                "semester_ay": sem_ay_raw,
+                "school_year": school_year,
+                "semester": semester,
+                "group_label": group_label,
+                "faculty_name": doc.get("faculty_name") or meta.get("faculty_name") or "Faculty Instructor",
+                "schedule": doc.get("class_schedule") or meta.get("class_schedule") or "TBA",
+                "course_description": doc.get("course_description") or meta.get("course_description") or "",
+                "workflow_status": status,
+                "is_qa_approved": is_qa_approved,
+                "has_acknowledged": ack_record is not None,
+                "acknowledged_at": ack_record.get("acknowledged_at") if ack_record else None,
+                "signature_data": ack_record.get("signature_data") if ack_record else None,
+                "comment": ack_record.get("comment", "") if ack_record else "",
+                "total_enrolled": len(students),
+                "total_acknowledged": len(acks),
+                "status_category": status_category,
+            }
+
+            if ack_record is not None:
+                acknowledged_list.append(course_item)
+            elif is_qa_approved:
+                pending_list.append(course_item)
+            else:
+                in_review_list.append(course_item)
+
+        except Exception:
+            continue
 
     # Sort each list alphabetically by course code
     pending_list.sort(key=lambda c: c.get("course_code") or "")
@@ -669,6 +967,9 @@ def record_student_acknowledgment(
     doc["student_acknowledgments"] = acks
     if "workflow" in doc and isinstance(doc["workflow"], dict):
         doc["workflow"]["student_acknowledgments"] = acks
+    bp = doc.get("blueprint")
+    if isinstance(bp, dict):
+        bp["student_acknowledgments"] = acks
 
     import syllabus_workflow
     stats = syllabus_workflow.get_student_acknowledgment_stats(doc)
@@ -690,9 +991,26 @@ def record_student_acknowledgment(
 
     courses_store.save_course_doc(doc)
 
-    # Save to student profile if signature is missing
-    if signature_data and not st_profile.get("signature_data"):
-        save_student_signature(sid, signature_data)
+    # Persist directly into student's profile and database
+    try:
+        all_sts = _load_students()
+        st_entry = all_sts.get(sid)
+        if not st_entry:
+            for k, v in all_sts.items():
+                if _normalize_id(k) == sid or str(v.get("student_id") or "").lower() == sid.lower():
+                    st_entry = v
+                    break
+        if st_entry:
+            syl_acks = st_entry.setdefault("syllabus_acknowledgments", {})
+            syl_acks[course_id] = new_ack
+            if signature_data:
+                st_entry["signature_data"] = signature_data
+                st_entry["signature_updated_at"] = now_ts
+            _save_students(all_sts)
+        elif signature_data and not st_profile.get("signature_data"):
+            save_student_signature(sid, signature_data)
+    except Exception as _e:
+        logger.debug("Error saving acknowledgment to student store: %s", _e)
 
     return True, f"Syllabus acknowledgment successfully recorded for {s_name}! {msg_suffix}".strip(), new_ack
 

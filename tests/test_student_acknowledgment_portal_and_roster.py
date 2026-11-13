@@ -93,9 +93,18 @@ class TestStudentPortalAndRoster(unittest.TestCase):
             program_year="BSEE 3A",
             email=f"{self.test_student_id}@usep.edu.ph",
         )
+        all_sts = student_store._load_students()
+        if self.test_student_id in all_sts and "syllabus_acknowledgments" in all_sts[self.test_student_id]:
+            all_sts[self.test_student_id]["syllabus_acknowledgments"].pop(self.test_course_id, None)
+            student_store._save_students(all_sts)
 
     def tearDown(self):
         courses_store.delete_course("admin", self.test_course_id)
+        courses_store.delete_course(self.test_username, self.test_course_id)
+        all_sts = student_store._load_students()
+        if self.test_student_id in all_sts:
+            del all_sts[self.test_student_id]
+            student_store._save_students(all_sts)
 
     def test_login_navigation_links(self):
         """Test navigation between Faculty Portal and Student Portal."""

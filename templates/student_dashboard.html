@@ -281,7 +281,7 @@
         <div class="name" id="userDisplayName">{{ student.full_name or student.student_id }}</div>
         <div class="meta">ID: <strong>{{ student.student_id }}</strong> &bull; {{ student.program_year or 'Engineering' }}</div>
       </div>
-      <form method="post" action="{{ url_for('student_logout') }}" style="margin:0;">
+      <form method="post" action="{{ url_for('student_logout') }}" onsubmit="try { sessionStorage.clear(); localStorage.clear(); } catch(e){}" style="margin:0;">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />
         <button type="submit" class="btn-sp btn-sp-outline" style="font-size:0.78rem;">Sign Out</button>
       </form>
@@ -985,6 +985,35 @@
           btn.disabled = false;
           btn.textContent = "Submit Signed Acknowledgment";
           return;
+        }
+
+        // Optimistically update the UI card immediately
+        const cid = activeSigningCourseId;
+        const termCard = document.getElementById(`termCourseCard_${cid}`);
+        if (termCard) {
+          termCard.classList.remove("pending");
+          termCard.classList.add("acknowledged");
+          const badge = termCard.querySelector(".badge-pill");
+          if (badge) {
+            badge.className = "badge-pill badge-ack";
+            badge.textContent = "✓ Signed & Acknowledged";
+          }
+          const signBtn = document.getElementById(`btnSignAck_term_${cid}`);
+          if (signBtn) {
+            signBtn.outerHTML = `
+              <a href="/api/courses/${cid}/export-acknowledgment-pdf" target="_blank" class="btn-sp btn-sp-success" style="flex:1.1; justify-content:center; font-size:0.76rem;" title="Download FM-USeP-MID-07 Acknowledgment Form">
+                📥 Form MID-07
+              </a>
+            `;
+          }
+        }
+        const mPending = document.getElementById("metricPending");
+        const mAck = document.getElementById("metricAck");
+        if (mPending && mAck) {
+          const pVal = parseInt(mPending.textContent, 10) || 0;
+          const aVal = parseInt(mAck.textContent, 10) || 0;
+          if (pVal > 0) mPending.textContent = pVal - 1;
+          mAck.textContent = aVal + 1;
         }
 
         alert("✓ Syllabus acknowledgment signed successfully!");
@@ -1917,6 +1946,12 @@
     function closeViewAffixedSigModal() {
       document.getElementById("viewAffixedSigBackdrop").style.display = "none";
     }
+
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
 
 </script>
 
