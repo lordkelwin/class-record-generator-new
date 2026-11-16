@@ -585,6 +585,51 @@
     .align-lines path.hl { stroke-width: 3.2; }
     @media (max-width: 900px) { .align-map { grid-template-columns: 1fr; gap: 16px; } .align-map svg.align-lines { display: none; } }
 
+    /* PGO Assessment Interactive Flowchart & Matrix */
+    .pgo-flow-wrap { position: relative; overflow-x: auto; padding: 10px 4px; }
+    .pgo-flow-map { position: relative; display: grid; grid-template-columns: 1.05fr 1.05fr 1.1fr; gap: 76px; min-width: 780px; padding: 10px 6px; }
+    .pgo-flow-map svg.pgo-flow-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 0; }
+    .pgo-flow-col { display: flex; flex-direction: column; gap: 12px; justify-content: flex-start; position: relative; z-index: 1; }
+    .pgo-flow-col-title { text-align: center; font-size: 0.74rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #334155; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 8px; margin-bottom: 4px; }
+    .pgo-flow-node {
+      border-radius: 9px; padding: 10px 12px; font-size: 0.77rem; line-height: 1.38; cursor: pointer;
+      border: 1.5px solid #cbd5e1; background: #ffffff;
+      transition: opacity 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, border-color 0.16s ease;
+    }
+    .pgo-flow-node:hover { box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14); transform: translateY(-1px); }
+    .pgo-flow-node.cclo { border-color: #64748b; background: #f8fafc; }
+    .pgo-flow-node.pi { border-color: #2563eb; background: #eff6ff; }
+    .pgo-flow-node.pgo { border-color: #7f1d1d; background: #fef2f2; }
+    .pgo-flow-node.attained { border-left: 5px solid #15803d; background: #f0fdf4; border-color: #16a34a; }
+    .pgo-flow-node.below-target { border-left: 5px solid #dc2626; background: #fff5f5; border-color: #ef4444; }
+    .pgo-flow-node.pending { border-left: 5px solid #94a3b8; }
+    .pgo-flow-node.dim { opacity: 0.22; }
+    .pgo-flow-node.hl { box-shadow: 0 6px 18px rgba(37, 99, 235, 0.24); transform: translateY(-2px); outline: 2px solid #2563eb; }
+    .pgo-flow-svg path { fill: none; stroke: #94a3b8; stroke-width: 2; transition: opacity 0.16s ease, stroke-width 0.16s ease; }
+    .pgo-flow-svg path.ied-I { stroke: #3b82f6; }
+    .pgo-flow-svg path.ied-E { stroke: #8b5cf6; }
+    .pgo-flow-svg path.ied-D { stroke: #10b981; }
+    .pgo-flow-svg path.dim { opacity: 0.1; }
+    .pgo-flow-svg path.hl { stroke-width: 3.4; opacity: 1; }
+    .ied-pill { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 999px; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.02em; }
+    .ied-pill.ied-I { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+    .ied-pill.ied-E { background: #ede9fe; color: #6d28d9; border: 1px solid #c4b5fd; }
+    .ied-pill.ied-D { background: #d1fae5; color: #047857; border: 1px solid #6ee7b7; }
+    #pgoNodeTooltip {
+      position: fixed; z-index: 99990; display: none; max-width: 320px; pointer-events: none;
+      background: #0f172a; color: #f8fafc; border-radius: 10px; padding: 10px 13px; font-size: 0.77rem;
+      line-height: 1.45; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35); border: 1px solid #334155;
+    }
+    .pgo-matrix-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .pgo-matrix-table th, .pgo-matrix-table td { border: 1px solid #e2e8f0; padding: 7px 9px; text-align: center; }
+    .pgo-matrix-table th { background: #f8fafc; color: #1e293b; font-weight: 800; position: sticky; top: 0; z-index: 2; }
+    .pgo-matrix-table td.st-left { text-align: left; }
+    .pgo-matrix-table tbody tr:hover { background: #f0f9ff; cursor: pointer; }
+    .pgo-cell-pass { background: #dcfce7; color: #166534; font-weight: 700; }
+    .pgo-cell-fail { background: #fee2e2; color: #991b1b; font-weight: 700; }
+    .pgo-cell-na { background: #f8fafc; color: #94a3b8; }
+    @media (max-width: 900px) { .pgo-flow-map { grid-template-columns: 1fr; gap: 16px; min-width: 0; } .pgo-flow-map svg.pgo-flow-svg { display: none; } }
+
     /* ======================================================================
        MULTI-SUBJECT SIDEBAR & APP SHELL (Grouped by School Year & Semester)
        ====================================================================== */
@@ -2290,23 +2335,29 @@
     <div class="ribbon-tabs-bar">
       <div class="ribbon-tabs">
         {% if current_user and not current_user.can_access_faculty_tools %}
-          <button type="button" class="ribbon-tab active" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
+          <button type="button" class="ribbon-tab{% if default_tab == 'approvals' or default_tab not in ['curriculum', 'pgo-assessment'] %} active{% endif %}" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
             📥 Requests for Approval &amp; Institutional Oversight <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
           </button>
-          <button type="button" class="ribbon-tab" id="ribbonTabCurriculum" onclick="switchRibbon('ribbon-curriculum', 'tab-curriculum')">
+          <button type="button" class="ribbon-tab{% if default_tab == 'pgo-assessment' %} active{% endif %}" id="ribbonTabPgoAssessment" onclick="switchRibbon('ribbon-pgo-assessment', 'tab-pgo-assessment')">
+            🎯 PGO Assessment
+          </button>
+          <button type="button" class="ribbon-tab{% if default_tab == 'curriculum' %} active{% endif %}" id="ribbonTabCurriculum" onclick="switchRibbon('ribbon-curriculum', 'tab-curriculum')">
             🗺️ Prerequisite Flowchart &amp; Curriculum Map
           </button>
         {% else %}
           <button type="button" class="ribbon-tab{% if default_tab == 'dashboard' %} active{% endif %}" id="ribbonTabDashboard" onclick="switchRibbon('ribbon-dashboard', 'tab-dashboard')">
             📊 Dashboard <span id="dashLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
           </button>
-          <button type="button" class="ribbon-tab{% if default_tab != 'dashboard' %} active{% endif %}" id="ribbonTabSyllabus" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">
+          <button type="button" class="ribbon-tab{% if default_tab == 'syllabus' %} active{% endif %}" id="ribbonTabSyllabus" onclick="switchRibbon('ribbon-syllabus', 'tab-syllabus')">
             📝 Syllabus Creator &amp; Class Record <span id="syllabusLockIcon" class="tab-lock-indicator" style="display:none;">🔒</span>
           </button>
-          <button type="button" class="ribbon-tab" id="ribbonTabCurriculum" onclick="switchRibbon('ribbon-curriculum', 'tab-curriculum')">
+          <button type="button" class="ribbon-tab{% if default_tab == 'pgo-assessment' %} active{% endif %}" id="ribbonTabPgoAssessment" onclick="switchRibbon('ribbon-pgo-assessment', 'tab-pgo-assessment')">
+            🎯 PGO Assessment
+          </button>
+          <button type="button" class="ribbon-tab{% if default_tab == 'curriculum' %} active{% endif %}" id="ribbonTabCurriculum" onclick="switchRibbon('ribbon-curriculum', 'tab-curriculum')">
             🗺️ Prerequisite Flowchart &amp; Curriculum Map
           </button>
-          <button type="button" class="ribbon-tab" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
+          <button type="button" class="ribbon-tab{% if default_tab == 'approvals' %} active{% endif %}" id="tabBtnApprovals" onclick="switchRibbon('ribbon-approvals', 'tab-approvals')">
             📥 Requests for Approval <span id="approvalsBadge" class="badge ribbon-badge" style="display:none;">0</span>
           </button>
         {% endif %}
@@ -2558,6 +2609,53 @@
           <button type="button" class="btn btn-primary btn-sm" id="btnRibbonToggleAi" onclick="toggleCurriculumAiDrawer()" title="Open Interactive Curriculum Guide AI Agent" style="background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border:none; font-weight:700; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(79, 70, 229, 0.35);">
             <span>🤖</span> Curriculum Guide AI
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. PGO ASSESSMENT RIBBON BAND -->
+    <div class="ribbon-band{% if default_tab == 'pgo-assessment' %} active{% endif %}" id="ribbonBandPgoAssessment">
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Program &amp; Course Filter</span>
+        <div class="ribbon-group-content" style="gap:6px;">
+          <select id="pgoFilterProgram" class="form-select form-select-sm" style="height:31px; font-weight:700; font-size:0.79rem; border:1px solid #cbd5e1; border-radius:6px; min-width:110px;" onchange="loadPgoAssessmentData()">
+            <option value="ALL">All Programs</option>
+          </select>
+          <select id="pgoFilterCourse" class="form-select form-select-sm" style="height:31px; font-weight:600; font-size:0.79rem; border:1px solid #cbd5e1; border-radius:6px; min-width:170px; max-width:240px;" onchange="loadPgoAssessmentData()">
+            <option value="ALL">All Aligned Courses</option>
+          </select>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">I-E-D &amp; Cohort Filter</span>
+        <div class="ribbon-group-content" style="gap:6px;">
+          <select id="pgoFilterIed" class="form-select form-select-sm" style="height:31px; font-weight:600; font-size:0.79rem; border:1px solid #cbd5e1; border-radius:6px;" onchange="loadPgoAssessmentData()">
+            <option value="ALL">All Levels (I · E · D)</option>
+            <option value="I">I — Introductory</option>
+            <option value="E">E — Enabling</option>
+            <option value="D">D — Demonstrative</option>
+          </select>
+          <select id="pgoFilterCohort" class="form-select form-select-sm" style="height:31px; font-weight:600; font-size:0.79rem; border:1px solid #cbd5e1; border-radius:6px;" onchange="loadPgoAssessmentData()">
+            <option value="ALL">All Cohorts / Batches</option>
+          </select>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Student ID # / Outcome Finder</span>
+        <div class="ribbon-group-content" style="gap:6px;">
+          <input type="text" id="pgoSearchInput" placeholder="🔍 Search ID # (e.g. 2023-00011) or Name..." oninput="debouncedPgoSearch()" style="height:31px; padding:4px 9px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.80rem; width:220px;" />
+          <button type="button" class="btn btn-light btn-sm" onclick="resetPgoFilters()" title="Reset PGO Assessment Filters">✕ Reset</button>
+        </div>
+      </div>
+      <div class="ribbon-divider"></div>
+      <div class="ribbon-group">
+        <span class="ribbon-group-title">Views &amp; Consolidation</span>
+        <div class="ribbon-group-content" style="gap:6px;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="loadPgoAssessmentData(true)" style="font-weight:700;">🔄 Refresh Consolidation</button>
+          <button type="button" class="btn btn-light btn-sm" onclick="document.getElementById('pgoFlowchartCard')?.scrollIntoView({behavior:'smooth'});" style="font-weight:600;">🗺️ Flowchart</button>
+          <button type="button" class="btn btn-light btn-sm" onclick="document.getElementById('pgoStudentMatrixCard')?.scrollIntoView({behavior:'smooth'});" style="font-weight:600;">📋 ID # Matrix</button>
         </div>
       </div>
     </div>
@@ -4566,8 +4664,119 @@
     </div>
   </div>
 
+  <!-- ==================== PGO ASSESSMENT & INTERACTIVE FLOWCHART TAB ==================== -->
+  <div id="tab-pgo-assessment" class="tab-panel{% if default_tab == 'pgo-assessment' %} active{% endif %}">
+    <!-- Hero Header & Role Scope Banner -->
+    <div class="card" style="background:linear-gradient(135deg, #7f1d1d 0%, #991b1b 55%, #1e3a8a 100%); color:#ffffff; padding:18px 22px; border-radius:12px; margin-bottom:16px; box-shadow:0 4px 14px rgba(127,29,29,0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h2 style="color:#ffffff; margin:0; font-size:1.28rem; font-weight:800;">🎯 Program Graduate Outcomes (PGO) Assessment</h2>
+            <span id="pgoScopeBadge" class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; font-weight:700; border:1px solid rgba(255,255,255,0.4); border-radius:12px; padding:4px 11px; font-size:0.75rem;">Loading role scope...</span>
+          </div>
+          <p style="margin:6px 0 0; font-size:0.83rem; color:#fee2e2; max-width:900px;">
+            Bottom-up OBE attainment consolidation: <strong>Class Record Scores (Step 4) ➔ CLO Assessment (MID-10) ➔ Performance Indicators (PI) ➔ Program Graduate Outcomes (PGO)</strong>, segregated by <strong>Student ID Numbers (ID #s)</strong> and <strong>I-E-D</strong> curriculum progression.
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn btn-light btn-sm" onclick="loadPgoAssessmentData(true)" style="font-weight:700; color:#7f1d1d;">
+            🔄 Refresh Metrics
+          </button>
+        </div>
+      </div>
+      <div id="pgoScopeNotice" style="margin-top:10px; padding:8px 12px; background:rgba(15,23,42,0.28); border:1px solid rgba(255,255,255,0.2); border-radius:8px; font-size:0.78rem; color:#f8fafc;">
+        Evaluating aligned outcomes...
+      </div>
+    </div>
 
-  <div id="tab-approvals" class="tab-panel{% if current_user and not current_user.can_access_faculty_tools %} active{% endif %}">
+    <!-- Section 1: KPI Summary Cards -->
+    <div class="kpi-row" id="pgoKpis" style="margin-bottom:16px;">
+      <div class="kpi"><div class="k-label">Visible PGOs</div><div class="k-value">—</div><div class="k-sub">Loading...</div></div>
+      <div class="kpi"><div class="k-label">PGO Attainment Rate</div><div class="k-value">—</div><div class="k-sub">Loading...</div></div>
+      <div class="kpi"><div class="k-label">Assessed Students (ID #s)</div><div class="k-value">—</div><div class="k-sub">Loading...</div></div>
+      <div class="kpi"><div class="k-label">Aligned Courses &amp; CLOs</div><div class="k-value">—</div><div class="k-sub">Loading...</div></div>
+      <div class="kpi"><div class="k-label">PGOs Meeting Target (≥75%)</div><div class="k-value">—</div><div class="k-sub">Loading...</div></div>
+    </div>
+
+    <!-- Section 2: Interactive PGO Assessment Flowchart -->
+    <div class="card" id="pgoFlowchartCard" style="margin-bottom:16px; border:1px solid #cbd5e1; border-radius:12px; padding:18px 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+        <div>
+          <h3 style="margin:0; font-size:1.08rem; font-weight:800; color:#0f172a;">🗺️ Interactive PGO Assessment Flowchart (Courses &amp; CLOs ➔ PI ➔ PGO)</h3>
+          <p style="margin:3px 0 0; font-size:0.79rem; color:#475569;">
+            <strong>Hover</strong> any node to inspect live attainment &amp; highlight causal paths. <strong>Click</strong> any Course/CLO, PI, or PGO node to open the Student ID # drill-down drawer.
+          </p>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+          <span class="ied-pill ied-I">I · Introductory</span>
+          <span class="ied-pill ied-E">E · Enabling</span>
+          <span class="ied-pill ied-D">D · Demonstrative</span>
+          <span class="badge badge-pass" style="font-size:0.69rem;">✓ ≥75% Attained</span>
+          <span class="badge badge-fail" style="font-size:0.69rem;">⚠ &lt;75% Below Target</span>
+        </div>
+      </div>
+      <div class="pgo-flow-wrap">
+        <div class="pgo-flow-map" id="pgoFlowchartMap">
+          <div style="grid-column:1 / -1; text-align:center; padding:32px; color:#64748b;">Loading PGO Assessment Flowchart...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Hover Tooltip for PGO Flowchart -->
+    <div id="pgoNodeTooltip"></div>
+
+    <!-- Section 3: Consolidated PGO Attainment Charts & Cohort Breakdown -->
+    <div style="display:grid; grid-template-columns:1.25fr 1fr; gap:16px; margin-bottom:16px;" class="pgo-analytics-grid">
+      <div class="card" style="padding:18px 20px; border-radius:12px; border:1px solid #cbd5e1;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+          <div>
+            <h3 style="margin:0; font-size:1.02rem; font-weight:800; color:#0f172a;">📊 Overall Attainment per PGO (Actual vs. 75% Target)</h3>
+            <div style="font-size:0.76rem; color:#64748b;">Consolidated Base-50 grade average &amp; student pass rate per Program Graduate Outcome</div>
+          </div>
+        </div>
+        <div id="pgoBarChartContainer" style="display:flex; flex-direction:column; gap:10px;">
+          <div style="color:#64748b; font-size:0.82rem;">Loading PGO bars...</div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card" style="padding:18px 20px; border-radius:12px; border:1px solid #cbd5e1;">
+          <h3 style="margin:0 0 8px; font-size:1.02rem; font-weight:800; color:#0f172a;">🎓 Cohort / Batch PGO Performance</h3>
+          <div id="pgoCohortContainer" style="display:flex; flex-direction:column; gap:8px;">
+            <div style="color:#64748b; font-size:0.82rem;">Loading cohorts...</div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:18px 20px; border-radius:12px; border:1px solid #cbd5e1; max-height:360px; overflow-y:auto;">
+          <h3 style="margin:0 0 8px; font-size:1.02rem; font-weight:800; color:#0f172a;">📌 Performance Indicator (PI) Breakdown</h3>
+          <div id="pgoPiBreakdownContainer" style="display:flex; flex-direction:column; gap:8px;">
+            <div style="color:#64748b; font-size:0.82rem;">Loading PI breakdown...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Searchable Student ID (ID #) PGO Attainment Matrix -->
+    <div class="card" id="pgoStudentMatrixCard" style="padding:18px 20px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <div>
+          <h3 style="margin:0; font-size:1.08rem; font-weight:800; color:#0f172a;">📋 Student ID (ID #) PGO Attainment Matrix</h3>
+          <div style="font-size:0.78rem; color:#475569;">
+            Segregated by <strong>Student ID Number (ID #)</strong> and batch cohort. Click any student row to inspect individual Course ➔ CLO ➔ PI ➔ PGO ratings.
+          </div>
+        </div>
+        <div id="pgoCohortPills" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      </div>
+      <div style="overflow-x:auto; max-height:520px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+        <table class="pgo-matrix-table" id="pgoStudentMatrixTable">
+          <thead><tr><th>Loading...</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-approvals" class="tab-panel{% if default_tab == 'approvals' or (current_user and not current_user.can_access_faculty_tools and default_tab not in ['curriculum', 'pgo-assessment']) %} active{% endif %}">
     <!-- Header Card -->
     <div class="card" style="background:linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); color:#ffffff; padding:18px 22px; border-radius:12px; margin-bottom:16px; box-shadow:0 4px 12px rgba(30,58,138,0.18);">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
@@ -5932,7 +6141,15 @@
 
     await fetchCurrentUser();
     if (currentUser && !currentUser.can_access_faculty_tools) {
-      switchTab("tab-approvals");
+      const urlParams = new URLSearchParams(window.location.search);
+      const reqTab = urlParams.get("tab");
+      if (reqTab === "pgo-assessment") {
+        switchRibbon("ribbon-pgo-assessment", "tab-pgo-assessment");
+      } else if (reqTab === "curriculum") {
+        switchRibbon("ribbon-curriculum", "tab-curriculum");
+      } else {
+        switchRibbon("ribbon-approvals", "tab-approvals");
+      }
       loadApprovalRequests(true);
       startRealtimeSyncEngine();
       return;
@@ -5947,6 +6164,8 @@
       switchRibbon("ribbon-approvals", "tab-approvals");
     } else if (reqTab === "curriculum") {
       switchRibbon("ribbon-curriculum", "tab-curriculum");
+    } else if (reqTab === "pgo-assessment") {
+      switchRibbon("ribbon-pgo-assessment", "tab-pgo-assessment");
     }
     syncActiveSubjectBarVisibility();
     updateSyllabusStepUI(currentSyllabusStep || 'tab-syllabus');
@@ -6776,7 +6995,7 @@
   }
 
   const SERVER_DEFAULT_TAB = {{ (default_tab or 'syllabus')|tojson }};
-  let currentRibbon = SERVER_DEFAULT_TAB === 'dashboard' ? 'ribbon-dashboard' : (SERVER_DEFAULT_TAB === 'approvals' ? 'ribbon-approvals' : (SERVER_DEFAULT_TAB === 'curriculum' ? 'ribbon-curriculum' : 'ribbon-syllabus'));
+  let currentRibbon = SERVER_DEFAULT_TAB === 'dashboard' ? 'ribbon-dashboard' : (SERVER_DEFAULT_TAB === 'approvals' ? 'ribbon-approvals' : (SERVER_DEFAULT_TAB === 'curriculum' ? 'ribbon-curriculum' : (SERVER_DEFAULT_TAB === 'pgo-assessment' ? 'ribbon-pgo-assessment' : 'ribbon-syllabus')));
   let currentSyllabusStep = 'tab-syllabus';
 
   function hasActiveCourseRecordedScores() {
@@ -6849,7 +7068,7 @@
   }
 
   function switchRibbon(ribbonId, targetTabId) {
-    if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && ribbonId !== 'ribbon-approvals' && ribbonId !== 'ribbon-curriculum') {
+    if (window.CURRENT_USER && !window.CURRENT_USER.can_access_faculty_tools && ribbonId !== 'ribbon-approvals' && ribbonId !== 'ribbon-curriculum' && ribbonId !== 'ribbon-pgo-assessment') {
       ribbonId = 'ribbon-approvals';
       targetTabId = 'tab-approvals';
     }
@@ -6911,6 +7130,7 @@
     const tabMap = {
       'ribbon-dashboard': 'ribbonTabDashboard',
       'ribbon-syllabus': 'ribbonTabSyllabus',
+      'ribbon-pgo-assessment': 'ribbonTabPgoAssessment',
       'ribbon-curriculum': 'ribbonTabCurriculum',
       'ribbon-approvals': 'tabBtnApprovals'
     };
@@ -6922,6 +7142,7 @@
     const bandMap = {
       'ribbon-dashboard': 'ribbonBandDashboard',
       'ribbon-syllabus': 'ribbonBandSyllabus',
+      'ribbon-pgo-assessment': 'ribbonBandPgoAssessment',
       'ribbon-curriculum': 'ribbonBandCurriculum',
       'ribbon-approvals': 'ribbonBandApprovals'
     };
@@ -6933,6 +7154,7 @@
     if (!tabToShow) {
       if (ribbonId === 'ribbon-dashboard') tabToShow = 'tab-dashboard';
       else if (ribbonId === 'ribbon-syllabus') tabToShow = currentSyllabusStep || 'tab-syllabus';
+      else if (ribbonId === 'ribbon-pgo-assessment') tabToShow = 'tab-pgo-assessment';
       else if (ribbonId === 'ribbon-curriculum') tabToShow = 'tab-curriculum';
       else if (ribbonId === 'ribbon-approvals') tabToShow = 'tab-approvals';
     }
@@ -7148,6 +7370,9 @@
       stopReceiptAckPolling();
       updateDashboardCourseSelectors();
       renderDashboard();
+    } else if (tabId === "tab-pgo-assessment") {
+      stopReceiptAckPolling();
+      if (typeof initPgoAssessmentTab === 'function') initPgoAssessmentTab();
     } else if (tabId === "tab-curriculum") {
       stopReceiptAckPolling();
       if (typeof initCurriculumFlowchart === 'function') initCurriculumFlowchart();
@@ -7193,6 +7418,8 @@
       }
       switchRibbon("ribbon-dashboard", "tab-dashboard");
       return;
+    } else if (tabId === "tab-pgo-assessment") {
+      switchRibbon("ribbon-pgo-assessment", "tab-pgo-assessment");
     } else if (tabId === "tab-curriculum") {
       stopReceiptAckPolling();
       if (typeof initCurriculumFlowchart === 'function') initCurriculumFlowchart();
@@ -24208,6 +24435,749 @@ window.addEventListener('pageshow', function(event) {
   }
 });
 
+// ============================================================================
+// PROGRAM GRADUATE OUTCOMES (PGO) ASSESSMENT & INTERACTIVE FLOWCHART ENGINE
+// ============================================================================
+let _pgoReportData = null;
+let _pgoSearchTimer = null;
+let _pgoFlowGraph = { down: {}, up: {}, edges: [], nodesByKey: {} };
+let _pgoActiveDrilldownRows = [];
+
+function initPgoAssessmentTab() {
+  loadPgoAssessmentData(false);
+}
+window.initPgoAssessmentTab = initPgoAssessmentTab;
+
+function debouncedPgoSearch() {
+  clearTimeout(_pgoSearchTimer);
+  _pgoSearchTimer = setTimeout(() => loadPgoAssessmentData(false), 320);
+}
+window.debouncedPgoSearch = debouncedPgoSearch;
+
+function resetPgoFilters() {
+  const progEl = document.getElementById("pgoFilterProgram");
+  const crsEl = document.getElementById("pgoFilterCourse");
+  const iedEl = document.getElementById("pgoFilterIed");
+  const cohEl = document.getElementById("pgoFilterCohort");
+  const qEl = document.getElementById("pgoSearchInput");
+  if (progEl && !progEl.disabled) progEl.value = "ALL";
+  if (crsEl) crsEl.value = "ALL";
+  if (iedEl) iedEl.value = "ALL";
+  if (cohEl) cohEl.value = "ALL";
+  if (qEl) qEl.value = "";
+  loadPgoAssessmentData(false);
+}
+window.resetPgoFilters = resetPgoFilters;
+
+async function loadPgoAssessmentData(showNotify = false) {
+  const progVal = document.getElementById("pgoFilterProgram")?.value || "ALL";
+  const crsVal = document.getElementById("pgoFilterCourse")?.value || "ALL";
+  const iedVal = document.getElementById("pgoFilterIed")?.value || "ALL";
+  const cohVal = document.getElementById("pgoFilterCohort")?.value || "ALL";
+  const qVal = (document.getElementById("pgoSearchInput")?.value || "").trim();
+
+  const params = new URLSearchParams({
+    program: progVal,
+    course_id: crsVal,
+    ied: iedVal,
+    cohort: cohVal,
+    q: qVal,
+  });
+
+  try {
+    const res = await fetch(`/api/pgo-assessment?${params.toString()}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    _pgoReportData = data;
+    renderPgoAssessmentView(data);
+    if (showNotify && typeof showToast === "function") {
+      showToast("PGO Assessment data consolidated from Class Records & CLOs.", "success");
+    }
+  } catch (err) {
+    console.error("Failed to load PGO assessment:", err);
+    const mapEl = document.getElementById("pgoFlowchartMap");
+    if (mapEl) {
+      mapEl.innerHTML = `<div style="grid-column:1 / -1; text-align:center; padding:28px; color:#b91c1c; background:#fef2f2; border-radius:8px;">⚠️ Could not load PGO Assessment data: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+window.loadPgoAssessmentData = loadPgoAssessmentData;
+
+function _syncPgoFilterDropdowns(filters, scope) {
+  const progSel = document.getElementById("pgoFilterProgram");
+  if (progSel) {
+    const cur = progSel.value || "ALL";
+    const progs = filters?.available_programs || [];
+    progSel.innerHTML = `<option value="ALL">All Programs</option>` + progs.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join("");
+    if (progs.includes(cur)) progSel.value = cur;
+    else if (cur === "ALL") progSel.value = "ALL";
+    // If single-program PH or single-program faculty, keep selectable if >1 else show
+    if (!scope?.is_college_wide && progs.length <= 1 && progs.length > 0 && !scope?.is_program_wide) {
+      progSel.value = progs[0];
+    }
+  }
+
+  const crsSel = document.getElementById("pgoFilterCourse");
+  if (crsSel) {
+    const curC = crsSel.value || "ALL";
+    const courses = filters?.available_courses || [];
+    crsSel.innerHTML = `<option value="ALL">All Aligned Courses (${courses.length})</option>` +
+      courses.map(c => `<option value="${escapeHtml(c.course_id)}">${escapeHtml(c.course_code)} (${escapeHtml(c.section)}) ${c.has_scores ? '✓' : '· Pending'}</option>`).join("");
+    if (courses.some(c => c.course_id === curC)) crsSel.value = curC;
+    else crsSel.value = "ALL";
+  }
+
+  const cohSel = document.getElementById("pgoFilterCohort");
+  if (cohSel) {
+    const curCoh = cohSel.value || "ALL";
+    const cohorts = filters?.available_cohorts || [];
+    cohSel.innerHTML = `<option value="ALL">All Cohorts / Batches</option>` +
+      cohorts.map(c => `<option value="${escapeHtml(c)}">Batch ${escapeHtml(c)} (${escapeHtml(c)}-XXXXX)</option>`).join("");
+    if (cohorts.includes(curCoh)) cohSel.value = curCoh;
+    else cohSel.value = "ALL";
+  }
+}
+
+function renderPgoAssessmentView(data) {
+  if (!data) return;
+  const scope = data.scope || {};
+  const kpis = data.kpis || {};
+  const pgos = data.pgos || [];
+  const pis = data.pis || [];
+  const cohorts = data.cohorts || [];
+  const studentsMatrix = data.students_matrix || [];
+
+  try { _syncPgoFilterDropdowns(data.filters || {}, scope); } catch (e) { console.warn("_syncPgoFilterDropdowns:", e); }
+
+  // 1. Scope Banner
+  const scopeBadge = document.getElementById("pgoScopeBadge");
+  if (scopeBadge) {
+    scopeBadge.textContent = scope.is_program_wide ? "🏛️ Program / College-Wide Oversight" : "👤 Faculty Aligned Scope";
+  }
+  const scopeNotice = document.getElementById("pgoScopeNotice");
+  if (scopeNotice) {
+    if (scope.is_program_wide) {
+      scopeNotice.innerHTML = `<strong>${escapeHtml(scope.scope_label || "Program-Wide Access")}:</strong> Showing all <strong>${scope.visible_pgo_count || pgos.length} Program Graduate Outcomes</strong> across aligned courses, cohorts, and Student ID #s.`;
+    } else {
+      const pgoTags = pgos.map(p => `<span class="badge" style="background:rgba(255,255,255,0.22); color:#fff; margin-left:4px;">${escapeHtml(p.pgo_label)}</span>`).join("");
+      scopeNotice.innerHTML = `<strong>${escapeHtml(scope.scope_label || "Faculty Scope")}:</strong> Visibility restricted to the <strong>${pgos.length} PGO(s)</strong> aligned with your assigned courses (${kpis.aligned_courses_count || 0} course(s)). ${pgoTags}`;
+    }
+  }
+
+  // 2. KPI Summary Cards
+  const kpiEl = document.getElementById("pgoKpis");
+  if (kpiEl) {
+    const attPct = Number(kpis.overall_attainment_pct || 0);
+    const avgGrd = Number(kpis.overall_avg_grade || 0);
+    kpiEl.innerHTML = `
+      <div class="kpi" style="border-left-color:#7f1d1d;">
+        <div class="k-label">Visible PGOs (${scope.is_program_wide ? 'Program-Wide' : 'Faculty Scope'})</div>
+        <div class="k-value">${kpis.visible_pgos ?? pgos.length}</div>
+        <div class="k-sub">${kpis.aligned_pgos ?? 0} aligned · ${kpis.assessed_pgos ?? 0} with recorded scores</div>
+      </div>
+      <div class="kpi" style="border-left-color:${attPct >= 50 ? '#15803d' : '#b45309'};">
+        <div class="k-label">Overall PGO Attainment</div>
+        <div class="k-value">${kpis.assessed_pgos ? attPct.toFixed(1) + '%' : '—'}</div>
+        <div class="k-sub">Avg Base-50 Grade: ${kpis.assessed_pgos ? avgGrd.toFixed(2) : '—'} (Target ≥75.0)</div>
+      </div>
+      <div class="kpi" style="border-left-color:#2563eb;">
+        <div class="k-label">Students (ID #s)</div>
+        <div class="k-value">${kpis.total_students_assessed ?? 0} <span style="font-size:0.9rem; font-weight:600; color:#64748b;">/ ${kpis.total_students_enrolled ?? 0}</span></div>
+        <div class="k-sub">Assessed out of enrolled roster</div>
+      </div>
+      <div class="kpi" style="border-left-color:#7c3aed;">
+        <div class="k-label">Consolidated Courses &amp; CLOs</div>
+        <div class="k-value">${kpis.aligned_courses_count ?? 0} <span style="font-size:0.9rem; font-weight:600; color:#64748b;">(${kpis.aligned_clos_count ?? 0} CLOs)</span></div>
+        <div class="k-sub">${kpis.assessed_courses_count ?? 0} course(s) with Class Record scores</div>
+      </div>
+      <div class="kpi" style="border-left-color:${(kpis.pgos_meeting_target || 0) > 0 ? '#15803d' : '#dc2626'};">
+        <div class="k-label">PGOs Meeting ≥75% Target</div>
+        <div class="k-value">${kpis.pgos_meeting_target ?? 0} / ${kpis.assessed_pgos ?? 0}</div>
+        <div class="k-sub">Threshold: ≥75.0 Base-50 CLO-PGO Grade</div>
+      </div>
+    `;
+  }
+
+  // 3. Interactive Flowchart
+  try { renderPgoFlowchart(data); } catch (e) { console.error("renderPgoFlowchart error:", e); }
+
+  // 4. Overall Attainment per PGO Bar Chart
+  try { renderPgoBarChart(pgos); } catch (e) { console.error("renderPgoBarChart error:", e); }
+
+  // 5. Cohorts & PI Breakdown
+  try { renderPgoCohorts(cohorts); } catch (e) { console.error("renderPgoCohorts error:", e); }
+  try { renderPgoPiBreakdown(pis); } catch (e) { console.error("renderPgoPiBreakdown error:", e); }
+
+  // 6. Student ID Matrix
+  try { renderPgoStudentMatrix(pgos, studentsMatrix, cohorts); } catch (e) { console.error("renderPgoStudentMatrix error:", e); }
+}
+
+function renderPgoFlowchart(data) {
+  const mapEl = document.getElementById("pgoFlowchartMap");
+  if (!mapEl) return;
+  const fc = data.flowchart || {};
+  const ccloNodes = fc.course_clo_nodes || [];
+  const piNodes = fc.pi_nodes || [];
+  const pgoNodes = fc.pgo_nodes || [];
+  const edges = fc.edges || [];
+
+  if (!ccloNodes.length && !pgoNodes.length) {
+    mapEl.innerHTML = `<div style="grid-column:1 / -1; text-align:center; padding:32px; color:#64748b;">No aligned Courses, CLOs, PIs, or PGOs match the active filter.</div>`;
+    return;
+  }
+
+  // Build graph traversal index for hover highlighting & live tooltips
+  const down = {}, up = {}, nodesByKey = {};
+  edges.forEach(e => {
+    (down[e.from] = down[e.from] || []).push(e.to);
+    (up[e.to] = up[e.to] || []).push(e.from);
+  });
+  ccloNodes.forEach(n => { nodesByKey[n.node_key] = n; });
+  piNodes.forEach(n => { nodesByKey[n.node_key] = n; });
+  pgoNodes.forEach(n => { nodesByKey[n.node_key] = n; });
+  _pgoFlowGraph = { down, up, edges, nodesByKey };
+
+  const _statusClass = (n) => {
+    if (!n.assessed_students_count) return "pending";
+    return (n.avg_grade !== null && n.avg_grade >= 75.0) ? "attained" : "below-target";
+  };
+  const _iedBadges = (lvls) => (lvls || []).map(l => `<span class="ied-pill ied-${escapeHtml(l)}">${escapeHtml(l)}</span>`).join(" ");
+  const _metricPill = (n) => {
+    if (!n.assessed_students_count) {
+      return `<span class="badge badge-fa" style="font-size:0.66rem;">Pending Scores (${n.enrolled_students_count || 0} enrolled)</span>`;
+    }
+    const ok = (n.avg_grade !== null && n.avg_grade >= 75.0);
+    return `<span class="badge ${ok ? 'badge-pass' : 'badge-fail'}" style="font-size:0.66rem;">Avg ${Number(n.avg_grade).toFixed(2)} · ${Number(n.attainment_rate_pct || 0).toFixed(1)}% (${n.attained_students_count}/${n.assessed_students_count})</span>`;
+  };
+  const _nodeHandlers = (type, key) =>
+    `data-key="${escapeHtml(key)}" onmouseenter="highlightPgoFlowNode(this.dataset.key, event)" onmousemove="movePgoTooltip(event)" onmouseleave="clearPgoFlowHighlight()" onclick="openPgoNodeDrilldown('${escapeHtml(type)}', this.dataset.key)"`;
+
+  mapEl.innerHTML = `
+    <svg class="pgo-flow-svg" id="pgoFlowchartSvg"></svg>
+    <div class="pgo-flow-col">
+      <div class="pgo-flow-col-title">1. Courses &amp; CLOs (Class Record)</div>
+      ${ccloNodes.map(n => `
+        <div class="pgo-flow-node cclo ${_statusClass(n)}" ${_nodeHandlers('course_clo', n.node_key)}>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+            <strong style="color:#0f172a; font-size:0.81rem;">${escapeHtml(n.course_code)} · ${escapeHtml(n.clo_id)}</strong>
+            <div>${_iedBadges(n.ied_levels)}</div>
+          </div>
+          <div style="font-size:0.71rem; color:#475569; margin:2px 0 4px;">${escapeHtml(n.section)} · ${escapeHtml((n.clo_description || n.course_title || '').slice(0, 72))}${(n.clo_description || '').length > 72 ? '…' : ''}</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">${_metricPill(n)}</div>
+        </div>
+      `).join("")}
+    </div>
+    <div class="pgo-flow-col">
+      <div class="pgo-flow-col-title">2. Performance Indicators (PI)</div>
+      ${piNodes.map(n => `
+        <div class="pgo-flow-node pi ${_statusClass(n)}" ${_nodeHandlers('pi', n.node_key)}>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+            <strong style="color:#1d4ed8; font-size:0.81rem;">PI ${escapeHtml(n.pi_id)} (${escapeHtml(n.pgo_label)})</strong>
+            <div>${_iedBadges(n.ied_levels)}</div>
+          </div>
+          <div style="font-size:0.71rem; color:#334155; margin:2px 0 4px;">${escapeHtml((n.description || '').slice(0, 82))}${(n.description || '').length > 82 ? '…' : ''}</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">${_metricPill(n)}</div>
+        </div>
+      `).join("")}
+    </div>
+    <div class="pgo-flow-col">
+      <div class="pgo-flow-col-title">3. Program Graduate Outcomes (PGO)</div>
+      ${pgoNodes.map(n => `
+        <div class="pgo-flow-node pgo ${_statusClass(n)}" ${_nodeHandlers('pgo', n.node_key)}>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+            <strong style="color:#7f1d1d; font-size:0.84rem;">${escapeHtml(n.pgo_label.toUpperCase())}: ${escapeHtml(n.keyword)}</strong>
+            <div>${_iedBadges(n.ied_levels)}</div>
+          </div>
+          <div style="font-size:0.71rem; color:#334155; margin:2px 0 5px;">${escapeHtml((n.description || '').slice(0, 88))}${(n.description || '').length > 88 ? '…' : ''}</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+            ${_metricPill(n)}
+            <span class="badge" style="background:#f1f5f9; color:#334155; font-size:0.65rem;">Click for ID #s ➔</span>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  requestAnimationFrame(drawPgoFlowchartLines);
+}
+
+function drawPgoFlowchartLines() {
+  const mapEl = document.getElementById("pgoFlowchartMap");
+  const svgEl = document.getElementById("pgoFlowchartSvg");
+  if (!mapEl || !svgEl || !mapEl.offsetParent) return;
+  const base = mapEl.getBoundingClientRect();
+  svgEl.setAttribute("width", mapEl.clientWidth);
+  svgEl.setAttribute("height", mapEl.scrollHeight);
+
+  const getRect = (key) => {
+    const el = mapEl.querySelector(`.pgo-flow-node[data-key="${CSS.escape(key)}"]`);
+    return el ? el.getBoundingClientRect() : null;
+  };
+
+  svgEl.innerHTML = (_pgoFlowGraph.edges || []).map(e => {
+    const a = getRect(e.from);
+    const b = getRect(e.to);
+    if (!a || !b) return "";
+    const x1 = a.right - base.left;
+    const y1 = a.top + a.height / 2 - base.top;
+    const x2 = b.left - base.left;
+    const y2 = b.top + b.height / 2 - base.top;
+    const dx = Math.max(24, (x2 - x1) * 0.5);
+    return `<path class="ied-${escapeHtml(e.ied || 'I')}" data-from="${escapeHtml(e.from)}" data-to="${escapeHtml(e.to)}"
+      d="M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}" />`;
+  }).join("");
+}
+
+function movePgoTooltip(evt) {
+  const tip = document.getElementById("pgoNodeTooltip");
+  if (!tip || tip.style.display === "none") return;
+  const pad = 14;
+  let x = evt.clientX + pad;
+  let y = evt.clientY + pad;
+  if (x + 330 > window.innerWidth) x = Math.max(10, evt.clientX - 335);
+  if (y + 180 > window.innerHeight) y = Math.max(10, evt.clientY - 185);
+  tip.style.left = `${x}px`;
+  tip.style.top = `${y}px`;
+}
+window.movePgoTooltip = movePgoTooltip;
+
+function highlightPgoFlowNode(key, evt) {
+  const mapEl = document.getElementById("pgoFlowchartMap");
+  if (!mapEl) return;
+
+  // Trace connected nodes upstream and downstream
+  const keep = new Set([key]);
+  const walk = (start, adj) => {
+    const q = [start];
+    while (q.length) {
+      const cur = q.shift();
+      (adj[cur] || []).forEach(nxt => {
+        if (!keep.has(nxt)) { keep.add(nxt); q.push(nxt); }
+      });
+    }
+  };
+  walk(key, _pgoFlowGraph.down || {});
+  walk(key, _pgoFlowGraph.up || {});
+
+  mapEl.querySelectorAll(".pgo-flow-node").forEach(el => {
+    const k = el.dataset.key;
+    el.classList.toggle("hl", keep.has(k));
+    el.classList.toggle("dim", !keep.has(k));
+  });
+  mapEl.querySelectorAll("svg.pgo-flow-svg path").forEach(p => {
+    const hit = keep.has(p.dataset.from) && keep.has(p.dataset.to);
+    p.classList.toggle("hl", hit);
+    p.classList.toggle("dim", !hit);
+  });
+
+  // Populate live hover tooltip
+  const node = (_pgoFlowGraph.nodesByKey || {})[key];
+  const tip = document.getElementById("pgoNodeTooltip");
+  if (node && tip) {
+    let title = "";
+    let coursesInfo = "";
+    if (node.node_type === "course_clo") {
+      title = `${node.course_code} · ${node.clo_id} (${node.section})`;
+      coursesInfo = `Aligned PIs: ${(node.aligned_pis || []).join(", ") || "—"} ➔ PGOs: ${(node.aligned_pgos || []).map(p => "PGO " + p).join(", ")}`;
+    } else if (node.node_type === "pi") {
+      title = `PI ${node.pi_id} (${node.pgo_label})`;
+      coursesInfo = `Aligned Courses: ${(node.aligned_courses || []).map(c => c.course_code).join(", ") || "None"}`;
+    } else {
+      title = `${(node.pgo_label || "").toUpperCase()}: ${node.keyword || ""}`;
+      coursesInfo = `Aligned Courses: ${(node.aligned_courses || []).map(c => c.course_code).join(", ") || "None"}`;
+    }
+    const iedText = (node.ied_levels || []).map(l => l === "I" ? "I (Introductory)" : l === "E" ? "E (Enabling)" : "D (Demonstrative)").join(", ") || "—";
+    const attStr = node.assessed_students_count
+      ? `<strong>${Number(node.attainment_rate_pct || 0).toFixed(1)}%</strong> attained (${node.attained_students_count}/${node.assessed_students_count} students) · Avg Grade: <strong>${Number(node.avg_grade || 0).toFixed(2)}</strong>`
+      : `<em>Pending Class Record scores (${node.enrolled_students_count || 0} enrolled)</em>`;
+
+    tip.innerHTML = `
+      <div style="font-weight:800; color:#f8fafc; font-size:0.83rem; margin-bottom:4px;">${escapeHtml(title)}</div>
+      <div style="color:#93c5fd; font-size:0.73rem; margin-bottom:4px;">I-E-D Progression: <strong>${escapeHtml(iedText)}</strong></div>
+      <div style="color:#e2e8f0; margin-bottom:4px;">${attStr}</div>
+      <div style="color:#cbd5e1; font-size:0.72rem; border-top:1px solid #334155; padding-top:4px; margin-top:4px;">${escapeHtml(coursesInfo)}</div>
+      <div style="color:#fde047; font-size:0.69rem; margin-top:4px;">💡 Click node to view Student ID # breakdown</div>
+    `;
+    tip.style.display = "block";
+    if (evt) movePgoTooltip(evt);
+  }
+}
+window.highlightPgoFlowNode = highlightPgoFlowNode;
+
+function clearPgoFlowHighlight() {
+  const mapEl = document.getElementById("pgoFlowchartMap");
+  if (mapEl) {
+    mapEl.querySelectorAll(".pgo-flow-node, svg.pgo-flow-svg path").forEach(el => el.classList.remove("hl", "dim"));
+  }
+  const tip = document.getElementById("pgoNodeTooltip");
+  if (tip) tip.style.display = "none";
+}
+window.clearPgoFlowHighlight = clearPgoFlowHighlight;
+
+function renderPgoBarChart(pgos) {
+  const cont = document.getElementById("pgoBarChartContainer");
+  if (!cont) return;
+  if (!pgos.length) {
+    cont.innerHTML = `<div style="color:#64748b; font-size:0.82rem;">No PGO records in current scope.</div>`;
+    return;
+  }
+
+  cont.innerHTML = pgos.map(p => {
+    const isAssessed = Boolean(p.is_assessed && p.avg_grade !== null);
+    const avg = isAssessed ? Number(p.avg_grade) : 0;
+    const pct = isAssessed ? Number(p.attainment_rate_pct || 0) : 0;
+    const barW = isAssessed ? Math.max(4, Math.min(100, ((avg - 50) / 50) * 100)) : 0;
+    const ok = isAssessed && avg >= 75.0;
+    const fillCol = !isAssessed ? "#cbd5e1" : (ok ? "#16a34a" : "#dc2626");
+    const iedPills = (p.ied_levels || []).map(l => `<span class="ied-pill ied-${escapeHtml(l)}">${escapeHtml(l)}</span>`).join(" ");
+    const crsText = (p.aligned_courses || []).map(c => c.course_code).join(", ") || "No aligned course yet";
+
+    return `
+      <div onclick="openPgoNodeDrilldown('pgo', 'pgo:${escapeHtml(p.pgo_id)}')" style="cursor:pointer; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; background:${p.is_aligned ? '#ffffff' : '#f8fafc'}; transition:box-shadow 0.15s;" title="Click to drill down by Student ID #s">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap;">
+          <div style="font-size:0.82rem; font-weight:800; color:#0f172a;">
+            <span style="color:#7f1d1d;">${escapeHtml(p.pgo_label.toUpperCase())}:</span> ${escapeHtml(p.keyword)} ${iedPills}
+          </div>
+          <div style="font-size:0.75rem; font-weight:700;">
+            ${isAssessed
+              ? `<span style="color:${ok ? '#15803d' : '#b91c1c'};">Avg ${avg.toFixed(2)} (${pct.toFixed(1)}% Attained · ${p.attained_students_count}/${p.assessed_students_count} IDs)</span>`
+              : `<span style="color:#64748b;">${p.is_aligned ? 'Pending Scores (' + (p.enrolled_students_count || 0) + ' enrolled)' : 'Not Aligned in Filter'}</span>`
+            }
+          </div>
+        </div>
+        <div style="position:relative; height:12px; background:#e2e8f0; border-radius:999px; overflow:visible;">
+          <div style="height:100%; width:${barW}%; background:${fillCol}; border-radius:999px; transition:width 0.3s ease;"></div>
+          <div style="position:absolute; left:50%; top:-3px; bottom:-3px; width:2px; background:#0f172a; opacity:0.65;" title="Target: 75.0 Base-50 Grade"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.70rem; color:#64748b; margin-top:4px;">
+          <span>Courses: ${escapeHtml(crsText)}</span>
+          <span>Target: ≥75.0 Base-50</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderPgoCohorts(cohorts) {
+  const cont = document.getElementById("pgoCohortContainer");
+  if (!cont) return;
+  if (!cohorts.length) {
+    cont.innerHTML = `<div style="color:#64748b; font-size:0.80rem;">No student cohort prefixes found.</div>`;
+    return;
+  }
+  cont.innerHTML = cohorts.map(c => {
+    const hasG = c.avg_pgo_grade !== null && c.avg_pgo_grade !== undefined;
+    const ok = hasG && c.avg_pgo_grade >= 75.0;
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 11px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
+        <div>
+          <div style="font-size:0.81rem; font-weight:800; color:#0f172a;">${escapeHtml(c.label)}</div>
+          <div style="font-size:0.72rem; color:#64748b;">${c.assessed_count} assessed of ${c.student_count} student ID(s)</div>
+        </div>
+        <div style="text-align:right;">
+          ${hasG
+            ? `<span class="badge ${ok ? 'badge-pass' : 'badge-fail'}" style="font-size:0.73rem;">Avg ${Number(c.avg_pgo_grade).toFixed(2)} · ${Number(c.attainment_rate_pct || 0).toFixed(1)}%</span>`
+            : `<span class="badge badge-fa" style="font-size:0.72rem;">Pending Scores</span>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderPgoPiBreakdown(pis) {
+  const cont = document.getElementById("pgoPiBreakdownContainer");
+  if (!cont) return;
+  const alignedPis = pis.filter(p => p.is_aligned);
+  const displayPis = alignedPis.length ? alignedPis : pis;
+  if (!displayPis.length) {
+    cont.innerHTML = `<div style="color:#64748b; font-size:0.80rem;">No Performance Indicators aligned.</div>`;
+    return;
+  }
+  cont.innerHTML = displayPis.map(pi => {
+    const hasG = pi.is_assessed && pi.avg_grade !== null;
+    const ok = hasG && pi.avg_grade >= 75.0;
+    const ieds = (pi.ied_levels || []).map(l => `<span class="ied-pill ied-${escapeHtml(l)}">${escapeHtml(l)}</span>`).join(" ");
+    return `
+      <div onclick="openPgoNodeDrilldown('pi', 'pi:${escapeHtml(pi.pi_id)}')" style="cursor:pointer; padding:8px 10px; border:1px solid #e2e8f0; border-radius:7px; background:#ffffff;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+          <strong style="font-size:0.78rem; color:#1d4ed8;">PI ${escapeHtml(pi.pi_id)} (${escapeHtml(pi.pgo_label)}) ${ieds}</strong>
+          ${hasG
+            ? `<span class="badge ${ok ? 'badge-pass' : 'badge-fail'}" style="font-size:0.68rem;">${Number(pi.avg_grade).toFixed(2)} (${Number(pi.attainment_rate_pct || 0).toFixed(0)}%)</span>`
+            : `<span class="badge badge-fa" style="font-size:0.68rem;">Pending</span>`
+          }
+        </div>
+        <div style="font-size:0.71rem; color:#475569; margin-top:2px;">${escapeHtml(pi.description || "")}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderPgoStudentMatrix(pgos, studentsMatrix, cohorts) {
+  const tbl = document.getElementById("pgoStudentMatrixTable");
+  const pillsEl = document.getElementById("pgoCohortPills");
+  if (!tbl) return;
+
+  if (pillsEl) {
+    const curCoh = document.getElementById("pgoFilterCohort")?.value || "ALL";
+    pillsEl.innerHTML = `<button type="button" class="btn btn-sm ${curCoh === 'ALL' ? 'btn-primary' : 'btn-light'}" style="font-size:0.73rem; padding:3px 9px;" onclick="document.getElementById('pgoFilterCohort').value='ALL'; loadPgoAssessmentData();">All (${studentsMatrix.length})</button>` +
+      cohorts.map(c => `<button type="button" class="btn btn-sm ${curCoh === c.cohort ? 'btn-primary' : 'btn-light'}" style="font-size:0.73rem; padding:3px 9px;" onclick="document.getElementById('pgoFilterCohort').value='${escapeHtml(c.cohort)}'; loadPgoAssessmentData();">Batch ${escapeHtml(c.cohort)} (${c.student_count})</button>`).join("");
+  }
+
+  const matrixPgos = pgos.filter(p => p.is_aligned);
+  const cols = matrixPgos.length ? matrixPgos : pgos;
+
+  const thead = `
+    <thead>
+      <tr>
+        <th style="text-align:left; min-width:110px;">Student ID #</th>
+        <th style="text-align:left; min-width:170px;">Student Name</th>
+        <th style="min-width:75px;">Batch</th>
+        <th style="text-align:left; min-width:130px;">Aligned Courses</th>
+        ${cols.map(p => `<th title="${escapeHtml(p.keyword)}">${escapeHtml(p.pgo_label.toUpperCase())}<div style="font-size:0.65rem; font-weight:500; color:#64748b;">${escapeHtml((p.keyword || '').slice(0, 14))}</div></th>`).join("")}
+        <th style="background:#fef3c7; min-width:95px;">Overall PGO</th>
+      </tr>
+    </thead>
+  `;
+
+  if (!studentsMatrix.length) {
+    tbl.innerHTML = thead + `<tbody><tr><td colspan="${cols.length + 5}" style="padding:26px; color:#64748b;">No Student ID records match the current filters.</td></tr></tbody>`;
+    return;
+  }
+
+  const tbody = studentsMatrix.map(st => {
+    const courseTags = (st.courses || []).map(c => `<span class="badge ${c.has_scores ? 'badge-sa' : 'badge-fa'}" style="font-size:0.66rem; margin:1px;">${escapeHtml(c.course_code)}</span>`).join(" ");
+    const ovGrade = st.overall_pgo_grade;
+    const ovAtt = st.overall_attainment_pct;
+    const ovCls = ovGrade === null ? "pgo-cell-na" : (ovGrade >= 75.0 ? "pgo-cell-pass" : "pgo-cell-fail");
+
+    return `
+      <tr onclick="openPgoStudentDrilldown('${escapeHtml(st.student_id)}')" title="Click to inspect full Class Record ➔ CLO ➔ PI ➔ PGO breakdown for ${escapeHtml(st.student_id)}">
+        <td class="st-left"><strong style="color:#1e3a8a; font-family:monospace;">${escapeHtml(st.student_id)}</strong></td>
+        <td class="st-left">${escapeHtml(st.name)}</td>
+        <td><span class="badge" style="background:#f1f5f9; color:#334155; font-size:0.69rem;">${escapeHtml(st.cohort)}</span></td>
+        <td class="st-left">${courseTags || '—'}</td>
+        ${cols.map(p => {
+          const sc = (st.pgo_scores || {})[p.pgo_id];
+          if (!sc) return `<td class="pgo-cell-na">—</td>`;
+          if (sc.grade === null || sc.grade === undefined) return `<td class="pgo-cell-na" title="Aligned (${sc.ied_levels.join('/')}), pending scores">Pending</td>`;
+          const cls = sc.attained ? "pgo-cell-pass" : "pgo-cell-fail";
+          return `<td class="${cls}">${Number(sc.grade).toFixed(2)}<div style="font-size:0.64rem; font-weight:600;">${sc.ied_levels.join('/')}</div></td>`;
+        }).join("")}
+        <td class="${ovCls}">
+          ${ovGrade !== null ? `${Number(ovGrade).toFixed(2)}<div style="font-size:0.65rem;">${Number(ovAtt || 0).toFixed(0)}% (${st.attained_pgos_count}/${st.assessed_pgos_count})</div>` : 'Pending'}
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbl.innerHTML = thead + `<tbody>${tbody}</tbody>`;
+}
+
+function openPgoNodeDrilldown(nodeType, nodeKey) {
+  clearPgoFlowHighlight();
+  if (!_pgoReportData) return;
+
+  let title = "";
+  let subtitle = "";
+  let rows = [];
+
+  if (nodeType === "pgo") {
+    const pid = nodeKey.replace(/^pgo:/, "");
+    const pgo = (_pgoReportData.pgos || []).find(p => p.pgo_id === pid);
+    if (!pgo) return;
+    title = `${(pgo.pgo_label || "").toUpperCase()}: ${pgo.keyword || ""}`;
+    subtitle = pgo.description || "Student ID # breakdown across all aligned CLOs & PIs";
+    rows = _flattenStudentIdsForModal(pgo.student_ids || [], "pgo");
+  } else if (nodeType === "pi") {
+    const piId = nodeKey.replace(/^pi:/, "");
+    const pi = (_pgoReportData.pis || []).find(p => p.pi_id === piId);
+    if (!pi) return;
+    title = `Performance Indicator ${pi.pi_id} (${pi.pgo_label})`;
+    subtitle = pi.description || "Student ID # breakdown for this Performance Indicator";
+    rows = _flattenStudentIdsForModal(pi.student_ids || [], "pi");
+  } else if (nodeType === "course_clo") {
+    const cnode = (_pgoReportData.flowchart?.course_clo_nodes || []).find(n => n.node_key === nodeKey);
+    if (!cnode) return;
+    title = `${cnode.course_code} (${cnode.section}) · ${cnode.clo_id}`;
+    subtitle = cnode.clo_description || cnode.course_title || "";
+    rows = (cnode.student_ids || []).map(s => ({
+      student_id: s.student_id,
+      name: s.name,
+      cohort: s.cohort,
+      course_code: s.course_code,
+      section: s.section,
+      clo_id: s.clo_id,
+      pgo_label: (cnode.aligned_pgos || []).map(p => "PGO " + p).join(", "),
+      pi_id: (cnode.aligned_pis || []).join(", "),
+      ied: (cnode.ied_levels || []).join("/"),
+      per_sa_clo: s.per_sa_clo || {},
+      clo_final_grade: s.clo_final_grade,
+      current_assessed_grade: s.current_assessed_grade,
+      target_score_pct: s.target_score_pct,
+      attained: s.attained,
+      has_scores: s.has_scores,
+      agg_grade: s.clo_final_grade,
+    }));
+  }
+
+  _showPgoDrilldownModal(title, subtitle, rows);
+}
+window.openPgoNodeDrilldown = openPgoNodeDrilldown;
+
+function _flattenStudentIdsForModal(studentEntries, mode) {
+  const out = [];
+  studentEntries.forEach(st => {
+    const aggGrade = mode === "pgo" ? st.pgo_grade : st.pi_grade;
+    const details = st.details && st.details.length ? st.details : [{}];
+    details.forEach(d => {
+      out.push({
+        student_id: st.student_id,
+        name: st.name,
+        cohort: st.cohort,
+        course_code: d.course_code || "—",
+        section: d.section || "",
+        clo_id: d.clo_id || "—",
+        pgo_label: d.pgo_label || "—",
+        pi_id: d.pi_id || "—",
+        ied: d.ied || (st.ied_levels || []).join("/"),
+        per_sa_clo: d.per_sa_clo || {},
+        clo_final_grade: d.clo_final_grade,
+        current_assessed_grade: d.current_assessed_grade,
+        target_score_pct: d.target_score_pct || st.target_score_pct || 75.0,
+        attained: d.attained !== undefined ? d.attained : st.attained,
+        has_scores: Boolean(d.has_scores || aggGrade !== null),
+        agg_grade: aggGrade,
+      });
+    });
+  });
+  return out;
+}
+
+function openPgoStudentDrilldown(studentId) {
+  if (!_pgoReportData) return;
+  const st = (_pgoReportData.students_matrix || []).find(s => s.student_id === studentId);
+  if (!st) return;
+  const title = `Student ID # ${st.student_id} — ${st.name}`;
+  const subtitle = `Cohort Batch ${st.cohort} · Overall PGO Grade: ${st.overall_pgo_grade !== null ? Number(st.overall_pgo_grade).toFixed(2) : 'Pending'} (${st.attained_pgos_count}/${st.assessed_pgos_count} PGOs Attained)`;
+  const rows = (st.clo_details || []).map(d => ({
+    student_id: st.student_id,
+    name: st.name,
+    cohort: st.cohort,
+    course_code: d.course_code,
+    section: d.section,
+    clo_id: d.clo_id,
+    pgo_label: d.pgo_label,
+    pi_id: d.pi_id,
+    ied: d.ied,
+    per_sa_clo: d.per_sa_clo || {},
+    clo_final_grade: d.clo_final_grade,
+    current_assessed_grade: d.current_assessed_grade,
+    target_score_pct: d.target_score_pct,
+    attained: d.attained,
+    has_scores: d.has_scores,
+    agg_grade: (st.pgo_scores?.[d.pgo_id]?.grade) ?? d.clo_final_grade,
+  }));
+  _showPgoDrilldownModal(title, subtitle, rows);
+}
+window.openPgoStudentDrilldown = openPgoStudentDrilldown;
+
+function _showPgoDrilldownModal(title, subtitle, rows) {
+  _pgoActiveDrilldownRows = rows || [];
+  const modal = document.getElementById("pgoDrilldownModal");
+  const titleEl = document.getElementById("pgoDrilldownTitle");
+  const subEl = document.getElementById("pgoDrilldownSubtitle");
+  const searchEl = document.getElementById("pgoDrilldownSearch");
+  if (titleEl) titleEl.textContent = title;
+  if (subEl) subEl.textContent = subtitle;
+  if (searchEl) searchEl.value = "";
+  renderPgoDrilldownTable(_pgoActiveDrilldownRows);
+  if (modal) modal.style.display = "flex";
+}
+
+function closePgoDrilldownModal() {
+  const modal = document.getElementById("pgoDrilldownModal");
+  if (modal) modal.style.display = "none";
+}
+window.closePgoDrilldownModal = closePgoDrilldownModal;
+
+function filterPgoDrilldownRows(query) {
+  const q = (query || "").trim().toLowerCase();
+  if (!q) {
+    renderPgoDrilldownTable(_pgoActiveDrilldownRows);
+    return;
+  }
+  const filtered = _pgoActiveDrilldownRows.filter(r =>
+    (r.student_id || "").toLowerCase().includes(q) ||
+    (r.name || "").toLowerCase().includes(q) ||
+    (r.course_code || "").toLowerCase().includes(q) ||
+    (r.pgo_label || "").toLowerCase().includes(q) ||
+    (r.pi_id || "").toLowerCase().includes(q)
+  );
+  renderPgoDrilldownTable(filtered);
+}
+window.filterPgoDrilldownRows = filterPgoDrilldownRows;
+
+function renderPgoDrilldownTable(rows) {
+  const tbody = document.getElementById("pgoDrilldownBody");
+  const statsEl = document.getElementById("pgoDrilldownStats");
+  if (!tbody) return;
+
+  const uniqueStudents = new Set(rows.map(r => r.student_id));
+  const assessedRows = rows.filter(r => r.has_scores && r.clo_final_grade !== null);
+  const attainedCount = assessedRows.filter(r => r.attained).length;
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <span class="badge badge-sa">${uniqueStudents.size} Unique Student ID(s)</span>
+      <span class="badge badge-co">${rows.length} CLO-PI-PGO Record(s)</span>
+      <span class="badge ${attainedCount > 0 ? 'badge-pass' : 'badge-fa'}">${attainedCount} / ${assessedRows.length} Attained (Target ≥75.0)</span>
+    `;
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:24px; color:#64748b;">No student ID records match.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const saParts = Object.entries(r.per_sa_clo || {}).map(([sa, val]) =>
+      `<span class="badge" style="background:#f1f5f9; color:#1e293b; font-size:0.68rem; margin:1px;">${escapeHtml(sa)}: ${val !== null && val !== undefined ? Number(val).toFixed(2) : '—'}</span>`
+    ).join(" ");
+    const curAssessedNote = (r.current_assessed_grade !== null && r.current_assessed_grade !== undefined && r.current_assessed_grade !== r.clo_final_grade)
+      ? `<div style="font-size:0.65rem; color:#64748b;" title="Average over graded items only">Graded items: ${Number(r.current_assessed_grade).toFixed(2)}</div>`
+      : "";
+    const statusBadge = !r.has_scores || r.clo_final_grade === null
+      ? `<span class="badge badge-fa">Pending Scores</span>`
+      : (r.attained ? `<span class="badge badge-pass">✓ Attained</span>` : `<span class="badge badge-fail">Below Target</span>`);
+
+    return `
+      <tr>
+        <td style="font-family:monospace; font-weight:800; color:#1e3a8a;">${escapeHtml(r.student_id)}</td>
+        <td>${escapeHtml(r.name)}<div style="font-size:0.67rem; color:#64748b;">Batch ${escapeHtml(r.cohort)}</div></td>
+        <td><strong>${escapeHtml(r.course_code)}</strong><div style="font-size:0.67rem; color:#64748b;">${escapeHtml(r.section)}</div></td>
+        <td><strong>${escapeHtml(r.clo_id)}</strong></td>
+        <td><span class="ied-pill ied-${escapeHtml(r.ied || 'I')}">${escapeHtml(r.ied || 'I')}</span></td>
+        <td><strong>${escapeHtml(r.pgo_label)}</strong> / PI ${escapeHtml(r.pi_id)}</td>
+        <td>${saParts || '<span style="color:#94a3b8;">—</span>'}</td>
+        <td style="text-align:center; font-weight:700;">
+          ${r.clo_final_grade !== null && r.clo_final_grade !== undefined ? Number(r.clo_final_grade).toFixed(2) : '—'}
+          ${curAssessedNote}
+        </td>
+        <td style="text-align:center;">${statusBadge}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.addEventListener("resize", () => {
+  if (document.getElementById("tab-pgo-assessment")?.classList.contains("active")) {
+    requestAnimationFrame(drawPgoFlowchartLines);
+  }
+});
+
 </script>
 
 <!-- Modal: Admin Role & Designation Assignment (Supports Multiple Roles Simultaneously) -->
@@ -24981,6 +25951,49 @@ window.addEventListener('pageshow', function(event) {
     <div style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
       <button type="button" class="btn btn-light btn-sm" onclick="closeDeadlineSettingsModal()" style="font-weight:600;">Cancel</button>
       <button type="button" class="btn btn-primary btn-sm" onclick="saveDeadlineSettings()" style="font-weight:700;">Save Deadlines</button>
+    </div>
+  </div>
+</div>
+
+<!-- PGO ASSESSMENT STUDENT ID DRILL-DOWN MODAL -->
+<div id="pgoDrilldownModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.62); z-index:99998; align-items:center; justify-content:center;" onclick="if(event.target===this) closePgoDrilldownModal();">
+  <div class="modal-box" style="background:#ffffff; border-radius:12px; width:96%; max-width:1080px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 48px rgba(0,0,0,0.28); border:1px solid #cbd5e1; margin:auto;">
+    <div style="padding:16px 22px; background:linear-gradient(135deg, #7f1d1d 0%, #1e3a8a 100%); color:#ffffff; display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div>
+        <h3 id="pgoDrilldownTitle" style="margin:0; font-size:1.12rem; font-weight:800; color:#ffffff;">PGO Drill-Down</h3>
+        <div id="pgoDrilldownSubtitle" style="font-size:0.80rem; color:#e2e8f0; margin-top:4px;">Student ID # consolidated assessment details</div>
+      </div>
+      <button type="button" onclick="closePgoDrilldownModal()" style="background:rgba(255,255,255,0.2); border:none; color:#ffffff; font-size:1.3rem; line-height:1; border-radius:6px; width:30px; height:30px; cursor:pointer;">&times;</button>
+    </div>
+
+    <div style="padding:12px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div id="pgoDrilldownStats" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      <input type="text" id="pgoDrilldownSearch" placeholder="🔍 Filter by Student ID #, Name, Course, PI..." oninput="filterPgoDrilldownRows(this.value)" style="padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.80rem; width:280px;" />
+    </div>
+
+    <div style="padding:14px 20px; overflow-y:auto; flex:1;">
+      <div style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px;">
+        <table class="pgo-matrix-table" style="text-align:left;">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Student ID #</th>
+              <th style="text-align:left;">Student Name &amp; Batch</th>
+              <th style="text-align:left;">Course &amp; Section</th>
+              <th>CLO</th>
+              <th>I-E-D</th>
+              <th style="text-align:left;">Aligned PGO / PI</th>
+              <th style="text-align:left;">Per-SA CLO Grades</th>
+              <th>CLO Final Grade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="pgoDrilldownBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="padding:10px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end;">
+      <button type="button" class="btn btn-light btn-sm" onclick="closePgoDrilldownModal()" style="font-weight:700;">Close</button>
     </div>
   </div>
 </div>

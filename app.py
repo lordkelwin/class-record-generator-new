@@ -150,17 +150,19 @@ def index():
     user = current_user()
     default_tab = "syllabus"
     if user:
-        if not user.get("can_access_faculty_tools", True):
-            default_tab = "approvals"
+        req_tab = request.args.get("tab")
+        if req_tab == "pgo-assessment" and user.get("role") != "student":
+            default_tab = "pgo-assessment"
+        elif not user.get("can_access_faculty_tools", True):
+            default_tab = req_tab if req_tab in {"approvals", "curriculum", "pgo-assessment"} else "approvals"
         else:
             username = user.get("username", "")
             courses_data = courses_store.list_courses(username, user.get("full_name") or "")
             courses = courses_data.get("courses", [])
             has_unlocked_dashboard = any(bool(c.get("is_approved") and c.get("has_recorded_scores")) for c in courses)
-            req_tab = request.args.get("tab")
             if req_tab == "dashboard":
                 default_tab = "dashboard" if has_unlocked_dashboard else "syllabus"
-            elif req_tab in {"syllabus", "approvals", "curriculum"}:
+            elif req_tab in {"syllabus", "approvals", "curriculum", "pgo-assessment"}:
                 default_tab = req_tab
             else:
                 default_tab = "dashboard" if has_unlocked_dashboard else "syllabus"
@@ -3415,6 +3417,74 @@ def api_download_oversight_report():
             "Cache-Control": "no-cache, no-store, must-revalidate",
         }
     )
+
+
+# =========================================================================
+# PROGRAM GRADUATE OUTCOMES (PGO) ASSESSMENT & INTERACTIVE FLOWCHART API
+# =========================================================================
+
+@app.route("/api/pgo-assessment", methods=["GET"])
+def api_get_pgo_assessment():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if user.get("role") == "student":
+        return jsonify({"error": "Forbidden: PGO Assessment is for Faculty and Academic Leadership."}), 403
+
+    import pgo_assessment
+    program_filter = request.args.get("program", "ALL")
+    course_filter = request.args.get("course_id", "ALL")
+    ied_filter = request.args.get("ied", "ALL")
+    cohort_filter = request.args.get("cohort", "ALL")
+    search_query = request.args.get("q", "")
+
+    report = pgo_assessment.build_pgo_assessment_report(
+        user=user,
+        program_filter=program_filter,
+        course_filter=course_filter,
+        ied_filter=ied_filter,
+        cohort_filter=cohort_filter,
+        search_query=search_query,
+    )
+    return jsonify(report)
+
+
+@app.route("/api/pgo-assessment/node-drilldown", methods=["GET"])
+def api_get_pgo_node_drilldown():
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if user.get("role") == "student":
+        return jsonify({"error": "Forbidden"}), 403
+
+    import pgo_assessment
+    node_type = (request.args.get("node_type") or "").strip().lower()
+    node_id = (request.args.get("node_id") or "").strip()
+    report = pgo_assessment.build_pgo_assessment_report(
+        user=user,
+        program_filter=request.args.get("program", "ALL"),
+        course_filter=request.args.get("course_id", "ALL"),
+        ied_filter=request.args.get("ied", "ALL"),
+        cohort_filter=request.args.get("cohort", "ALL"),
+        search_query=request.args.get("q", ""),
+    )
+
+    target = None
+    if node_type == "pgo":
+        pid = node_id.replace("pgo:", "").strip().lower()
+        target = next((p for p in report["pgos"] if p["pgo_id"] == pid), None)
+    elif node_type == "pi":
+        pi_id = node_id.replace("pi:", "").strip().lower()
+        target = next((p for p in report["pis"] if p["pi_id"] == pi_id), None)
+    elif node_type in ("course_clo", "cclo"):
+        target = next((n for n in report["flowchart"]["course_clo_nodes"] if n["node_key"] == node_id or f"{n['course_id']}:{n['clo_id']}" == node_id), None)
+    elif node_type == "student":
+        target = next((s for s in report["students_matrix"] if s["student_id"].lower() == node_id.lower()), None)
+
+    if not target:
+        return jsonify({"error": "Requested node or record is not accessible within your role scope."}), 404
+
+    return jsonify({"success": True, "node_type": node_type, "node": target, "scope": report["scope"]})
 
 
 @app.route("/api/admin/faculty-list", methods=["GET"])
