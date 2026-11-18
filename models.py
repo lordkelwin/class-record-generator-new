@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, asdict
-from typing import List, Dict
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -114,10 +114,10 @@ class StudentRecord:
 
 @dataclass
 class CQIIndicator:
-    category: str
-    number: int
-    title: str
-    subtitle: str
+    category: str = ""
+    number: int = 1
+    title: str = ""
+    subtitle: str = ""
     mark: str = "✓"  # "✓" or "✗"
     remarks: str = ""
 
@@ -872,41 +872,65 @@ class SyllabusBlueprint:
             ]
 
         course_outcomes = []
-        for co in data.get("course_outcomes", []):
+        for idx, co in enumerate(data.get("course_outcomes") or [], 1):
+            if not isinstance(co, dict):
+                continue
             co_dict = dict(co)
             if "co_id" not in co_dict and "code" in co_dict:
                 co_dict["co_id"] = co_dict["code"]
+            co_dict.setdefault("co_id", f"CLO{idx}")
+            co_dict.setdefault("description", "")
             filtered = {k: v for k, v in co_dict.items() if k in CourseOutcome.__dataclass_fields__}
-            if "co_id" in filtered:
+            if filtered.get("co_id"):
                 course_outcomes.append(CourseOutcome(**filtered))
 
         categories = []
-        for cat in data.get("categories", []):
-            items = [
-                AssessmentItem(**{k: v for k, v in it.items() if k in AssessmentItem.__dataclass_fields__})
-                for it in cat.get("items", [])
-            ]
+        for c_idx, cat in enumerate(data.get("categories") or [], 1):
+            if not isinstance(cat, dict):
+                continue
+            items = []
+            for i_idx, it in enumerate(cat.get("items") or [], 1):
+                if not isinstance(it, dict):
+                    continue
+                it_clean = {k: v for k, v in it.items() if k in AssessmentItem.__dataclass_fields__}
+                it_clean.setdefault("item_id", f"ITEM_{c_idx}_{i_idx}")
+                it_clean.setdefault("name", it_clean["item_id"])
+                items.append(AssessmentItem(**it_clean))
             cat_filtered = {k: v for k, v in cat.items() if k in AssessmentCategory.__dataclass_fields__ and k != "items"}
+            cat_filtered.setdefault("category_id", f"CAT_{c_idx}")
+            cat_filtered.setdefault("term", "Midterm")
             categories.append(AssessmentCategory(**cat_filtered, items=items))
 
         students = []
-        for st in data.get("students", []):
+        for st in (data.get("students") or []):
+            if not isinstance(st, dict):
+                continue
             st_dict = {k: v for k, v in st.items() if k in StudentRecord.__dataclass_fields__}
+            if not st_dict.get("student_id"):
+                continue
             if not st_dict.get("last_name"):
                 name = st.get("name", "")
-                parts = [p.strip() for p in name.split(",", 1)]
+                parts = [p.strip() for p in str(name).split(",", 1)]
                 st_dict["last_name"] = parts[0] if parts and parts[0] else "Student"
                 st_dict["first_name"] = parts[1] if len(parts) > 1 else ""
-            if "first_name" not in st_dict:
+            if "first_name" not in st_dict or st_dict["first_name"] is None:
                 st_dict["first_name"] = ""
+            if not isinstance(st_dict.get("scores"), dict):
+                st_dict["scores"] = {}
             students.append(StudentRecord(**st_dict))
 
         cqi_raw = data.get("cqi_plan", {})
-        if cqi_raw:
-            inds = [
-                CQIIndicator(**{k: v for k, v in ind.items() if k in CQIIndicator.__dataclass_fields__})
-                for ind in cqi_raw.get("indicators", [])
-            ]
+        if isinstance(cqi_raw, dict) and cqi_raw:
+            inds = []
+            for idx, ind in enumerate(cqi_raw.get("indicators") or [], 1):
+                if not isinstance(ind, dict):
+                    continue
+                ind_clean = {k: v for k, v in ind.items() if k in CQIIndicator.__dataclass_fields__}
+                ind_clean.setdefault("number", idx)
+                ind_clean.setdefault("category", "")
+                ind_clean.setdefault("title", "")
+                ind_clean.setdefault("subtitle", "")
+                inds.append(CQIIndicator(**ind_clean))
             if not inds:
                 inds = get_default_cqi_indicators()
             cqi_plan = CQIPlan(

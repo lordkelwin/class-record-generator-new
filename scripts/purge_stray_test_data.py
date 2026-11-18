@@ -56,10 +56,24 @@ def purge_all_test_data():
         cur.execute(f"DELETE FROM {table} WHERE course_id NOT IN ({placeholders})", list(VALID_COURSES))
         print(f"Purged stray rows in {table} referencing test courses.")
 
+    # 1b-2. Purge test rows from survey_responses & cqi_plans (if tables exist)
+    has_sr = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='survey_responses'").fetchone()
+    if has_sr:
+        cur.execute(f"DELETE FROM survey_responses WHERE subject_id NOT IN ({placeholders})", list(VALID_COURSES))
+        st_placeholders_sr = ",".join("?" for _ in TEST_STUDENT_IDS)
+        cur.execute(f"DELETE FROM survey_responses WHERE student_id IN ({st_placeholders_sr}) OR student_id LIKE 'TEST%' OR student_id LIKE '%test%' OR student_id LIKE '2099-%'", list(TEST_STUDENT_IDS))
+        print("Purged stray rows from survey_responses.")
+
+    has_cqi = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='cqi_plans'").fetchone()
+    if has_cqi:
+        cur.execute(f"DELETE FROM cqi_plans WHERE course_id NOT IN ({placeholders})", list(VALID_COURSES))
+        cur.execute("DELETE FROM cqi_plans WHERE faculty_username LIKE 'test_%' OR faculty_username LIKE '%tester%'")
+        print("Purged stray rows from cqi_plans.")
+
     # 1c. Purge test students from app_students
     st_placeholders = ",".join("?" for _ in TEST_STUDENT_IDS)
     cur.execute(f"DELETE FROM app_students WHERE student_id IN ({st_placeholders})", list(TEST_STUDENT_IDS))
-    cur.execute("DELETE FROM app_students WHERE student_id LIKE 'TEST%' OR student_id LIKE '%test%' OR full_name LIKE '%Student, %'")
+    cur.execute("DELETE FROM app_students WHERE student_id LIKE 'TEST%' OR student_id LIKE '%test%' OR student_id LIKE '2099-%' OR full_name LIKE '%Student, %'")
     print("Purged stray test students from app_students.")
 
     # 1d. Clean enrolled_courses and acknowledgments in remaining app_students
@@ -101,7 +115,7 @@ def purge_all_test_data():
         cleaned_sts = {}
         for sid, s in sts.items():
             name = s.get("full_name") or s.get("name") or ""
-            if sid in TEST_STUDENT_IDS or "test" in sid.lower() or "test" in name.lower() or name.startswith("Student, "):
+            if sid in TEST_STUDENT_IDS or sid.startswith("2099-") or "test" in sid.lower() or "test" in name.lower() or name.startswith("Student, "):
                 continue
             enrolled = s.get("enrolled_courses") or []
             s["enrolled_courses"] = [c for c in enrolled if c in VALID_COURSES]

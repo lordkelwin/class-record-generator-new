@@ -55,5 +55,8 @@ extracted_curricula/
 scratch/
 
 
-# Notification logs
+# Notification & pilot temporary logs
 data/sent_notifications.json
+data/pilot_firestore_seed.json
+public_hosting/
+.firebase/

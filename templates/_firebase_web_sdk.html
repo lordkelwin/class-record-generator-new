@@ -1,0 +1,28 @@
+<!-- Firebase Web SDK Initialization (faculty-student-studio-usep) -->
+<script type="module">
+  const firebaseConfig = {
+    apiKey: "AIzaSyCYekPVvbg_4ViOBlXqPHtRYpKqdVPF4V8",
+    authDomain: "faculty-student-studio-usep.firebaseapp.com",
+    projectId: "faculty-student-studio-usep",
+    storageBucket: "faculty-student-studio-usep.firebasestorage.app",
+    messagingSenderId: "621897460998",
+    appId: "1:621897460998:web:f2566ff727e1c7630d0287",
+    measurementId: "G-LS3E68ZLQQ"
+  };
+  window.__FIREBASE_CONFIG__ = firebaseConfig;
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js");
+    const app = initializeApp(firebaseConfig);
+    window.__FIREBASE_APP__ = app;
+    try {
+      const { getAnalytics, isSupported } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js");
+      if (await isSupported()) {
+        window.__FIREBASE_ANALYTICS__ = getAnalytics(app);
+      }
+    } catch (_analyticsErr) {
+      // Analytics optional (e.g. local HTTP / offline LAN testing)
+    }
+  } catch (_fbErr) {
+    // Non-blocking fallback when offline or blocked in sandboxed intranet
+  }
+</script>

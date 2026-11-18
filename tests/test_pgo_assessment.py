@@ -159,6 +159,85 @@ class TestPgoAssessmentModule(unittest.TestCase):
             sids = [s["student_id"] for s in q_data["students_matrix"]]
             self.assertEqual(sids, ["2023-00011"])
 
+    def test_06_program_directory_per_program_and_rbac(self):
+        """Program PGO & PI Directory lists program-specific outcomes and respects RBAC scope."""
+        # Dean sees all 9 engineering programs and every PGO + child PIs
+        with patch("app.current_user", return_value=MOCK_DEAN), \
+             patch("auth.current_user", return_value=MOCK_DEAN):
+            res_dean = self.client.get("/api/pgo-assessment")
+            self.assertEqual(res_dean.status_code, 200)
+            dir_dean = res_dean.get_json().get("program_directory", {})
+            progs = {p["program_code"]: p for p in dir_dean.get("programs", [])}
+            self.assertIn("EE", progs)
+            self.assertIn("CE", progs)
+            self.assertIn("ECE", progs)
+            self.assertEqual(progs["EE"]["pgo_count"], 13)
+            self.assertGreaterEqual(progs["EE"]["pi_count"], 30)
+
+        # Faculty only sees PGOs aligned to their courses in directory
+        with patch("app.current_user", return_value=MOCK_FACULTY_TANO), \
+             patch("auth.current_user", return_value=MOCK_FACULTY_TANO):
+            res_fac = self.client.get("/api/pgo-assessment")
+            self.assertEqual(res_fac.status_code, 200)
+            dir_fac = res_fac.get_json().get("program_directory", {})
+            ee_prog = next((p for p in dir_fac.get("programs", []) if p["program_code"] == "EE"), None)
+            self.assertIsNotNone(ee_prog)
+            fac_keys = {pg["pgo_key"] for pg in ee_prog["pgos"]}
+            self.assertEqual(fac_keys, {"c", "d", "f", "g", "h"})
+            self.assertTrue(all(len(pg["pis"]) >= 1 for pg in ee_prog["pgos"]))
+
+    def test_07_null_and_malformed_cqi_guards_and_lan_cookie_config(self):
+        """Missing CQIIndicator.number, None scores, empty records never 500; LAN cookie settings are valid."""
+        import config
+        malformed_doc = {
+            "id": "mem_tmp_malformed_cqi",
+            "owner": "faculty_tano",
+            "course_code": "EE 415",
+            "course_title": "Faulty Blueprint Guard Test",
+            "section": "BSEE 4A",
+            "blueprint": {
+                "metadata": {"course_code": "EE 415", "programs": []},
+                "course_outcomes": [
+                    None,
+                    {"co_id": "CO1", "description": "Design check", "program_outcomes": None, "performance_indicator": None, "target_score_pct": None},
+                ],
+                "categories": [
+                    {
+                        "category_id": "SA1",
+                        "term": "Midterm",
+                        "assessment_type": "SA",
+                        "weight_pct": 0,
+                        "items": [{"item_id": "Q1", "name": "Quiz 1", "max_score": 0, "co_id": "CO1"}],
+                    }
+                ],
+                "students": [
+                    {"student_id": "2023-99901", "name": "Null, Score", "scores": {"Q1": None}},
+                    {"student_id": "2023-99902", "last_name": "Bad", "first_name": None, "scores": None},
+                ],
+                "cqi_plan": {
+                    "indicators": [
+                        {"category": "Cat I", "title": "Delivery", "subtitle": "Pacing", "mark": "✓", "remarks": ""}
+                    ]
+                },
+            },
+        }
+        mock_wf = [{"doc_raw": malformed_doc}]
+        with patch("app.current_user", return_value=MOCK_DEAN), \
+             patch("auth.current_user", return_value=MOCK_DEAN), \
+             patch("courses_store.list_all_workflow_courses", return_value=mock_wf):
+            res = self.client.get("/api/pgo-assessment")
+            self.assertEqual(res.status_code, 200)
+            payload = res.get_json()
+            self.assertTrue(payload["success"])
+            self.assertEqual(payload["courses"][0]["course_code"], "EE 415")
+
+        # Verify LAN binding & cookie compatibility
+        self.assertEqual(app.app.config.get("SESSION_COOKIE_SECURE"), False)
+        self.assertEqual(app.app.config.get("SESSION_COOKIE_SAMESITE"), "Lax")
+        self.assertIsNone(app.app.config.get("SERVER_NAME"))
+        self.assertEqual(config.HOST, "0.0.0.0")
+        self.assertTrue(bool(config.get_local_ip()))
+
 
 if __name__ == "__main__":
     unittest.main()

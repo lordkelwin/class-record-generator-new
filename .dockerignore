@@ -1,0 +1,26 @@
+# Exclude local dev artifacts, caches, secrets, and heavy local files from Cloud Run image
+__pycache__/
+*.py[cod]
+*$py.class
+.git/
+.gitignore
+venv/
+.venv/
+env/
+tests/
+test_*.py
+scratch/
+exports/*
+!exports/.gitkeep
+public_hosting/
+data/secret_key
+data/courses/
+data/sent_notifications.json
+data/deleted_users.json
+data/pilot_firestore_seed.json
+*.xlsm
+*.tmp
+*.laccdb
+*.log
+.DS_Store
+Thumbs.db

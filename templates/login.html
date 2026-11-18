@@ -9,7 +9,7 @@
   {% if info %}<div class="alert alert-info">{{ info }}</div>{% endif %}
   {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
 
-  <form method="post" autocomplete="on">
+  <form method="post" action="{{ url_for('auth.login') }}" autocomplete="on">
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}" />
     <label for="username">Username</label>
     <input type="text" id="username" name="username" value="{{ username }}" required autofocus autocomplete="username" />

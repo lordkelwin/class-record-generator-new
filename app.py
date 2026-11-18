@@ -15,6 +15,7 @@ from syllabus_evaluation_form import (
 import io
 
 import os
+import secrets
 
 import re
 
@@ -22,10 +23,12 @@ import tempfile
 
 import uuid
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
 from flask import Flask, render_template, request, jsonify, send_file, Response, session, redirect, url_for, flash, make_response
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 
@@ -75,15 +78,32 @@ except Exception as _e:
 
 
 app = Flask(__name__)
+# Trust X-Forwarded-* headers from Firebase Hosting / Cloud Run reverse proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # 25 MB upload limit
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
+@app.route("/api/health", methods=["GET"])
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return jsonify({
+        "status": "ok",
+        "use_firebase": bool(getattr(config, "USE_FIREBASE", False)),
+        "project_id": getattr(config, "FIREBASE_PROJECT_ID", ""),
+    }), 200
+
 @app.after_request
 def add_cache_control_headers(response):
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    if not request.path.startswith(("/static/", "/fonts/")):
+        response.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        existing_vary = response.headers.get("Vary", "")
+        vary_tokens = [v.strip() for v in existing_vary.split(",") if v.strip()]
+        if "Cookie" not in vary_tokens:
+            vary_tokens.append("Cookie")
+            response.headers["Vary"] = ", ".join(vary_tokens)
     origin = request.headers.get("Origin")
     if origin:
         response.headers["Access-Control-Allow-Origin"] = origin
@@ -107,6 +127,20 @@ def faculty_tools_required(fn):
 # Login screen, faculty accounts (admin-managed) and a global login guard for every page/API
 
 install_auth(app)
+
+# Environment-aware session cookies: HTTPS secure cookies behind Cloud Run / Firebase Hosting proxy,
+# and non-secure HTTP cookies on local development / LAN testing.
+_is_https_prod = bool(
+    os.environ.get("K_SERVICE")
+    or os.environ.get("FORCE_HTTPS_COOKIES", "").lower() in ("1", "true", "yes")
+    or os.environ.get("FLASK_ENV") == "production"
+)
+app.config["SESSION_COOKIE_NAME"] = "__session"
+app.config["REMEMBER_COOKIE_NAME"] = "__session_remember"
+app.config["SESSION_COOKIE_SECURE"] = _is_https_prod
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SERVER_NAME"] = None
 
 
 
@@ -2595,6 +2629,391 @@ def api_course_student_acknowledgment(course_id):
     return resp
 
 
+def _norm_ack_id(val: str) -> str:
+    return re.sub(r"[\s\-_]+", "", str(val or "").strip().lower())
+
+
+def _norm_ack_name(val: str) -> str:
+    s = re.sub(r"[^a-z0-9\s,]", " ", str(val or "").strip().lower())
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _parse_signed_rows_from_tabular(df) -> list:
+    """Extracts acknowledgment rows from a CSV/Excel DataFrame."""
+    df = df.copy()
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    cols = set(df.columns)
+
+    def _pick(row, candidates, default=""):
+        for c in candidates:
+            if c in cols:
+                v = row.get(c)
+                if pd.notna(v) and str(v).strip() not in ("", "nan", "None"):
+                    return str(v).strip()
+        return default
+
+    out = []
+    for _, row in df.iterrows():
+        sid = _pick(row, ["student_id", "id", "id #", "id_no", "student no", "student number", "id number"])
+        last = _pick(row, ["last_name", "lastname", "surname"])
+        first = _pick(row, ["first_name", "firstname", "given name"])
+        full = _pick(row, ["student_name", "name", "full_name", "student name"])
+        if not full and (last or first):
+            full = f"{last}, {first}".strip(", ")
+        if not sid and not full:
+            continue
+
+        status_raw = _pick(row, ["status", "signed", "acknowledged", "acknowledgment", "is_acknowledged", "signature", "e-signature", "e_signature"])
+        date_raw = _pick(row, ["acknowledged_at", "date", "date_signed", "signed_at", "timestamp"])
+        comment = _pick(row, ["comment", "comments", "feedback", "remarks"])
+        sig_data = _pick(row, ["signature_data", "signature_url"])
+        email = _pick(row, ["email", "email_address"])
+
+        st_low = status_raw.lower()
+        explicitly_unsigned = any(tok in st_low for tok in ("pending", "unsigned", "not signed", "no", "false", "0", "awaiting"))
+        if status_raw and explicitly_unsigned:
+            continue
+        out.append({
+            "student_id": sid,
+            "student_name": full,
+            "last_name": last,
+            "first_name": first,
+            "acknowledged_at": date_raw,
+            "comment": comment,
+            "signature_data": sig_data,
+            "email": email,
+        })
+    return out
+
+
+def _extract_signed_rows_from_pdf(file_bytes: bytes, roster_students: list) -> list:
+    """Extracts signed student IDs/names from a signed FM-USeP-MID-07 PDF via pdfplumber."""
+    import pdfplumber
+    extracted_lines = []
+    out = []
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        for page in pdf.pages:
+            txt = page.extract_text() or ""
+            extracted_lines.extend([ln.strip() for ln in txt.splitlines() if ln.strip()])
+            for tbl in (page.extract_tables() or []):
+                for r in tbl:
+                    cells = [str(c or "").strip() for c in (r or [])]
+                    joined = " | ".join(c for c in cells if c)
+                    if joined:
+                        extracted_lines.append(joined)
+
+    full_text = "\n".join(extracted_lines)
+    text_low = full_text.lower()
+    seen_ids = set()
+
+    # 1. Match known enrolled students appearing alongside signed/date markers or inside table rows
+    for st in roster_students:
+        sid = str(st.get("student_id") or "").strip()
+        last = str(st.get("last_name") or "").strip()
+        first = str(st.get("first_name") or "").strip()
+        sname = str(st.get("name") or f"{last}, {first}".strip(", ")).strip()
+        if not sid and not sname:
+            continue
+        sid_hit = bool(sid and (sid.lower() in text_low or _norm_ack_id(sid) in _norm_ack_id(text_low)))
+        name_hit = bool(last and len(last) > 2 and last.lower() in text_low and (not first or first.split()[0].lower() in text_low))
+        if sid_hit or name_hit:
+            # Skip rows explicitly marked Pending / Awaiting on the line containing this ID/name
+            line_match = [ln for ln in extracted_lines if (sid and sid.lower() in ln.lower()) or (last and last.lower() in ln.lower())]
+            if line_match and all(any(w in ln.lower() for w in ("pending", "awaiting", "unsigned")) for ln in line_match):
+                continue
+            key = _norm_ack_id(sid) or _norm_ack_name(sname)
+            if key not in seen_ids:
+                seen_ids.add(key)
+                date_m = re.search(r"(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{2,4})", " ".join(line_match))
+                out.append({
+                    "student_id": sid,
+                    "student_name": sname,
+                    "acknowledged_at": date_m.group(1) if date_m else "",
+                    "comment": "",
+                    "signature_data": "",
+                })
+
+    # 2. Catch explicit student ID patterns in PDF (e.g. 2023-00011) if roster was partial
+    for ln in extracted_lines:
+        if any(w in ln.lower() for w in ("pending", "awaiting", "unsigned")):
+            continue
+        id_m = re.search(r"\b(20\d{2}-\d{4,6})\b", ln)
+        if id_m:
+            sid = id_m.group(1)
+            key = _norm_ack_id(sid)
+            if key not in seen_ids:
+                seen_ids.add(key)
+                date_m = re.search(r"(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{2,4})", ln)
+                out.append({
+                    "student_id": sid,
+                    "student_name": sid,
+                    "acknowledged_at": date_m.group(1) if date_m else "",
+                    "comment": "",
+                    "signature_data": "",
+                })
+    return out
+
+
+@app.route("/api/courses/<course_id>/student-acknowledgment/import", methods=["POST"])
+@faculty_tools_required
+def api_import_course_student_acknowledgment(course_id):
+    """
+    Imports an existing signed Student Acknowledgment file (FM-USeP-MID-07) in .csv, .xlsx,
+    .pdf, or scanned image (.png/.jpg/.jpeg/.webp) format, matches enrolled students, and
+    records verified acknowledgments & workflow endorsement across stores.
+    """
+    import base64
+    import json as _json
+
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    if "file" not in request.files or not request.files["file"].filename:
+        return jsonify({"error": "No signed acknowledgment file was uploaded."}), 400
+
+    f = request.files["file"]
+    filename = os.path.basename(f.filename)
+    ext = os.path.splitext(filename)[1].lower()
+    raw_bytes = f.read()
+    if not raw_bytes:
+        return jsonify({"error": "Uploaded file is empty."}), 400
+
+    bp_dict = doc.setdefault("blueprint", {})
+    students = bp_dict.setdefault("students", [])
+    acks = list(doc.get("student_acknowledgments") or (doc.get("workflow") or {}).get("student_acknowledgments") or [])
+
+    enroll_unlisted = str(request.form.get("enroll_unlisted") or "").strip().lower() in ("1", "true", "yes")
+    mark_all_on_scan = str(request.form.get("mark_all_on_scan") or "").strip().lower() in ("1", "true", "yes")
+    selected_ids_raw = (request.form.get("selected_student_ids") or "").strip()
+    gemini_key = (request.form.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or "").strip()
+
+    parsed_rows = []
+    scan_preview_sig = ""
+
+    try:
+        if ext == ".csv":
+            df = pd.read_csv(io.BytesIO(raw_bytes))
+            parsed_rows = _parse_signed_rows_from_tabular(df)
+        elif ext in (".xlsx", ".xls"):
+            df = pd.read_excel(io.BytesIO(raw_bytes))
+            parsed_rows = _parse_signed_rows_from_tabular(df)
+        elif ext == ".pdf":
+            parsed_rows = _extract_signed_rows_from_pdf(raw_bytes, students)
+        elif ext in (".png", ".jpg", ".jpeg", ".webp"):
+            mime = "image/png" if ext == ".png" else ("image/webp" if ext == ".webp" else "image/jpeg")
+            if len(raw_bytes) <= 220_000:
+                scan_preview_sig = f"data:{mime};base64," + base64.b64encode(raw_bytes).decode("ascii")
+            # Try Gemini Vision OCR if key available
+            if gemini_key:
+                try:
+                    import requests as _req
+                    b64_img = base64.b64encode(raw_bytes).decode("ascii")
+                    prompt = (
+                        "Extract all signed students from this scanned USeP FM-USeP-MID-07 Student Acknowledgment sheet. "
+                        "Return ONLY valid JSON array of objects with keys: student_id, student_name, acknowledged_at, signed (boolean), comment. "
+                        "Include only rows that have a signature or checkmark."
+                    )
+                    resp_g = _req.post(
+                        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}",
+                        json={"contents": [{"parts": [{"text": prompt}, {"inline_data": {"mime_type": mime, "data": b64_img}}]}]},
+                        timeout=45,
+                    )
+                    if resp_g.ok:
+                        cand_txt = resp_g.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                        cand_txt = re.sub(r"^```(?:json)?\s*|\s*```$", "", cand_txt.strip(), flags=re.IGNORECASE)
+                        items = _json.loads(cand_txt)
+                        if isinstance(items, list):
+                            for it in items:
+                                if isinstance(it, dict) and it.get("signed", True):
+                                    parsed_rows.append({
+                                        "student_id": str(it.get("student_id") or "").strip(),
+                                        "student_name": str(it.get("student_name") or "").strip(),
+                                        "acknowledged_at": str(it.get("acknowledged_at") or "").strip(),
+                                        "comment": str(it.get("comment") or "").strip(),
+                                        "signature_data": scan_preview_sig,
+                                    })
+                except Exception as _ocr_err:
+                    logger.debug("Gemini scan acknowledgment fallback: %s", _ocr_err)
+
+            if not parsed_rows and selected_ids_raw:
+                try:
+                    sel_ids = _json.loads(selected_ids_raw)
+                except Exception:
+                    sel_ids = [s.strip() for s in selected_ids_raw.split(",") if s.strip()]
+                sel_norm = {_norm_ack_id(x) for x in sel_ids}
+                for st in students:
+                    sid = str(st.get("student_id") or "").strip()
+                    if _norm_ack_id(sid) in sel_norm:
+                        parsed_rows.append({
+                            "student_id": sid,
+                            "student_name": st.get("name") or f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", "),
+                            "acknowledged_at": "",
+                            "comment": f"Signed file attached: {filename}",
+                            "signature_data": scan_preview_sig,
+                        })
+            elif not parsed_rows and mark_all_on_scan:
+                for st in students:
+                    sid = str(st.get("student_id") or "").strip()
+                    parsed_rows.append({
+                        "student_id": sid,
+                        "student_name": st.get("name") or f"{st.get('last_name', '')}, {st.get('first_name', '')}".strip(", "),
+                        "acknowledged_at": "",
+                        "comment": f"Verified signed sheet: {filename}",
+                        "signature_data": scan_preview_sig,
+                    })
+        else:
+            return jsonify({"error": f"Unsupported file type '{ext}'. Upload .csv, .xlsx, .pdf, or a scanned image (.png, .jpg, .webp)."}), 400
+    except Exception as exc:
+        logger.warning("Failed to parse signed acknowledgment file %s: %s", filename, exc)
+        return jsonify({"error": f"Could not read signed acknowledgment file: {exc}"}), 400
+
+    # Index existing roster & acknowledgments
+    roster_by_id = {_norm_ack_id(s.get("student_id")): s for s in students if s.get("student_id")}
+    roster_by_name = {}
+    for s in students:
+        nm = s.get("name") or f"{s.get('last_name', '')}, {s.get('first_name', '')}".strip(", ")
+        if nm:
+            roster_by_name[_norm_ack_name(nm)] = s
+        first_last = f"{s.get('first_name', '')} {s.get('last_name', '')}".strip()
+        if first_last:
+            roster_by_name[_norm_ack_name(first_last)] = s
+
+    now_ts = datetime.now().isoformat(timespec="seconds")
+    imported_count = 0
+    matched_existing_count = 0
+    added_students_count = 0
+    skipped_rows = []
+
+    for row in parsed_rows:
+        raw_sid = str(row.get("student_id") or "").strip()
+        raw_name = str(row.get("student_name") or "").strip()
+        st_obj = roster_by_id.get(_norm_ack_id(raw_sid)) or roster_by_name.get(_norm_ack_name(raw_name))
+
+        if st_obj:
+            matched_existing_count += 1
+            sid = str(st_obj.get("student_id") or raw_sid).strip()
+            sname = str(st_obj.get("name") or f"{st_obj.get('last_name', '')}, {st_obj.get('first_name', '')}".strip(", ") or raw_name or sid).strip()
+            email = str(row.get("email") or st_obj.get("email") or "").strip()
+        elif enroll_unlisted and raw_sid and raw_name:
+            if "," in raw_name:
+                last_n, first_n = [p.strip() for p in raw_name.split(",", 1)]
+            else:
+                parts = raw_name.split()
+                last_n = parts[-1] if parts else raw_name
+                first_n = " ".join(parts[:-1]) if len(parts) > 1 else ""
+            new_st = {
+                "student_id": raw_sid,
+                "last_name": row.get("last_name") or last_n,
+                "first_name": row.get("first_name") or first_n,
+                "name": raw_name,
+                "program_year": doc.get("section") or "",
+                "email": str(row.get("email") or "").strip(),
+                "scores": {},
+            }
+            students.append(new_st)
+            roster_by_id[_norm_ack_id(raw_sid)] = new_st
+            sid = raw_sid
+            sname = raw_name
+            email = new_st["email"]
+            added_students_count += 1
+        else:
+            skipped_rows.append(raw_sid or raw_name or "Unknown row")
+            continue
+
+        ack_ts = str(row.get("acknowledged_at") or "").strip() or now_ts
+        if len(ack_ts) == 10 and ack_ts.count("-") == 2:
+            ack_ts = f"{ack_ts}T08:00:00"
+        new_ack = {
+            "student_id": sid,
+            "student_name": sname,
+            "email": email,
+            "signature_data": row.get("signature_data") or scan_preview_sig or "",
+            "acknowledged_at": ack_ts,
+            "date": ack_ts[:10],
+            "ip_address": request.remote_addr or "",
+            "comment": str(row.get("comment") or f"Imported from signed file ({filename})").strip(),
+            "source": "imported_file",
+            "import_filename": filename,
+        }
+
+        replaced = False
+        for idx, ex in enumerate(acks):
+            if (_norm_ack_id(sid) and _norm_ack_id(ex.get("student_id")) == _norm_ack_id(sid)) or (
+                _norm_ack_name(sname) and _norm_ack_name(ex.get("student_name")) == _norm_ack_name(sname)
+            ):
+                if not new_ack["signature_data"] and ex.get("signature_data"):
+                    new_ack["signature_data"] = ex["signature_data"]
+                acks[idx] = new_ack
+                replaced = True
+                break
+        if not replaced:
+            acks.append(new_ack)
+        imported_count += 1
+
+        try:
+            all_sts = student_store._load_students()
+            st_entry = all_sts.get(sid)
+            if not st_entry:
+                for k, v in all_sts.items():
+                    if _norm_ack_id(k) == _norm_ack_id(sid):
+                        st_entry = v
+                        break
+            if st_entry:
+                st_entry.setdefault("syllabus_acknowledgments", {})[course_id] = new_ack
+                if new_ack["signature_data"]:
+                    st_entry["signature_data"] = new_ack["signature_data"]
+                    st_entry["signature_updated_at"] = now_ts
+                student_store._save_students(all_sts)
+        except Exception as _st_err:
+            logger.debug("student_store sync on MID-07 import skipped: %s", _st_err)
+
+    doc["student_acknowledgments"] = acks
+    if isinstance(doc.get("workflow"), dict):
+        doc["workflow"]["student_acknowledgments"] = acks
+    if isinstance(doc.get("blueprint"), dict):
+        doc["blueprint"]["student_acknowledgments"] = acks
+        doc["blueprint"]["students"] = students
+
+    import syllabus_workflow
+    stats = syllabus_workflow.get_student_acknowledgment_stats(doc)
+    wf_obj = doc.get("workflow") or {}
+    if wf_obj.get("status") == "for_student_acknowledgment" and stats.get("meets_threshold"):
+        wf_obj["status"] = "for_dean_approval"
+        wf_obj["status_label"] = syllabus_workflow.STATUS_LABELS["for_dean_approval"]
+        wf_obj["step_entered_at"] = now_ts
+        wf_obj["auto_endorsed_to_dean"] = True
+        wf_obj.setdefault("history", []).append({
+            "action": "student_ack_threshold_met",
+            "step": "student_ack",
+            "at": now_ts,
+            "by": (current_user() or {}).get("username", "faculty"),
+            "remarks": f"Imported signed file '{filename}': {stats['total_acknowledged']}/{stats['total_students']} signed ({stats['percentage']}%). Automatically endorsed to Dean for approval.",
+        })
+        doc["workflow"] = wf_obj
+
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "filename": filename,
+        "imported_count": imported_count,
+        "matched_existing_count": matched_existing_count,
+        "added_students_count": added_students_count,
+        "skipped_count": len(skipped_rows),
+        "needs_scan_selection": (ext in (".png", ".jpg", ".jpeg", ".webp") and imported_count == 0 and len(students) > 0),
+        "acknowledgments": acks,
+        "total_acknowledged": stats.get("total_acknowledged", len(acks)),
+        "total_students": stats.get("total_students", len(students)),
+        "workflow": doc.get("workflow"),
+        "message": (
+            f"Imported {imported_count} signed acknowledgment record(s) from {filename}."
+            if imported_count > 0
+            else f"No matching signed rows auto-detected in {filename}. Use manual selection or upload CSV/XLSX/PDF."
+        ),
+    })
+
+
 import student_store
 
 
@@ -2932,45 +3351,60 @@ def api_course_roster_remove_student(course_id):
 
 @app.route("/student/login", methods=["GET", "POST"], endpoint="student_login")
 def student_login():
-    if request.args.get("signed_out"):
+    is_signed_out = bool(request.args.get("signed_out"))
+    if request.method == "GET" and is_signed_out:
         session.clear()
+        auth.get_csrf_token()
         session.modified = True
 
     user = current_user()
-    if user and user.get("role") == "student" and not request.args.get("signed_out"):
+    if user and user.get("role") == "student" and not (request.method == "GET" and is_signed_out):
         return redirect(url_for("student_dashboard"))
 
+    if request.method == "GET":
+        auth.get_csrf_token()
+        session.modified = True
+
     error = None
-    success = "You have been signed out from the Student Portal." if request.args.get("signed_out") else None
+    success = "You have been signed out from the Student Portal." if is_signed_out else None
     student_id = ""
     next_url = request.args.get("next") or ""
 
     if request.method == "POST":
         student_id = (request.form.get("student_id") or "").strip()
         secret = (request.form.get("secret") or request.form.get("student_secret") or "").strip()
-
-        ok, st, err_msg = student_store.verify_student_login(student_id, secret)
-        if ok and st:
+        sent_csrf = request.form.get("_csrf") or request.headers.get("X-CSRF-Token")
+        expected_csrf = session.get("_csrf", "")
+        if sent_csrf and expected_csrf and not secrets.compare_digest(sent_csrf, expected_csrf):
             session.clear()
-            session.permanent = True
-            session["username"] = st["student_id"]
-            session["student_id"] = st["student_id"]
-            session["student_name"] = st.get("full_name") or st.get("name") or st.get("student_id")
-            session["role"] = "student"
-            session["email"] = st.get("email") or f"{st['student_id']}@usep.edu.ph"
-            session["has_signature"] = bool(st.get("signature_data"))
             auth.get_csrf_token()
-
-            if next_url and next_url.startswith("/student"):
-                return redirect(next_url)
-            return redirect(url_for("student_dashboard"))
+            session.modified = True
+            success = None
+            error = "Your Student Portal sign-in token expired. A fresh security token has been issued — please submit again."
         else:
-            error = err_msg or "Authentication failed. Please verify your Student ID and Last Name."
+            ok, st, err_msg = student_store.verify_student_login(student_id, secret)
+            if ok and st:
+                session.clear()
+                session.permanent = True
+                session["username"] = st["student_id"]
+                session["student_id"] = st["student_id"]
+                session["student_name"] = st.get("full_name") or st.get("name") or st.get("student_id")
+                session["role"] = "student"
+                session["email"] = st.get("email") or f"{st['student_id']}@usep.edu.ph"
+                session["has_signature"] = bool(st.get("signature_data"))
+                auth.get_csrf_token()
+
+                if next_url and next_url.startswith("/student"):
+                    return redirect(next_url)
+                return redirect(url_for("student_dashboard"))
+            else:
+                error = err_msg or "Authentication failed. Please verify your Student ID and Last Name."
 
     resp = make_response(render_template("student_login.html", error=error, success=success, student_id=student_id, next_url=next_url))
-    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
+    resp.headers["Vary"] = "Cookie"
     return resp
 
 
@@ -2978,17 +3412,19 @@ def student_login():
 def student_logout():
     session.clear()
     session.modified = True
-    cookie_name = app.config.get("SESSION_COOKIE_NAME", "session")
+    cookie_name = app.config.get("SESSION_COOKIE_NAME", "__session")
+    remember_name = app.config.get("REMEMBER_COOKIE_NAME", "__session_remember")
+    is_secure = bool(app.config.get("SESSION_COOKIE_SECURE", False))
     resp = make_response(redirect(url_for("student_login", signed_out=1)))
-    resp.delete_cookie(cookie_name, path="/")
-    resp.delete_cookie(cookie_name, path="/student")
-    resp.delete_cookie("session", path="/")
-    resp.delete_cookie("session")
-    resp.set_cookie(cookie_name, "", expires=0, max_age=0, path="/")
-    resp.set_cookie("session", "", expires=0, max_age=0, path="/")
-    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    for cname in {cookie_name, "__session", "session", remember_name}:
+        resp.delete_cookie(cname, path="/")
+        resp.delete_cookie(cname, path="/student")
+        resp.delete_cookie(cname)
+        resp.set_cookie(cname, "", expires=0, max_age=0, path="/", secure=is_secure, httponly=True, samesite="Lax")
+    resp.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
+    resp.headers["Vary"] = "Cookie"
     return resp
 
 
@@ -3431,22 +3867,26 @@ def api_get_pgo_assessment():
     if user.get("role") == "student":
         return jsonify({"error": "Forbidden: PGO Assessment is for Faculty and Academic Leadership."}), 403
 
-    import pgo_assessment
-    program_filter = request.args.get("program", "ALL")
-    course_filter = request.args.get("course_id", "ALL")
-    ied_filter = request.args.get("ied", "ALL")
-    cohort_filter = request.args.get("cohort", "ALL")
-    search_query = request.args.get("q", "")
+    try:
+        import pgo_assessment
+        program_filter = request.args.get("program", "ALL")
+        course_filter = request.args.get("course_id", "ALL")
+        ied_filter = request.args.get("ied", "ALL")
+        cohort_filter = request.args.get("cohort", "ALL")
+        search_query = request.args.get("q", "")
 
-    report = pgo_assessment.build_pgo_assessment_report(
-        user=user,
-        program_filter=program_filter,
-        course_filter=course_filter,
-        ied_filter=ied_filter,
-        cohort_filter=cohort_filter,
-        search_query=search_query,
-    )
-    return jsonify(report)
+        report = pgo_assessment.build_pgo_assessment_report(
+            user=user,
+            program_filter=program_filter,
+            course_filter=course_filter,
+            ied_filter=ied_filter,
+            cohort_filter=cohort_filter,
+            search_query=search_query,
+        )
+        return jsonify(report)
+    except Exception as exc:
+        app.logger.exception("PGO Assessment build failed: %s", exc)
+        return jsonify({"error": f"Unable to compute PGO Assessment report: {exc}"}), 500
 
 
 @app.route("/api/pgo-assessment/node-drilldown", methods=["GET"])
@@ -3457,34 +3897,420 @@ def api_get_pgo_node_drilldown():
     if user.get("role") == "student":
         return jsonify({"error": "Forbidden"}), 403
 
-    import pgo_assessment
-    node_type = (request.args.get("node_type") or "").strip().lower()
-    node_id = (request.args.get("node_id") or "").strip()
-    report = pgo_assessment.build_pgo_assessment_report(
-        user=user,
-        program_filter=request.args.get("program", "ALL"),
-        course_filter=request.args.get("course_id", "ALL"),
-        ied_filter=request.args.get("ied", "ALL"),
-        cohort_filter=request.args.get("cohort", "ALL"),
-        search_query=request.args.get("q", ""),
+    try:
+        import pgo_assessment
+        node_type = (request.args.get("node_type") or "").strip().lower()
+        node_id = (request.args.get("node_id") or "").strip()
+        report = pgo_assessment.build_pgo_assessment_report(
+            user=user,
+            program_filter=request.args.get("program", "ALL"),
+            course_filter=request.args.get("course_id", "ALL"),
+            ied_filter=request.args.get("ied", "ALL"),
+            cohort_filter=request.args.get("cohort", "ALL"),
+            search_query=request.args.get("q", ""),
+        )
+
+        target = None
+        if node_type == "pgo":
+            pid = node_id.replace("pgo:", "").strip().lower()
+            target = next((p for p in (report.get("pgos") or []) if p.get("pgo_id") == pid), None)
+        elif node_type == "pi":
+            pi_id = node_id.replace("pi:", "").strip().lower()
+            target = next((p for p in (report.get("pis") or []) if p.get("pi_id") == pi_id), None)
+        elif node_type in ("course_clo", "cclo"):
+            cclo_nodes = (report.get("flowchart") or {}).get("course_clo_nodes") or []
+            target = next((n for n in cclo_nodes if n.get("node_key") == node_id or f"{n.get('course_id')}:{n.get('clo_id')}" == node_id), None)
+        elif node_type == "student":
+            target = next((s for s in (report.get("students_matrix") or []) if str(s.get("student_id") or "").lower() == node_id.lower()), None)
+
+        if not target:
+            return jsonify({"error": "Requested node or record is not accessible within your role scope."}), 404
+
+        return jsonify({"success": True, "node_type": node_type, "node": target, "scope": report.get("scope")})
+    except Exception as exc:
+        app.logger.exception("PGO Node Drilldown failed: %s", exc)
+        return jsonify({"error": f"Unable to load PGO node details: {exc}"}), 500
+
+
+# =========================================================================
+# COURSE SYLLABUS CREATOR (STEP 1) - PER-SECTION OCR / IMAGE EXTRACTION API
+# =========================================================================
+
+_SYLLABUS_OCR_SECTION_PROMPTS = {
+    "course_info": (
+        "Extract Part I Course & Faculty Metadata as JSON object with optional string keys: "
+        "university, schedule, room, semester_ay, faculty_name, program_head, passing_pct."
+    ),
+    "course_outcomes": (
+        "Extract Course Learning Outcomes (CLOs) as JSON object {\"course_outcomes\": [ "
+        "{\"co_id\": \"CO1\", \"description\": \"...\", \"program_outcomes\": \"PGO a\", \"performance_indicator\": \"a.1 ...\", \"iga_aligned\": \"IGA1\", \"degree_target\": 75, \"target_pct\": 50} ]}."
+    ),
+    "course_desc": (
+        "Extract Part III-V Course Description, Faculty Email, Consultation Hours, Workload Info as JSON object "
+        "with optional keys: version_number, version_note, year_level, faculty_email, consultation_hours, consultation_venue, course_description, workload_description."
+    ),
+    "prereq_sdg": (
+        "Extract Part V Pre-requisites/Co-requisites and SDG Alignments as JSON object: "
+        "{\"prereq_coreq_table\": [{\"req_type\": \"Pre-requisite\"|\"Co-requisite\", \"course_code\": \"...\", \"course_title\": \"...\"}], "
+        "\"sdg_table\": [{\"sdg\": \"SDG 7: Affordable and Clean Energy\", \"description\": \"...\"}]}."
+    ),
+    "assessment_activities": (
+        "Extract Part VI Assessment Activities as JSON object {\"syllabus_assessment_activities\": [ "
+        "{\"type\": \"Formative\"|\"Summative\", \"code\": \"FA1\"|\"SA1\", \"activity\": \"...\", \"description\": \"...\", \"clo_aligned\": \"CO1, CO2\", \"weight_pct\": 0, \"items_per_term\": 2} ]}."
+    ),
+    "rubrics": (
+        "Extract Part VII Measurement System / Rubrics as JSON object {\"rubrics\": [ "
+        "{\"title\": \"...\", \"linked_assessment\": \"...\", \"criteria\": [{\"criterion\": \"...\", \"weight\": 25, \"levels\": [\"...\"]}]} ]}."
+    ),
+    "grading_plan": (
+        "Extract Part VIII Grading System & Passing Conditions as JSON object: "
+        "{\"grading_system_type\": \"two_term\"|\"term_project\"|\"lecture_lab\", \"passing_grade_conditions\": \"...\"}."
+    ),
+    "learning_plan": (
+        "Extract Part IX Course Learning Plan rows as JSON object {\"learning_plan_table\": [ "
+        "{\"ilo\": \"...\", \"clo\": \"CO1\", \"time_frame\": \"Week 2 (3 hrs)\", \"topics\": \"...\", \"tla\": \"...\", \"required_reading\": \"...\", \"assessment_activities\": \"...\"} ]}."
+    ),
+    "references_policies": (
+        "Extract Part X References and Part XI Classroom Policies as JSON object: "
+        "{\"references_table\": [{\"code\": \"Ref01\", \"reference\": \"...\"}], "
+        "\"policies_table\": [{\"no\": \"1\", \"area\": \"Attendance Policy\", \"details\": \"...\"}]}."
+    ),
+}
+
+
+def _parse_ocr_raw_text_fallback(section_key: str, raw_text: str) -> dict:
+    """Deterministic text parser when Vision JSON isn't directly structured or raw text is provided."""
+    lines = [ln.strip() for ln in str(raw_text or "").splitlines() if ln.strip()]
+    if section_key == "course_info":
+        out = {}
+        joined = "\n".join(lines)
+        for key, pat in [
+            ("schedule", r"(?:Schedule|Class\s*Schedule)\s*[:\-]\s*(.+)"),
+            ("room", r"(?:Room|Venue)\s*[:\-]\s*(.+)"),
+            ("semester_ay", r"(?:Semester|A\.?Y\.?|Academic\s*Year)\s*[:\-]\s*(.+)"),
+            ("faculty_name", r"(?:Instructor|Faculty|Prepared\s*by)\s*[:\-]\s*(.+)"),
+            ("program_head", r"(?:Program\s*Head|Department\s*Chair)\s*[:\-]\s*(.+)"),
+        ]:
+            m = re.search(pat, joined, flags=re.IGNORECASE)
+            if m:
+                out[key] = m.group(1).strip()
+        return out
+    if section_key == "course_outcomes":
+        cos = []
+        for idx, ln in enumerate(lines, 1):
+            m = re.match(r"^(CO\s*\d+|CLO\s*\d+)[\s.:\-]+(.+)$", ln, flags=re.IGNORECASE)
+            if m:
+                co_code = re.sub(r"\s+", "", m.group(1).upper()).replace("CLO", "CO")
+                cos.append({"co_id": co_code, "description": m.group(2).strip()})
+            elif len(ln) > 18:
+                cos.append({"co_id": f"CO{len(cos) + 1}", "description": ln})
+        return {"course_outcomes": cos}
+    if section_key == "course_desc":
+        return {"course_description": "\n".join(lines)}
+    if section_key == "prereq_sdg":
+        reqs, sdgs = [], []
+        for ln in lines:
+            if re.search(r"\bSDG\s*\d+", ln, flags=re.IGNORECASE):
+                parts = re.split(r"\s*[\-:|]\s*", ln, maxsplit=1)
+                sdgs.append({"sdg": parts[0].strip(), "description": parts[1].strip() if len(parts) > 1 else ln})
+            else:
+                req_t = "Co-requisite" if "co-req" in ln.lower() or "coreq" in ln.lower() else "Pre-requisite"
+                cm = re.search(r"\b([A-Z]{2,6}\s*\d{3}[A-Z]?)\b", ln)
+                if cm:
+                    code = cm.group(1).strip()
+                    title = ln.replace(code, "", 1).strip(" -:|")
+                    reqs.append({"req_type": req_t, "course_code": code, "course_title": title})
+        return {"prereq_coreq_table": reqs, "sdg_table": sdgs}
+    if section_key == "assessment_activities":
+        acts = []
+        for ln in lines:
+            m = re.match(r"^(FA\d+|SA\d+)\b[\s.:\-]+(.+)$", ln, flags=re.IGNORECASE)
+            if m:
+                code = m.group(1).upper()
+                acts.append({
+                    "type": "Formative" if code.startswith("FA") else "Summative",
+                    "code": code,
+                    "activity": m.group(2).strip()[:60],
+                    "description": m.group(2).strip(),
+                })
+        return {"syllabus_assessment_activities": acts}
+    if section_key == "grading_plan":
+        return {"passing_grade_conditions": "\n".join(lines)}
+    if section_key == "learning_plan":
+        rows = []
+        for idx, ln in enumerate(lines, 1):
+            parts = [p.strip() for p in re.split(r"\t+|\s*\|\s*", ln) if p.strip()]
+            if len(parts) >= 3:
+                rows.append({
+                    "ilo": parts[0],
+                    "clo": parts[1] if len(parts) > 3 else "",
+                    "time_frame": parts[2] if len(parts) > 3 else f"Week {idx}",
+                    "topics": parts[3] if len(parts) > 3 else parts[1],
+                    "tla": parts[4] if len(parts) > 4 else "Lecture / Discussion",
+                    "required_reading": parts[5] if len(parts) > 5 else "",
+                    "assessment_activities": parts[6] if len(parts) > 6 else "",
+                })
+            elif len(ln) > 8:
+                wm = re.search(r"(Week\s*\d+(?:\s*[-–]\s*\d+)?)", ln, flags=re.IGNORECASE)
+                rows.append({
+                    "ilo": f"Understand and apply {ln}",
+                    "clo": "",
+                    "time_frame": wm.group(1) if wm else f"Week {idx}",
+                    "topics": ln,
+                    "tla": "Lecture / Guided Discussion",
+                    "required_reading": "",
+                    "assessment_activities": "",
+                })
+        return {"learning_plan_table": rows}
+    if section_key == "references_policies":
+        refs, pols = [], []
+        for ln in lines:
+            if re.match(r"^(Ref\s*\d+|\[\d+\])", ln, flags=re.IGNORECASE):
+                parts = re.split(r"\s+", ln, maxsplit=1)
+                refs.append({"code": parts[0], "reference": parts[1] if len(parts) > 1 else ln})
+            elif any(w in ln.lower() for w in ("policy", "attendance", "honesty", "late", "grading", "conduct")) or re.match(r"^\d+[\.)]\s+", ln):
+                clean = re.sub(r"^\d+[\.)]\s*", "", ln)
+                parts = re.split(r"\s*[:\-]\s*", clean, maxsplit=1)
+                pols.append({
+                    "no": str(len(pols) + 1),
+                    "area": parts[0].strip()[:80],
+                    "details": parts[1].strip() if len(parts) > 1 else clean,
+                })
+            else:
+                refs.append({"code": f"Ref{len(refs) + 1:02d}", "reference": ln})
+        return {"references_table": refs, "policies_table": pols}
+    return {"raw_text": "\n".join(lines)}
+
+
+def _run_built_in_local_ocr(raw_bytes: bytes) -> tuple:
+    """
+    Runs built-in out-of-the-box local OCR without requiring user API keys or setup:
+      1) Local pytesseract if available on host
+      2) Native Windows 10/11 WinRT OCR (Windows.Media.Ocr.OcrEngine) via PIL upscaling + PowerShell
+    Returns (extracted_text, engine_name).
+    """
+    from PIL import Image, ImageOps
+    import subprocess
+
+    img_obj = Image.open(io.BytesIO(raw_bytes))
+    # Upscale smaller captures for much cleaner OCR recognition
+    if img_obj.width < 1100:
+        scale = 2 if img_obj.width >= 450 else 3
+        img_obj = img_obj.resize((img_obj.width * scale, img_obj.height * scale), Image.Resampling.LANCZOS)
+    if img_obj.mode not in ("RGB", "L"):
+        img_obj = img_obj.convert("RGB")
+
+    # 1. Try pytesseract if installed
+    try:
+        import pytesseract
+        txt = (pytesseract.image_to_string(img_obj) or "").strip()
+        if txt:
+            return txt, "tesseract_default_ocr"
+    except Exception:
+        pass
+
+    # 2. Native Windows WinRT OCR fallback (pre-installed on Windows)
+    if os.name == "nt":
+        prep_buf = io.BytesIO()
+        ImageOps.autocontrast(img_obj.convert("L")).save(prep_buf, format="PNG")
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tf:
+                tf.write(prep_buf.getvalue())
+                tmp_path = tf.name
+            safe_path = tmp_path.replace("'", "''")
+            ps_cmd = (
+                "Add-Type -AssemblyName System.Runtime.WindowsRuntime; "
+                "$asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | "
+                "Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and "
+                "$_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1' })[0]; "
+                "function Await($WinRtTask, $ResultType) { "
+                "$asTask = $asTaskGeneric.MakeGenericMethod($ResultType); "
+                "$netTask = $asTask.Invoke($null, @($WinRtTask)); "
+                "$netTask.Wait(-1) | Out-Null; $netTask.Result }; "
+                "$null = [Windows.Storage.StorageFile, Windows.Storage, ContentType=WindowsRuntime]; "
+                "$null = [Windows.Storage.Streams.IRandomAccessStream, Windows.Storage.Streams, ContentType=WindowsRuntime]; "
+                "$null = [Windows.Graphics.Imaging.BitmapDecoder, Windows.Graphics.Imaging, ContentType=WindowsRuntime]; "
+                "$null = [Windows.Graphics.Imaging.SoftwareBitmap, Windows.Graphics.Imaging, ContentType=WindowsRuntime]; "
+                "$null = [Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType=WindowsRuntime]; "
+                "$null = [Windows.Media.Ocr.OcrResult, Windows.Foundation, ContentType=WindowsRuntime]; "
+                f"$file = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync('{safe_path}')) ([Windows.Storage.StorageFile]); "
+                "$stream = Await ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream]); "
+                "$decoder = Await ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder]); "
+                "$bitmap = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap]); "
+                "$engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages(); "
+                "if ($null -ne $engine) { "
+                "$result = Await ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult]); "
+                "foreach ($ln in $result.Lines) { Write-Output $ln.Text } }; "
+                "$stream.Dispose()"
+            )
+            proc = subprocess.run(
+                ["powershell", "-NoProfile", "-Command", ps_cmd],
+                capture_output=True,
+                text=True,
+                timeout=20,
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                return proc.stdout.strip(), "built_in_default_ocr"
+        except Exception as exc:
+            logger.debug("WinRT local OCR error: %s", exc)
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
+
+    return "", ""
+
+
+@app.route("/api/syllabus/ocr-extract", methods=["POST"])
+@faculty_tools_required
+def api_syllabus_section_ocr_extract():
+    """
+    Performs OCR / Vision extraction for a specific Course Syllabus Creator (Step 1)
+    section from an uploaded/clipboard-pasted image or raw text payload.
+    Defaults to the built-in out-of-the-box OCR engine (zero config required),
+    with optional specialized Gemini Vision model override.
+    """
+    import base64
+    import json as _json
+    import requests as _req
+
+    payload = request.get_json(silent=True) if request.is_json else None
+    if payload:
+        section_key = str(payload.get("section_key") or "learning_plan").strip()
+        ocr_mode = str(payload.get("ocr_mode") or "default").strip().lower()
+        gemini_key = str(payload.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or "").strip()
+        raw_text_in = str(payload.get("raw_text") or "").strip()
+        img_b64 = str(payload.get("image_base64") or "").strip()
+        mime_type = str(payload.get("mime_type") or "image/png").strip()
+        if "," in img_b64 and img_b64.startswith("data:"):
+            hdr, img_b64 = img_b64.split(",", 1)
+            if ":" in hdr and ";" in hdr:
+                mime_type = hdr.split(":", 1)[1].split(";", 1)[0]
+    else:
+        section_key = str(request.form.get("section_key") or "learning_plan").strip()
+        ocr_mode = str(request.form.get("ocr_mode") or "default").strip().lower()
+        gemini_key = str(request.form.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or "").strip()
+        raw_text_in = str(request.form.get("raw_text") or "").strip()
+        img_b64 = ""
+        mime_type = "image/png"
+        up_file = request.files.get("image") or request.files.get("file")
+        if up_file and up_file.filename:
+            raw_bytes = up_file.read()
+            mime_type = up_file.mimetype or "image/png"
+            img_b64 = base64.b64encode(raw_bytes).decode("ascii")
+
+    if section_key not in _SYLLABUS_OCR_SECTION_PROMPTS:
+        return jsonify({"error": f"Unknown syllabus section '{section_key}'."}), 400
+
+    # 1. If explicit raw text was sent without an image, parse directly
+    if raw_text_in and not img_b64:
+        parsed = _parse_ocr_raw_text_fallback(section_key, raw_text_in)
+        return jsonify({
+            "success": True,
+            "engine": "structured_text_parser",
+            "section_key": section_key,
+            "raw_text": raw_text_in,
+            "data": parsed,
+        })
+
+    if not img_b64 and not raw_text_in:
+        return jsonify({"error": "Please upload an image, paste a screenshot (Ctrl+V), or provide extracted text."}), 400
+
+    # 2. Specialized Vision Model Override (when chosen under Advanced or an explicit API key was supplied)
+    explicit_req_key = str((payload or request.form).get("gemini_api_key") or "").strip()
+    use_specialized_gemini = bool(
+        gemini_key and (ocr_mode.startswith("gemini") or bool(explicit_req_key))
     )
+    if use_specialized_gemini:
+        model_id = "gemini-2.5-pro" if "pro" in ocr_mode else "gemini-2.5-flash"
+        prompt = (
+            "You are performing strict OCR and structured extraction on an engineering course syllabus screenshot "
+            "for the University of Southeastern Philippines (USeP FM-USeP-MID-01).\n"
+            f"{_SYLLABUS_OCR_SECTION_PROMPTS[section_key]}\n"
+            "Return ONLY valid JSON without markdown code fences or commentary."
+        )
+        try:
+            resp_g = _req.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={gemini_key}",
+                json={
+                    "contents": [{
+                        "parts": [
+                            {"text": prompt},
+                            {"inline_data": {"mime_type": mime_type, "data": img_b64}},
+                        ]
+                    }]
+                },
+                timeout=45,
+            )
+            if not resp_g.ok:
+                err_msg = f"Specialized Vision model returned HTTP {resp_g.status_code}."
+                return jsonify({"success": False, "error": err_msg, "section_key": section_key}), 502
 
-    target = None
-    if node_type == "pgo":
-        pid = node_id.replace("pgo:", "").strip().lower()
-        target = next((p for p in report["pgos"] if p["pgo_id"] == pid), None)
-    elif node_type == "pi":
-        pi_id = node_id.replace("pi:", "").strip().lower()
-        target = next((p for p in report["pis"] if p["pi_id"] == pi_id), None)
-    elif node_type in ("course_clo", "cclo"):
-        target = next((n for n in report["flowchart"]["course_clo_nodes"] if n["node_key"] == node_id or f"{n['course_id']}:{n['clo_id']}" == node_id), None)
-    elif node_type == "student":
-        target = next((s for s in report["students_matrix"] if s["student_id"].lower() == node_id.lower()), None)
+            raw_cand = (
+                resp_g.json()
+                .get("candidates", [{}])[0]
+                .get("content", {})
+                .get("parts", [{}])[0]
+                .get("text", "")
+                .strip()
+            )
+            cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw_cand, flags=re.IGNORECASE).strip()
+            try:
+                parsed_json = _json.loads(cleaned)
+                if not isinstance(parsed_json, dict):
+                    parsed_json = {"items": parsed_json}
+                return jsonify({
+                    "success": True,
+                    "engine": "gemini_vision",
+                    "model": model_id,
+                    "section_key": section_key,
+                    "raw_text": raw_cand,
+                    "data": parsed_json,
+                })
+            except Exception:
+                parsed = _parse_ocr_raw_text_fallback(section_key, cleaned)
+                return jsonify({
+                    "success": True,
+                    "engine": "gemini_vision_text_fallback",
+                    "model": model_id,
+                    "section_key": section_key,
+                    "raw_text": cleaned,
+                    "data": parsed,
+                })
+        except Exception as exc:
+            if ocr_mode.startswith("gemini"):
+                return jsonify({"success": False, "error": f"Specialized Vision OCR failed: {exc}", "section_key": section_key}), 502
 
-    if not target:
-        return jsonify({"error": "Requested node or record is not accessible within your role scope."}), 404
-
-    return jsonify({"success": True, "node_type": node_type, "node": target, "scope": report["scope"]})
+    # 3. Default Built-In Out-of-the-Box Local OCR Engine (Tesseract / Native Windows WinRT OCR)
+    try:
+        raw_img_bytes = base64.b64decode(img_b64)
+        ocr_text, eng_name = _run_built_in_local_ocr(raw_img_bytes)
+        if ocr_text:
+            parsed = _parse_ocr_raw_text_fallback(section_key, ocr_text)
+            return jsonify({
+                "success": True,
+                "engine": eng_name,
+                "section_key": section_key,
+                "raw_text": ocr_text,
+                "data": parsed,
+            })
+        return jsonify({
+            "success": True,
+            "engine": "built_in_default_ocr",
+            "section_key": section_key,
+            "raw_text": "",
+            "data": {},
+            "warning": "No readable text detected in this image. You can paste/type text directly in the Raw Text box or select a specialized Vision model under Advanced.",
+        })
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "section_key": section_key,
+            "error": f"Built-in OCR could not process the uploaded image: {exc}",
+        }), 400
 
 
 @app.route("/api/admin/faculty-list", methods=["GET"])
@@ -3609,7 +4435,7 @@ def _calculate_single_student_performance(st, categories, clos, meta, ttable, pa
             has_clo_entry = False
             for c in aligned_clos:
                 c_key = f"{item_id}__{c}"
-                if c_key in st_clo_scores:
+                if c_key in st_clo_scores and st_clo_scores[c_key] is not None and str(st_clo_scores[c_key]).strip() != "":
                     st_raw += float(st_clo_scores[c_key] or 0.0)
                     has_clo_entry = True
                     clo_points_earned[c] = clo_points_earned.get(c, 0.0) + float(st_clo_scores[c_key] or 0.0)
@@ -4140,6 +4966,42 @@ def api_student_course_performance(course_id):
     except Exception:
         pass
 
+    # 4b. Per-Course Exit Survey & Final Grade Visibility Gate
+    unrecorded_count = int(passing_recommendation.get("unrecorded_count", 0))
+    total_sa_items = sum(
+        len(c.get("items") or [])
+        for c in categories
+        if (c.get("assessment_type") or "SA").upper() in ("SA", "SUMMATIVE")
+        or ((c.get("assessment_type") or "SA").upper() not in ("FA", "FORMATIVE") and float(c.get("weight_pct") or 0.0) > 0)
+    )
+    cr_approved = ((doc.get("class_record_workflow") or {}).get("status") == "approved")
+    all_assessments_finalized = bool((total_sa_items > 0 and unrecorded_count == 0) or cr_approved)
+
+    matched_sid = str(matched_st.get("student_id") or user.get("student_id") or user.get("username") or "").strip()
+    survey_rec = None
+    try:
+        import db_persistence
+        survey_rec = db_persistence.get_student_survey_response_db(matched_sid, course_id)
+    except Exception:
+        survey_rec = None
+
+    survey_completed = bool(survey_rec and survey_rec.get("is_completed"))
+    final_grade_unlocked = bool(all_assessments_finalized and survey_completed)
+
+    grades_payload = {
+        "midterm_grade": matched_perf["midterm_grade"],
+        "finals_grade": matched_perf["finals_grade"] if final_grade_unlocked else None,
+        "average_final_grade": matched_perf["average_final_grade"] if final_grade_unlocked else None,
+        "transmuted_grade": matched_perf["transmuted_grade"] if final_grade_unlocked else None,
+        "passed": matched_perf["passed"] if final_grade_unlocked else None,
+        "status_label": (
+            ("PASSED" if matched_perf["passed"] else "IN PROGRESS / DEFICIENT")
+            if final_grade_unlocked
+            else ("LOCKED_SURVEY_REQUIRED" if (all_assessments_finalized and not survey_completed) else "PENDING_COMPLETION")
+        ),
+        "passing_cutoff": passing_pct,
+    }
+
     return jsonify({
         "success": True,
         "student": {
@@ -4159,15 +5021,20 @@ def api_student_course_performance(course_id):
             "schedule": meta.get("schedule") or "TBA",
         },
         "all_enrolled_courses": all_enrolled_courses,
-        "grades": {
-            "midterm_grade": matched_perf["midterm_grade"],
-            "finals_grade": matched_perf["finals_grade"],
-            "average_final_grade": matched_perf["average_final_grade"],
-            "transmuted_grade": matched_perf["transmuted_grade"],
-            "passed": matched_perf["passed"],
-            "status_label": "PASSED" if matched_perf["passed"] else "IN PROGRESS / DEFICIENT",
-            "passing_cutoff": passing_pct,
+        "grade_visibility": {
+            "all_assessments_finalized": all_assessments_finalized,
+            "unrecorded_count": unrecorded_count,
+            "total_sa_items": total_sa_items,
+            "survey_completed": survey_completed,
+            "survey_submitted_at": survey_rec.get("submitted_at") if survey_rec else None,
+            "final_grade_unlocked": final_grade_unlocked,
+            "lock_reason": (
+                None if final_grade_unlocked else (
+                    "survey_required" if (all_assessments_finalized and not survey_completed) else "pending_grades"
+                )
+            ),
         },
+        "grades": grades_payload,
         "class_average": {
             "midterm_grade": class_avg_midterm,
             "finals_grade": class_avg_finals,
@@ -4199,18 +5066,517 @@ def api_student_course_performance(course_id):
             "passing_cutoff": passing_pct,
         },
         "comparison": {
-            "afg_diff": afg_diff,
+            "afg_diff": afg_diff if final_grade_unlocked else None,
             "midterm_diff": mg_diff,
-            "finals_diff": fg_diff,
-            "rank": student_rank,
+            "finals_diff": fg_diff if final_grade_unlocked else None,
+            "rank": student_rank if final_grade_unlocked else None,
             "total_students": n_st,
-            "percentile": percentile,
-            "standing_label": standing_label,
-            "is_above_average": (afg_diff >= 0),
+            "percentile": percentile if final_grade_unlocked else None,
+            "standing_label": standing_label if final_grade_unlocked else ("Survey Required" if (all_assessments_finalized and not survey_completed) else "In Progress"),
+            "is_above_average": (afg_diff >= 0) if final_grade_unlocked else None,
         },
         "clo_attainment": matched_perf["clo_summary"],
         "categories": matched_perf["categories"],
         "passing_recommendation": passing_recommendation,
+    })
+
+
+EXIT_SURVEY_GENERAL_QUESTIONS = [
+    {
+        "key": "syllabus_clarity",
+        "label": "Syllabus & CLO Clarity",
+        "cqi_anchor_key": "instructional_delivery_pacing",
+        "cqi_category": "Category I: Instructional Delivery & Pacing",
+        "prompt": "The syllabus clearly communicated Course Learning Outcomes (CLOs), grading policies, and requirements.",
+        "required": True,
+    },
+    {
+        "key": "teaching_delivery",
+        "label": "Instructional Delivery & Weekly Pacing",
+        "cqi_anchor_key": "instructional_delivery_pacing",
+        "cqi_category": "Category I: Instructional Delivery & Pacing",
+        "prompt": "Topic pacing followed the weekly delivery timeline effectively, and lectures/activities explained core concepts clearly.",
+        "required": True,
+    },
+    {
+        "key": "assessment_fairness",
+        "label": "Assessment Fairness, Rubrics & TOS Alignment",
+        "cqi_anchor_key": "assessment_tos_rubrics",
+        "cqi_category": "Category II: Assessment Fairness, Rubrics & TOS Alignment",
+        "prompt": "Formative tasks, summative exams, and measurement rubrics fairly and accurately measured the stated Course Learning Outcomes.",
+        "required": True,
+    },
+    {
+        "key": "resources_facilities",
+        "label": "Learning Resources, Lab Equipment & Facilities",
+        "cqi_anchor_key": "learning_resources_labs",
+        "cqi_category": "Category III: Learning Resources, Lab Equipment & Facilities",
+        "prompt": "References, instructional manuals, software tools, laboratory equipment, and lab hours were adequate for this course.",
+        "required": False,
+    },
+    {
+        "key": "feedback_consultation",
+        "label": "Feedback, Transparency & Consultation Support",
+        "cqi_anchor_key": "student_support_consultation",
+        "cqi_category": "Category IV: Feedback & Student Support",
+        "prompt": "Timely assessment feedback, transparent grading, and faculty consultation helped address learning difficulties.",
+        "required": True,
+    },
+]
+
+
+@app.route("/api/student/courses/<course_id>/exit-survey", methods=["GET", "POST"])
+def api_student_course_exit_survey(course_id):
+    """
+    Dynamic per-course Student Exit Survey endpoint (CLOs pulled from course syllabus +
+    CQI-anchored delivery/fairness/resource questions + diagnostic topic prompt).
+    Persists submissions to SQLite `survey_responses` and unlocks Final Grade visibility.
+    """
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Authentication required."}), 401
+
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    bp = doc.get("blueprint") or {}
+    meta = bp.get("metadata") or {}
+    clos_raw = bp.get("course_outcomes") or bp.get("clos") or []
+    clos = [
+        {
+            "co_id": str(c.get("co_id") or f"CO{idx}").strip().upper(),
+            "description": str(c.get("description") or "").strip(),
+            "program_outcomes": str(c.get("program_outcomes") or "").strip(),
+        }
+        for idx, c in enumerate(clos_raw, 1)
+    ]
+
+    sid = str(user.get("student_id") or user.get("username") or "").strip()
+    import db_persistence
+
+    if request.method == "GET":
+        existing = db_persistence.get_student_survey_response_db(sid, course_id)
+        return jsonify({
+            "success": True,
+            "course": {
+                "course_id": course_id,
+                "course_code": doc.get("course_code") or meta.get("course_code") or "",
+                "course_title": doc.get("course_title") or meta.get("course_title") or "",
+                "section": doc.get("section") or meta.get("section") or "",
+                "semester_ay": doc.get("semester_ay") or meta.get("semester_ay") or "",
+                "faculty_name": doc.get("faculty_name") or meta.get("faculty_name") or "",
+            },
+            "clos": clos,
+            "general_questions": EXIT_SURVEY_GENERAL_QUESTIONS,
+            "response": existing,
+            "is_completed": bool(existing and existing.get("is_completed")),
+        })
+
+    payload = request.get_json(silent=True) or {}
+    raw_clo_ratings = payload.get("clo_ratings") or {}
+    raw_gen_ratings = payload.get("general_ratings") or {}
+    challenging_topics = str(payload.get("challenging_topics") or "").strip()
+    comments = str(payload.get("comments") or "").strip()
+
+    clo_ratings = {}
+    for co in clos:
+        cid = co["co_id"]
+        val = raw_clo_ratings.get(cid)
+        try:
+            r_int = int(val)
+        except (TypeError, ValueError):
+            return jsonify({"error": f"Please select a rating (1 to 5) for {cid}."}), 400
+        if not 1 <= r_int <= 5:
+            return jsonify({"error": f"Rating for {cid} must be between 1 and 5."}), 400
+        clo_ratings[cid] = r_int
+
+    general_ratings = {}
+    anchor_accum = {}
+    for q in EXIT_SURVEY_GENERAL_QUESTIONS:
+        qk = q["key"]
+        val = raw_gen_ratings.get(qk)
+        if val is None or val == "":
+            if q.get("required", True):
+                return jsonify({"error": f"Please rate '{q['label']}' (1 to 5)."}), 400
+            continue
+        try:
+            r_int = int(val)
+        except (TypeError, ValueError):
+            return jsonify({"error": f"Please rate '{q['label']}' (1 to 5)."}), 400
+        if not 1 <= r_int <= 5:
+            return jsonify({"error": f"Rating for '{q['label']}' must be between 1 and 5."}), 400
+        general_ratings[qk] = r_int
+        anchor_accum.setdefault(q["cqi_anchor_key"], []).append(r_int)
+
+    cqi_anchors = {
+        ak: round(sum(vals) / len(vals), 2)
+        for ak, vals in anchor_accum.items() if vals
+    }
+
+    saved = db_persistence.save_survey_response_db(
+        student_id=sid,
+        subject_id=course_id,
+        course_code=doc.get("course_code") or meta.get("course_code") or "",
+        clo_ratings=clo_ratings,
+        general_ratings=general_ratings,
+        comments=comments,
+        cqi_anchors=cqi_anchors,
+        challenging_topics=challenging_topics,
+    )
+    return jsonify({
+        "success": True,
+        "survey": saved,
+        "is_completed": True,
+        "message": "Thank you! Your Course Exit Survey has been recorded.",
+    })
+
+
+@app.route("/api/courses/<course_id>/exit-survey-summary", methods=["GET"])
+@faculty_tools_required
+def api_course_exit_survey_summary(course_id):
+    """Returns aggregated Course Exit Survey metrics & anonymized feedback for CQI / CLO analysis."""
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    bp = doc.get("blueprint") or {}
+    clos = bp.get("course_outcomes") or bp.get("clos") or []
+    import db_persistence
+    summary = db_persistence.get_course_survey_aggregates_db(course_id, clos)
+    return jsonify({
+        "success": True,
+        "course_id": course_id,
+        "general_questions": EXIT_SURVEY_GENERAL_QUESTIONS,
+        **summary,
+    })
+
+
+# =========================================================================
+# STEP 8 CQI PLAN AUTO-SYNTHESIS & PROGRAM HEAD SUBMISSION / REVISIT WORKFLOW
+# =========================================================================
+
+@app.route("/api/courses/<course_id>/cqi/plan", methods=["GET"])
+@faculty_tools_required
+def api_get_course_cqi_plan(course_id):
+    """Returns 3-source consolidated data and saved Step 8 CQI Plan submission status."""
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+    import cqi_engine
+    import db_persistence
+
+    three_source = cqi_engine.collect_three_source_cqi_data(doc)
+    plan_row = db_persistence.get_cqi_plan_db(course_id)
+    if plan_row:
+        plan_row["revisit_status"] = cqi_engine.evaluate_revisit_status(plan_row, courses_store.list_all_workflow_courses())
+
+    bp_cqi = (doc.get("blueprint") or {}).get("cqi_plan") or {}
+    return jsonify({
+        "success": True,
+        "course_id": course_id,
+        "three_source_summary": three_source,
+        "cqi_plan_record": plan_row,
+        "blueprint_cqi": bp_cqi,
+    })
+
+
+@app.route("/api/courses/<course_id>/cqi/synthesize", methods=["POST"])
+@faculty_tools_required
+def api_synthesize_course_cqi_plan(course_id):
+    """
+    Auto-generates and synthesizes Step 8 CQI Plan fields by correlating Step 4 Class Record,
+    Step 7 MID-10 CLO Attainment, and Student Course Exit Survey responses.
+    """
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    payload = request.get_json(silent=True) or {}
+    use_ai = bool(payload.get("use_ai"))
+    gemini_key = str(payload.get("gemini_api_key") or "").strip()
+
+    import cqi_engine
+    import db_persistence
+
+    draft = cqi_engine.synthesize_cqi_plan(doc, use_ai=use_ai, gemini_api_key=gemini_key)
+    bp = doc.setdefault("blueprint", {})
+    cqi_obj = bp.setdefault("cqi_plan", {})
+    for field in ("key_strengths", "areas_for_improvement", "gap_analysis", "root_causes", "action_plan", "target_kpis", "indicators", "targeted_clos", "revisit_date", "revisit_term"):
+        cqi_obj[field] = draft.get(field)
+
+    existing = db_persistence.get_cqi_plan_db(course_id)
+    user = current_user() or {}
+    meta = bp.get("metadata") or {}
+    plan_rec = db_persistence.save_cqi_plan_db({
+        "course_id": course_id,
+        "course_code": doc.get("course_code") or meta.get("course_code") or "",
+        "course_title": doc.get("course_title") or meta.get("course_title") or "",
+        "section": doc.get("section") or meta.get("section") or "",
+        "program_code": doc.get("program_code") or meta.get("program_code") or "EE",
+        "semester_ay": doc.get("semester_ay") or meta.get("semester_ay") or "",
+        "faculty_username": doc.get("owner") or user.get("username") or "faculty",
+        "faculty_name": doc.get("faculty_name") or meta.get("faculty_name") or user.get("full_name") or "",
+        "targeted_clos": draft.get("targeted_clos") or [],
+        "synthesis": {
+            "engine": draft.get("engine"),
+            "clo_correlations": draft["three_source_summary"]["clo_correlations"],
+            "bottleneck_items": draft["three_source_summary"]["bottleneck_items"],
+            "survey_total_responses": draft["three_source_summary"]["exit_survey"].get("total_responses", 0),
+            "survey_overall_rating": draft["three_source_summary"]["exit_survey"].get("overall_avg_rating"),
+        },
+        "key_strengths": draft["key_strengths"],
+        "areas_for_improvement": draft["areas_for_improvement"],
+        "gap_analysis": draft["gap_analysis"],
+        "root_causes": draft["root_causes"],
+        "action_plan": draft["action_plan"],
+        "target_kpis": draft["target_kpis"],
+        "indicators": draft["indicators"],
+        "status": existing["status"] if existing else "draft",
+        "revisit_date": existing["revisit_date"] if (existing and existing.get("revisit_date")) else draft["revisit_date"],
+        "revisit_term": existing["revisit_term"] if (existing and existing.get("revisit_term")) else draft["revisit_term"],
+        "revisit_status": existing["revisit_status"] if existing else "Upcoming",
+    })
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "engine": draft["engine"],
+        "cqi_plan": cqi_obj,
+        "cqi_plan_record": plan_rec,
+        "three_source_summary": draft["three_source_summary"],
+    })
+
+
+@app.route("/api/courses/<course_id>/cqi/submit", methods=["POST"])
+@faculty_tools_required
+def api_submit_course_cqi_plan(course_id):
+    """
+    Submits a completed Step 8 CQI Plan to the Program Head, setting status='submitted',
+    calculating the Mandatory Revisit Date (1 Year post-submission / Next AY Same Semester),
+    and surfacing it inside Requests for Approval -> Submitted CQI Plans.
+    """
+    doc = courses_store.find_course(course_id)
+    if not doc:
+        return jsonify({"error": f"Course '{course_id}' not found."}), 404
+
+    payload = request.get_json(silent=True) or {}
+    user = current_user() or {}
+    bp = doc.setdefault("blueprint", {})
+    meta = bp.get("metadata") or {}
+    cqi_obj = bp.setdefault("cqi_plan", {})
+
+    for fld in ("key_strengths", "areas_for_improvement", "gap_analysis", "root_causes", "action_plan", "target_kpis"):
+        if fld in payload:
+            cqi_obj[fld] = str(payload.get(fld) or "").strip()
+    if isinstance(payload.get("indicators"), list):
+        cqi_obj["indicators"] = payload["indicators"]
+
+    import cqi_engine
+    import db_persistence
+
+    three_source = cqi_engine.collect_three_source_cqi_data(doc)
+    now_dt = datetime.now()
+    now_ts = now_dt.isoformat(timespec="seconds")
+    sem_ay = doc.get("semester_ay") or meta.get("semester_ay") or ""
+    default_revisit_date, revisit_term = cqi_engine.compute_cqi_revisit_schedule(sem_ay, now_dt)
+    revisit_date = str(payload.get("revisit_date") or "").strip() or default_revisit_date
+
+    targeted_clos = payload.get("targeted_clos") or [
+        c["co_id"] for c in (three_source["unmet_clos"] or three_source["borderline_clos"])
+    ] or [c["co_id"] for c in three_source["clo_correlations"]]
+
+    cqi_obj["status"] = "submitted"
+    cqi_obj["submitted_at"] = now_ts
+    cqi_obj["revisit_date"] = revisit_date
+    cqi_obj["revisit_term"] = revisit_term
+    cqi_obj["revisit_status"] = "Upcoming"
+    cqi_obj["targeted_clos"] = targeted_clos
+
+    plan_rec = db_persistence.save_cqi_plan_db({
+        "course_id": course_id,
+        "course_code": doc.get("course_code") or meta.get("course_code") or "",
+        "course_title": doc.get("course_title") or meta.get("course_title") or "",
+        "section": doc.get("section") or meta.get("section") or "",
+        "program_code": doc.get("program_code") or meta.get("program_code") or "EE",
+        "semester_ay": sem_ay,
+        "faculty_username": doc.get("owner") or user.get("username") or "faculty",
+        "faculty_name": doc.get("faculty_name") or meta.get("faculty_name") or user.get("full_name") or "",
+        "targeted_clos": targeted_clos,
+        "synthesis": {
+            "clo_correlations": three_source["clo_correlations"],
+            "bottleneck_items": three_source["bottleneck_items"],
+            "survey_total_responses": three_source["exit_survey"].get("total_responses", 0),
+            "survey_overall_rating": three_source["exit_survey"].get("overall_avg_rating"),
+        },
+        "key_strengths": cqi_obj.get("key_strengths") or "",
+        "areas_for_improvement": cqi_obj.get("areas_for_improvement") or "",
+        "gap_analysis": cqi_obj.get("gap_analysis") or "",
+        "root_causes": cqi_obj.get("root_causes") or "",
+        "action_plan": cqi_obj.get("action_plan") or "",
+        "target_kpis": cqi_obj.get("target_kpis") or "",
+        "indicators": cqi_obj.get("indicators") or [],
+        "status": "submitted",
+        "submitted_at": now_ts,
+        "revisit_date": revisit_date,
+        "revisit_term": revisit_term,
+        "revisit_status": "Upcoming",
+    })
+    courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "message": f"CQI Plan submitted to Program Head! Mandatory Revisit scheduled for {revisit_date} ({revisit_term}).",
+        "cqi_plan_record": plan_rec,
+    })
+
+
+def _can_review_cqi_plans(user: Optional[Dict[str, Any]]) -> bool:
+    if not user:
+        return False
+    role = str(user.get("role") or "").strip().lower()
+    wf_roles = {str(r).strip().lower() for r in (user.get("workflow_roles") or [])}
+    return role == "admin" or bool(wf_roles.intersection({"program_head", "qa_head", "dean", "associate_dean"}))
+
+
+@app.route("/api/workflow/cqi-plans", methods=["GET"])
+def api_get_submitted_cqi_plans():
+    """
+    Returns Submitted CQI Plans segregated by Academic Year & Semester for the Program Head /
+    Oversight Portal ('Submitted CQI Plans' sub-ribbon) and Faculty tracking.
+    """
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if user.get("role") == "student":
+        return jsonify({"error": "Forbidden"}), 403
+
+    import cqi_engine
+    import db_persistence
+
+    all_plans = db_persistence.list_cqi_plans_db(include_drafts=False)
+    all_courses = courses_store.list_all_workflow_courses()
+    can_view_all = is_authorized_oversight_user(user)
+    can_review = _can_review_cqi_plans(user)
+
+    wf_roles = {str(r).strip().lower() for r in (user.get("workflow_roles") or [])}
+    is_college_wide = (
+        user.get("role") in ("admin", "staff")
+        or bool(wf_roles.intersection({"dean", "associate_dean", "qa_head", "staff"}))
+    )
+    user_progs = {str(p).strip().upper() for p in (user.get("program_codes") or []) if str(p).strip()}
+    uname_low = str(user.get("username") or "").strip().lower()
+
+    visible_plans = []
+    for pl in all_plans:
+        p_code = str(pl.get("program_code") or "EE").strip().upper()
+        if p_code.startswith("BS") and len(p_code) > 2:
+            p_code = p_code[2:]
+        if not can_view_all:
+            if str(pl.get("faculty_username") or "").strip().lower() != uname_low:
+                continue
+        elif not is_college_wide and user_progs and "*" not in user_progs:
+            if p_code not in user_progs:
+                continue
+        pl["revisit_status"] = cqi_engine.evaluate_revisit_status(pl, all_courses)
+        visible_plans.append(pl)
+
+    # Group per Semester / Academic Year
+    sem_rank = {"1st Semester": 1, "2nd Semester": 2, "3rd Trimester": 3, "Summer / Midyear": 4}
+    groups_map: Dict[str, List[Dict[str, Any]]] = {}
+    for pl in visible_plans:
+        sem_raw = str(pl.get("semester_ay") or "Unassigned Term").strip()
+        _, _, grp_lbl = courses_store.parse_semester_ay(sem_raw)
+        key_lbl = sem_raw or grp_lbl
+        groups_map.setdefault(key_lbl, []).append(pl)
+
+    def _term_sort_key(item):
+        lbl = item[0]
+        sy, sem, _ = courses_store.parse_semester_ay(lbl)
+        m_yr = re.search(r"(\d{4})", sy)
+        yr = int(m_yr.group(1)) if m_yr else 0
+        return (-yr, sem_rank.get(sem, 9), lbl)
+
+    groups = [
+        {"semester_ay": lbl, "plans": plist, "count": len(plist)}
+        for lbl, plist in sorted(groups_map.items(), key=_term_sort_key)
+    ]
+
+    return jsonify({
+        "success": True,
+        "can_review": can_review,
+        "can_view_all": can_view_all,
+        "total_count": len(visible_plans),
+        "plans": visible_plans,
+        "groups": groups,
+    })
+
+
+@app.route("/api/workflow/cqi-plans/<course_id>/review", methods=["POST"])
+def api_review_submitted_cqi_plan(course_id):
+    """Program Head / QA Head / Dean action: Approve & Schedule Revisit, Verify/Close Revisit, Return, or Update Revisit Date."""
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if not _can_review_cqi_plans(user):
+        return jsonify({"error": "Forbidden: Only Program Heads, QA Head, Associate Dean, Dean, or Admin can review CQI Plans."}), 403
+
+    payload = request.get_json(silent=True) or {}
+    action = str(payload.get("action") or "approve").strip().lower()
+    remarks = str(payload.get("remarks") or "").strip()
+    revisit_date = str(payload.get("revisit_date") or "").strip() or None
+
+    status_map = {
+        "approve": ("approved_scheduled", "Upcoming"),
+        "close": ("verified", "Closed/Verified"),
+        "verify": ("verified", "Closed/Verified"),
+        "return": ("returned", "Upcoming"),
+    }
+    if action in status_map:
+        new_status, new_rev_status = status_map[action]
+    elif action == "update_revisit":
+        import db_persistence
+        cur_row = db_persistence.get_cqi_plan_db(course_id)
+        if not cur_row:
+            return jsonify({"error": "Submitted CQI Plan not found."}), 404
+        new_status = cur_row["status"]
+        new_rev_status = str(payload.get("revisit_status") or cur_row.get("revisit_status") or "Upcoming")
+    else:
+        return jsonify({"error": f"Unknown CQI review action '{action}'."}), 400
+
+    import cqi_engine
+    import db_persistence
+
+    updated = db_persistence.update_cqi_plan_review_db(
+        course_id=course_id,
+        status=new_status,
+        reviewed_by=user.get("username") or "",
+        reviewed_by_name=user.get("full_name") or user.get("username") or "",
+        remarks=remarks,
+        revisit_date=revisit_date,
+        revisit_status=new_rev_status,
+    )
+    if not updated:
+        return jsonify({"error": f"CQI Plan for course '{course_id}' not found."}), 404
+
+    updated["revisit_status"] = cqi_engine.evaluate_revisit_status(updated, courses_store.list_all_workflow_courses())
+
+    # Sync back onto course blueprint.cqi_plan
+    doc = courses_store.find_course(course_id)
+    if doc:
+        bp = doc.setdefault("blueprint", {})
+        bp_cqi = bp.setdefault("cqi_plan", {})
+        bp_cqi["status"] = updated["status"]
+        bp_cqi["revisit_date"] = updated["revisit_date"]
+        bp_cqi["revisit_term"] = updated["revisit_term"]
+        bp_cqi["revisit_status"] = updated["revisit_status"]
+        bp_cqi["program_head_remarks"] = updated["program_head_remarks"]
+        bp_cqi["reviewed_by_name"] = updated["reviewed_by_name"]
+        courses_store.save_course_doc(doc)
+
+    return jsonify({
+        "success": True,
+        "cqi_plan_record": updated,
+        "message": f"CQI Plan updated ({updated['status']}) — Revisit Date: {updated.get('revisit_date')}.",
     })
 
 
@@ -4355,26 +5721,28 @@ if __name__ == "__main__":
         except Exception as _pdf_err:
             logging.getLogger(__name__).warning(f"Could not generate sample PDF: {_pdf_err}")
 
-    host = config.HOST
+    host = config.HOST or "0.0.0.0"
     port = config.PORT
     debug = config.DEBUG
     local_ip = config.get_local_ip()
 
     print("=" * 72)
-    print("  USeP OBE Syllabus-to-Class Record Generator - Local Server")
+    print("  USeP OBE Syllabus-to-Class Record Generator - Local & LAN Server")
     print("=" * 72)
-    print("  Server is active and ready for Client User Acceptance Testing (UAT):")
+    print("  Server is active and bound to 0.0.0.0 (multi-device LAN enabled):")
     print()
-    print(f"  👉 Local Machine (This PC):")
-    print(f"     http://localhost:{port}")
-    print(f"     http://127.0.0.1:{port}")
+    print(f"  [Local Machine (This PC)]")
+    print(f"     Faculty / Admin Portal : http://127.0.0.1:{port}")
+    print(f"     Student Portal         : http://127.0.0.1:{port}/student")
     print()
-    print(f"  👉 Network / LAN Access (Same Wi-Fi or Local Network):")
-    print(f"     http://{local_ip}:{port}")
+    print(f"  [Network / LAN Access (Same Wi-Fi or Local Network)]")
+    print(f"     Faculty / Admin Portal : http://{local_ip}:{port}")
+    print(f"     Student Portal         : http://{local_ip}:{port}/student")
+    print(f"     Student Login Direct   : http://{local_ip}:{port}/student/login")
     print()
     print("  Default Faculty & Admin Credentials:")
     print("     Admin Username   : admin")
     print("     Admin Password   : admin123")
     print("=" * 72)
 
-    app.run(host=host, port=port, debug=debug)
+    app.run(host=host, port=port, debug=debug, threaded=True)

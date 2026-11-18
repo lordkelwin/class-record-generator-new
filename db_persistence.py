@@ -33,6 +33,15 @@ except Exception:
     COURSES_BASE_DIR = os.environ.get("COURSES_DIR", os.path.join(DATA_DIR, "courses"))
 
 
+def _use_firebase() -> bool:
+    """Returns True when Cloud Firestore backend is active (`USE_FIREBASE=true`)."""
+    try:
+        import config as _cfg
+        return bool(getattr(_cfg, "USE_FIREBASE", False))
+    except Exception:
+        return os.environ.get("USE_FIREBASE", "false").lower() in ("true", "1", "yes")
+
+
 def get_db_connection() -> sqlite3.Connection:
     """Returns a connection with WAL mode and foreign keys enabled."""
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -202,6 +211,60 @@ def init_db() -> None:
             )
         """)
 
+        # 9. Course Exit Survey Responses table (Student Portal -> CQI Analytics)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS survey_responses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id TEXT NOT NULL,
+                subject_id TEXT NOT NULL,
+                course_code TEXT,
+                clo_ratings_json TEXT NOT NULL,
+                general_ratings_json TEXT NOT NULL,
+                cqi_anchors_json TEXT,
+                challenging_topics TEXT,
+                comments TEXT,
+                submitted_at TEXT NOT NULL,
+                is_completed INTEGER NOT NULL DEFAULT 1,
+                FOREIGN KEY (subject_id) REFERENCES course_records(course_id) ON DELETE CASCADE,
+                UNIQUE(student_id, subject_id)
+            )
+        """)
+
+        # 10. Step 8 CQI Plans Submission & Revisit Tracking table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS cqi_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_id TEXT UNIQUE NOT NULL,
+                course_code TEXT NOT NULL,
+                course_title TEXT,
+                section TEXT,
+                program_code TEXT,
+                semester_ay TEXT,
+                faculty_username TEXT NOT NULL,
+                faculty_name TEXT,
+                targeted_clos_json TEXT,
+                synthesis_json TEXT,
+                key_strengths TEXT,
+                areas_for_improvement TEXT,
+                gap_analysis TEXT,
+                root_causes TEXT,
+                action_plan TEXT,
+                target_kpis TEXT,
+                indicators_json TEXT,
+                status TEXT NOT NULL DEFAULT 'draft',
+                submitted_at TEXT,
+                reviewed_by TEXT,
+                reviewed_by_name TEXT,
+                reviewed_at TEXT,
+                program_head_remarks TEXT,
+                revisit_date TEXT,
+                revisit_term TEXT,
+                revisit_status TEXT DEFAULT 'Upcoming',
+                updated_at TEXT,
+                FOREIGN KEY (course_id) REFERENCES course_records(course_id) ON DELETE CASCADE
+            )
+        """)
+
         # Create helpful indexes
         cur.execute("CREATE INDEX IF NOT EXISTS idx_cr_owner ON course_records(owner);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_cr_code ON course_records(course_code);")
@@ -209,6 +272,8 @@ def init_db() -> None:
         cur.execute("CREATE INDEX IF NOT EXISTS idx_ai_cid ON assessment_items(course_id);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_scg_cid ON student_course_grades(course_id);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_srs_cid ON syllabus_reviews_and_signatures(course_id);")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_sr_sub_sid ON survey_responses(subject_id, student_id);")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_cqi_status_sem ON cqi_plans(status, semester_ay);")
 
         # Dynamic schema migrations
         try:
@@ -219,6 +284,14 @@ def init_db() -> None:
             cur.execute("ALTER TABLE app_students ADD COLUMN syllabus_acknowledgments TEXT;")
         except sqlite3.OperationalError:
             pass
+        for alter_sql in (
+            "ALTER TABLE survey_responses ADD COLUMN cqi_anchors_json TEXT;",
+            "ALTER TABLE survey_responses ADD COLUMN challenging_topics TEXT;",
+        ):
+            try:
+                cur.execute(alter_sql)
+            except sqlite3.OperationalError:
+                pass
 
         conn.commit()
     finally:
@@ -230,7 +303,10 @@ def init_db() -> None:
 # ==============================================================================
 
 def load_users_from_db() -> Dict[str, Dict[str, Any]]:
-    """Loads all users from app_users table."""
+    """Loads all users from app_users table (or Firestore when USE_FIREBASE=true)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.load_users_from_db()
     init_db()
     conn = get_db_connection()
     try:
@@ -270,7 +346,10 @@ def load_users_from_db() -> Dict[str, Dict[str, Any]]:
 
 
 def save_user_to_db(u: Dict[str, Any]) -> None:
-    """Inserts or updates a single user into app_users."""
+    """Inserts or updates a single user into app_users (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.save_user_to_db(u)
     init_db()
     conn = get_db_connection()
     try:
@@ -334,7 +413,10 @@ def save_user_to_db(u: Dict[str, Any]) -> None:
 
 
 def delete_user_from_db(username: str) -> bool:
-    """Deletes a user by username from app_users."""
+    """Deletes a user by username from app_users (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.delete_user_from_db(username)
     init_db()
     conn = get_db_connection()
     try:
@@ -348,7 +430,10 @@ def delete_user_from_db(username: str) -> bool:
 
 
 def save_users_dict_to_db(users_dict: Dict[str, Dict[str, Any]], purge_missing: bool = True) -> None:
-    """Saves multiple users into app_users in a single transaction."""
+    """Saves multiple users into app_users in a single transaction (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.save_users_dict_to_db(users_dict, purge_missing=purge_missing)
     init_db()
     conn = get_db_connection()
     try:
@@ -420,7 +505,10 @@ def save_users_dict_to_db(users_dict: Dict[str, Dict[str, Any]], purge_missing: 
 # ==============================================================================
 
 def load_students_from_db() -> Dict[str, Dict[str, Any]]:
-    """Loads all students from app_students table."""
+    """Loads all students from app_students table (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.load_students_from_db()
     init_db()
     conn = get_db_connection()
     try:
@@ -454,7 +542,10 @@ def load_students_from_db() -> Dict[str, Dict[str, Any]]:
 
 
 def delete_student_from_db(student_id: str) -> bool:
-    """Deletes a student by student_id from app_students."""
+    """Deletes a student by student_id from app_students (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.delete_student_from_db(student_id)
     init_db()
     conn = get_db_connection()
     try:
@@ -469,11 +560,14 @@ def delete_student_from_db(student_id: str) -> bool:
 
 def disenroll_student_from_course_db(student_id: str, course_id: str) -> bool:
     """
-    Disenrolls a student from a course in SQLite:
+    Disenrolls a student from a course in SQLite (or Firestore):
     1. Deletes student's row from student_course_grades for this course_id.
     2. Updates app_students to remove course_id from enrolled_courses.
     3. Explicitly commits the SQLite transaction.
     """
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.disenroll_student_from_course_db(student_id, course_id)
     init_db()
     sid = str(student_id or "").strip()
     cid = str(course_id or "").strip()
@@ -508,7 +602,10 @@ def disenroll_student_from_course_db(student_id: str, course_id: str) -> bool:
 
 
 def save_students_dict_to_db(students_dict: Dict[str, Dict[str, Any]], purge_missing: bool = True) -> None:
-    """Saves multiple students into app_students table."""
+    """Saves multiple students into app_students table (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.save_students_dict_to_db(students_dict, purge_missing=purge_missing)
     init_db()
     conn = get_db_connection()
     try:
@@ -580,6 +677,9 @@ def save_course_to_db(doc: Dict[str, Any]) -> None:
     - syllabus_reviews_and_signatures
     - syllabus_evaluations
     """
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.save_course_to_db(doc)
     init_db()
     cid = doc.get("id") or doc.get("course_id")
     if not cid:
@@ -790,6 +890,11 @@ def get_enrolled_students_for_course(course_id: str, section: str = "", program_
     
     Returns clean student records with scores and acknowledgments populated.
     """
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.get_enrolled_students_for_course(
+            course_id, section=section, program_code=program_code, exclude_student_ids=exclude_student_ids
+        )
     init_db()
     cid = (course_id or "").strip()
     sec = (section or "").strip()
@@ -974,7 +1079,10 @@ def get_enrolled_students_for_course(course_id: str, section: str = "", program_
 
 
 def load_course_from_db(course_id: str) -> Optional[Dict[str, Any]]:
-    """Loads a course document by course_id from SQLite, ensuring categories and enrolled students are populated."""
+    """Loads a course document by course_id from SQLite (or Firestore), ensuring categories and enrolled students are populated."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.load_course_from_db(course_id)
     init_db()
     conn = get_db_connection()
     try:
@@ -1068,7 +1176,10 @@ def load_course_from_db(course_id: str) -> Optional[Dict[str, Any]]:
 
 
 def list_courses_from_db_for_user(username: str) -> List[Dict[str, Any]]:
-    """Lists courses owned or authored by username from SQLite."""
+    """Lists courses owned or authored by username from SQLite (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.list_courses_from_db_for_user(username)
     init_db()
     conn = get_db_connection()
     try:
@@ -1106,7 +1217,10 @@ def list_courses_from_db_for_user(username: str) -> List[Dict[str, Any]]:
 
 
 def list_all_courses_from_db() -> List[Dict[str, Any]]:
-    """Lists all courses across all departments and programs."""
+    """Lists all courses across all departments and programs (SQLite or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.list_all_courses_from_db()
     init_db()
     conn = get_db_connection()
     try:
@@ -1137,7 +1251,10 @@ def list_all_courses_from_db() -> List[Dict[str, Any]]:
 
 
 def delete_course_from_db(course_id: str) -> bool:
-    """Deletes a course and all its cascaded relational rows."""
+    """Deletes a course and all its cascaded relational rows (SQLite or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.delete_course_from_db(course_id)
     init_db()
     conn = get_db_connection()
     try:
@@ -1155,7 +1272,9 @@ def delete_course_from_db(course_id: str) -> bool:
 # ==============================================================================
 
 def migrate_all_from_json() -> None:
-    """Migrates users, students, and courses from JSON into SQLite."""
+    """Migrates users, students, and courses from JSON into SQLite (skipped in Cloud Firestore mode)."""
+    if _use_firebase():
+        return
     init_db()
 
     # 1. Migrate Users
@@ -1199,3 +1318,483 @@ def migrate_all_from_json() -> None:
                             logger.warning("Error migrating course file %s: %s", fp, e)
         except Exception as e:
             logger.warning("Error scanning courses directory: %s", e)
+
+
+# ==============================================================================
+# COURSE EXIT SURVEY PERSISTENCE & CQI AGGREGATION
+# ==============================================================================
+
+def _norm_survey_sid(student_id: str) -> str:
+    return re.sub(r"[\s]+", "", str(student_id or "").strip().lower())
+
+
+def _sid_digits(student_id: str) -> str:
+    return re.sub(r"\D", "", str(student_id or ""))
+
+
+def save_survey_response_db(
+    student_id: str,
+    subject_id: str,
+    course_code: str,
+    clo_ratings: Dict[str, int],
+    general_ratings: Dict[str, int],
+    comments: str = "",
+    cqi_anchors: Optional[Dict[str, int]] = None,
+    challenging_topics: str = "",
+) -> Dict[str, Any]:
+    """Saves or updates a student's completed Course Exit Survey response in SQLite (or Firestore)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.save_survey_response_db(
+            student_id=student_id,
+            subject_id=subject_id,
+            course_code=course_code,
+            clo_ratings=clo_ratings,
+            general_ratings=general_ratings,
+            comments=comments,
+            cqi_anchors=cqi_anchors,
+            challenging_topics=challenging_topics,
+        )
+    init_db()
+    sid_clean = str(student_id or "").strip()
+    sub_clean = str(subject_id or "").strip()
+    now_ts = datetime.now().isoformat(timespec="seconds")
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO survey_responses
+                (student_id, subject_id, course_code, clo_ratings_json, general_ratings_json,
+                 cqi_anchors_json, challenging_topics, comments, submitted_at, is_completed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+            ON CONFLICT(student_id, subject_id) DO UPDATE SET
+                course_code = excluded.course_code,
+                clo_ratings_json = excluded.clo_ratings_json,
+                general_ratings_json = excluded.general_ratings_json,
+                cqi_anchors_json = excluded.cqi_anchors_json,
+                challenging_topics = excluded.challenging_topics,
+                comments = excluded.comments,
+                submitted_at = excluded.submitted_at,
+                is_completed = 1
+            """,
+            (
+                sid_clean,
+                sub_clean,
+                str(course_code or "").strip(),
+                json.dumps(clo_ratings or {}, ensure_ascii=False),
+                json.dumps(general_ratings or {}, ensure_ascii=False),
+                json.dumps(cqi_anchors or {}, ensure_ascii=False),
+                str(challenging_topics or "").strip(),
+                str(comments or "").strip(),
+                now_ts,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return {
+        "student_id": sid_clean,
+        "subject_id": sub_clean,
+        "course_code": str(course_code or "").strip(),
+        "clo_ratings": clo_ratings or {},
+        "general_ratings": general_ratings or {},
+        "cqi_anchors": cqi_anchors or {},
+        "challenging_topics": str(challenging_topics or "").strip(),
+        "comments": str(comments or "").strip(),
+        "submitted_at": now_ts,
+        "is_completed": True,
+    }
+
+
+def _row_to_survey_dict(r: sqlite3.Row) -> Dict[str, Any]:
+    return {
+        "student_id": str(r["student_id"] or ""),
+        "subject_id": r["subject_id"],
+        "course_code": r["course_code"] or "",
+        "clo_ratings": json.loads(r["clo_ratings_json"] or "{}"),
+        "general_ratings": json.loads(r["general_ratings_json"] or "{}"),
+        "cqi_anchors": json.loads(r["cqi_anchors_json"] or "{}") if "cqi_anchors_json" in r.keys() else {},
+        "challenging_topics": (r["challenging_topics"] or "") if "challenging_topics" in r.keys() else "",
+        "comments": r["comments"] or "",
+        "submitted_at": r["submitted_at"],
+        "is_completed": bool(r["is_completed"]),
+    }
+
+
+def get_student_survey_response_db(student_id: str, subject_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieves a student's survey response for a specific enrolled course (hyphen-tolerant)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.get_student_survey_response_db(student_id, subject_id)
+    init_db()
+    sid_norm = _norm_survey_sid(student_id)
+    sid_dig = _sid_digits(student_id)
+    sub_clean = str(subject_id or "").strip()
+    if not sid_norm or not sub_clean:
+        return None
+
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM survey_responses WHERE subject_id = ?",
+            (sub_clean,),
+        ).fetchall()
+        for r in rows:
+            r_sid = str(r["student_id"] or "")
+            if _norm_survey_sid(r_sid) == sid_norm or (
+                sid_dig and len(sid_dig) >= 4 and _sid_digits(r_sid) == sid_dig
+            ):
+                return _row_to_survey_dict(r)
+        return None
+    finally:
+        conn.close()
+
+
+def get_student_completed_surveys_map_db(student_id: str) -> Dict[str, Dict[str, Any]]:
+    """Returns a mapping of subject_id -> completed survey response for a student."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.get_student_completed_surveys_map_db(student_id)
+    init_db()
+    sid_norm = _norm_survey_sid(student_id)
+    sid_dig = _sid_digits(student_id)
+    if not sid_norm:
+        return {}
+
+    conn = get_db_connection()
+    try:
+        rows = conn.execute("SELECT * FROM survey_responses WHERE is_completed = 1").fetchall()
+        out: Dict[str, Dict[str, Any]] = {}
+        for r in rows:
+            r_sid = str(r["student_id"] or "")
+            if _norm_survey_sid(r_sid) == sid_norm or (
+                sid_dig and len(sid_dig) >= 4 and _sid_digits(r_sid) == sid_dig
+            ):
+                out[r["subject_id"]] = _row_to_survey_dict(r)
+        return out
+    finally:
+        conn.close()
+
+
+def get_course_survey_aggregates_db(
+    subject_id: str,
+    clos: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Aggregates Course Exit Survey Likert ratings, CQI anchors & comments for faculty CQI / CLO analysis."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.get_course_survey_aggregates_db(subject_id, clos=clos)
+    init_db()
+    sub_clean = str(subject_id or "").strip()
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM survey_responses WHERE subject_id = ? AND is_completed = 1 ORDER BY submitted_at DESC",
+            (sub_clean,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    total_resp = len(rows)
+    clo_buckets: Dict[str, List[float]] = {}
+    gen_buckets: Dict[str, List[float]] = {}
+    anchor_buckets: Dict[str, List[float]] = {}
+    challenging_list: List[str] = []
+    comments_list: List[Dict[str, str]] = []
+
+    for r in rows:
+        try:
+            c_map = json.loads(r["clo_ratings_json"] or "{}")
+        except Exception:
+            c_map = {}
+        for cid, val in (c_map or {}).items():
+            try:
+                clo_buckets.setdefault(str(cid).upper(), []).append(float(val))
+            except (TypeError, ValueError):
+                pass
+
+        try:
+            g_map = json.loads(r["general_ratings_json"] or "{}")
+        except Exception:
+            g_map = {}
+        for gk, val in (g_map or {}).items():
+            try:
+                gen_buckets.setdefault(str(gk), []).append(float(val))
+            except (TypeError, ValueError):
+                pass
+
+        try:
+            anc_raw = r["cqi_anchors_json"] if "cqi_anchors_json" in r.keys() else "{}"
+            anc_map = json.loads(anc_raw or "{}")
+        except Exception:
+            anc_map = {}
+        for ak, val in (anc_map or {}).items():
+            try:
+                anchor_buckets.setdefault(str(ak), []).append(float(val))
+            except (TypeError, ValueError):
+                pass
+
+        chal = str(r["challenging_topics"] if "challenging_topics" in r.keys() else "" or "").strip()
+        if chal:
+            challenging_list.append(chal)
+
+        cmt = str(r["comments"] or "").strip()
+        if cmt:
+            comments_list.append({
+                "comment": cmt,
+                "challenging_topics": chal,
+                "submitted_at": r["submitted_at"],
+            })
+        elif chal:
+            comments_list.append({
+                "comment": f"[Challenging Topics/CLOs] {chal}",
+                "challenging_topics": chal,
+                "submitted_at": r["submitted_at"],
+            })
+
+    clo_desc_map = {
+        str(c.get("co_id") or "").upper(): str(c.get("description") or "")
+        for c in (clos or []) if c.get("co_id")
+    }
+    ordered_cids = list(clo_desc_map.keys()) + [k for k in sorted(clo_buckets.keys()) if k not in clo_desc_map]
+
+    clo_summary = []
+    for cid in ordered_cids:
+        vals = clo_buckets.get(cid, [])
+        avg_r = round(sum(vals) / len(vals), 2) if vals else None
+        clo_summary.append({
+            "co_id": cid,
+            "description": clo_desc_map.get(cid, ""),
+            "responses_count": len(vals),
+            "avg_rating": avg_r,
+            "pct_equivalent": round((avg_r / 5.0) * 100.0, 1) if avg_r is not None else None,
+        })
+
+    general_summary = {
+        k: {
+            "responses_count": len(v),
+            "avg_rating": round(sum(v) / len(v), 2) if v else None,
+        }
+        for k, v in gen_buckets.items()
+    }
+    cqi_anchors_summary = {
+        ak: {
+            "responses_count": len(v),
+            "avg_rating": round(sum(v) / len(v), 2) if v else None,
+        }
+        for ak, v in anchor_buckets.items()
+    }
+
+    all_vals = [x for vals in list(clo_buckets.values()) + list(gen_buckets.values()) for x in vals]
+    overall_avg = round(sum(all_vals) / len(all_vals), 2) if all_vals else None
+
+    return {
+        "subject_id": sub_clean,
+        "total_responses": total_resp,
+        "overall_avg_rating": overall_avg,
+        "clo_ratings_summary": clo_summary,
+        "general_ratings_summary": general_summary,
+        "cqi_anchors_summary": cqi_anchors_summary,
+        "challenging_topics": challenging_list,
+        "comments": comments_list,
+    }
+
+
+# ==============================================================================
+# CQI PLANS WORKFLOW PERSISTENCE (Step 8 -> Program Head Approval & Revisit)
+# ==============================================================================
+
+def _row_to_cqi_plan_dict(r: sqlite3.Row) -> Dict[str, Any]:
+    return {
+        "id": r["id"],
+        "course_id": r["course_id"],
+        "course_code": r["course_code"],
+        "course_title": r["course_title"] or "",
+        "section": r["section"] or "",
+        "program_code": r["program_code"] or "EE",
+        "semester_ay": r["semester_ay"] or "",
+        "faculty_username": r["faculty_username"],
+        "faculty_name": r["faculty_name"] or r["faculty_username"],
+        "targeted_clos": json.loads(r["targeted_clos_json"] or "[]"),
+        "synthesis": json.loads(r["synthesis_json"] or "{}"),
+        "key_strengths": r["key_strengths"] or "",
+        "areas_for_improvement": r["areas_for_improvement"] or "",
+        "gap_analysis": r["gap_analysis"] or "",
+        "root_causes": r["root_causes"] or "",
+        "action_plan": r["action_plan"] or "",
+        "target_kpis": r["target_kpis"] or "",
+        "indicators": json.loads(r["indicators_json"] or "[]"),
+        "status": r["status"] or "draft",
+        "submitted_at": r["submitted_at"],
+        "reviewed_by": r["reviewed_by"],
+        "reviewed_by_name": r["reviewed_by_name"],
+        "reviewed_at": r["reviewed_at"],
+        "program_head_remarks": r["program_head_remarks"] or "",
+        "revisit_date": r["revisit_date"],
+        "revisit_term": r["revisit_term"] or "",
+        "revisit_status": r["revisit_status"] or "Upcoming",
+        "updated_at": r["updated_at"],
+    }
+
+
+def save_cqi_plan_db(plan_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Upserts a course CQI Plan (draft, submitted, approved_scheduled, verified, returned)."""
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.save_cqi_plan_db(plan_data)
+    init_db()
+    now_ts = datetime.now().isoformat(timespec="seconds")
+    cid = str(plan_data.get("course_id") or "").strip()
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            """
+            INSERT INTO cqi_plans (
+                course_id, course_code, course_title, section, program_code, semester_ay,
+                faculty_username, faculty_name, targeted_clos_json, synthesis_json,
+                key_strengths, areas_for_improvement, gap_analysis, root_causes,
+                action_plan, target_kpis, indicators_json, status,
+                submitted_at, reviewed_by, reviewed_by_name, reviewed_at,
+                program_head_remarks, revisit_date, revisit_term, revisit_status, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(course_id) DO UPDATE SET
+                course_code = excluded.course_code,
+                course_title = excluded.course_title,
+                section = excluded.section,
+                program_code = excluded.program_code,
+                semester_ay = excluded.semester_ay,
+                faculty_username = excluded.faculty_username,
+                faculty_name = excluded.faculty_name,
+                targeted_clos_json = excluded.targeted_clos_json,
+                synthesis_json = excluded.synthesis_json,
+                key_strengths = excluded.key_strengths,
+                areas_for_improvement = excluded.areas_for_improvement,
+                gap_analysis = excluded.gap_analysis,
+                root_causes = excluded.root_causes,
+                action_plan = excluded.action_plan,
+                target_kpis = excluded.target_kpis,
+                indicators_json = excluded.indicators_json,
+                status = excluded.status,
+                submitted_at = COALESCE(excluded.submitted_at, cqi_plans.submitted_at),
+                reviewed_by = COALESCE(excluded.reviewed_by, cqi_plans.reviewed_by),
+                reviewed_by_name = COALESCE(excluded.reviewed_by_name, cqi_plans.reviewed_by_name),
+                reviewed_at = COALESCE(excluded.reviewed_at, cqi_plans.reviewed_at),
+                program_head_remarks = COALESCE(excluded.program_head_remarks, cqi_plans.program_head_remarks),
+                revisit_date = COALESCE(excluded.revisit_date, cqi_plans.revisit_date),
+                revisit_term = COALESCE(excluded.revisit_term, cqi_plans.revisit_term),
+                revisit_status = excluded.revisit_status,
+                updated_at = excluded.updated_at
+            """,
+            (
+                cid,
+                str(plan_data.get("course_code") or "").strip(),
+                str(plan_data.get("course_title") or "").strip(),
+                str(plan_data.get("section") or "").strip(),
+                str(plan_data.get("program_code") or "EE").strip(),
+                str(plan_data.get("semester_ay") or "").strip(),
+                str(plan_data.get("faculty_username") or "").strip(),
+                str(plan_data.get("faculty_name") or "").strip(),
+                json.dumps(plan_data.get("targeted_clos") or [], ensure_ascii=False),
+                json.dumps(plan_data.get("synthesis") or {}, ensure_ascii=False),
+                str(plan_data.get("key_strengths") or ""),
+                str(plan_data.get("areas_for_improvement") or ""),
+                str(plan_data.get("gap_analysis") or ""),
+                str(plan_data.get("root_causes") or ""),
+                str(plan_data.get("action_plan") or ""),
+                str(plan_data.get("target_kpis") or ""),
+                json.dumps(plan_data.get("indicators") or [], ensure_ascii=False),
+                str(plan_data.get("status") or "draft"),
+                plan_data.get("submitted_at"),
+                plan_data.get("reviewed_by"),
+                plan_data.get("reviewed_by_name"),
+                plan_data.get("reviewed_at"),
+                plan_data.get("program_head_remarks"),
+                plan_data.get("revisit_date"),
+                plan_data.get("revisit_term"),
+                str(plan_data.get("revisit_status") or "Upcoming"),
+                now_ts,
+            ),
+        )
+        conn.commit()
+        row = conn.execute("SELECT * FROM cqi_plans WHERE course_id = ?", (cid,)).fetchone()
+        return _row_to_cqi_plan_dict(row) if row else plan_data
+    finally:
+        conn.close()
+
+
+def get_cqi_plan_db(course_id: str) -> Optional[Dict[str, Any]]:
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.get_cqi_plan_db(course_id)
+    init_db()
+    conn = get_db_connection()
+    try:
+        row = conn.execute("SELECT * FROM cqi_plans WHERE course_id = ?", (str(course_id or "").strip(),)).fetchone()
+        return _row_to_cqi_plan_dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def list_cqi_plans_db(include_drafts: bool = False) -> List[Dict[str, Any]]:
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.list_cqi_plans_db(include_drafts=include_drafts)
+    init_db()
+    conn = get_db_connection()
+    try:
+        if include_drafts:
+            rows = conn.execute("SELECT * FROM cqi_plans ORDER BY updated_at DESC").fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM cqi_plans WHERE status != 'draft' ORDER BY submitted_at DESC, updated_at DESC").fetchall()
+        return [_row_to_cqi_plan_dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def update_cqi_plan_review_db(
+    course_id: str,
+    status: str,
+    reviewed_by: str,
+    reviewed_by_name: str,
+    remarks: str = "",
+    revisit_date: Optional[str] = None,
+    revisit_status: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    if _use_firebase():
+        import firebase_persistence
+        return firebase_persistence.update_cqi_plan_review_db(
+            course_id=course_id,
+            status=status,
+            reviewed_by=reviewed_by,
+            reviewed_by_name=reviewed_by_name,
+            remarks=remarks,
+            revisit_date=revisit_date,
+            revisit_status=revisit_status,
+        )
+    init_db()
+    now_ts = datetime.now().isoformat(timespec="seconds")
+    cid = str(course_id or "").strip()
+    conn = get_db_connection()
+    try:
+        row = conn.execute("SELECT * FROM cqi_plans WHERE course_id = ?", (cid,)).fetchone()
+        if not row:
+            return None
+        new_revisit_date = revisit_date.strip() if revisit_date and revisit_date.strip() else row["revisit_date"]
+        new_revisit_status = revisit_status.strip() if revisit_status and revisit_status.strip() else row["revisit_status"]
+        conn.execute(
+            """
+            UPDATE cqi_plans
+               SET status = ?, reviewed_by = ?, reviewed_by_name = ?, reviewed_at = ?,
+                   program_head_remarks = ?, revisit_date = ?, revisit_status = ?, updated_at = ?
+             WHERE course_id = ?
+            """,
+            (status, reviewed_by, reviewed_by_name, now_ts, remarks, new_revisit_date, new_revisit_status, now_ts, cid),
+        )
+        conn.commit()
+        updated = conn.execute("SELECT * FROM cqi_plans WHERE course_id = ?", (cid,)).fetchone()
+        return _row_to_cqi_plan_dict(updated) if updated else None
+    finally:
+        conn.close()

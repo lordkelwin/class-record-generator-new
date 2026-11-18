@@ -15,14 +15,17 @@ import re
 import copy
 import json
 import logging
+import threading
 from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
+_ACCDB_LOCK = threading.RLock()
 
 try:
     import config
     ACCDB_PATH = config.ACCDB_PATH
     CONN_STR = config.ACCDB_CONN_STR
+    BUNDLE_PATH = getattr(config, "ACCDB_BUNDLE_PATH", os.path.join(config.DATA_DIR, "accdb_curriculum_bundle.json"))
 except Exception:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     ACCDB_PATH = os.environ.get("ACCDB_PATH", os.path.join(BASE_DIR, "prospectus", "PGO-PI-IGA.accdb"))
@@ -30,9 +33,44 @@ except Exception:
         "ACCDB_CONN_STR",
         f"DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={ACCDB_PATH};"
     )
+    BUNDLE_PATH = os.environ.get(
+        "ACCDB_BUNDLE_PATH", os.path.join(BASE_DIR, "data", "accdb_curriculum_bundle.json")
+    )
 
 _CACHED_BSEE_COURSES: Optional[List[Dict[str, Any]]] = None
 _CACHED_PGO_PI_TREE: Optional[List[Dict[str, Any]]] = None
+_CACHED_CLOUD_BUNDLE: Optional[Dict[str, Any]] = None
+
+
+def _load_cloud_curriculum_bundle() -> Optional[Dict[str, Any]]:
+    """Loads portable exported .accdb replica from Firestore (if USE_FIREBASE) or bundled JSON."""
+    global _CACHED_CLOUD_BUNDLE
+    with _ACCDB_LOCK:
+        if _CACHED_CLOUD_BUNDLE is not None:
+            return _CACHED_CLOUD_BUNDLE
+        try:
+            use_fb = bool(getattr(config, "USE_FIREBASE", False))
+        except Exception:
+            use_fb = os.environ.get("USE_FIREBASE", "false").lower() in ("true", "1", "yes")
+        if use_fb:
+            try:
+                import firebase_persistence
+                fs_bundle = firebase_persistence.load_curriculum_bundle()
+                if isinstance(fs_bundle, dict) and (fs_bundle.get("courses") or fs_bundle.get("pgo_pi_tree")):
+                    _CACHED_CLOUD_BUNDLE = fs_bundle
+                    return _CACHED_CLOUD_BUNDLE
+            except Exception as exc:
+                logger.debug("Firestore curriculum_master fallback to JSON bundle: %s", exc)
+        if BUNDLE_PATH and os.path.exists(BUNDLE_PATH):
+            try:
+                with open(BUNDLE_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, dict) and (data.get("courses") or data.get("pgo_pi_tree")):
+                    _CACHED_CLOUD_BUNDLE = data
+                    return _CACHED_CLOUD_BUNDLE
+            except Exception as exc:
+                logger.warning("Could not read bundled curriculum JSON %s: %s", BUNDLE_PATH, exc)
+        return None
 
 # Authoritative BSEE PGO and Performance Indicator hierarchy fallback
 FALLBACK_PGO_PI_TREE: List[Dict[str, Any]] = [
@@ -359,66 +397,84 @@ def get_accdb_pgo_pi_tree(force_refresh: bool = False) -> List[Dict[str, Any]]:
     and Performance Indicators (PIs) directly from PGO-PI-IGA.accdb, or authoritative fallback.
     """
     global _CACHED_PGO_PI_TREE
-    if _CACHED_PGO_PI_TREE is not None and not force_refresh:
-        return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
+    with _ACCDB_LOCK:
+        if _CACHED_PGO_PI_TREE is not None and not force_refresh:
+            return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
 
-    if not os.path.exists(ACCDB_PATH):
-        for p in FALLBACK_PGO_PI_TREE:
-            p.setdefault("pgo", p.get("pgo_id", ""))
-            for pi in p.get("pis", []):
-                pi.setdefault("pi", pi.get("pi_id", ""))
-                pi.setdefault("pgo", p.get("pgo_id", ""))
+        try:
+            use_fb = bool(getattr(config, "USE_FIREBASE", False))
+        except Exception:
+            use_fb = False
+
+        # Prefer portable cloud bundle (Firestore / JSON replica) in Cloud/Linux mode or when .accdb missing
+        if use_fb or os.name != "nt" or not os.path.exists(ACCDB_PATH):
+            bundle = _load_cloud_curriculum_bundle()
+            if bundle and isinstance(bundle.get("pgo_pi_tree"), list) and bundle["pgo_pi_tree"]:
+                _CACHED_PGO_PI_TREE = bundle["pgo_pi_tree"]
+                return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
+
+        if not os.path.exists(ACCDB_PATH):
+            for p in FALLBACK_PGO_PI_TREE:
+                p.setdefault("pgo", p.get("pgo_id", ""))
+                for pi in p.get("pis", []):
+                    pi.setdefault("pi", pi.get("pi_id", ""))
+                    pi.setdefault("pgo", p.get("pgo_id", ""))
+            _CACHED_PGO_PI_TREE = FALLBACK_PGO_PI_TREE
+            return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
+
+        conn = None
+        try:
+            import pyodbc
+            conn = pyodbc.connect(CONN_STR, autocommit=True)
+            cur = conn.cursor()
+
+            # Query PGO
+            cur.execute("SELECT [PGO ID], [PGO Keyword], [PGO Description] FROM [PGO] ORDER BY [ID]")
+            pgo_lookup = {}
+            pgo_list = []
+            for pgo_id, kw, desc in cur.fetchall():
+                p_id = (pgo_id or "").strip().lower()
+                item = {
+                    "pgo_id": p_id,
+                    "pgo": p_id,
+                    "label": f"PGO {p_id.upper()}: {(kw or '').strip()}",
+                    "keyword": (kw or "").strip(),
+                    "description": (desc or "").strip(),
+                    "pis": []
+                }
+                pgo_lookup[p_id] = item
+                pgo_list.append(item)
+
+            # Query PI
+            cur.execute("SELECT [PI ID], [PGO ID], [PI Description] FROM [PI] ORDER BY [ID]")
+            for pi_id, pgo_id, desc in cur.fetchall():
+                clean_pi = (pi_id or "").strip().rstrip(".")
+                p_id = (pgo_id or "").strip().lower()
+                pi_item = {
+                    "pi_id": clean_pi,
+                    "pi": clean_pi,
+                    "pgo_id": p_id,
+                    "pgo": p_id,
+                    "description": (desc or "").strip(),
+                    "label": f"{clean_pi}: {(desc or '').strip()}"
+                }
+                if p_id in pgo_lookup:
+                    pgo_lookup[p_id]["pis"].append(pi_item)
+
+            if pgo_list:
+                _CACHED_PGO_PI_TREE = pgo_list
+                return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
+        except Exception as e:
+            logger.warning(f"Could not read PGO tree from Access DB: {e}. Using authoritative fallback.")
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
         _CACHED_PGO_PI_TREE = FALLBACK_PGO_PI_TREE
         return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
-
-    try:
-        import pyodbc
-        conn = pyodbc.connect(CONN_STR, autocommit=True)
-        cur = conn.cursor()
-
-        # Query PGO
-        cur.execute("SELECT [PGO ID], [PGO Keyword], [PGO Description] FROM [PGO] ORDER BY [ID]")
-        pgo_lookup = {}
-        pgo_list = []
-        for pgo_id, kw, desc in cur.fetchall():
-            p_id = (pgo_id or "").strip().lower()
-            item = {
-                "pgo_id": p_id,
-                "pgo": p_id,
-                "label": f"PGO {p_id.upper()}: {(kw or '').strip()}",
-                "keyword": (kw or "").strip(),
-                "description": (desc or "").strip(),
-                "pis": []
-            }
-            pgo_lookup[p_id] = item
-            pgo_list.append(item)
-
-        # Query PI
-        cur.execute("SELECT [PI ID], [PGO ID], [PI Description] FROM [PI] ORDER BY [ID]")
-        for pi_id, pgo_id, desc in cur.fetchall():
-            clean_pi = (pi_id or "").strip().rstrip(".")
-            p_id = (pgo_id or "").strip().lower()
-            pi_item = {
-                "pi_id": clean_pi,
-                "pi": clean_pi,
-                "pgo_id": p_id,
-                "pgo": p_id,
-                "description": (desc or "").strip(),
-                "label": f"{clean_pi}: {(desc or '').strip()}"
-            }
-            if p_id in pgo_lookup:
-                pgo_lookup[p_id]["pis"].append(pi_item)
-
-        conn.close()
-
-        if pgo_list:
-            _CACHED_PGO_PI_TREE = pgo_list
-            return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
-    except Exception as e:
-        logger.warning(f"Could not read PGO tree from Access DB: {e}. Using authoritative fallback.")
-
-    _CACHED_PGO_PI_TREE = FALLBACK_PGO_PI_TREE
-    return [copy.deepcopy(p) for p in _CACHED_PGO_PI_TREE]
 
 
 def parse_pgo_pi_string(pgo_pi_str: str) -> List[Dict[str, Any]]:
@@ -478,222 +534,241 @@ def query_accdb_bsee_courses(force_refresh: bool = False) -> List[Dict[str, Any]
     Fetches Courses_EE, Course_PI, PI, PGO, IED, PGO_PI_IGA, and Prereq_Coreq.
     """
     global _CACHED_BSEE_COURSES
-    if _CACHED_BSEE_COURSES is not None and not force_refresh:
-        return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
+    with _ACCDB_LOCK:
+        if _CACHED_BSEE_COURSES is not None and not force_refresh:
+            return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
 
-    if not os.path.exists(ACCDB_PATH):
-        logger.warning(f"Access database not found at {ACCDB_PATH}. Falling back to program_catalogs.")
-        from program_catalogs.courses_ee import BSEE_COURSES
-        _CACHED_BSEE_COURSES = BSEE_COURSES
-        return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
+        try:
+            use_fb = bool(getattr(config, "USE_FIREBASE", False))
+        except Exception:
+            use_fb = False
 
-    try:
-        import pyodbc
-    except ImportError:
-        logger.warning("pyodbc is not installed. Falling back to program_catalogs.")
-        from program_catalogs.courses_ee import BSEE_COURSES
-        _CACHED_BSEE_COURSES = BSEE_COURSES
-        return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
+        if use_fb or os.name != "nt" or not os.path.exists(ACCDB_PATH):
+            bundle = _load_cloud_curriculum_bundle()
+            if bundle and isinstance(bundle.get("courses"), list) and bundle["courses"]:
+                _CACHED_BSEE_COURSES = bundle["courses"]
+                return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
 
-    try:
-        conn = pyodbc.connect(CONN_STR, autocommit=True)
-        cur = conn.cursor()
+        if not os.path.exists(ACCDB_PATH):
+            logger.warning(f"Access database not found at {ACCDB_PATH}. Falling back to program_catalogs.")
+            from program_catalogs.courses_ee import BSEE_COURSES
+            _CACHED_BSEE_COURSES = BSEE_COURSES
+            return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
 
-        # 1. PI to IGA Mapping (PGO_PI_IGA)
-        cur.execute("SELECT [PI ID], [IGA ID] FROM [PGO_PI_IGA]")
-        pi_to_igas: Dict[str, List[str]] = {}
-        for pi_id, iga_id in cur.fetchall():
-            pi_clean = (pi_id or "").strip().rstrip(".")
-            iga_clean = (iga_id or "").strip()
-            if pi_clean not in pi_to_igas:
-                pi_to_igas[pi_clean] = []
-            if iga_clean and iga_clean not in pi_to_igas[pi_clean]:
-                pi_to_igas[pi_clean].append(iga_clean)
+        try:
+            import pyodbc
+        except ImportError:
+            logger.warning("pyodbc is not installed. Falling back to program_catalogs.")
+            from program_catalogs.courses_ee import BSEE_COURSES
+            _CACHED_BSEE_COURSES = BSEE_COURSES
+            return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
 
-        # 2. Prerequisites & Co-requisites (Prereq_Coreq)
-        cur.execute("SELECT [Course Code], [Prereq Code], [Coreq Code] FROM [Prereq_Coreq]")
-        course_prereqs: Dict[str, List[str]] = {}
-        course_coreqs: Dict[str, List[str]] = {}
-        for code, prereq, coreq in cur.fetchall():
-            c_code = (code or "").strip()
-            p_code = (prereq or "").strip()
-            co_code = (coreq or "").strip()
+        conn = None
+        try:
+            conn = pyodbc.connect(CONN_STR, autocommit=True)
+            cur = conn.cursor()
 
-            if c_code not in course_prereqs:
-                course_prereqs[c_code] = []
-            if p_code and p_code.lower() != "none" and p_code not in course_prereqs[c_code]:
-                course_prereqs[c_code].append(p_code)
+            # 1. PI to IGA Mapping (PGO_PI_IGA)
+            cur.execute("SELECT [PI ID], [IGA ID] FROM [PGO_PI_IGA]")
+            pi_to_igas: Dict[str, List[str]] = {}
+            for pi_id, iga_id in cur.fetchall():
+                pi_clean = (pi_id or "").strip().rstrip(".")
+                iga_clean = (iga_id or "").strip()
+                if pi_clean not in pi_to_igas:
+                    pi_to_igas[pi_clean] = []
+                if iga_clean and iga_clean not in pi_to_igas[pi_clean]:
+                    pi_to_igas[pi_clean].append(iga_clean)
 
-            if c_code not in course_coreqs:
-                course_coreqs[c_code] = []
-            if co_code and co_code.lower() != "none" and co_code not in course_coreqs[c_code]:
-                course_coreqs[c_code].append(co_code)
-                if co_code not in course_coreqs:
-                    course_coreqs[co_code] = []
-                if c_code not in course_coreqs[co_code]:
-                    course_coreqs[co_code].append(c_code)
+            # 2. Prerequisites & Co-requisites (Prereq_Coreq)
+            cur.execute("SELECT [Course Code], [Prereq Code], [Coreq Code] FROM [Prereq_Coreq]")
+            course_prereqs: Dict[str, List[str]] = {}
+            course_coreqs: Dict[str, List[str]] = {}
+            for code, prereq, coreq in cur.fetchall():
+                c_code = (code or "").strip()
+                p_code = (prereq or "").strip()
+                co_code = (coreq or "").strip()
 
-        # 3. PGO, PI, and IED Lookup Tables
-        cur.execute("SELECT [PGO ID], [PGO Keyword], [PGO Description] FROM [PGO]")
-        pgo_lookup: Dict[str, Dict[str, str]] = {}
-        for pgo_id, kw, desc in cur.fetchall():
-            p_id = (pgo_id or "").strip().lower()
-            pgo_lookup[p_id] = {
-                "keyword": (kw or "").strip(),
-                "description": (desc or "").strip()
-            }
+                if c_code not in course_prereqs:
+                    course_prereqs[c_code] = []
+                if p_code and p_code.lower() != "none" and p_code not in course_prereqs[c_code]:
+                    course_prereqs[c_code].append(p_code)
 
-        cur.execute("SELECT [PI ID], [PGO ID], [PI Description] FROM [PI]")
-        pi_lookup: Dict[str, Dict[str, str]] = {}
-        for pi_id, pgo_id, desc in cur.fetchall():
-            clean_pi = (pi_id or "").strip().rstrip(".")
-            p_id = (pgo_id or "").strip().lower()
-            pi_lookup[clean_pi] = {
-                "pgo_id": p_id,
-                "description": (desc or "").strip()
-            }
+                if c_code not in course_coreqs:
+                    course_coreqs[c_code] = []
+                if co_code and co_code.lower() != "none" and co_code not in course_coreqs[c_code]:
+                    course_coreqs[c_code].append(co_code)
+                    if co_code not in course_coreqs:
+                        course_coreqs[co_code] = []
+                    if c_code not in course_coreqs[co_code]:
+                        course_coreqs[co_code].append(c_code)
 
-        cur.execute("SELECT [IED ID], [IED Name] FROM [IED]")
-        ied_lookup: Dict[str, str] = {}
-        for ied_id, name in cur.fetchall():
-            i_id = (ied_id or "").strip().upper()
-            ied_lookup[i_id] = (name or "").strip()
+            # 3. PGO, PI, and IED Lookup Tables
+            cur.execute("SELECT [PGO ID], [PGO Keyword], [PGO Description] FROM [PGO]")
+            pgo_lookup: Dict[str, Dict[str, str]] = {}
+            for pgo_id, kw, desc in cur.fetchall():
+                p_id = (pgo_id or "").strip().lower()
+                pgo_lookup[p_id] = {
+                    "keyword": (kw or "").strip(),
+                    "description": (desc or "").strip()
+                }
 
-        # 4. Course_PI joined in Python with clean_pi normalization
-        cur.execute("SELECT [Course Code], [PI ID], [IED ID] FROM [Course_PI] ORDER BY [Course Code], [PI ID]")
-        course_pi_map: Dict[str, List[Dict[str, Any]]] = {}
-        for code, pi_id, ied_id in cur.fetchall():
-            c_code = (code or "").strip()
-            clean_pi = (pi_id or "").strip().rstrip(".")
-            i_code = (ied_id or "").strip().upper()
-            if "D" in i_code:
-                effective_ied = "D"
-            elif "E" in i_code:
-                effective_ied = "E"
-            else:
-                effective_ied = "I"
+            cur.execute("SELECT [PI ID], [PGO ID], [PI Description] FROM [PI]")
+            pi_lookup: Dict[str, Dict[str, str]] = {}
+            for pi_id, pgo_id, desc in cur.fetchall():
+                clean_pi = (pi_id or "").strip().rstrip(".")
+                p_id = (pgo_id or "").strip().lower()
+                pi_lookup[clean_pi] = {
+                    "pgo_id": p_id,
+                    "description": (desc or "").strip()
+                }
 
-            ied_name_map = {"I": "Introductory", "E": "Enabling", "D": "Demonstrative"}
-            ied_name = ied_name_map.get(effective_ied, "Introductory")
+            cur.execute("SELECT [IED ID], [IED Name] FROM [IED]")
+            ied_lookup: Dict[str, str] = {}
+            for ied_id, name in cur.fetchall():
+                i_id = (ied_id or "").strip().upper()
+                ied_lookup[i_id] = (name or "").strip()
 
-            pi_info = pi_lookup.get(clean_pi, {})
-            pgo_clean = pi_info.get("pgo_id")
-            if not pgo_clean and clean_pi:
-                pgo_clean = clean_pi.split(".")[0].lower()
+            # 4. Course_PI joined in Python with clean_pi normalization
+            cur.execute("SELECT [Course Code], [PI ID], [IED ID] FROM [Course_PI] ORDER BY [Course Code], [PI ID]")
+            course_pi_map: Dict[str, List[Dict[str, Any]]] = {}
+            for code, pi_id, ied_id in cur.fetchall():
+                c_code = (code or "").strip()
+                clean_pi = (pi_id or "").strip().rstrip(".")
+                i_code = (ied_id or "").strip().upper()
+                if "D" in i_code:
+                    effective_ied = "D"
+                elif "E" in i_code:
+                    effective_ied = "E"
+                else:
+                    effective_ied = "I"
 
-            pgo_info = pgo_lookup.get(pgo_clean, {})
-            igas_str = ", ".join(pi_to_igas.get(clean_pi, []))
+                ied_name_map = {"I": "Introductory", "E": "Enabling", "D": "Demonstrative"}
+                ied_name = ied_name_map.get(effective_ied, "Introductory")
 
-            item = {
-                "pgo": f"PGO {pgo_clean}",
-                "pgo_id": pgo_clean,
-                "pgo_keyword": pgo_info.get("keyword", ""),
-                "pgo_description": pgo_info.get("description", ""),
-                "pi": clean_pi,
-                "pi_description": pi_info.get("description", ""),
-                "ied": i_code,
-                "ied_label": ied_name,
-                "igas": igas_str
-            }
-            norm_code = re.sub(r"\s+", " ", c_code).strip().upper()
-            if norm_code not in course_pi_map:
-                course_pi_map[norm_code] = []
-            course_pi_map[norm_code].append(item)
-            if c_code not in course_pi_map:
-                course_pi_map[c_code] = []
-            course_pi_map[c_code].append(item)
+                pi_info = pi_lookup.get(clean_pi, {})
+                pgo_clean = pi_info.get("pgo_id")
+                if not pgo_clean and clean_pi:
+                    pgo_clean = clean_pi.split(".")[0].lower()
 
-        # 5. Courses_EE Master Table
-        cur.execute("""
-            SELECT [Course Code], [Course Title], [Course Description], [Lecture Units], [Laboratory Units], [Year Level], [Semester]
-            FROM [Courses_EE]
-            ORDER BY [Year Level], [Semester], [Course Code]
-        """)
-        raw_courses = cur.fetchall()
-        conn.close()
+                pgo_info = pgo_lookup.get(pgo_clean, {})
+                igas_str = ", ".join(pi_to_igas.get(clean_pi, []))
 
-        # Existing metadata lookup for topics & sdgs retention
-        from program_catalogs.courses_ee import BSEE_COURSES as fallback_bsee
-        fallback_lookup = {re.sub(r"\s+", " ", c["code"].split(" - ")[0]).strip().upper(): c for c in fallback_bsee}
+                item = {
+                    "pgo": f"PGO {pgo_clean}",
+                    "pgo_id": pgo_clean,
+                    "pgo_keyword": pgo_info.get("keyword", ""),
+                    "pgo_description": pgo_info.get("description", ""),
+                    "pi": clean_pi,
+                    "pi_description": pi_info.get("description", ""),
+                    "ied": i_code,
+                    "ied_label": ied_name,
+                    "igas": igas_str
+                }
+                norm_code = re.sub(r"\s+", " ", c_code).strip().upper()
+                if norm_code not in course_pi_map:
+                    course_pi_map[norm_code] = []
+                course_pi_map[norm_code].append(item)
+                if c_code not in course_pi_map:
+                    course_pi_map[c_code] = []
+                course_pi_map[c_code].append(item)
 
-        year_map = {1: "First Year", 2: "Second Year", 3: "Third Year", 4: "Fourth Year"}
-        sem_map = {1: "1st Semester", 2: "2nd Semester"}
+            # 5. Courses_EE Master Table
+            cur.execute("""
+                SELECT [Course Code], [Course Title], [Course Description], [Lecture Units], [Laboratory Units], [Year Level], [Semester]
+                FROM [Courses_EE]
+                ORDER BY [Year Level], [Semester], [Course Code]
+            """)
+            raw_courses = cur.fetchall()
+            conn.close()
 
-        courses: List[Dict[str, Any]] = []
-        for code, title, desc, lec, lab, yr, sem in raw_courses:
-            c_code = (code or "").strip()
-            c_title = (title or "").strip()
-            c_desc = (desc or "").strip()
-            norm_code = re.sub(r"\s+", " ", c_code).strip().upper()
+            # Existing metadata lookup for topics & sdgs retention
+            from program_catalogs.courses_ee import BSEE_COURSES as fallback_bsee
+            fallback_lookup = {re.sub(r"\s+", " ", c["code"].split(" - ")[0]).strip().upper(): c for c in fallback_bsee}
 
-            lec_u = int(lec or 0)
-            lab_u = int(lab or 0)
-            tot_u = lec_u + lab_u
+            year_map = {1: "First Year", 2: "Second Year", 3: "Third Year", 4: "Fourth Year"}
+            sem_map = {1: "1st Semester", 2: "2nd Semester"}
 
-            lec_lab_type = "Lecture and Laboratory" if (lec_u > 0 and lab_u > 0) else ("Laboratory" if lab_u > 0 else "Lecture")
-            credit_units_str = f"{tot_u}.0 Units \u2013 {lec_lab_type}"
-            hrs_parts = []
-            if lec_u > 0:
-                hrs_parts.append(f"{lec_u} hours Lecture")
-            if lab_u > 0:
-                hrs_parts.append(f"{lab_u * 3} hours Laboratory")
-            total_hrs = lec_u + (lab_u * 3)
-            hours_str = f"{total_hrs} Hours/Week ({', '.join(hrs_parts)})" if hrs_parts else "3 Hours/Week"
+            courses: List[Dict[str, Any]] = []
+            for code, title, desc, lec, lab, yr, sem in raw_courses:
+                c_code = (code or "").strip()
+                c_title = (title or "").strip()
+                c_desc = (desc or "").strip()
+                norm_code = re.sub(r"\s+", " ", c_code).strip().upper()
 
-            pr_list = course_prereqs.get(c_code, []) or course_prereqs.get(norm_code, [])
-            prereq_str = ", ".join(pr_list) if pr_list else "None"
+                lec_u = int(lec or 0)
+                lab_u = int(lab or 0)
+                tot_u = lec_u + lab_u
 
-            co_list = course_coreqs.get(c_code, []) or course_coreqs.get(norm_code, [])
-            coreq_str = ", ".join(co_list) if co_list else "None"
+                lec_lab_type = "Lecture and Laboratory" if (lec_u > 0 and lab_u > 0) else ("Laboratory" if lab_u > 0 else "Lecture")
+                credit_units_str = f"{tot_u}.0 Units \u2013 {lec_lab_type}"
+                hrs_parts = []
+                if lec_u > 0:
+                    hrs_parts.append(f"{lec_u} hours Lecture")
+                if lab_u > 0:
+                    hrs_parts.append(f"{lab_u * 3} hours Laboratory")
+                total_hrs = lec_u + (lab_u * 3)
+                hours_str = f"{total_hrs} Hours/Week ({', '.join(hrs_parts)})" if hrs_parts else "3 Hours/Week"
 
-            pi_mappings = course_pi_map.get(norm_code, []) or course_pi_map.get(c_code, [])
-            pgo_pi_summary = "; ".join([f"{m['pgo']}-{m['pi']} [{m['ied']}]" for m in pi_mappings[:3]]) if pi_mappings else ""
+                pr_list = course_prereqs.get(c_code, []) or course_prereqs.get(norm_code, [])
+                prereq_str = ", ".join(pr_list) if pr_list else "None"
 
-            fb = fallback_lookup.get(norm_code, {}) or fallback_lookup.get(c_code, {})
-            # If accdb has no PI mapping for this course, fallback to existing mapping
-            final_pgo_pi = pgo_pi_summary if pgo_pi_summary else fb.get("pgo_pi", "")
-            final_pgo_pi_mappings = pi_mappings if pi_mappings else fb.get("pgo_pi_mappings", [])
-            if not final_pgo_pi_mappings and final_pgo_pi:
-                final_pgo_pi_mappings = parse_pgo_pi_string(final_pgo_pi)
+                co_list = course_coreqs.get(c_code, []) or course_coreqs.get(norm_code, [])
+                coreq_str = ", ".join(co_list) if co_list else "None"
 
-            # If accdb description was empty (e.g. PE/NSTP/Elective), allow fallback description if available
-            final_desc = c_desc if c_desc else fb.get("description", "")
-            topics = fb.get("topics", [])
-            sdgs = fb.get("sdgs", "SDG 4: Quality Education")
+                pi_mappings = course_pi_map.get(norm_code, []) or course_pi_map.get(c_code, [])
+                pgo_pi_summary = "; ".join([f"{m['pgo']}-{m['pi']} [{m['ied']}]" for m in pi_mappings[:3]]) if pi_mappings else ""
 
-            courses.append({
-                "code": c_code,
-                "title": c_title,
-                "description": final_desc,
-                "lecture_units": lec_u,
-                "lab_units": lab_u,
-                "credit_units": credit_units_str,
-                "lec_lab": lec_lab_type,
-                "hours": hours_str,
-                "year_level": year_map.get(yr, f"Year {yr}"),
-                "semester": sem_map.get(sem, f"Semester {sem}"),
-                "prereqs": prereq_str,
-                "coreqs": coreq_str,
-                "pgo_pi": final_pgo_pi,
-                "pgo_pi_mappings": final_pgo_pi_mappings,
-                "topics": topics,
-                "sdgs": sdgs
-            })
+                fb = fallback_lookup.get(norm_code, {}) or fallback_lookup.get(c_code, {})
+                # If accdb has no PI mapping for this course, fallback to existing mapping
+                final_pgo_pi = pgo_pi_summary if pgo_pi_summary else fb.get("pgo_pi", "")
+                final_pgo_pi_mappings = pi_mappings if pi_mappings else fb.get("pgo_pi_mappings", [])
+                if not final_pgo_pi_mappings and final_pgo_pi:
+                    final_pgo_pi_mappings = parse_pgo_pi_string(final_pgo_pi)
 
-        _CACHED_BSEE_COURSES = courses
-        return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
+                # If accdb description was empty (e.g. PE/NSTP/Elective), allow fallback description if available
+                final_desc = c_desc if c_desc else fb.get("description", "")
+                topics = fb.get("topics", [])
+                sdgs = fb.get("sdgs", "SDG 4: Quality Education")
 
-    except Exception as e:
-        logger.error(f"Error querying PGO-PI-IGA.accdb: {e}", exc_info=True)
-        from program_catalogs.courses_ee import BSEE_COURSES
-        fallback_courses = []
-        for c in BSEE_COURSES:
-            c_copy = copy.deepcopy(c)
-            if not c_copy.get("pgo_pi_mappings") and c_copy.get("pgo_pi"):
-                c_copy["pgo_pi_mappings"] = parse_pgo_pi_string(c_copy["pgo_pi"])
-            fallback_courses.append(c_copy)
-        _CACHED_BSEE_COURSES = fallback_courses
-        return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
+                courses.append({
+                    "code": c_code,
+                    "title": c_title,
+                    "description": final_desc,
+                    "lecture_units": lec_u,
+                    "lab_units": lab_u,
+                    "credit_units": credit_units_str,
+                    "lec_lab": lec_lab_type,
+                    "hours": hours_str,
+                    "year_level": year_map.get(yr, f"Year {yr}"),
+                    "semester": sem_map.get(sem, f"Semester {sem}"),
+                    "prereqs": prereq_str,
+                    "coreqs": coreq_str,
+                    "pgo_pi": final_pgo_pi,
+                    "pgo_pi_mappings": final_pgo_pi_mappings,
+                    "topics": topics,
+                    "sdgs": sdgs
+                })
+
+            _CACHED_BSEE_COURSES = courses
+            return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
+
+        except Exception as e:
+            logger.error(f"Error querying PGO-PI-IGA.accdb: {e}", exc_info=True)
+            from program_catalogs.courses_ee import BSEE_COURSES
+            fallback_courses = []
+            for c in BSEE_COURSES:
+                c_copy = copy.deepcopy(c)
+                if not c_copy.get("pgo_pi_mappings") and c_copy.get("pgo_pi"):
+                    c_copy["pgo_pi_mappings"] = parse_pgo_pi_string(c_copy["pgo_pi"])
+                fallback_courses.append(c_copy)
+            _CACHED_BSEE_COURSES = fallback_courses
+            return [copy.deepcopy(c) for c in _CACHED_BSEE_COURSES]
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
 
 def sync_accdb_to_catalog_and_db() -> int:
@@ -718,36 +793,62 @@ def sync_accdb_to_catalog_and_db() -> int:
     except Exception as e:
         logger.error(f"Failed to update catalog_data: {e}")
 
-    # 2. Update SQLite database data/academic_catalog.db
-    try:
-        import academic_db
-        with academic_db.get_connection() as conn:
-            cur = conn.cursor()
-            cur.execute("DELETE FROM courses WHERE program_code = 'BSEE'")
-            
-            rows = []
-            for c in courses:
-                rows.append((
-                    "BSEE",
-                    c.get("code", "").strip(),
-                    c.get("title", "").strip(),
-                    c.get("year_level", ""),
-                    c.get("credit_units", ""),
-                    c.get("lec_lab", "Lecture"),
-                    c.get("hours", ""),
-                    c.get("prereqs", "None"),
-                    c.get("coreqs", "None"),
-                    c.get("description", ""),
-                    json.dumps(c.get("topics", [])),
-                    c.get("sdgs", ""),
-                    c.get("pgo_pi", "")
-                ))
-            cur.executemany("""
-                INSERT INTO courses (program_code, course_code, course_title, year_level, credit_units, lec_lab, contact_hours, prerequisites, corequisites, description, topics, sdgs, pgo_pi)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, rows)
-            conn.commit()
-    except Exception as e:
-        logger.error(f"Failed to update academic_db: {e}")
+    # 2. Update SQLite database data/academic_catalog.db (skip in Firestore-only cloud mode)
+    use_fb = bool(getattr(config, "USE_FIREBASE", False)) if "config" in globals() else False
+    if not use_fb:
+        try:
+            import academic_db
+            with academic_db.get_connection() as conn:
+                cur = conn.cursor()
+                cur.execute("DELETE FROM courses WHERE program_code = 'BSEE'")
+                
+                rows = []
+                for c in courses:
+                    rows.append((
+                        "BSEE",
+                        c.get("code", "").strip(),
+                        c.get("title", "").strip(),
+                        c.get("year_level", ""),
+                        c.get("credit_units", ""),
+                        c.get("lec_lab", "Lecture"),
+                        c.get("hours", ""),
+                        c.get("prereqs", "None"),
+                        c.get("coreqs", "None"),
+                        c.get("description", ""),
+                        json.dumps(c.get("topics", [])),
+                        c.get("sdgs", ""),
+                        c.get("pgo_pi", "")
+                    ))
+                cur.executemany("""
+                    INSERT INTO courses (program_code, course_code, course_title, year_level, credit_units, lec_lab, contact_hours, prerequisites, corequisites, description, topics, sdgs, pgo_pi)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, rows)
+                conn.commit()
+        except Exception as e:
+            logger.error(f"Failed to update academic_db: {e}")
 
     return len(courses)
+
+
+def export_accdb_cloud_bundle(output_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Exports authoritative BSEE courses, prerequisites, and PGO-PI-IGA tree from
+    PGO-PI-IGA.accdb into a portable JSON replica for Linux/Cloud Run & Firestore.
+    """
+    target = output_path or BUNDLE_PATH
+    tree = get_accdb_pgo_pi_tree(force_refresh=True)
+    courses = query_accdb_bsee_courses(force_refresh=True)
+    bundle = {
+        "source": "PGO-PI-IGA.accdb",
+        "exported_at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+        "pgo_count": len(tree),
+        "courses_count": len(courses),
+        "pgo_pi_tree": tree,
+        "courses": courses,
+    }
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    with open(target, "w", encoding="utf-8") as f:
+        json.dump(bundle, f, indent=2, ensure_ascii=False)
+    global _CACHED_CLOUD_BUNDLE
+    _CACHED_CLOUD_BUNDLE = bundle
+    return bundle

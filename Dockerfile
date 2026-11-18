@@ -1,39 +1,42 @@
 # ======================================================================
-# Production Dockerfile for USeP OBE Syllabus & Class Record Generator
+# Cloud Run / Firebase Backend Dockerfile for USeP OBE Studio Pilot
 # ======================================================================
 FROM python:3.11-slim
 
-# Prevent Python from writing bytecode files and enable unbuffered logging
+# Prevent Python from writing bytecode files, enable unbuffered logs, set Cloud Run port
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=5000 \
-    DATA_DIR=/app/data
+    PORT=8080 \
+    DATA_DIR=/app/data \
+    USE_FIREBASE=true \
+    FLASK_ENV=production
 
 WORKDIR /app
 
-# Install lightweight system dependencies (system fonts and curl for health checks)
+# Install system fonts, Tesseract OCR engine for built-in Syllabus OCR, and curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-liberation \
     fonts-dejavu-core \
+    tesseract-ocr \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency manifest and install production packages
+# Install Python dependencies cleanly from requirements.txt
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt gunicorn>=21.2.0
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
+# Copy application source, templates, bundled controlled-form fonts (Cinzel-Bold.otf), and curriculum bundles
 COPY . .
 
-# Ensure storage directories exist
+# Ensure writable runtime directories exist
 RUN mkdir -p /app/data /app/static/signatures /app/exports
 
-# Expose port
-EXPOSE 5000
+# Expose Cloud Run / local HTTP port
+EXPOSE 8080
 
-# Health check to ensure Flask application is responding
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:5000/auth/login || exit 1
+# Lightweight health check verifying Flask + Gunicorn readiness
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -f http://127.0.0.1:${PORT}/api/health || exit 1
 
-# Launch production WSGI server
+# Launch production multi-threaded Gunicorn WSGI server
 CMD ["gunicorn", "--config", "gunicorn_config.py", "app:app"]

@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "faculty-student-studio-usep",
+    "pilot": "faculty-student-studio-usep",
+    "gcloud-ref": "usep-faculty-student"
+  }
+}

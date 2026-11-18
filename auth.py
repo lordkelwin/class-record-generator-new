@@ -189,6 +189,15 @@ def apply_role_to_user_dict(target: dict, designation: str, prog_code: str = "EE
 # Storage helpers
 # --------------------------------------------------------------------------
 def get_or_create_secret_key() -> bytes:
+    env_key = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
+    if env_key and env_key.strip():
+        return env_key.strip().encode("utf-8")
+    if os.environ.get("K_SERVICE") or os.environ.get("USE_FIREBASE", "").lower() in ("true", "1", "yes"):
+        # Never generate random per-worker secrets in multi-worker Cloud Run environments;
+        # fall back deterministically if SECRET_KEY env var was omitted.
+        import hashlib
+        proj = os.environ.get("FIREBASE_PROJECT_ID", "faculty-student-studio-usep")
+        return hashlib.sha256(f"usep-obe-studio::{proj}::session-key".encode("utf-8")).hexdigest().encode("ascii")
     os.makedirs(DATA_DIR, exist_ok=True)
     if os.path.exists(SECRET_KEY_FILE):
         with open(SECRET_KEY_FILE, "rb") as f:
@@ -474,12 +483,16 @@ def get_csrf_token() -> str:
     return tok
 
 
-def _check_csrf() -> None:
+def _is_csrf_valid() -> bool:
     sent = request.form.get("_csrf") or request.headers.get("X-CSRF-Token")
     if not sent and request.is_json:
         sent = (request.get_json(silent=True) or {}).get("_csrf")
     expected = session.get("_csrf", "")
-    if not sent or not secrets.compare_digest(sent, expected):
+    return bool(sent and expected and secrets.compare_digest(sent, expected))
+
+
+def _check_csrf() -> None:
+    if not _is_csrf_valid():
         abort(400, description="Invalid or missing security token. Please reload the page and try again.")
 
 
@@ -495,7 +508,7 @@ def admin_required(view):
     return wrapper
 
 
-PUBLIC_ENDPOINTS = {"auth.login", "student_login", "student_logout", "static", "api_download_roster_template"}
+PUBLIC_ENDPOINTS = {"auth.login", "auth.logout", "student_login", "student_logout", "static", "api_download_roster_template", "healthz"}
 PASSWORD_CHANGE_ALLOWED = {"auth.change_password", "auth.logout", "static"}
 
 
@@ -503,6 +516,8 @@ def install_auth(app) -> None:
     """Attach secret key, the auth blueprint and a global login guard to the app."""
     app.secret_key = get_or_create_secret_key()
     app.config.update(
+        SESSION_COOKIE_NAME="__session",
+        REMEMBER_COOKIE_NAME="__session_remember",
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         PERMANENT_SESSION_LIFETIME=60 * 60 * 8,  # 8 hours
@@ -591,70 +606,85 @@ def _safe_next(target: str) -> str:
 # --------------------------------------------------------------------------
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if request.args.get("signed_out"):
+    is_signed_out = bool(request.args.get("signed_out"))
+    if request.method == "GET" and is_signed_out:
         session.clear()
+        get_csrf_token()
         session.modified = True
 
     curr = current_user()
-    if curr and not request.args.get("signed_out"):
+    if curr and not (request.method == "GET" and is_signed_out):
         if curr.get("role") == "student":
             return redirect(url_for("student_dashboard"))
         return redirect(url_for("index"))
 
+    if request.method == "GET":
+        get_csrf_token()
+        session.modified = True
+
     error = None
-    info = "You have been signed out." if request.args.get("signed_out") else None
+    info = "You have been signed out." if is_signed_out else None
     username = ""
     if request.method == "POST":
-        _check_csrf()
-        raw_username = request.form.get("username") or ""
+        raw_username = (request.form.get("username") or "").strip()
         username = _normalize_username(raw_username)
-        password = request.form.get("password") or ""
-        key = _attempt_key(username)
-        wait = _locked_seconds_left(key)
-        if wait:
-            error = f"Too many failed attempts. Please wait {wait} seconds and try again."
+        csrf_required = current_app.config.get("WTF_CSRF_ENABLED", True)
+        if csrf_required and not _is_csrf_valid():
+            # Gracefully recover from stale/cached CSRF token instead of crashing with HTTP 400
+            session.clear()
+            get_csrf_token()
+            session.modified = True
+            info = None
+            error = "Your sign-in security token expired (for example, from a cached tab or after signing out). A fresh token has been issued — please sign in again."
         else:
-            users = _load_users()
-            user = users.get(username)
-            if user and check_password_hash(user.get("password_hash", ""), password):
-                _clear_failures(key)
-                session.clear()
-                session.permanent = True
-                session["username"] = username
-                session["is_admin_session"] = bool(user.get("role") == "admin")
-                get_csrf_token()
-                with _lock:
-                    users = _load_users()
-                    if username in users:
-                        users[username]["last_login"] = datetime.now().isoformat(timespec="seconds")
-                        _save_users(users)
-                if user.get("must_change_password"):
-                    return redirect(url_for("auth.change_password"))
-                return redirect(_safe_next(request.args.get("next", "")))
+            password = request.form.get("password") or ""
+            key = _attempt_key(username)
+            wait = _locked_seconds_left(key)
+            if wait:
+                error = f"Too many failed attempts. Please wait {wait} seconds and try again."
+            else:
+                users = _load_users()
+                user = users.get(username)
+                if user and check_password_hash(user.get("password_hash", ""), password):
+                    _clear_failures(key)
+                    session.clear()
+                    session.permanent = True
+                    session["username"] = username
+                    session["is_admin_session"] = bool(user.get("role") == "admin")
+                    get_csrf_token()
+                    with _lock:
+                        users = _load_users()
+                        if username in users:
+                            users[username]["last_login"] = datetime.now().isoformat(timespec="seconds")
+                            _save_users(users)
+                    if user.get("must_change_password"):
+                        return redirect(url_for("auth.change_password"))
+                    return redirect(_safe_next(request.args.get("next", "")))
 
-            # If not a faculty account, check if this is an enrolled student signing in
-            import student_store
-            ok_st, st_obj, _ = student_store.verify_student_login(raw_username, password)
-            if ok_st and st_obj:
-                _clear_failures(key)
-                session.clear()
-                session.permanent = True
-                session["username"] = st_obj["student_id"]
-                session["student_id"] = st_obj["student_id"]
-                session["student_name"] = st_obj.get("full_name") or st_obj.get("name") or st_obj.get("student_id")
-                session["role"] = "student"
-                session["email"] = st_obj.get("email") or f"{st_obj['student_id']}@usep.edu.ph"
-                session["has_signature"] = bool(st_obj.get("signature_data"))
-                get_csrf_token()
-                return redirect(url_for("student_dashboard"))
+                # If not a faculty account, check if this is an enrolled student signing in
+                import student_store
+                ok_st, st_obj, _ = student_store.verify_student_login(raw_username, password)
+                if ok_st and st_obj:
+                    _clear_failures(key)
+                    session.clear()
+                    session.permanent = True
+                    session["username"] = st_obj["student_id"]
+                    session["student_id"] = st_obj["student_id"]
+                    session["student_name"] = st_obj.get("full_name") or st_obj.get("name") or st_obj.get("student_id")
+                    session["role"] = "student"
+                    session["email"] = st_obj.get("email") or f"{st_obj['student_id']}@usep.edu.ph"
+                    session["has_signature"] = bool(st_obj.get("signature_data"))
+                    get_csrf_token()
+                    return redirect(url_for("student_dashboard"))
 
-            _register_failure(key)
-            error = "Invalid username or password."
+                _register_failure(key)
+                error = "Invalid username or password."
 
     resp = make_response(render_template("login.html", error=error, info=info, username=username))
-    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    resp.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
+    resp.headers["Vary"] = "Cookie"
     return resp
 
 
@@ -662,17 +692,19 @@ def login():
 def logout():
     session.clear()
     session.modified = True
-    cookie_name = current_app.config.get("SESSION_COOKIE_NAME", "session")
+    cookie_name = current_app.config.get("SESSION_COOKIE_NAME", "__session")
+    remember_name = current_app.config.get("REMEMBER_COOKIE_NAME", "__session_remember")
+    is_secure = bool(current_app.config.get("SESSION_COOKIE_SECURE", False))
     resp = make_response(redirect(url_for("auth.login", signed_out=1)))
-    resp.delete_cookie(cookie_name, path="/")
-    resp.delete_cookie(cookie_name, path="/student")
-    resp.delete_cookie("session", path="/")
-    resp.delete_cookie("session")
-    resp.set_cookie(cookie_name, "", expires=0, max_age=0, path="/")
-    resp.set_cookie("session", "", expires=0, max_age=0, path="/")
-    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    for cname in {cookie_name, "__session", "session", remember_name}:
+        resp.delete_cookie(cname, path="/")
+        resp.delete_cookie(cname, path="/student")
+        resp.delete_cookie(cname)
+        resp.set_cookie(cname, "", expires=0, max_age=0, path="/", secure=is_secure, httponly=True, samesite="Lax")
+    resp.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
+    resp.headers["Vary"] = "Cookie"
     return resp
 
 

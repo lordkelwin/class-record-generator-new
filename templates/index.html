@@ -628,6 +628,12 @@
     .pgo-cell-pass { background: #dcfce7; color: #166534; font-weight: 700; }
     .pgo-cell-fail { background: #fee2e2; color: #991b1b; font-weight: 700; }
     .pgo-cell-na { background: #f8fafc; color: #94a3b8; }
+    .pgo-dir-prog-card { border: 1px solid #cbd5e1; border-radius: 10px; overflow: hidden; background: #ffffff; margin-bottom: 12px; }
+    .pgo-dir-prog-head { background: linear-gradient(90deg, #eff6ff 0%, #f8fafc 100%); padding: 10px 14px; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .pgo-dir-pgo-row { border-bottom: 1px solid #e2e8f0; padding: 10px 14px; }
+    .pgo-dir-pgo-row:last-child { border-bottom: none; }
+    .pgo-dir-pi-list { margin: 6px 0 0 12px; padding-left: 12px; border-left: 2px solid #93c5fd; display: flex; flex-direction: column; gap: 5px; }
+    .pgo-dir-pi-item { font-size: 0.77rem; color: #334155; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
     @media (max-width: 900px) { .pgo-flow-map { grid-template-columns: 1fr; gap: 16px; min-width: 0; } .pgo-flow-map svg.pgo-flow-svg { display: none; } }
 
     /* ======================================================================
@@ -656,6 +662,64 @@
     }
     .subject-sidebar.collapsed {
       margin-left: -320px;
+    }
+    .sb-list {
+      padding-bottom: 76px;
+    }
+    .sb-floating-fab {
+      position: fixed;
+      bottom: 22px;
+      left: 20px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      background: linear-gradient(135deg, #7f1d1d 0%, #1e3a8a 100%);
+      color: #ffffff;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.28);
+      cursor: pointer;
+      z-index: 9950;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .sb-floating-fab:hover {
+      transform: scale(1.07);
+      box-shadow: 0 10px 26px rgba(30, 58, 138, 0.38);
+    }
+    .sb-floating-fab.is-open {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    }
+    .sb-floating-fab .fab-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #eab308;
+      color: #0f172a;
+      font-size: 0.68rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffffff;
+      line-height: 1;
+    }
+    .syl-ocr-btn {
+      font-weight: 700;
+      border-color: #6366f1 !important;
+      color: #4338ca !important;
+      background: #eef2ff !important;
+      white-space: nowrap;
+    }
+    .syl-ocr-btn:hover {
+      background: #e0e7ff !important;
+      color: #312e81 !important;
     }
     .main-workspace {
       flex: 1;
@@ -2323,6 +2387,10 @@
       <!-- Populated dynamically: grouped by School Year and Semester -->
     </div>
   </aside>
+  <button type="button" id="floatingSidebarToggleBtn" class="sb-floating-fab is-open" onclick="toggleSidebar()" title="Collapse / Expand My Subjects & Classes Sidebar" aria-label="Toggle My Subjects and Classes Sidebar">
+    <span class="fab-icon">📚</span>
+    <span class="fab-badge" id="fabSubCountBadge">0</span>
+  </button>
   {% endif %}
 
   <!-- MAIN WORKSPACE -->
@@ -2483,6 +2551,9 @@
           </button>
           <button type="button" id="ribbonBtnPortalAnalytics" class="btn btn-light btn-sm" onclick="switchPortalView('analytics')" style="font-weight:700;">
             📊 Oversight &amp; Audit
+          </button>
+          <button type="button" id="ribbonBtnPortalCqiPlans" class="btn btn-light btn-sm" onclick="switchPortalView('cqi_plans')" style="font-weight:700;">
+            📋 Submitted CQI Plans (<span id="countPortalCqiRibbon">0</span>)
           </button>
           <button type="button" class="btn btn-light btn-sm" onclick="loadApprovalRequests(true)" style="font-weight:700; color:#1e3a8a;">
             🔄 Refresh
@@ -3083,6 +3154,9 @@
           <button type="button" class="btn btn-outline-success btn-sm" onclick="openImportRosterModal()" title="Upload class roster via CSV or Excel">
             📥 Import Student List (.csv / .xlsx)
           </button>
+          <button type="button" class="btn btn-outline-warning btn-sm" style="font-weight:700;" onclick="openImportSignedAckModal()" title="Import an existing signed FM-USeP-MID-07 Student Acknowledgment file (.csv, .xlsx, .pdf, or scanned image)">
+            📤 Import Signed Acknowledgment File
+          </button>
           <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openManualStudentModal()" title="Manually encode an enrolled student">
             ➕ Manually Encode Student
           </button>
@@ -3145,7 +3219,8 @@
     <div class="card" id="part1CourseInfoCard">
       <div class="card-header">
         <h2>Course &amp; Faculty Information (Cascading College &rarr; Department &rarr; Course Code &rarr; Auto-Filled Title &amp; Credit Units)</h2>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('course_info')" title="Extract Course & Faculty info from an image upload or Ctrl+V screenshot">📷 OCR / Extract from Image</button>
           <button class="btn btn-primary btn-sm" onclick="exportSyllabusPdf()">Generate &amp; Download Syllabus (.pdf)</button>
         </div>
       </div>
@@ -3326,6 +3401,7 @@
             <option value="new_5_igas">New USeP 5-IGA (IGA1–IGA5: FM-USeP-MID-01 / New IGAv1)</option>
             <option value="program_structure_6_igas">Program Structure 6-IGA (IGA1–IGA6: CMO Program Structure)</option>
           </select>
+          <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('course_outcomes')" title="Extract CLOs & PIs from an image upload or Ctrl+V screenshot">📷 OCR / Extract from Image</button>
           <button type="button" class="btn btn-light btn-sm" onclick="toggleProgramStructurePanel()">Browse Program Structure (IGAs, PEOs, PGOs &amp; PIs)</button>
           <button class="btn btn-primary btn-sm" onclick="addCourseOutcome()">+ Add CLO</button>
         </div>
@@ -3412,7 +3488,8 @@
     <div class="card">
       <div class="card-header">
         <h2>Part III, IV &amp; V. Document, Faculty, Course Description &amp; Workload Information (FM-USeP-MID-01)</h2>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('course_desc')" title="Extract Course Description, Workload & Faculty Info via OCR">📷 OCR / Extract from Image</button>
           <button class="btn btn-primary btn-sm" onclick="exportSyllabusPdf()">Export Complete Syllabus (.pdf)</button>
         </div>
       </div>
@@ -3563,7 +3640,10 @@
       <div class="card" id="part5PreReqCard">
         <div class="card-header">
           <h2>Part V. Pre-requisites &amp; Co-requisites Table</h2>
-          <button class="btn btn-primary btn-sm" onclick="addPrereqCoreqRow()">+ Add Requirement</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('prereq_sdg')" title="Extract Pre-requisites & SDGs via OCR">📷 OCR / Extract</button>
+            <button class="btn btn-primary btn-sm" onclick="addPrereqCoreqRow()">+ Add Requirement</button>
+          </div>
         </div>
         <table>
           <thead>
@@ -3581,7 +3661,10 @@
       <div class="card">
         <div class="card-header">
           <h2>SDG Alignment Table (SDG &amp; Description of Alignment)</h2>
-          <button class="btn btn-primary btn-sm" onclick="addSdgRow()">+ Add SDG Alignment</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('prereq_sdg')" title="Extract SDG Alignment rows via OCR">📷 OCR / Extract</button>
+            <button class="btn btn-primary btn-sm" onclick="addSdgRow()">+ Add SDG Alignment</button>
+          </div>
         </div>
         <table>
           <thead>
@@ -3617,6 +3700,7 @@
             Auto-Link Syllabus &rarr; Class Record Setup
           </label>
           <button class="btn btn-success btn-sm" onclick="syncClassRecordSetupFromSyllabus(true)">Sync &amp; Open Class Record Setup &rarr;</button>
+          <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('assessment_activities')" title="Extract Part VI Assessment Activities via OCR">📷 OCR / Extract from Image</button>
           <button class="btn btn-primary btn-sm" onclick="addSyllabusAssessmentActivityRow()">+ Add Assessment Activity</button>
         </div>
       </div>
@@ -3663,6 +3747,7 @@
           <button class="btn btn-outline-primary btn-sm" onclick="loadRubricTemplate('progress_report')">📊 + Progress Report (5-0)</button>
           <button class="btn btn-primary btn-sm" onclick="addNewRubric()">+ Add Custom Rubric</button>
           <button class="btn btn-warning btn-sm" onclick="autoGenerateRubricsForAllAssessments()" style="font-weight:700;">⚡ Ensure All Rubrics</button>
+          <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('rubrics')" title="Extract Rubric Criteria & Rating Scales via OCR">📷 OCR / Extract from Image</button>
         </div>
       </div>
       <div id="rubricsContainer" style="display:flex; flex-direction:column; gap:16px; margin-top:10px;">
@@ -3672,12 +3757,15 @@
 
     <!-- PART VIII. GRADING SYSTEM AND ASSESSMENT PLAN -->
     <div class="card" id="part8GradingPlanCard">
-      <div class="card-header">
+      <div class="card-header" style="flex-wrap:wrap; gap:10px;">
         <div>
           <h2>Part VIII. Grading System and Assessment Plan</h2>
           <div style="font-size:0.78rem; color:#4b5563; margin-top:2px;">
             Official assessment weight distribution, CLO mapping with Part VII measurement rubric references, Base-50 transmutation, passing grade conditions, and grade equivalence table.
           </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('grading_plan')" title="Extract Grading System & Passing Conditions via OCR">📷 OCR / Extract from Image</button>
         </div>
       </div>
       <div style="padding:16px;">
@@ -3774,7 +3862,8 @@
             </div>
           </div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('learning_plan')" title="Extract Course Learning Plan rows via OCR">📷 OCR / Extract from Image</button>
           <button class="btn btn-light btn-sm" onclick="addLearningPlanExamRow('MIDTERM EXAMINATION')">+ Add Midterm Exam Row</button>
           <button class="btn btn-light btn-sm" onclick="addLearningPlanExamRow('FINAL EXAMINATION')">+ Add Final Exam Row</button>
           <button class="btn btn-primary btn-sm" onclick="addLearningPlanRow()">+ Add Learning Plan Topic Row</button>
@@ -3805,7 +3894,10 @@
       <div class="card" id="part10ReferencesCard">
         <div class="card-header">
           <h2>Part X. References / Articles to Read Table</h2>
-          <button type="button" class="btn btn-primary btn-sm" onclick="addReferenceRow()">+ Add Reference</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('references_policies')" title="Extract References & Policies via OCR">📷 OCR / Extract</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="addReferenceRow()">+ Add Reference</button>
+          </div>
         </div>
         <table>
           <thead>
@@ -3822,7 +3914,10 @@
       <div class="card" id="part11PoliciesCard">
         <div class="card-header">
           <h2>Part XI. Classroom &amp; Assessment Policies Table</h2>
-          <button class="btn btn-primary btn-sm" onclick="addPolicyRow()">+ Add Policy</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline-primary btn-sm syl-ocr-btn" onclick="openSyllabusOcrModal('references_policies')" title="Extract Classroom Policies via OCR">📷 OCR / Extract</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="addPolicyRow()">+ Add Policy</button>
+          </div>
         </div>
         <table>
           <thead>
@@ -4442,22 +4537,88 @@
 
     <!-- WRAPPER FOR TAB 6 CONTENT (LOCKED UNTIL SYLLABUS IS APPROVED) -->
     <div id="cqiTabContent">
+      <div class="card" style="background:linear-gradient(135deg, #0f766e 0%, #1e3a8a 100%); color:#ffffff; border-radius:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <h2 style="margin:0; color:#ffffff; font-size:1.15rem;">🔄 Step 8: Continuous Quality Improvement (CQI) Plan &amp; Program Head Submission</h2>
+              <span id="cqiSubmissionStatusBadge" class="badge" style="background:rgba(255,255,255,0.22); color:#ffffff; font-weight:700; padding:3px 10px; border-radius:12px;">Draft</span>
+            </div>
+            <div id="cqiRevisitScheduleNote" style="font-size:0.79rem; color:#d1fae5; margin-top:4px;">
+              Consolidate Step 4 Class Record, Step 7 MID-10 CLO Attainment, and Student Exit Survey feedback into a trackable CQI Plan.
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="btn btn-light btn-sm" id="btnSynthesizeCqiRule" onclick="synthesizeCourseCqiPlan(false)" style="font-weight:700; color:#0f766e;">
+              ⚡ Auto-Generate / Synthesize CQI Plan
+            </button>
+            <button type="button" class="btn btn-warning btn-sm" id="btnSynthesizeCqiAi" onclick="synthesizeCourseCqiPlan(true)" style="font-weight:700; color:#0f172a;">
+              🤖 AI-Assisted Synthesis
+            </button>
+            <button type="button" class="btn btn-success btn-sm" id="btnSubmitCqiPlan" onclick="submitCourseCqiPlanToProgramHead()" style="font-weight:700; border:1px solid #86efac;">
+              📤 Submit CQI Plan to Program Head
+            </button>
+          </div>
+        </div>
+        <div id="cqiProgramHeadRemarksBanner" style="display:none; margin-top:10px; padding:8px 12px; border-radius:8px; background:rgba(15,23,42,0.3); font-size:0.8rem; color:#fef3c7;"></div>
+      </div>
+
+      <!-- 3-Source Correlation Table -->
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h2>📈 Three-Source CLO Correlation (Class Record + MID-10 + Student Exit Survey)</h2>
+            <div style="font-size:0.77rem; color:#475569;">Direct CLO attainment vs. Indirect Student Exit Survey confidence ratings per CLO.</div>
+          </div>
+          <button type="button" class="btn btn-light btn-sm" onclick="loadCourseCqiPlanState()" style="font-weight:700;">🔄 Refresh Sources</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>CLO</th>
+                <th>Outcome Statement &amp; PGO-PI</th>
+                <th style="text-align:center;">Direct MID-10 %</th>
+                <th style="text-align:center;">Target %</th>
+                <th style="text-align:center;">Exit Survey (1–5)</th>
+                <th>Direct vs. Indirect Correlation</th>
+              </tr>
+            </thead>
+            <tbody id="cqiThreeSourceBody">
+              <tr><td colspan="6" style="text-align:center; color:#64748b; padding:12px;">Click "Auto-Generate / Synthesize CQI Plan" to correlate live data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
-          <h2>Continuous Quality Improvement (CQI) — Overall Reflection &amp; Action Plan</h2>
+          <h2>Continuous Quality Improvement (CQI) — Synthesized Findings &amp; Action Plan</h2>
         </div>
-        <div class="grid-4" style="grid-template-columns: 1fr 1fr 1.2fr;">
+        <div class="grid-4" style="grid-template-columns: 1fr 1fr; margin-bottom:12px;">
           <div class="form-group">
             <label>Key Strengths</label>
-            <textarea id="cqi_strengths" rows="4" oninput="blueprint.cqi_plan.key_strengths=this.value"></textarea>
+            <textarea id="cqi_strengths" rows="4" oninput="blueprint.cqi_plan.key_strengths=this.value; queueAutoSave();"></textarea>
           </div>
           <div class="form-group">
             <label>Main Areas for Improvement</label>
-            <textarea id="cqi_improvements" rows="4" oninput="blueprint.cqi_plan.areas_for_improvement=this.value"></textarea>
+            <textarea id="cqi_improvements" rows="4" oninput="blueprint.cqi_plan.areas_for_improvement=this.value; queueAutoSave();"></textarea>
           </div>
           <div class="form-group">
-            <label>CQI Action Plan</label>
-            <textarea id="cqi_actions" rows="4" oninput="blueprint.cqi_plan.action_plan=this.value"></textarea>
+            <label>Observed Performance &amp; Gap Analysis (Direct vs. Indirect)</label>
+            <textarea id="cqi_gap_analysis" rows="4" oninput="blueprint.cqi_plan.gap_analysis=this.value; queueAutoSave();"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Identified Root Causes (Anchored to Survey &amp; Item Bottlenecks)</label>
+            <textarea id="cqi_root_causes" rows="4" oninput="blueprint.cqi_plan.root_causes=this.value; queueAutoSave();"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Concrete CQI Action Plan &amp; Pedagogical Recommendations</label>
+            <textarea id="cqi_actions" rows="4" oninput="blueprint.cqi_plan.action_plan=this.value; queueAutoSave();"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Target KPIs &amp; Evidence of Improvement (Next Same-Semester Offering)</label>
+            <textarea id="cqi_target_kpis" rows="4" oninput="blueprint.cqi_plan.target_kpis=this.value; queueAutoSave();"></textarea>
           </div>
         </div>
       </div>
@@ -4477,6 +4638,19 @@
           </thead>
           <tbody id="cqiIndicatorsBody"></tbody>
         </table>
+      </div>
+
+      <div class="card" id="cqiExitSurveyCard">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h2>📊 Aggregated Student Course Exit Survey Results (CQI Input)</h2>
+            <div style="font-size:0.78rem; color:#475569; margin-top:2px;">Live Likert (1–5) student ratings per Course Learning Outcome (CLO) and delivery indicators submitted via the Student Portal.</div>
+          </div>
+          <button type="button" class="btn btn-light btn-sm" onclick="loadCourseExitSurveySummary()" style="font-weight:700;">🔄 Refresh Survey Data</button>
+        </div>
+        <div id="cqiExitSurveyBody" style="padding:14px 16px; font-size:0.82rem; color:#475569;">
+          Loading Course Exit Survey summary...
+        </div>
       </div>
 
       <div class="grid-4" style="grid-template-columns: 1fr 1.4fr;">
@@ -4756,6 +4930,27 @@
       </div>
     </div>
 
+    <!-- Section 3B: Program-Specific PGO & Performance Indicators (PI) Reference Directory -->
+    <div class="card" id="pgoDirectoryCard" style="padding:18px 20px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <div>
+          <h3 style="margin:0; font-size:1.06rem; font-weight:800; color:#0f172a;">📚 Program Graduate Outcomes (PGO) &amp; Performance Indicators (PI) Reference Directory</h3>
+          <div id="pgoDirScopeInfo" style="font-size:0.78rem; color:#475569; margin-top:2px;">
+            Complete CMO &amp; PGO-PI-IGA reference per degree program, paired with live attainment metrics within your role scope.
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <select id="pgoDirProgramSelect" class="form-select form-select-sm" style="height:31px; font-weight:700; font-size:0.79rem; border:1px solid #cbd5e1; border-radius:6px; min-width:170px;" onchange="renderPgoProgramDirectoryFromCache()">
+            <option value="ALL">All Permitted Programs</option>
+          </select>
+          <input type="text" id="pgoDirSearchInput" placeholder="🔍 Filter PGO code or PI keyword..." oninput="renderPgoProgramDirectoryFromCache()" style="height:31px; padding:4px 9px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.79rem; width:215px;" />
+        </div>
+      </div>
+      <div id="pgoDirectoryContainer" style="max-height:540px; overflow-y:auto;">
+        <div style="color:#64748b; font-size:0.82rem; padding:12px 0;">Loading PGO &amp; PI Directory...</div>
+      </div>
+    </div>
+
     <!-- Section 4: Searchable Student ID (ID #) PGO Attainment Matrix -->
     <div class="card" id="pgoStudentMatrixCard" style="padding:18px 20px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
@@ -4812,6 +5007,9 @@
       </button>
       <button id="btnPortalViewAnalytics" class="btn btn-sm" onclick="switchPortalView('analytics')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:transparent; color:#475569;">
         📈 Institutional Analytics &amp; Reports
+      </button>
+      <button id="btnPortalViewCqiPlans" class="btn btn-sm" onclick="switchPortalView('cqi_plans')" style="font-weight:700; font-size:0.82rem; border-radius:8px; padding:7px 16px; border:none; background:transparent; color:#475569;">
+        📋 Submitted CQI Plans (<span id="countPortalCqiPlans">0</span>)
       </button>
     </div>
 
@@ -5068,6 +5266,35 @@
         <div id="anBottlenecksGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
           <!-- Populated by JavaScript -->
         </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: SUBMITTED CQI PLANS (PROGRAM HEAD / OVERSIGHT REVISIT TRACKER) -->
+    <div id="portalViewCqiPlans" style="display:none;">
+      <div class="card" style="margin-bottom:16px; border:1px solid #cbd5e1; border-radius:10px; padding:14px 18px; background:#f8fafc;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <div>
+            <h3 style="margin:0; font-size:1.05rem; font-weight:800; color:#0f172a;">📋 Submitted CQI Plans &amp; Mandatory Revisit Tracker</h3>
+            <div style="font-size:0.78rem; color:#475569;">Segregated by Semester &amp; Academic Year. Mandatory Revisit defaults to 1 Year post-submission (Next Academic Year under the Same Semester).</div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" onclick="loadSubmittedCqiPlans(true)" style="font-weight:700;">🔄 Refresh CQI Plans</button>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <select id="cqiPortalTermFilter" onchange="renderSubmittedCqiPlans()" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem; font-weight:700;">
+            <option value="ALL">All Semesters &amp; Academic Years</option>
+          </select>
+          <select id="cqiPortalRevisitFilter" onchange="renderSubmittedCqiPlans()" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem; font-weight:600;">
+            <option value="ALL">All Revisit Statuses</option>
+            <option value="Upcoming">Upcoming Revisit</option>
+            <option value="Due for Re-Evaluation">Due for Re-Evaluation</option>
+            <option value="Closed/Verified">Closed / Verified</option>
+          </select>
+          <input type="text" id="cqiPortalSearchInput" placeholder="🔍 Search course code, faculty, CLO..." oninput="renderSubmittedCqiPlans()" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem; width:240px;" />
+        </div>
+      </div>
+
+      <div id="portalCqiPlansListContainer" style="display:flex; flex-direction:column; gap:18px;">
+        <div style="padding:24px; text-align:center; color:#64748b;">Loading Submitted CQI Plans...</div>
       </div>
     </div>
   </div>
@@ -6138,6 +6365,8 @@
       const sb = document.getElementById("subjectSidebar");
       if (sb) sb.classList.add("collapsed");
     }
+    syncSidebarFabState();
+    initSidebarTransitionHook();
 
     await fetchCurrentUser();
     if (currentUser && !currentUser.can_access_faculty_tools) {
@@ -6173,12 +6402,40 @@
     loadApprovalRequests();
   }
 
+  function syncSidebarFabState() {
+    const sb = document.getElementById("subjectSidebar");
+    const fab = document.getElementById("floatingSidebarToggleBtn");
+    if (!fab || !sb) return;
+    const isCollapsed = sb.classList.contains("collapsed");
+    fab.classList.toggle("is-open", !isCollapsed);
+    fab.title = isCollapsed
+      ? "Expand My Subjects & Classes Sidebar"
+      : "Collapse My Subjects & Classes Sidebar";
+    const iconEl = fab.querySelector(".fab-icon");
+    if (iconEl) iconEl.textContent = isCollapsed ? "📚" : "«";
+  }
+
+  let _sidebarTransitionBound = false;
+  function initSidebarTransitionHook() {
+    const sb = document.getElementById("subjectSidebar");
+    if (!sb || _sidebarTransitionBound) return;
+    _sidebarTransitionBound = true;
+    sb.addEventListener("transitionend", function(ev) {
+      if (ev.propertyName === "margin-left" || ev.propertyName === "width" || ev.propertyName === "transform") {
+        redrawAllFlowcharts();
+      }
+    });
+  }
+
   function toggleSidebar() {
     const sb = document.getElementById("subjectSidebar");
     if (!sb) return;
+    initSidebarTransitionHook();
     sb.classList.toggle("collapsed");
     localStorage.setItem("usep_sidebar_collapsed", sb.classList.contains("collapsed") ? "true" : "false");
-    requestAnimationFrame(drawAlignLines);
+    syncSidebarFabState();
+    redrawAllFlowcharts();
+    setTimeout(redrawAllFlowcharts, 250);
   }
 
   async function loadCoursesList(autoSelectId = null, shouldLoadCourse = true) {
@@ -6194,6 +6451,7 @@
       const b1 = document.getElementById("sbTotalCount"); if (b1) b1.textContent = countStr;
       const b2 = document.getElementById("headerSubCount"); if (b2) b2.textContent = countStr;
       const b3 = document.getElementById("asbCountBadge"); if (b3) b3.textContent = countStr;
+      const b4 = document.getElementById("fabSubCountBadge"); if (b4) b4.textContent = countStr;
 
       renderSidebarSubjects();
       updateDashboardCourseSelectors();
@@ -7400,6 +7658,10 @@
     }
     checkClassRecordLock();
     checkSyllabusLock();
+    if (typeof redrawAllFlowcharts === "function") {
+      redrawAllFlowcharts();
+      setTimeout(redrawAllFlowcharts, 140);
+    }
   }
 
   function switchTab(tabId, btnEl) {
@@ -12634,29 +12896,41 @@
 
   function renderCqiSection() {
     if (!blueprint.cqi_plan) return;
-    document.getElementById("cqi_strengths").value = blueprint.cqi_plan.key_strengths || "";
-    document.getElementById("cqi_improvements").value = blueprint.cqi_plan.areas_for_improvement || "";
-    document.getElementById("cqi_actions").value = blueprint.cqi_plan.action_plan || "";
+    const setVal = (id, v) => {
+      const el = document.getElementById(id);
+      if (el) el.value = v || "";
+    };
+    setVal("cqi_strengths", blueprint.cqi_plan.key_strengths);
+    setVal("cqi_improvements", blueprint.cqi_plan.areas_for_improvement);
+    setVal("cqi_gap_analysis", blueprint.cqi_plan.gap_analysis);
+    setVal("cqi_root_causes", blueprint.cqi_plan.root_causes);
+    setVal("cqi_actions", blueprint.cqi_plan.action_plan);
+    setVal("cqi_target_kpis", blueprint.cqi_plan.target_kpis);
+
+    if (typeof loadCourseExitSurveySummary === "function") loadCourseExitSurveySummary();
+    if (typeof loadCourseCqiPlanState === "function") loadCourseCqiPlanState();
 
     const tbody = document.getElementById("cqiIndicatorsBody");
-    tbody.innerHTML = (blueprint.cqi_plan.indicators || []).map((ind, idx) => `
-      <tr>
-        <td style="font-weight:700;">${escapeHtml(ind.category)}</td>
-        <td>
-          <div style="font-weight:700;">${escapeHtml(ind.title)}</div>
-          <div style="font-size:0.76rem; color:#475569;">${escapeHtml(ind.subtitle)}</div>
-        </td>
-        <td style="text-align:center;">
-          <select onchange="blueprint.cqi_plan.indicators[${idx}].mark=this.value" style="text-align:center; font-weight:700;">
-            <option value="✓" ${ind.mark === "✓" ? "selected" : ""}>✓</option>
-            <option value="✗" ${ind.mark === "✗" ? "selected" : ""}>✗</option>
-          </select>
-        </td>
-        <td>
-          <input type="text" value="${escapeHtml(ind.remarks)}" onchange="blueprint.cqi_plan.indicators[${idx}].remarks=this.value" />
-        </td>
-      </tr>
-    `).join("");
+    if (tbody) {
+      tbody.innerHTML = (blueprint.cqi_plan.indicators || []).map((ind, idx) => `
+        <tr>
+          <td style="font-weight:700;">${escapeHtml(ind.category)}</td>
+          <td>
+            <div style="font-weight:700;">${escapeHtml(ind.title)}</div>
+            <div style="font-size:0.76rem; color:#475569;">${escapeHtml(ind.subtitle)}</div>
+          </td>
+          <td style="text-align:center;">
+            <select onchange="blueprint.cqi_plan.indicators[${idx}].mark=this.value; queueAutoSave();" style="text-align:center; font-weight:700;">
+              <option value="✓" ${ind.mark === "✓" ? "selected" : ""}>✓</option>
+              <option value="✗" ${ind.mark === "✗" ? "selected" : ""}>✗</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" value="${escapeHtml(ind.remarks)}" onchange="blueprint.cqi_plan.indicators[${idx}].remarks=this.value; queueAutoSave();" />
+          </td>
+        </tr>
+      `).join("");
+    }
   }
 
   function getItemCloMaxScore(itemId, cloId) {
@@ -14309,6 +14583,7 @@
       </div>
     `;
     requestAnimationFrame(drawAlignLines);
+    observeFlowchartLayout(map, drawAlignLines);
 
     // Alignment matrix table
     const gc = gradebookCache;
@@ -14342,25 +14617,94 @@
     `;
   }
 
+  function _scheduleFlowchartRaf(fn) {
+    if (typeof fn !== "function") return;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      try { fn(); } catch (e) { console.debug("flowchart redraw error:", e); }
+    }));
+  }
+
+  function redrawAllFlowcharts() {
+    _scheduleFlowchartRaf(() => {
+      if (typeof drawAlignLines === "function") drawAlignLines();
+      if (typeof drawPgoFlowchartLines === "function") drawPgoFlowchartLines();
+      if (typeof renderFlowchartConnectors === "function") renderFlowchartConnectors();
+    });
+  }
+
+  const _flowchartObservers = new WeakMap();
+  function observeFlowchartLayout(mapEl, redrawFn) {
+    if (!mapEl || typeof redrawFn !== "function") return;
+    const schedule = () => _scheduleFlowchartRaf(redrawFn);
+    if (_flowchartObservers.has(mapEl)) {
+      schedule();
+      return;
+    }
+    let timer = null;
+    const debounced = () => {
+      schedule();
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(schedule, 120);
+    };
+    const meta = {};
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(debounced);
+      ro.observe(mapEl);
+      if (mapEl.parentElement) ro.observe(mapEl.parentElement);
+      meta.ro = ro;
+    }
+    if (typeof MutationObserver !== "undefined") {
+      const mo = new MutationObserver(debounced);
+      mo.observe(mapEl, { childList: true, subtree: false });
+      meta.mo = mo;
+    }
+    if (mapEl.parentElement) {
+      mapEl.parentElement.addEventListener("scroll", () => {
+        if (mapEl.id === "flowchartCanvas") {
+          const eg = document.getElementById("flowchartSvgEdgesGroup");
+          if (eg && eg.children.length > 0) {
+            if (typeof preserveFlowchartSelectionHighlight === "function") {
+              _scheduleFlowchartRaf(preserveFlowchartSelectionHighlight);
+            }
+            return;
+          }
+        }
+        schedule();
+      }, { passive: true });
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(schedule).catch(() => {});
+    }
+    _flowchartObservers.set(mapEl, meta);
+    schedule();
+  }
+
   function drawAlignLines() {
     const map = document.getElementById("dashAlignMap");
     const svg = document.getElementById("dashAlignSvg");
     if (!map || !svg || !map.offsetParent) return;  // not visible
     const base = map.getBoundingClientRect();
-    svg.setAttribute("width", map.clientWidth);
-    svg.setAttribute("height", map.scrollHeight);
+    const svgW = Math.max(map.clientWidth || 0, map.scrollWidth || 0);
+    const svgH = Math.max(map.clientHeight || 0, map.scrollHeight || 0);
+    if (!svgW || !svgH) return;
+    svg.setAttribute("width", svgW);
+    svg.setAttribute("height", svgH);
+    svg.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
+    svg.style.width = `${svgW}px`;
+    svg.style.height = `${svgH}px`;
     const nodeRect = key => {
       const el = map.querySelector(`.align-node[data-key="${CSS.escape(key)}"]`);
       return el ? el.getBoundingClientRect() : null;
     };
-    svg.innerHTML = _alignGraph.edges.map(e => {
+    svg.innerHTML = (_alignGraph.edges || []).map(e => {
       const a = nodeRect(e.from), b = nodeRect(e.to);
-      if (!a || !b) return "";
+      if (!a || !b || a.width === 0 || b.width === 0) return "";
       const x1 = a.right - base.left, y1 = a.top + a.height / 2 - base.top;
       const x2 = b.left - base.left, y2 = b.top + b.height / 2 - base.top;
-      const dx = Math.max(20, (x2 - x1) / 2);
+      if (x2 < x1 - 4) return "";
+      const dx = Math.max(20, Math.abs(x2 - x1) * 0.5);
       return `<path class="${e.cls}" data-from="${escapeHtml(e.from)}" data-to="${escapeHtml(e.to)}"
-        d="M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}" />`;
+        d="M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${(x1 + dx).toFixed(1)} ${y1.toFixed(1)}, ${(x2 - dx).toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}" />`;
     }).join("");
   }
 
@@ -14392,7 +14736,7 @@
     document.querySelectorAll("#dashAlignMap .align-node, #dashAlignSvg path").forEach(el => el.classList.remove("dim", "hl"));
   }
 
-  window.addEventListener("resize", () => requestAnimationFrame(drawAlignLines));
+  window.addEventListener("resize", () => redrawAllFlowcharts());
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -14803,6 +15147,10 @@
     // Enforce class record lock & syllabus lock
     checkClassRecordLock();
     checkSyllabusLock();
+    if (typeof redrawAllFlowcharts === "function") {
+      redrawAllFlowcharts();
+      setTimeout(redrawAllFlowcharts, 140);
+    }
   }
 
   // Enforce Class Record Lock Barrier on Tabs 2 to 8 & Grade Freeze
@@ -15896,6 +16244,7 @@
       // 3. View Switcher Analytics Button (The Whole Dashboard with all details: Dean, Assoc Dean, Program Heads, QA Head, Staff, Admin)
       const btnViewAnalytics = document.getElementById("btnPortalViewAnalytics");
       if (btnViewAnalytics) btnViewAnalytics.style.display = canViewInst ? "inline-block" : "none";
+      loadSubmittedCqiPlans(false);
 
       // 4. Syllabi View Oversight Elements (KPI Row, SLA Banner, All Institutional Filter, Program Filter)
       const kpiRow = document.getElementById("approvalsKpiRow");
@@ -19789,42 +20138,43 @@
     const btnSyl = document.getElementById("btnPortalViewSyllabi");
     const btnCr = document.getElementById("btnPortalViewClassRecords");
     const btnAn = document.getElementById("btnPortalViewAnalytics");
+    const btnCqi = document.getElementById("btnPortalViewCqiPlans");
 
-    if (btnSyl) {
-      btnSyl.style.background = viewName === "syllabi" ? "#ffffff" : "transparent";
-      btnSyl.style.color = viewName === "syllabi" ? "#1e3a8a" : "#475569";
-      btnSyl.style.boxShadow = viewName === "syllabi" ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
-    }
-    if (btnCr) {
-      btnCr.style.background = viewName === "class_records" ? "#ffffff" : "transparent";
-      btnCr.style.color = viewName === "class_records" ? "#1e3a8a" : "#475569";
-      btnCr.style.boxShadow = viewName === "class_records" ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
-    }
-    if (btnAn) {
-      btnAn.style.background = viewName === "analytics" ? "#ffffff" : "transparent";
-      btnAn.style.color = viewName === "analytics" ? "#1e3a8a" : "#475569";
-      btnAn.style.boxShadow = viewName === "analytics" ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
-    }
+    const _styleBtn = (el, active) => {
+      if (!el) return;
+      el.style.background = active ? "#ffffff" : "transparent";
+      el.style.color = active ? "#1e3a8a" : "#475569";
+      el.style.boxShadow = active ? "0 1px 3px rgba(0,0,0,0.08)" : "none";
+    };
+    _styleBtn(btnSyl, viewName === "syllabi");
+    _styleBtn(btnCr, viewName === "class_records");
+    _styleBtn(btnAn, viewName === "analytics");
+    _styleBtn(btnCqi, viewName === "cqi_plans");
 
     // Toggle ribbon buttons
     const ribSyl = document.getElementById("ribbonBtnPortalSyllabi");
     const ribCr = document.getElementById("ribbonBtnPortalClassRecords");
     const ribAn = document.getElementById("ribbonBtnPortalAnalytics");
+    const ribCqi = document.getElementById("ribbonBtnPortalCqiPlans");
     if (ribSyl) ribSyl.classList.toggle("active", viewName === "syllabi");
     if (ribCr) ribCr.classList.toggle("active", viewName === "class_records");
     if (ribAn) ribAn.classList.toggle("active", viewName === "analytics");
+    if (ribCqi) ribCqi.classList.toggle("active", viewName === "cqi_plans");
 
     // Toggle container visibility
     const vSyl = document.getElementById("portalViewSyllabi");
     const vCr = document.getElementById("portalViewClassRecords");
     const vAn = document.getElementById("portalViewAnalytics");
+    const vCqi = document.getElementById("portalViewCqiPlans");
 
     if (vSyl) vSyl.style.display = viewName === "syllabi" ? "block" : "none";
     if (vCr) vCr.style.display = viewName === "class_records" ? "block" : "none";
     if (vAn) vAn.style.display = viewName === "analytics" ? "block" : "none";
+    if (vCqi) vCqi.style.display = viewName === "cqi_plans" ? "block" : "none";
 
     if (viewName === "class_records") renderPortalClassRecordsList();
     if (viewName === "analytics") renderPortalAnalyticsDashboard();
+    if (viewName === "cqi_plans") loadSubmittedCqiPlans(true);
   }
 
   function switchCrFilter(filt) {
@@ -21639,7 +21989,11 @@ async function loadCurriculumFlowchart(programCode) {
     renderFlowchartColumns();
     // Enforce 70% default zoom level on initial and reloaded curriculum view
     setFlowchartZoom(0.70);
-    // Render connectors after DOM elements are settled
+    // Attach post-layout observers & render connectors after DOM elements settle
+    const fcCanvas = document.getElementById('flowchartCanvas');
+    if (fcCanvas && typeof observeFlowchartLayout === 'function') {
+      observeFlowchartLayout(fcCanvas, renderFlowchartConnectors);
+    }
     setTimeout(() => {
       renderFlowchartConnectors();
     }, 90);
@@ -21868,6 +22222,21 @@ function renderFlowchartConnectors() {
 
     edgesGroup.appendChild(path);
   });
+
+  // Preserve active selected/filtered/AI spotlight connector lines across zoom, resize, or scroll redraws
+  preserveFlowchartSelectionHighlight();
+}
+
+function preserveFlowchartSelectionHighlight() {
+  if (flowchartSelectedNode) {
+    highlightCourseDependencies(flowchartSelectedNode);
+  } else if (flowchartHoveredNode && !advisorActiveHighlights) {
+    highlightCourseDependencies(flowchartHoveredNode);
+  } else if (flowchartActivePgo || flowchartActivePi) {
+    applyPgoPiFilter(flowchartActivePgo, flowchartActivePi);
+  } else if (advisorActiveHighlights || flowchartSearchLocked) {
+    document.querySelectorAll('.fc-edge-path').forEach(p => p.classList.add('dimmed'));
+  }
 }
 
 function applyEdgeModeVisibility(pathEl, edgeType) {
@@ -21910,18 +22279,18 @@ function setFlowchartConnectorMode(mode) {
 }
 
 function onCourseNodeHover(courseCode) {
-  if (flowchartSearchLocked || flowchartActivePgo || flowchartActivePi || flowchartSelectedNode) return;
+  if (flowchartSearchLocked || flowchartActivePgo || flowchartActivePi || flowchartSelectedNode || advisorActiveHighlights) return;
   highlightCourseDependencies(courseCode);
 }
 
 function onCourseNodeLeave() {
-  if (flowchartSearchLocked || flowchartActivePgo || flowchartActivePi || flowchartSelectedNode) return;
+  if (flowchartSearchLocked || flowchartActivePgo || flowchartActivePi || flowchartSelectedNode || advisorActiveHighlights) return;
   clearHighlightCourseDependencies();
 }
 
 function highlightCourseDependencies(courseCode) {
   if (flowchartSearchLocked && !flowchartSelectedNode) return;
-  if (flowchartActivePgo || flowchartActivePi) return;
+  if (flowchartActivePgo || flowchartActivePi || advisorActiveHighlights) return;
   if (!flowchartData || !courseCode) return;
   const targetUpper = courseCode.trim().toUpperCase();
   const course = flowchartCoursesMap[targetUpper];
@@ -22465,7 +22834,7 @@ function onCourseNodeClick(event, courseCode) {
   if (!cleanCode) return;
 
   if (flowchartSearchLocked) return;
-  if (flowchartActivePgo || flowchartActivePi) return;
+  if (flowchartActivePgo || flowchartActivePi || advisorActiveHighlights) return;
 
   const targetUpper = cleanCode.toUpperCase();
   if (flowchartSelectedNode === targetUpper) {
@@ -22923,6 +23292,7 @@ function resetFlowchartView() {
   flowchartYearFilter = 'ALL';
   flowchartSelectedNode = null;
   flowchartHoveredNode = null;
+  advisorActiveHighlights = null;
 
   const yFilter = document.getElementById('curriculumYearFilter');
   if (yFilter) yFilter.value = 'ALL';
@@ -24613,6 +24983,9 @@ function renderPgoAssessmentView(data) {
 
   // 6. Student ID Matrix
   try { renderPgoStudentMatrix(pgos, studentsMatrix, cohorts); } catch (e) { console.error("renderPgoStudentMatrix error:", e); }
+
+  // 7. Program-Specific PGO & PI Reference Directory
+  try { renderPgoProgramDirectory(data); } catch (e) { console.error("renderPgoProgramDirectory error:", e); }
 }
 
 function renderPgoFlowchart(data) {
@@ -24701,7 +25074,11 @@ function renderPgoFlowchart(data) {
     </div>
   `;
 
-  requestAnimationFrame(drawPgoFlowchartLines);
+  if (typeof observeFlowchartLayout === "function") {
+    observeFlowchartLayout(mapEl, drawPgoFlowchartLines);
+  } else {
+    requestAnimationFrame(drawPgoFlowchartLines);
+  }
 }
 
 function drawPgoFlowchartLines() {
@@ -24709,8 +25086,14 @@ function drawPgoFlowchartLines() {
   const svgEl = document.getElementById("pgoFlowchartSvg");
   if (!mapEl || !svgEl || !mapEl.offsetParent) return;
   const base = mapEl.getBoundingClientRect();
-  svgEl.setAttribute("width", mapEl.clientWidth);
-  svgEl.setAttribute("height", mapEl.scrollHeight);
+  const svgW = Math.max(mapEl.clientWidth || 0, mapEl.scrollWidth || 0);
+  const svgH = Math.max(mapEl.clientHeight || 0, mapEl.scrollHeight || 0);
+  if (!svgW || !svgH) return;
+  svgEl.setAttribute("width", svgW);
+  svgEl.setAttribute("height", svgH);
+  svgEl.setAttribute("viewBox", `0 0 ${svgW} ${svgH}`);
+  svgEl.style.width = `${svgW}px`;
+  svgEl.style.height = `${svgH}px`;
 
   const getRect = (key) => {
     const el = mapEl.querySelector(`.pgo-flow-node[data-key="${CSS.escape(key)}"]`);
@@ -24720,14 +25103,15 @@ function drawPgoFlowchartLines() {
   svgEl.innerHTML = (_pgoFlowGraph.edges || []).map(e => {
     const a = getRect(e.from);
     const b = getRect(e.to);
-    if (!a || !b) return "";
+    if (!a || !b || a.width === 0 || b.width === 0) return "";
     const x1 = a.right - base.left;
     const y1 = a.top + a.height / 2 - base.top;
     const x2 = b.left - base.left;
     const y2 = b.top + b.height / 2 - base.top;
-    const dx = Math.max(24, (x2 - x1) * 0.5);
+    if (x2 < x1 - 4) return "";
+    const dx = Math.max(24, Math.abs(x2 - x1) * 0.5);
     return `<path class="ied-${escapeHtml(e.ied || 'I')}" data-from="${escapeHtml(e.from)}" data-to="${escapeHtml(e.to)}"
-      d="M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}" />`;
+      d="M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${(x1 + dx).toFixed(1)} ${y1.toFixed(1)}, ${(x2 - dx).toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}" />`;
   }).join("");
 }
 
@@ -25174,9 +25558,1169 @@ function renderPgoDrilldownTable(rows) {
 
 window.addEventListener("resize", () => {
   if (document.getElementById("tab-pgo-assessment")?.classList.contains("active")) {
-    requestAnimationFrame(drawPgoFlowchartLines);
+    redrawAllFlowcharts();
   }
 });
+
+/* ==================== PGO & PI PROGRAM DIRECTORY ==================== */
+let _pgoDirectoryPayload = null;
+let _pgoDirectoryScope = null;
+
+function renderPgoProgramDirectory(data) {
+  _pgoDirectoryPayload = (data && data.program_directory) ? data.program_directory : { programs: [] };
+  _pgoDirectoryScope = (data && data.scope) ? data.scope : {};
+  const availDirProgs = (data && data.filters && data.filters.available_directory_programs) || [];
+  const sel = document.getElementById("pgoDirProgramSelect");
+  if (sel) {
+    const curVal = sel.value || "ALL";
+    sel.innerHTML = `<option value="ALL">All Permitted Programs (${availDirProgs.length})</option>` +
+      availDirProgs.map(p => `<option value="${escapeHtml(p.program_code)}">${escapeHtml(p.degree_label)} — ${escapeHtml(p.program_name)}</option>`).join("");
+    if (availDirProgs.some(p => p.program_code === curVal)) sel.value = curVal;
+    else sel.value = "ALL";
+  }
+  const infoEl = document.getElementById("pgoDirScopeInfo");
+  if (infoEl) {
+    if (_pgoDirectoryScope.is_program_wide) {
+      infoEl.innerHTML = `Showing complete CMO &amp; PGO-PI reference across <strong>${_pgoDirectoryPayload.total_programs || 0} program(s)</strong> (<strong>${_pgoDirectoryPayload.total_pgos || 0} PGOs</strong>, <strong>${_pgoDirectoryPayload.total_pis || 0} Performance Indicators</strong>).`;
+    } else {
+      infoEl.innerHTML = `<strong>Faculty Scope Active:</strong> Displaying only the PGOs &amp; Performance Indicators aligned to your handled courses (<strong>${_pgoDirectoryPayload.total_pgos || 0} PGO(s)</strong>, <strong>${_pgoDirectoryPayload.total_pis || 0} PI(s)</strong>).`;
+    }
+  }
+  renderPgoProgramDirectoryFromCache();
+}
+
+function renderPgoProgramDirectoryFromCache() {
+  const container = document.getElementById("pgoDirectoryContainer");
+  if (!container) return;
+  const sel = document.getElementById("pgoDirProgramSelect");
+  const qInp = document.getElementById("pgoDirSearchInput");
+  const progFilter = sel ? sel.value : "ALL";
+  const q = (qInp ? qInp.value : "").trim().toLowerCase();
+  const progs = (_pgoDirectoryPayload && _pgoDirectoryPayload.programs) || [];
+
+  const filteredProgs = progs.filter(p => progFilter === "ALL" || p.program_code === progFilter);
+  if (!filteredProgs.length) {
+    container.innerHTML = `<div style="padding:20px; text-align:center; color:#64748b; font-size:0.82rem;">No program PGO &amp; PI directory records available for the selected filter and role scope.</div>`;
+    return;
+  }
+
+  let html = "";
+  let totalMatches = 0;
+  filteredProgs.forEach(prog => {
+    const pgos = (prog.pgos || []).filter(pg => {
+      if (!q) return true;
+      const inPgo = `${pg.pgo_code} ${pg.description} ${pg.full_description} ${pg.igas}`.toLowerCase().includes(q);
+      const inPi = (pg.pis || []).some(pi => `${pi.pi_code} ${pi.full_text} ${pi.description} ${pi.igas}`.toLowerCase().includes(q));
+      return inPgo || inPi;
+    });
+    if (!pgos.length) return;
+    totalMatches += pgos.length;
+
+    html += `
+      <div class="pgo-dir-prog-card">
+        <div class="pgo-dir-prog-head">
+          <div>
+            <strong style="color:#1e3a8a; font-size:0.9rem;">${escapeHtml(prog.degree_label)} — ${escapeHtml(prog.program_name)}</strong>
+            <div style="font-size:0.72rem; color:#475569;">${escapeHtml(prog.department || prog.cmo_reference || prog.source_file || '')}</div>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="badge badge-sa">${pgos.length} PGO(s)</span>
+            <span class="badge badge-co">${pgos.reduce((s, x) => s + (x.pis || []).length, 0)} PI(s)</span>
+          </div>
+        </div>
+        <div>
+          ${pgos.map(pg => {
+            const pgoGradeBadge = (pg.avg_grade !== null && pg.avg_grade !== undefined)
+              ? `<span class="badge ${pg.avg_grade >= 75 ? 'badge-pass' : 'badge-fail'}" style="font-size:0.68rem;">Avg ${Number(pg.avg_grade).toFixed(2)} (${Number(pg.attainment_rate_pct || 0).toFixed(1)}%)</span>`
+              : (pg.is_aligned ? `<span class="badge badge-fa" style="font-size:0.68rem;">Course-Aligned · Pending Scores</span>` : ``);
+            const pis = (pg.pis || []).filter(pi => {
+              if (!q) return true;
+              const inPgo = `${pg.pgo_code} ${pg.description} ${pg.full_description}`.toLowerCase().includes(q);
+              return inPgo || `${pi.pi_code} ${pi.full_text} ${pi.description}`.toLowerCase().includes(q);
+            });
+            return `
+              <div class="pgo-dir-pgo-row">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+                  <div style="font-size:0.82rem; color:#0f172a; line-height:1.4;">
+                    <strong style="color:#7f1d1d;">${escapeHtml(pg.pgo_code.toUpperCase())}:</strong>
+                    ${escapeHtml(pg.description || pg.full_description)}
+                    ${pg.igas ? `<span class="badge" style="background:#f1f5f9; color:#334155; font-size:0.67rem; margin-left:4px;">${escapeHtml(pg.igas)}</span>` : ''}
+                  </div>
+                  <div style="display:flex; gap:4px; align-items:center;">${pgoGradeBadge}</div>
+                </div>
+                ${pis.length ? `
+                  <div class="pgo-dir-pi-list">
+                    ${pis.map(pi => {
+                      const piBadge = (pi.avg_grade !== null && pi.avg_grade !== undefined)
+                        ? `<span class="badge ${pi.avg_grade >= 75 ? 'badge-pass' : 'badge-fail'}" style="font-size:0.65rem; white-space:nowrap;">PI Avg ${Number(pi.avg_grade).toFixed(2)}</span>`
+                        : (pi.is_aligned ? `<span class="badge badge-fa" style="font-size:0.65rem; white-space:nowrap;">Aligned</span>` : ``);
+                      return `
+                        <div class="pgo-dir-pi-item">
+                          <span><strong>PI ${escapeHtml(pi.pi_code)}:</strong> ${escapeHtml(pi.description || pi.full_text)}${pi.igas ? ` <small style="color:#64748b;">[${escapeHtml(pi.igas)}]</small>` : ''}</span>
+                          <span>${piBadge}</span>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
+                ` : `<div style="font-size:0.73rem; color:#94a3b8; margin:4px 0 0 12px;">No specific PI breakdown defined.</div>`}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = totalMatches
+    ? html
+    : `<div style="padding:20px; text-align:center; color:#64748b; font-size:0.82rem;">No PGO or PI entries match "<strong>${escapeHtml(q)}</strong>".</div>`;
+}
+window.renderPgoProgramDirectoryFromCache = renderPgoProgramDirectoryFromCache;
+
+/* ==================== FM-USeP-MID-07 IMPORT SIGNED FILE ==================== */
+function openImportSignedAckModal() {
+  if (!currentCourseId) {
+    alert("Please select an active course first.");
+    return;
+  }
+  const modal = document.getElementById("importSignedAckModal");
+  const fileEl = document.getElementById("importSignedAckFileInput");
+  const statusEl = document.getElementById("importSignedAckStatus");
+  const scanWrap = document.getElementById("importSignedAckScanSelectWrap");
+  if (fileEl) fileEl.value = "";
+  if (statusEl) { statusEl.style.display = "none"; statusEl.textContent = ""; }
+  if (scanWrap) scanWrap.style.display = "none";
+  if (modal) modal.style.display = "flex";
+}
+window.openImportSignedAckModal = openImportSignedAckModal;
+
+function closeImportSignedAckModal() {
+  const modal = document.getElementById("importSignedAckModal");
+  if (modal) modal.style.display = "none";
+}
+window.closeImportSignedAckModal = closeImportSignedAckModal;
+
+async function submitImportSignedAckFile(forceSelectedIds = false) {
+  if (!currentCourseId) return;
+  const fileEl = document.getElementById("importSignedAckFileInput");
+  const statusEl = document.getElementById("importSignedAckStatus");
+  const btn = document.getElementById("importSignedAckSubmitBtn");
+  const enrollUnlistedEl = document.getElementById("importSignedAckEnrollUnlisted");
+  const markAllEl = document.getElementById("importSignedAckMarkAll");
+  const geminiKeyEl = document.getElementById("importSignedAckGeminiKey");
+
+  if (!fileEl || !fileEl.files || !fileEl.files.length) {
+    alert("Please choose a signed acknowledgment file (.csv, .xlsx, .pdf, or scanned image).");
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append("file", fileEl.files[0]);
+  fd.append("enroll_unlisted", enrollUnlistedEl && enrollUnlistedEl.checked ? "1" : "0");
+  fd.append("mark_all_on_scan", markAllEl && markAllEl.checked ? "1" : "0");
+  const storedKey = (geminiKeyEl?.value || localStorage.getItem("usep_gemini_api_key") || "").trim();
+  if (storedKey) fd.append("gemini_api_key", storedKey);
+
+  if (forceSelectedIds) {
+    const checkedIds = [...document.querySelectorAll(".import-ack-scan-cb:checked")].map(cb => cb.value);
+    fd.append("selected_student_ids", JSON.stringify(checkedIds));
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Importing..."; }
+  if (statusEl) {
+    statusEl.style.display = "block";
+    statusEl.style.background = "#eff6ff";
+    statusEl.style.color = "#1e3a8a";
+    statusEl.textContent = "Parsing signed acknowledgment records & syncing with roster...";
+  }
+
+  try {
+    const res = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}/student-acknowledgment/import`, {
+      method: "POST",
+      body: fd,
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    if (data.needs_scan_selection && !forceSelectedIds) {
+      // Scanned image uploaded without Vision API key: let faculty check off the signing students directly
+      const scanWrap = document.getElementById("importSignedAckScanSelectWrap");
+      const listEl = document.getElementById("importSignedAckScanStudentList");
+      const roster = (blueprint && blueprint.students) || [];
+      if (scanWrap && listEl && roster.length) {
+        listEl.innerHTML = roster.map(s => {
+          const sid = escapeHtml(s.student_id || "");
+          const nm = escapeHtml(s.name || `${s.last_name || ''}, ${s.first_name || ''}`.replace(/^,\s*/, ''));
+          return `<label style="display:flex; align-items:center; gap:6px; font-size:0.78rem; padding:3px 4px; border-bottom:1px solid #f1f5f9;">
+            <input type="checkbox" class="import-ack-scan-cb" value="${sid}" checked />
+            <strong>${sid}</strong> — ${nm}
+          </label>`;
+        }).join("");
+        scanWrap.style.display = "block";
+      }
+      if (statusEl) {
+        statusEl.style.background = "#fffbeb";
+        statusEl.style.color = "#92400e";
+        statusEl.textContent = "Scanned image uploaded! Confirm the signing students below (or enter a Gemini Vision key) and click Import.";
+      }
+      return;
+    }
+
+    if (data.workflow) {
+      currentWorkflow = data.workflow;
+    }
+    if (typeof renderStudentAcknowledgments === "function") await renderStudentAcknowledgments();
+    if (typeof renderWorkflowStepper === "function") renderWorkflowStepper();
+    if (typeof updateDashboard === "function") updateDashboard();
+
+    if (statusEl) {
+      statusEl.style.background = "#f0fdf4";
+      statusEl.style.color = "#166534";
+      statusEl.textContent = `✓ ${data.message} (${data.total_acknowledged}/${data.total_students} students acknowledged)`;
+    }
+    if (typeof showLiveToast === "function") {
+      showLiveToast(`📜 ${data.message}`, "success");
+    }
+    setTimeout(() => closeImportSignedAckModal(), 1100);
+  } catch (err) {
+    if (statusEl) {
+      statusEl.style.background = "#fef2f2";
+      statusEl.style.color = "#991b1b";
+      statusEl.textContent = `✕ Import failed: ${err.message}`;
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "📥 Import & Sync Acknowledgments"; }
+  }
+}
+window.submitImportSignedAckFile = submitImportSignedAckFile;
+
+/* ==================== STEP 1 PER-SECTION OCR MODAL (UPLOAD + CTRL+V PASTE) ==================== */
+let _ocrActiveSectionKey = "learning_plan";
+let _ocrCurrentImageBase64 = "";
+let _ocrCurrentImageMime = "image/png";
+let _ocrLastResultData = null;
+
+const _OCR_SECTION_LABELS = {
+  course_info: "Part I: Course & Faculty Information",
+  course_outcomes: "Part II: Course Learning Outcomes (CLOs & PIs)",
+  course_desc: "Parts III–V: Document, Faculty, Course Description & Workload",
+  prereq_sdg: "Part V: Pre-requisites / Co-requisites & SDG Alignments",
+  assessment_activities: "Part VI: Assessment Activities (FA / SA)",
+  rubrics: "Part VII: Measurement System (Rubrics)",
+  grading_plan: "Part VIII: Grading System & Passing Conditions",
+  learning_plan: "Part IX: Course Learning Plan Table",
+  references_policies: "Parts X & XI: References & Classroom Policies",
+};
+
+function openSyllabusOcrModal(sectionKey) {
+  _ocrActiveSectionKey = sectionKey || "learning_plan";
+  _ocrCurrentImageBase64 = "";
+  _ocrCurrentImageMime = "image/png";
+  _ocrLastResultData = null;
+
+  const modal = document.getElementById("syllabusSectionOcrModal");
+  const titleEl = document.getElementById("syllabusOcrModalTitle");
+  const fileEl = document.getElementById("syllabusOcrFileInput");
+  const previewWrap = document.getElementById("syllabusOcrPreviewWrap");
+  const previewImg = document.getElementById("syllabusOcrPreviewImg");
+  const keyEl = document.getElementById("syllabusOcrGeminiKey");
+  const modelEl = document.getElementById("syllabusOcrModelSelect");
+  const advEl = document.getElementById("syllabusOcrAdvancedDetails");
+  const badgeEl = document.getElementById("syllabusOcrEngineBadge");
+  const rawEl = document.getElementById("syllabusOcrRawText");
+  const resultEl = document.getElementById("syllabusOcrResultJson");
+  const applyBtn = document.getElementById("syllabusOcrApplyBtn");
+  const statusEl = document.getElementById("syllabusOcrStatus");
+
+  if (titleEl) titleEl.textContent = `📷 OCR Section Extractor — ${_OCR_SECTION_LABELS[_ocrActiveSectionKey] || _ocrActiveSectionKey}`;
+  if (fileEl) fileEl.value = "";
+  if (previewWrap) previewWrap.style.display = "none";
+  if (previewImg) previewImg.src = "";
+  if (modelEl) modelEl.value = "default";
+  if (keyEl) keyEl.value = localStorage.getItem("usep_gemini_api_key") || "";
+  if (advEl) advEl.open = false;
+  if (badgeEl) badgeEl.textContent = "⚡ Active Engine: Built-In Default OCR Engine (Out-of-the-Box · No Setup Required)";
+  if (rawEl) rawEl.value = "";
+  if (resultEl) resultEl.value = "";
+  if (applyBtn) applyBtn.disabled = true;
+  if (statusEl) { statusEl.style.display = "none"; statusEl.textContent = ""; }
+  if (modal) modal.style.display = "flex";
+}
+window.openSyllabusOcrModal = openSyllabusOcrModal;
+
+function closeSyllabusOcrModal() {
+  const modal = document.getElementById("syllabusSectionOcrModal");
+  if (modal) modal.style.display = "none";
+}
+window.closeSyllabusOcrModal = closeSyllabusOcrModal;
+
+function onSyllabusOcrModelChange() {
+  const modelEl = document.getElementById("syllabusOcrModelSelect");
+  const badgeEl = document.getElementById("syllabusOcrEngineBadge");
+  if (!modelEl || !badgeEl) return;
+  const v = modelEl.value || "default";
+  if (v === "default") {
+    badgeEl.textContent = "⚡ Active Engine: Built-In Default OCR Engine (Out-of-the-Box · No Setup Required)";
+  } else {
+    badgeEl.textContent = `🤖 Active Engine: Specialized Model (${v})`;
+  }
+}
+window.onSyllabusOcrModelChange = onSyllabusOcrModelChange;
+
+function _loadOcrImageBlob(fileOrBlob) {
+  if (!fileOrBlob) return;
+  _ocrCurrentImageMime = fileOrBlob.type || "image/png";
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const dataUrl = String(ev.target.result || "");
+    _ocrCurrentImageBase64 = dataUrl;
+    const previewWrap = document.getElementById("syllabusOcrPreviewWrap");
+    const previewImg = document.getElementById("syllabusOcrPreviewImg");
+    if (previewImg) previewImg.src = dataUrl;
+    if (previewWrap) previewWrap.style.display = "block";
+    // Immediately run default built-in OCR upon upload or Ctrl+V paste with zero manual setup
+    runSyllabusOcrExtract();
+  };
+  reader.readAsDataURL(fileOrBlob);
+}
+
+function handleSyllabusOcrFileChange(input) {
+  if (input && input.files && input.files[0]) {
+    _loadOcrImageBlob(input.files[0]);
+  }
+}
+window.handleSyllabusOcrFileChange = handleSyllabusOcrFileChange;
+
+document.addEventListener("paste", function(evt) {
+  const modal = document.getElementById("syllabusSectionOcrModal");
+  if (!modal || modal.style.display === "none") return;
+  const cd = evt.clipboardData || window.clipboardData;
+  if (!cd || !cd.items) return;
+  for (let i = 0; i < cd.items.length; i++) {
+    const item = cd.items[i];
+    if (item.type && item.type.startsWith("image/")) {
+      const blob = item.getAsFile();
+      if (blob) {
+        evt.preventDefault();
+        _loadOcrImageBlob(blob);
+        return;
+      }
+    }
+  }
+});
+
+async function runSyllabusOcrExtract() {
+  const keyEl = document.getElementById("syllabusOcrGeminiKey");
+  const modelEl = document.getElementById("syllabusOcrModelSelect");
+  const rawEl = document.getElementById("syllabusOcrRawText");
+  const resultEl = document.getElementById("syllabusOcrResultJson");
+  const applyBtn = document.getElementById("syllabusOcrApplyBtn");
+  const runBtn = document.getElementById("syllabusOcrExtractBtn");
+  const statusEl = document.getElementById("syllabusOcrStatus");
+
+  const ocrMode = (modelEl ? modelEl.value : "default") || "default";
+  const apiKey = (keyEl ? keyEl.value : "").trim();
+  if (apiKey) localStorage.setItem("usep_gemini_api_key", apiKey);
+  const rawText = (rawEl ? rawEl.value : "").trim();
+
+  if (!_ocrCurrentImageBase64 && !rawText) {
+    alert("Please upload an image, press Ctrl+V to paste a screenshot, or paste raw text to parse.");
+    return;
+  }
+
+  if (runBtn) { runBtn.disabled = true; runBtn.textContent = "⏳ Extracting..."; }
+  if (statusEl) {
+    statusEl.style.display = "block";
+    statusEl.style.background = "#eff6ff";
+    statusEl.style.color = "#1e3a8a";
+    statusEl.textContent = ocrMode === "default"
+      ? "Running Built-In Default OCR Engine..."
+      : `Extracting via ${ocrMode}...`;
+  }
+
+  try {
+    const res = await fetch("/api/syllabus/ocr-extract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        section_key: _ocrActiveSectionKey,
+        ocr_mode: ocrMode,
+        image_base64: _ocrCurrentImageBase64,
+        mime_type: _ocrCurrentImageMime,
+        gemini_api_key: ocrMode === "default" ? "" : apiKey,
+        raw_text: rawText,
+      }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      if (statusEl) {
+        statusEl.style.background = "#fffbeb";
+        statusEl.style.color = "#92400e";
+        statusEl.textContent = data.error || "Extraction did not return structured data.";
+      }
+      return;
+    }
+
+    _ocrLastResultData = data.data || {};
+    if (rawEl && data.raw_text !== undefined) rawEl.value = data.raw_text;
+    if (resultEl) resultEl.value = JSON.stringify(_ocrLastResultData, null, 2);
+    const hasFields = Object.keys(_ocrLastResultData).length > 0;
+    if (applyBtn) applyBtn.disabled = !hasFields && !(data.raw_text || "").trim();
+    if (statusEl) {
+      statusEl.style.background = data.warning ? "#fffbeb" : "#f0fdf4";
+      statusEl.style.color = data.warning ? "#92400e" : "#166534";
+      statusEl.textContent = data.warning
+        ? data.warning
+        : `✓ Extracted via ${data.engine}. Review JSON below, then click 'Apply to Section'.`;
+    }
+  } catch (err) {
+    if (statusEl) {
+      statusEl.style.background = "#fef2f2";
+      statusEl.style.color = "#991b1b";
+      statusEl.textContent = `✕ OCR request failed: ${err.message}`;
+    }
+  } finally {
+    if (runBtn) { runBtn.disabled = false; runBtn.textContent = "🔍 Run / Re-run OCR"; }
+  }
+}
+window.runSyllabusOcrExtract = runSyllabusOcrExtract;
+
+async function loadCourseExitSurveySummary() {
+  const container = document.getElementById("cqiExitSurveyBody");
+  if (!container || !currentCourseId) return;
+  try {
+    const res = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}/exit-survey-summary`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const total = data.total_responses || 0;
+    if (!total) {
+      container.innerHTML = `<div style="padding:14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px; text-align:center; color:#64748b;">No student Course Exit Survey responses submitted yet for this course.</div>`;
+      return;
+    }
+    const clos = data.clo_ratings_summary || [];
+    const genQs = data.general_questions || [];
+    const genSum = data.general_ratings_summary || {};
+    const comments = data.comments || [];
+    container.innerHTML = `
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+        <span class="badge badge-pass" style="font-size:0.78rem;">👥 ${total} Student Response(s)</span>
+        <span class="badge badge-sa" style="font-size:0.78rem;">⭐ Overall Mean Rating: ${data.overall_avg_rating !== null ? data.overall_avg_rating + ' / 5.00' : '—'}</span>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:10px;">
+        <div>
+          <strong style="display:block; margin-bottom:6px; color:#1e293b;">CLO Student Self-Assessment Ratings (1–5)</strong>
+          <table>
+            <thead><tr><th>CLO</th><th>Outcome</th><th style="text-align:center;">Mean Rating</th></tr></thead>
+            <tbody>
+              ${clos.map(c => `
+                <tr>
+                  <td><strong>${escapeHtml(c.co_id)}</strong></td>
+                  <td style="font-size:0.75rem;">${escapeHtml(c.description || '')}</td>
+                  <td style="text-align:center; font-weight:700;">${c.avg_rating !== null ? c.avg_rating.toFixed(2) + ' / 5' : '—'}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <strong style="display:block; margin-bottom:6px; color:#1e293b;">Course Delivery &amp; Fairness Ratings (1–5)</strong>
+          <table>
+            <thead><tr><th>Dimension</th><th style="text-align:center;">Mean Rating</th></tr></thead>
+            <tbody>
+              ${genQs.map(q => {
+                const stat = genSum[q.key] || {};
+                return `<tr><td>${escapeHtml(q.label)}</td><td style="text-align:center; font-weight:700;">${stat.avg_rating !== undefined && stat.avg_rating !== null ? stat.avg_rating.toFixed(2) + ' / 5' : '—'}</td></tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ${comments.length ? `
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px 12px;">
+          <strong style="display:block; margin-bottom:4px; color:#1e293b;">Student Qualitative Feedback (${comments.length}):</strong>
+          <ul style="margin:0; padding-left:18px; font-size:0.77rem;">
+            ${comments.slice(0, 8).map(cm => `<li>"${escapeHtml(cm.comment)}" <small style="color:#94a3b8;">(${escapeHtml(cm.submitted_at || '')})</small></li>`).join("")}
+          </ul>
+        </div>
+      ` : ""}
+    `;
+  } catch (e) {
+    container.innerHTML = `<div style="color:#94a3b8; font-size:0.78rem;">Could not load exit survey summary: ${escapeHtml(e.message)}</div>`;
+  }
+}
+window.loadCourseExitSurveySummary = loadCourseExitSurveySummary;
+
+function applySyllabusOcrToSection() {
+  if (!blueprint) return;
+  const resultEl = document.getElementById("syllabusOcrResultJson");
+  let parsed = _ocrLastResultData;
+  if (resultEl && resultEl.value.trim()) {
+    try {
+      parsed = JSON.parse(resultEl.value);
+    } catch (e) {
+      alert("Invalid JSON in preview box: " + e.message);
+      return;
+    }
+  }
+  if (!parsed || typeof parsed !== "object") return;
+  if (!blueprint.metadata) blueprint.metadata = {};
+  const m = blueprint.metadata;
+  const sec = _ocrActiveSectionKey;
+
+  const setInp = (id, val) => {
+    if (val === undefined || val === null || val === "") return;
+    const el = document.getElementById(id);
+    if (el) el.value = String(val);
+  };
+
+  if (sec === "course_info") {
+    setInp("meta_university", parsed.university);
+    setInp("meta_schedule", parsed.schedule);
+    setInp("meta_room", parsed.room);
+    setInp("meta_semester_ay", parsed.semester_ay);
+    setInp("meta_faculty_name", parsed.faculty_name);
+    setInp("meta_program_head", parsed.program_head);
+    if (parsed.passing_pct) setInp("meta_passing_pct", parsed.passing_pct);
+    if (typeof syncMetaFromInputs === "function") syncMetaFromInputs();
+  } else if (sec === "course_outcomes") {
+    const arr = Array.isArray(parsed.course_outcomes) ? parsed.course_outcomes : [];
+    if (arr.length) {
+      if (!Array.isArray(blueprint.course_outcomes)) blueprint.course_outcomes = [];
+      arr.forEach((item, i) => {
+        blueprint.course_outcomes.push({
+          co_id: item.co_id || `CO${blueprint.course_outcomes.length + 1}`,
+          description: item.description || "",
+          program_outcomes: item.program_outcomes || "",
+          performance_indicator: item.performance_indicator || "",
+          iga_aligned: item.iga_aligned || "IGA1",
+          degree_target: Number(item.degree_target || 75),
+          target_pct: Number(item.target_pct || 50),
+        });
+      });
+      if (typeof renderCourseOutcomes === "function") renderCourseOutcomes();
+    }
+  } else if (sec === "course_desc") {
+    setInp("meta_version_number", parsed.version_number);
+    setInp("meta_version_note", parsed.version_note);
+    setInp("meta_year_level", parsed.year_level);
+    setInp("meta_faculty_email", parsed.faculty_email);
+    setInp("meta_consultation_hours", parsed.consultation_hours);
+    setInp("meta_consultation_venue", parsed.consultation_venue);
+    setInp("meta_course_description", parsed.course_description);
+    setInp("meta_workload_description", parsed.workload_description);
+    if (typeof syncMetaFromInputs === "function") syncMetaFromInputs();
+  } else if (sec === "prereq_sdg") {
+    if (Array.isArray(parsed.prereq_coreq_table) && parsed.prereq_coreq_table.length) {
+      if (!Array.isArray(m.prereq_coreq_table)) m.prereq_coreq_table = [];
+      parsed.prereq_coreq_table.forEach(r => m.prereq_coreq_table.push({
+        req_type: r.req_type || "Pre-requisite",
+        course_code: r.course_code || "",
+        course_title: r.course_title || "",
+      }));
+      if (typeof renderPrereqCoreqTable === "function") renderPrereqCoreqTable();
+    }
+    if (Array.isArray(parsed.sdg_table) && parsed.sdg_table.length) {
+      if (!Array.isArray(m.sdg_table)) m.sdg_table = [];
+      parsed.sdg_table.forEach(s => m.sdg_table.push({
+        sdg: s.sdg || "",
+        description: s.description || "",
+      }));
+      if (typeof renderSdgTable === "function") renderSdgTable();
+    }
+  } else if (sec === "assessment_activities") {
+    const acts = Array.isArray(parsed.syllabus_assessment_activities) ? parsed.syllabus_assessment_activities : [];
+    if (acts.length) {
+      if (!Array.isArray(m.syllabus_assessment_activities)) m.syllabus_assessment_activities = [];
+      acts.forEach(a => m.syllabus_assessment_activities.push({
+        type: a.type || "Summative",
+        code: a.code || "SA1",
+        activity: a.activity || "",
+        description: a.description || "",
+        clo_aligned: a.clo_aligned || "",
+        weight_pct: Number(a.weight_pct ?? 0),
+        items_per_term: Number(a.items_per_term ?? 1),
+      }));
+      if (typeof renderSyllabusAssessmentActivitiesTable === "function") renderSyllabusAssessmentActivitiesTable();
+    }
+  } else if (sec === "rubrics") {
+    const rubs = Array.isArray(parsed.rubrics) ? parsed.rubrics : [];
+    if (rubs.length) {
+      if (!Array.isArray(blueprint.rubrics)) blueprint.rubrics = [];
+      rubs.forEach(r => blueprint.rubrics.push({
+        title: r.title || "Imported OCR Rubric",
+        assessment_code: r.linked_assessment || r.assessment_code || "",
+        criteria: Array.isArray(r.criteria) ? r.criteria.map(c => ({
+          criterion: c.criterion || "Criteria",
+          weight_pct: Number(c.weight || c.weight_pct || 25),
+          descriptors: Array.isArray(c.levels) ? c.levels : (Array.isArray(c.descriptors) ? c.descriptors : []),
+        })) : [],
+      }));
+      if (typeof renderRubrics === "function") renderRubrics();
+    }
+  } else if (sec === "grading_plan") {
+    if (parsed.grading_system_type) {
+      m.grading_system_type = parsed.grading_system_type;
+      setInp("part8GradingSchemeSelect", parsed.grading_system_type);
+    }
+    if (parsed.passing_grade_conditions) {
+      setInp("meta_passing_grade_conditions", parsed.passing_grade_conditions);
+    }
+    if (typeof syncMetaFromInputs === "function") syncMetaFromInputs();
+    if (typeof renderPart8GradingPlan === "function") renderPart8GradingPlan();
+  } else if (sec === "learning_plan") {
+    const rows = Array.isArray(parsed.learning_plan_table) ? parsed.learning_plan_table : [];
+    if (rows.length) {
+      if (!Array.isArray(m.learning_plan_table)) m.learning_plan_table = [];
+      rows.forEach(r => m.learning_plan_table.push({
+        ilo: r.ilo || "",
+        clo: r.clo || "",
+        time_frame: r.time_frame || "Week 1",
+        topics: r.topics || "",
+        tla: r.tla || "",
+        required_reading: r.required_reading || "",
+        assessment_activities: r.assessment_activities || "",
+        merge_assessment_with_prev: false,
+      }));
+      if (typeof renderLearningPlanTable === "function") renderLearningPlanTable();
+    }
+  } else if (sec === "references_policies") {
+    if (Array.isArray(parsed.references_table) && parsed.references_table.length) {
+      if (!Array.isArray(m.references_table)) m.references_table = [];
+      parsed.references_table.forEach(r => m.references_table.push({
+        code: r.code || `Ref${String(m.references_table.length + 1).padStart(2, "0")}`,
+        reference: r.reference || "",
+      }));
+      if (typeof renderReferencesTable === "function") renderReferencesTable();
+    }
+    if (Array.isArray(parsed.policies_table) && parsed.policies_table.length) {
+      if (!Array.isArray(m.policies_table)) m.policies_table = [];
+      parsed.policies_table.forEach(p => m.policies_table.push({
+        number: String(p.no || p.number || m.policies_table.length + 1),
+        title: p.area || p.title || "Classroom Policy",
+        description: p.details || p.description || "",
+      }));
+      if (typeof renderPoliciesTable === "function") renderPoliciesTable();
+    }
+  }
+
+  if (typeof queueAutoSave === "function") queueAutoSave(200);
+  if (typeof showLiveToast === "function") {
+    showLiveToast(`✓ OCR content applied to ${_OCR_SECTION_LABELS[sec] || sec}`, "success");
+  }
+  closeSyllabusOcrModal();
+}
+window.applySyllabusOcrToSection = applySyllabusOcrToSection;
+
+// ==================== STEP 8: THREE-SOURCE CQI SYNTHESIS & SUBMISSION ====================
+function _formatCqiStatusLabel(status) {
+  const s = String(status || "draft").toLowerCase();
+  if (s === "approved_scheduled") return "Approved & Scheduled for Revisit";
+  if (s === "verified") return "Closed / Verified";
+  if (s === "submitted") return "Submitted to Program Head";
+  if (s === "returned") return "Returned for Revision";
+  return "Draft";
+}
+
+function _applyCqiPlanRecordBanner(rec) {
+  const badge = document.getElementById("cqiSubmissionStatusBadge");
+  const noteEl = document.getElementById("cqiRevisitScheduleNote");
+  const remarksBanner = document.getElementById("cqiProgramHeadRemarksBanner");
+  if (!rec) {
+    if (badge) {
+      badge.textContent = "Draft";
+      badge.style.background = "rgba(255,255,255,0.22)";
+      badge.style.color = "#ffffff";
+    }
+    if (noteEl) {
+      noteEl.textContent = "Consolidate Step 4 Class Record, Step 7 MID-10 CLO Attainment, and Student Exit Survey feedback into a trackable CQI Plan.";
+    }
+    if (remarksBanner) {
+      remarksBanner.style.display = "none";
+      remarksBanner.textContent = "";
+    }
+    return;
+  }
+
+  const st = String(rec.status || "draft").toLowerCase();
+  if (badge) {
+    badge.textContent = _formatCqiStatusLabel(st);
+    if (st === "verified") {
+      badge.style.background = "#bbf7d0";
+      badge.style.color = "#14532d";
+    } else if (st === "approved_scheduled") {
+      badge.style.background = "#dbeafe";
+      badge.style.color = "#1e3a8a";
+    } else if (st === "submitted") {
+      badge.style.background = "#fef08a";
+      badge.style.color = "#854d0e";
+    } else if (st === "returned") {
+      badge.style.background = "#fecaca";
+      badge.style.color = "#7f1d1d";
+    } else {
+      badge.style.background = "rgba(255,255,255,0.22)";
+      badge.style.color = "#ffffff";
+    }
+  }
+
+  if (noteEl) {
+    const revDate = rec.revisit_date ? escapeHtml(rec.revisit_date) : "TBD";
+    const revTerm = rec.revisit_term ? escapeHtml(rec.revisit_term) : "Next Academic Year";
+    const revStatus = rec.revisit_status ? escapeHtml(rec.revisit_status) : "Upcoming";
+    const subAt = rec.submitted_at ? `Submitted ${escapeHtml(String(rec.submitted_at).slice(0, 16).replace("T", " "))} • ` : "";
+    noteEl.innerHTML = `${subAt}<strong>Mandatory Revisit Date:</strong> ${revDate} (${revTerm}) • <strong>Status:</strong> ${revStatus}`;
+  }
+
+  if (remarksBanner) {
+    if (rec.program_head_remarks) {
+      remarksBanner.style.display = "block";
+      remarksBanner.innerHTML = `<strong>💬 Program Head Remarks${rec.reviewed_by_name ? ` (${escapeHtml(rec.reviewed_by_name)})` : ""}:</strong> ${escapeHtml(rec.program_head_remarks)}`;
+    } else {
+      remarksBanner.style.display = "none";
+      remarksBanner.textContent = "";
+    }
+  }
+}
+
+function renderCqiThreeSourceTable(summary) {
+  const tbody = document.getElementById("cqiThreeSourceBody");
+  if (!tbody) return;
+  const corrs = Array.isArray(summary?.clo_correlations) ? summary.clo_correlations : [];
+  if (!corrs.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b; padding:12px;">No CLO correlation data available yet. Configure CLOs and Class Record scores first.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = corrs.map(row => {
+    const dirPct = row.direct_attainment_pct != null ? `${Number(row.direct_attainment_pct).toFixed(1)}%` : "Pending";
+    const tgtPct = row.cohort_target_pct != null ? `${Number(row.cohort_target_pct).toFixed(0)}%` : "50%";
+    const srvRating = row.survey_avg_rating != null ? `${Number(row.survey_avg_rating).toFixed(2)} / 5.00` : "No responses";
+    const srvSub = row.survey_pct_equiv != null ? ` (${Number(row.survey_pct_equiv).toFixed(0)}%)` : "";
+    let statusBadge = `<span class="badge" style="background:#dcfce7; color:#166534;">MET</span>`;
+    if (row.direct_attainment_pct == null) {
+      statusBadge = `<span class="badge" style="background:#f1f5f9; color:#475569;">Pending</span>`;
+    } else if (!row.direct_passed) {
+      statusBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b;">UNMET</span>`;
+    } else if (row.is_borderline) {
+      statusBadge = `<span class="badge" style="background:#fef3c7; color:#92400e;">BORDERLINE</span>`;
+    }
+    const noteText = row.correlation_note || "Aligned";
+    const noteColor = noteText.includes("Gap") || noteText.includes("Deficit") ? "#b45309" : "#334155";
+    return `
+      <tr>
+        <td style="font-weight:800; color:#0f172a; white-space:nowrap;">${escapeHtml(row.co_id || "")}</td>
+        <td>
+          <div style="font-size:0.8rem; color:#1e293b;">${escapeHtml(row.description || "—")}</div>
+          <div style="font-size:0.72rem; color:#64748b;">PGO: ${escapeHtml(row.pgo || "—")} | PI: ${escapeHtml(row.pi || "—")}</div>
+        </td>
+        <td style="text-align:center; font-weight:700;">${escapeHtml(dirPct)} ${statusBadge}</td>
+        <td style="text-align:center; color:#475569;">&ge; ${escapeHtml(tgtPct)}</td>
+        <td style="text-align:center; font-weight:600; color:#1e3a8a;">${escapeHtml(srvRating + srvSub)}</td>
+        <td style="font-size:0.78rem; font-weight:600; color:${noteColor};">${escapeHtml(noteText)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function _applyCqiPlanFieldsToForm(planObj) {
+  if (!planObj || typeof planObj !== "object") return;
+  if (!blueprint) return;
+  if (!blueprint.cqi_plan) blueprint.cqi_plan = {};
+  const fields = [
+    ["key_strengths", "cqi_strengths"],
+    ["areas_for_improvement", "cqi_improvements"],
+    ["gap_analysis", "cqi_gap_analysis"],
+    ["root_causes", "cqi_root_causes"],
+    ["action_plan", "cqi_actions"],
+    ["target_kpis", "cqi_target_kpis"],
+  ];
+  fields.forEach(([key, elId]) => {
+    const val = planObj[key] != null ? String(planObj[key]) : (blueprint.cqi_plan[key] || "");
+    blueprint.cqi_plan[key] = val;
+    const el = document.getElementById(elId);
+    if (el) el.value = val;
+  });
+  if (Array.isArray(planObj.indicators) && planObj.indicators.length) {
+    blueprint.cqi_plan.indicators = planObj.indicators;
+  }
+  if (Array.isArray(planObj.targeted_clos)) {
+    blueprint.cqi_plan.targeted_clos = planObj.targeted_clos;
+  }
+}
+
+async function loadCourseCqiPlanState() {
+  if (typeof currentCourseId === "undefined" || !currentCourseId) return;
+  try {
+    const res = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}/cqi/plan`);
+    const data = await res.json();
+    if (!res.ok || !data.success) return;
+    renderCqiThreeSourceTable(data.three_source_summary);
+    _applyCqiPlanRecordBanner(data.cqi_plan_record);
+    if (data.cqi_plan_record && blueprint?.cqi_plan) {
+      const rec = data.cqi_plan_record;
+      // Populate extended CQI fields from persisted CQI record if form fields are currently blank
+      const fillIfBlank = (k, id, v) => {
+        if (!blueprint.cqi_plan[k] && v) {
+          blueprint.cqi_plan[k] = v;
+          const el = document.getElementById(id);
+          if (el) el.value = v;
+        }
+      };
+      fillIfBlank("key_strengths", "cqi_strengths", rec.key_strengths);
+      fillIfBlank("areas_for_improvement", "cqi_improvements", rec.areas_for_improvement);
+      fillIfBlank("gap_analysis", "cqi_gap_analysis", rec.gap_analysis);
+      fillIfBlank("root_causes", "cqi_root_causes", rec.root_causes);
+      fillIfBlank("action_plan", "cqi_actions", rec.action_plan);
+      fillIfBlank("target_kpis", "cqi_target_kpis", rec.target_kpis);
+    }
+  } catch (e) {
+    console.warn("Could not load CQI plan state:", e);
+  }
+}
+window.loadCourseCqiPlanState = loadCourseCqiPlanState;
+
+async function synthesizeCourseCqiPlan(useAi = false) {
+  if (typeof currentCourseId === "undefined" || !currentCourseId) {
+    alert("Please open or save a course first.");
+    return;
+  }
+  const btn = document.getElementById(useAi ? "btnSynthesizeCqiAi" : "btnSynthesizeCqiRule");
+  const origHtml = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = useAi ? "⏳ Running AI Synthesis..." : "⏳ Correlating 3 Sources...";
+  }
+  try {
+    // Save latest edits before synthesizing so Class Record & Syllabus are current
+    if (typeof saveCurrentCourse === "function") {
+      try { await saveCurrentCourse(true); } catch (_) {}
+    }
+    const apiKeyInput = document.getElementById("geminiApiKeyInput") || document.getElementById("aiGeminiApiKey");
+    const geminiKey = apiKeyInput ? (apiKeyInput.value || "").trim() : "";
+    const res = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}/cqi/synthesize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ use_ai: !!useAi, gemini_api_key: geminiKey }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Failed to synthesize CQI Plan.");
+    }
+    renderCqiThreeSourceTable(data.three_source_summary);
+    _applyCqiPlanFieldsToForm(data.cqi_plan);
+    _applyCqiPlanRecordBanner(data.cqi_plan_record);
+    renderCqiSection();
+    if (typeof queueAutoSave === "function") queueAutoSave(200);
+    if (typeof showLiveToast === "function") {
+      showLiveToast(`✓ CQI Plan synthesized (${data.engine || "Rule-Based"})`, "success");
+    }
+  } catch (err) {
+    alert("CQI Synthesis Error: " + (err.message || err));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+}
+window.synthesizeCourseCqiPlan = synthesizeCourseCqiPlan;
+
+async function submitCourseCqiPlanToProgramHead() {
+  if (typeof currentCourseId === "undefined" || !currentCourseId) {
+    alert("Please open or save a course first.");
+    return;
+  }
+  const readVal = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) return el.value.trim();
+    return String(blueprint?.cqi_plan?.[key] || "").trim();
+  };
+  const payload = {
+    key_strengths: readVal("cqi_strengths", "key_strengths"),
+    areas_for_improvement: readVal("cqi_improvements", "areas_for_improvement"),
+    gap_analysis: readVal("cqi_gap_analysis", "gap_analysis"),
+    root_causes: readVal("cqi_root_causes", "root_causes"),
+    action_plan: readVal("cqi_actions", "action_plan"),
+    target_kpis: readVal("cqi_target_kpis", "target_kpis"),
+    indicators: blueprint?.cqi_plan?.indicators || [],
+    targeted_clos: blueprint?.cqi_plan?.targeted_clos || [],
+  };
+
+  if (!payload.action_plan && !payload.areas_for_improvement && !payload.gap_analysis) {
+    alert("Please fill in or auto-generate the CQI Plan findings and action plan before submitting to the Program Head.");
+    return;
+  }
+
+  const btn = document.getElementById("btnSubmitCqiPlan");
+  const origHtml = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Submitting...";
+  }
+  try {
+    if (typeof saveCurrentCourse === "function") {
+      try { await saveCurrentCourse(true); } catch (_) {}
+    }
+    const res = await fetch(`/api/courses/${encodeURIComponent(currentCourseId)}/cqi/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Failed to submit CQI Plan.");
+    }
+    _applyCqiPlanRecordBanner(data.cqi_plan_record);
+    if (typeof loadApprovalRequests === "function") {
+      try { loadApprovalRequests(true, true); } catch (_) {}
+    }
+    if (typeof showLiveToast === "function") {
+      showLiveToast(data.message || "✓ CQI Plan submitted to Program Head.", "success");
+    } else {
+      alert(data.message || "CQI Plan submitted to Program Head.");
+    }
+  } catch (err) {
+    alert("CQI Submission Error: " + (err.message || err));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+}
+window.submitCourseCqiPlanToProgramHead = submitCourseCqiPlanToProgramHead;
+
+// ==================== REQUESTS FOR APPROVAL: SUBMITTED CQI PLANS SUB-RIBBON ====================
+let _submittedCqiPlansState = {
+  can_review: false,
+  can_view_all: false,
+  plans: [],
+  groups: [],
+};
+
+async function loadSubmittedCqiPlans(showErrors = false) {
+  const container = document.getElementById("portalCqiPlansListContainer");
+  try {
+    const res = await fetch("/api/workflow/cqi-plans");
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Unable to load Submitted CQI Plans.");
+    }
+    _submittedCqiPlansState = {
+      can_review: !!data.can_review,
+      can_view_all: !!data.can_view_all,
+      plans: Array.isArray(data.plans) ? data.plans : [],
+      groups: Array.isArray(data.groups) ? data.groups : [],
+    };
+    const countVal = String(data.total_count ?? _submittedCqiPlansState.plans.length);
+    const badgeSub = document.getElementById("countPortalCqiPlans");
+    const badgeRib = document.getElementById("countPortalCqiRibbon");
+    if (badgeSub) badgeSub.textContent = countVal;
+    if (badgeRib) badgeRib.textContent = countVal;
+
+    // Populate Term Filter options
+    const termSel = document.getElementById("cqiPortalTermFilter");
+    if (termSel) {
+      const prev = termSel.value || "ALL";
+      const terms = Array.from(new Set(_submittedCqiPlansState.plans.map(p => p.semester_ay || "Unspecified Semester & A.Y.")));
+      termSel.innerHTML = `<option value="ALL">All Semesters &amp; Academic Years (${terms.length})</option>` +
+        terms.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+      if (terms.includes(prev)) termSel.value = prev;
+    }
+
+    renderSubmittedCqiPlans();
+  } catch (err) {
+    if (showErrors && container) {
+      container.innerHTML = `<div class="card" style="padding:18px; color:#b91c1c;">⚠ ${escapeHtml(err.message || String(err))}</div>`;
+    }
+  }
+}
+window.loadSubmittedCqiPlans = loadSubmittedCqiPlans;
+
+function _cqiRevisitBadgeHtml(revisitStatus) {
+  const rs = String(revisitStatus || "Upcoming");
+  if (rs === "Closed/Verified") {
+    return `<span class="badge" style="background:#dcfce7; color:#166534; font-weight:700;">✅ Closed / Verified</span>`;
+  }
+  if (rs === "Due for Re-Evaluation") {
+    return `<span class="badge" style="background:#fee2e2; color:#991b1b; font-weight:700;">⏰ Due for Re-Evaluation</span>`;
+  }
+  return `<span class="badge" style="background:#dbeafe; color:#1e40af; font-weight:700;">📅 Upcoming Revisit</span>`;
+}
+
+function renderSubmittedCqiPlans() {
+  const container = document.getElementById("portalCqiPlansListContainer");
+  if (!container) return;
+
+  const termFilter = document.getElementById("cqiPortalTermFilter")?.value || "ALL";
+  const revFilter = document.getElementById("cqiPortalRevisitFilter")?.value || "ALL";
+  const q = (document.getElementById("cqiPortalSearchInput")?.value || "").trim().toLowerCase();
+
+  const filtered = (_submittedCqiPlansState.plans || []).filter(p => {
+    if (termFilter !== "ALL" && (p.semester_ay || "Unspecified Semester & A.Y.") !== termFilter) return false;
+    if (revFilter !== "ALL" && (p.revisit_status || "Upcoming") !== revFilter) return false;
+    if (q) {
+      const hay = [
+        p.course_code, p.course_title, p.section, p.faculty_name, p.faculty_username,
+        p.program_code, p.semester_ay, (p.targeted_clos || []).join(" "),
+        p.gap_analysis, p.action_plan
+      ].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="card" style="padding:28px; text-align:center; color:#64748b; border:1px dashed #cbd5e1;">
+        No submitted CQI Plans match the current filters.
+      </div>`;
+    return;
+  }
+
+  // Segregate cleanly by Semester & Academic Year
+  const byTerm = new Map();
+  filtered.forEach(p => {
+    const key = p.semester_ay || "Unspecified Semester & A.Y.";
+    if (!byTerm.has(key)) byTerm.set(key, []);
+    byTerm.get(key).push(p);
+  });
+
+  const canReview = !!_submittedCqiPlansState.can_review;
+
+  container.innerHTML = Array.from(byTerm.entries()).map(([termLabel, list]) => {
+    const cardsHtml = list.map(p => {
+      const cid = escapeHtml(p.course_id);
+      const closStr = Array.isArray(p.targeted_clos) && p.targeted_clos.length
+        ? p.targeted_clos.map(c => `<span class="badge" style="background:#fef3c7; color:#92400e; margin-right:4px;">${escapeHtml(c)}</span>`).join("")
+        : `<span class="badge" style="background:#dcfce7; color:#166534;">All CLOs Met / Preventive CQI</span>`;
+      const corrs = Array.isArray(p.synthesis?.clo_correlations) ? p.synthesis.clo_correlations : [];
+      const corrChips = corrs.slice(0, 6).map(c => {
+        const dp = c.direct_attainment_pct != null ? `${Number(c.direct_attainment_pct).toFixed(0)}%` : "—";
+        const sp = c.survey_avg_rating != null ? `${Number(c.survey_avg_rating).toFixed(1)}/5` : "—";
+        const bg = (c.direct_attainment_pct != null && !c.direct_passed) ? "#fee2e2" : "#f1f5f9";
+        return `<span style="display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.72rem; background:${bg}; color:#1e293b; margin:2px 4px 2px 0;"><strong>${escapeHtml(c.co_id)}:</strong> MID-10 ${escapeHtml(dp)} | Survey ${escapeHtml(sp)}</span>`;
+      }).join("");
+
+      const reviewControls = canReview ? `
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid #e2e8f0;">
+          <label style="font-size:0.75rem; font-weight:700; color:#334155;">Revisit Date:</label>
+          <input type="date" id="cqiRevisitDate_${cid}" value="${escapeHtml(p.revisit_date || "")}" style="padding:4px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.78rem;" />
+          <button type="button" class="btn btn-light btn-sm" onclick="reviewSubmittedCqiPlan('${cid}', 'update_revisit')" style="font-size:0.75rem; font-weight:700;">💾 Save Revisit Date</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="reviewSubmittedCqiPlan('${cid}', 'approve')" style="font-size:0.75rem; font-weight:700;">✓ Approve &amp; Schedule Revisit</button>
+          <button type="button" class="btn btn-success btn-sm" onclick="reviewSubmittedCqiPlan('${cid}', 'close')" style="font-size:0.75rem; font-weight:700;">✅ Mark Revisit Closed/Verified</button>
+          <button type="button" class="btn btn-warning btn-sm" onclick="reviewSubmittedCqiPlan('${cid}', 'return')" style="font-size:0.75rem; font-weight:700;">↩ Return for Revision</button>
+        </div>
+      ` : "";
+
+      return `
+        <div class="card" style="border:1px solid #cbd5e1; border-radius:10px; padding:16px; margin-bottom:12px; background:#ffffff;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:1rem; font-weight:800; color:#0f172a;">${escapeHtml(p.course_code || "Course")}</span>
+                <span style="font-size:0.85rem; color:#334155; font-weight:600;">${escapeHtml(p.course_title || "")}</span>
+                ${p.section ? `<span class="badge" style="background:#e2e8f0; color:#1e293b;">Sec ${escapeHtml(p.section)}</span>` : ""}
+                ${p.program_code ? `<span class="badge" style="background:#ede9fe; color:#5b21b6;">${escapeHtml(p.program_code)}</span>` : ""}
+              </div>
+              <div style="font-size:0.78rem; color:#475569; margin-top:4px;">
+                👤 <strong>Faculty:</strong> ${escapeHtml(p.faculty_name || p.faculty_username || "—")}
+                ${p.submitted_at ? ` • 🕒 <strong>Submitted:</strong> ${escapeHtml(String(p.submitted_at).slice(0, 16).replace("T", " "))}` : ""}
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <span class="badge" style="background:#fef9c3; color:#854d0e; font-weight:700;">${escapeHtml(_formatCqiStatusLabel(p.status))}</span>
+              ${_cqiRevisitBadgeHtml(p.revisit_status)}
+            </div>
+          </div>
+
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:10px; font-size:0.78rem;">
+            <div style="margin-bottom:4px;"><strong>📅 Mandatory Revisit Schedule:</strong> <span style="color:#0f766e; font-weight:700;">${escapeHtml(p.revisit_date || "TBD")}</span> — ${escapeHtml(p.revisit_term || "Next Academic Year")}</div>
+            <div style="margin-bottom:4px;"><strong>🎯 Targeted CLOs / Gaps:</strong> ${closStr}</div>
+            ${corrChips ? `<div style="margin-top:6px;">${corrChips}</div>` : ""}
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px; font-size:0.78rem;">
+            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px;">
+              <strong style="color:#92400e; display:block; margin-bottom:4px;">Gap &amp; Root Cause Summary</strong>
+              <div style="white-space:pre-wrap; color:#334155;">${escapeHtml((p.gap_analysis || p.areas_for_improvement || "—").slice(0, 500))}</div>
+            </div>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px;">
+              <strong style="color:#166534; display:block; margin-bottom:4px;">Proposed CQI Action Plan &amp; KPIs</strong>
+              <div style="white-space:pre-wrap; color:#334155;">${escapeHtml((p.action_plan || "—").slice(0, 500))}</div>
+              ${p.target_kpis ? `<div style="margin-top:6px; font-size:0.74rem; color:#0f766e;"><strong>Target KPIs:</strong> ${escapeHtml(p.target_kpis.slice(0, 260))}</div>` : ""}
+            </div>
+          </div>
+
+          ${p.program_head_remarks ? `<div style="margin-top:8px; padding:8px 10px; border-radius:6px; background:#eff6ff; color:#1e3a8a; font-size:0.76rem;"><strong>💬 Review Remarks:</strong> ${escapeHtml(p.program_head_remarks)}</div>` : ""}
+          ${reviewControls}
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div style="border:1px solid #cbd5e1; border-radius:12px; padding:14px 16px; background:#f8fafc;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #cbd5e1;">
+          <h4 style="margin:0; font-size:0.95rem; font-weight:800; color:#1e3a8a;">🗓️ ${escapeHtml(termLabel)}</h4>
+          <span class="badge" style="background:#1e3a8a; color:#ffffff;">${list.length} CQI Plan(s)</span>
+        </div>
+        ${cardsHtml}
+      </div>
+    `;
+  }).join("");
+}
+window.renderSubmittedCqiPlans = renderSubmittedCqiPlans;
+
+async function reviewSubmittedCqiPlan(courseId, action) {
+  if (!courseId) return;
+  let remarks = "";
+  const dateInput = document.getElementById(`cqiRevisitDate_${courseId}`);
+  const revisitDate = dateInput ? (dateInput.value || "").trim() : "";
+
+  if (action === "return") {
+    const inp = prompt("Enter revision remarks for the faculty (required for return):", "");
+    if (inp === null) return;
+    remarks = inp.trim();
+    if (!remarks) {
+      alert("Please enter revision remarks when returning a CQI Plan.");
+      return;
+    }
+  } else if (action === "approve" || action === "close") {
+    const label = action === "close"
+      ? "Optional verification/closure remarks (or leave blank):"
+      : "Optional Program Head approval remarks (or leave blank):";
+    const inp = prompt(label, "");
+    if (inp === null) return;
+    remarks = inp.trim();
+  }
+
+  try {
+    const res = await fetch(`/api/workflow/cqi-plans/${encodeURIComponent(courseId)}/review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action,
+        remarks,
+        revisit_date: revisitDate,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Failed to update CQI Plan review status.");
+    }
+    if (typeof showLiveToast === "function") {
+      showLiveToast(data.message || "✓ CQI Plan updated.", "success");
+    }
+    await loadSubmittedCqiPlans(true);
+    if (typeof currentCourseId !== "undefined" && currentCourseId === courseId) {
+      loadCourseCqiPlanState();
+    }
+  } catch (err) {
+    alert("CQI Review Error: " + (err.message || err));
+  }
+}
+window.reviewSubmittedCqiPlan = reviewSubmittedCqiPlan;
 
 </script>
 
@@ -25998,6 +27542,112 @@ window.addEventListener("resize", () => {
   </div>
 </div>
 
+<!-- IMPORT EXISTING SIGNED STUDENT ACKNOWLEDGMENT FILE MODAL (FM-USeP-MID-07) -->
+<div id="importSignedAckModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.62); z-index:99998; align-items:center; justify-content:center;" onclick="if(event.target===this) closeImportSignedAckModal();">
+  <div class="modal-box" style="background:#ffffff; border-radius:12px; width:94%; max-width:600px; overflow:hidden; box-shadow:0 24px 48px rgba(0,0,0,0.28); border:1px solid #cbd5e1; margin:auto;">
+    <div style="padding:14px 20px; background:linear-gradient(135deg, #1e3a8a 0%, #0f766e 100%); color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:1.05rem; font-weight:800;">📤 Import Signed Student Acknowledgment (FM-USeP-MID-07)</h3>
+      <button type="button" onclick="closeImportSignedAckModal()" style="background:rgba(255,255,255,0.2); border:none; color:#ffffff; font-size:1.2rem; border-radius:6px; width:28px; height:28px; cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:18px 20px; display:flex; flex-direction:column; gap:12px;">
+      <div style="font-size:0.8rem; color:#475569; line-height:1.45; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+        Upload an existing signed acknowledgment sheet in <strong>.csv</strong>, <strong>.xlsx</strong>, <strong>.pdf</strong>, or scanned image (<strong>.png / .jpg / .webp</strong>). Matched students are marked <em>Signed</em> with timestamps and synced across the Syllabus Workflow &amp; Dashboard.
+      </div>
+      <div>
+        <label style="font-size:0.8rem; font-weight:700; color:#1e293b; display:block; margin-bottom:4px;">Select Signed Acknowledgment File</label>
+        <input type="file" id="importSignedAckFileInput" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp" style="width:100%; font-size:0.82rem; border:1px solid #cbd5e1; border-radius:6px; padding:6px;" />
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; font-size:0.78rem; color:#334155;">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="importSignedAckEnrollUnlisted" />
+          Also enroll signed students from CSV/XLSX if missing from current roster
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="importSignedAckMarkAll" />
+          If uploading a full-class scanned signature sheet, mark all enrolled students as acknowledged
+        </label>
+      </div>
+      <div>
+        <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Optional Gemini Vision API Key (for automatic handwriting/ID scan OCR on PNG/JPG)</label>
+        <input type="password" id="importSignedAckGeminiKey" placeholder="Optional — uses saved browser key if previously entered" style="width:100%; font-size:0.79rem; padding:5px 8px; border:1px solid #cbd5e1; border-radius:6px;" />
+      </div>
+      <div id="importSignedAckScanSelectWrap" style="display:none; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; background:#f8fafc;">
+        <div style="font-size:0.77rem; font-weight:700; color:#1e3a8a; margin-bottom:6px;">Confirm Students Present on Scanned Signature Sheet:</div>
+        <div id="importSignedAckScanStudentList" style="max-height:150px; overflow-y:auto;"></div>
+        <div style="margin-top:8px; text-align:right;">
+          <button type="button" class="btn btn-success btn-sm" onclick="submitImportSignedAckFile(true)">✓ Apply Checked Students &amp; Attach Scan</button>
+        </div>
+      </div>
+      <div id="importSignedAckStatus" style="display:none; padding:8px 12px; border-radius:6px; font-size:0.79rem; font-weight:600;"></div>
+    </div>
+    <div style="padding:10px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:8px;">
+      <button type="button" class="btn btn-light btn-sm" onclick="closeImportSignedAckModal()">Cancel</button>
+      <button type="button" id="importSignedAckSubmitBtn" class="btn btn-primary btn-sm" style="font-weight:700;" onclick="submitImportSignedAckFile(false)">📥 Import &amp; Sync Acknowledgments</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 1 PER-SECTION OCR MODAL (FILE UPLOAD + CTRL+V CLIPBOARD PASTE) -->
+<div id="syllabusSectionOcrModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.62); z-index:99998; align-items:center; justify-content:center;" onclick="if(event.target===this) closeSyllabusOcrModal();">
+  <div class="modal-box" style="background:#ffffff; border-radius:12px; width:96%; max-width:860px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 48px rgba(0,0,0,0.28); border:1px solid #cbd5e1; margin:auto;">
+    <div style="padding:14px 20px; background:linear-gradient(135deg, #4338ca 0%, #1e3a8a 100%); color:#ffffff; display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="syllabusOcrModalTitle" style="margin:0; font-size:1.05rem; font-weight:800;">📷 OCR Section Extractor</h3>
+      <button type="button" onclick="closeSyllabusOcrModal()" style="background:rgba(255,255,255,0.2); border:none; color:#ffffff; font-size:1.2rem; border-radius:6px; width:28px; height:28px; cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:16px 20px; overflow-y:auto; display:flex; flex-direction:column; gap:12px;">
+      <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span id="syllabusOcrEngineBadge" style="font-size:0.78rem; font-weight:700; color:#166534;">⚡ Active Engine: Built-In Default OCR Engine (Out-of-the-Box · No Setup Required)</span>
+        <span style="font-size:0.72rem; color:#475569;">Instant offline extraction on file upload or Ctrl+V</span>
+      </div>
+      <div style="background:#eef2ff; border:1px dashed #6366f1; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:0.8rem; color:#312e81;">
+          <strong>Dual Input Mode:</strong> Upload an image file OR press <strong>Ctrl+V</strong> anywhere inside this dialog to paste a screenshot — extraction starts automatically!
+        </div>
+        <input type="file" id="syllabusOcrFileInput" accept="image/*" onchange="handleSyllabusOcrFileChange(this)" style="font-size:0.78rem;" />
+      </div>
+      <div id="syllabusOcrPreviewWrap" style="display:none; text-align:center; background:#0f172a; padding:10px; border-radius:8px; max-height:220px; overflow:auto;">
+        <img id="syllabusOcrPreviewImg" alt="OCR Clipboard/Upload Preview" style="max-width:100%; max-height:195px; border-radius:4px;" />
+      </div>
+      <details id="syllabusOcrAdvancedDetails" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px;">
+        <summary style="cursor:pointer; font-size:0.78rem; font-weight:700; color:#334155;">⚙️ Advanced / Specialized Model (Optional)</summary>
+        <div style="margin-top:10px; display:grid; grid-template-columns:1fr 1.4fr; gap:10px;">
+          <div>
+            <label style="font-size:0.74rem; font-weight:700; color:#475569; display:block; margin-bottom:3px;">OCR Engine / Model</label>
+            <select id="syllabusOcrModelSelect" onchange="onSyllabusOcrModelChange()" style="width:100%; font-size:0.79rem; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; font-weight:600;">
+              <option value="default" selected>Built-In Default OCR Engine (Out-of-the-Box)</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Specialized Vision)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Complex Tables/Handwriting)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.74rem; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Specialized Model API Key (Optional)</label>
+            <input type="password" id="syllabusOcrGeminiKey" placeholder="Optional — only needed if overriding with a Gemini Vision model" style="width:100%; font-size:0.79rem; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px;" />
+          </div>
+        </div>
+      </details>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:3px;">Raw Copied / Extracted Text (Optional Direct Paste Fallback)</label>
+          <textarea id="syllabusOcrRawText" rows="6" placeholder="Or paste plain text copied from PDF/Word here and click 'Run OCR & Extract' to parse rows/fields..." style="width:100%; font-size:0.77rem; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-family:monospace;"></textarea>
+        </div>
+        <div>
+          <label style="font-size:0.76rem; font-weight:700; color:#334155; display:block; margin-bottom:3px;">Extracted Structured Preview (Editable JSON)</label>
+          <textarea id="syllabusOcrResultJson" rows="6" placeholder="Structured JSON preview will appear here for review before applying..." style="width:100%; font-size:0.77rem; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-family:monospace;"></textarea>
+        </div>
+      </div>
+      <div id="syllabusOcrStatus" style="display:none; padding:8px 12px; border-radius:6px; font-size:0.79rem; font-weight:600;"></div>
+    </div>
+    <div style="padding:10px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+      <button type="button" id="syllabusOcrExtractBtn" class="btn btn-primary btn-sm" style="font-weight:700;" onclick="runSyllabusOcrExtract()">🔍 Run OCR &amp; Extract</button>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-light btn-sm" onclick="closeSyllabusOcrModal()">Cancel</button>
+        <button type="button" id="syllabusOcrApplyBtn" class="btn btn-success btn-sm" style="font-weight:700;" onclick="applySyllabusOcrToSection()" disabled>✓ Apply to Section</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="liveToastContainer"></div>
+{% include "_firebase_web_sdk.html" %}
 </body>
 </html>

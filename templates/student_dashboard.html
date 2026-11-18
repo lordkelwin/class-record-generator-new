@@ -479,9 +479,18 @@
                     </div>
 
                     <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
-                      <button type="button" class="btn-sp btn-sp-outline" style="width:100%; justify-content:center; font-size:0.78rem; color:#0f766e; border-color:#99f6e4; background:#f0fdf4; font-weight:700;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
-                        📊 View Academic Performance
-                      </button>
+                      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                        <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.78rem; color:#0f766e; border-color:#99f6e4; background:#f0fdf4; font-weight:700;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
+                          📊 View Academic Performance
+                        </button>
+                        {% if c.survey_completed %}
+                          <span class="badge-pill course-survey-badge" data-course-id="{{ c.course_id }}" style="background:#dcfce7; color:#166534; font-size:0.71rem;">✓ Exit Survey Done</span>
+                        {% else %}
+                          <button type="button" class="btn-sp btn-sp-outline course-survey-btn" data-course-id="{{ c.course_id }}" style="font-size:0.75rem; color:#7f1d1d; border-color:#fecaca; background:#fff5f5; font-weight:700;" onclick="openCourseExitSurveyModal('{{ c.course_id }}')">
+                            📝 Take Exit Survey
+                          </button>
+                        {% endif %}
+                      </div>
 
                       <div style="display:flex; gap:6px; flex-wrap:wrap;">
                         <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;" onclick="openReviewSyllabusModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}')">
@@ -557,6 +566,11 @@
                     <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem; color:#0f766e; border-color:#99f6e4; background:#f0fdf4;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
                       📊 Performance
                     </button>
+                    {% if not c.survey_completed %}
+                      <button type="button" class="btn-sp btn-sp-outline course-survey-btn" data-course-id="{{ c.course_id }}" style="font-size:0.74rem; color:#7f1d1d; border-color:#fecaca; background:#fff5f5; font-weight:700;" onclick="openCourseExitSurveyModal('{{ c.course_id }}')">
+                        📝 Exit Survey
+                      </button>
+                    {% endif %}
                     <button type="button" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;" onclick="openReviewSyllabusModal('{{ c.course_id }}', '{{ c.course_code }}', '{{ c.course_title }}', '{{ c.faculty_name }}')">
                       🔍 Review Syllabus
                     </button>
@@ -618,9 +632,18 @@
                   </div>
 
                   <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0;">
-                    <button type="button" class="btn-sp btn-sp-primary" style="width:100%; justify-content:center; font-size:0.82rem; font-weight:700; background:#0f766e; border-color:#0f766e;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
-                      📊 View Performance Dashboard
-                    </button>
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                      <button type="button" class="btn-sp btn-sp-primary" style="flex:1; justify-content:center; font-size:0.82rem; font-weight:700; background:#0f766e; border-color:#0f766e;" onclick="openPerformanceDashboardModal('{{ c.course_id }}')">
+                        📊 View Performance Dashboard
+                      </button>
+                      {% if c.survey_completed %}
+                        <span class="badge-pill course-survey-badge" data-course-id="{{ c.course_id }}" style="background:#dcfce7; color:#166534; font-size:0.71rem;">✓ Survey Done</span>
+                      {% else %}
+                        <button type="button" class="btn-sp btn-sp-outline course-survey-btn" data-course-id="{{ c.course_id }}" style="font-size:0.75rem; color:#7f1d1d; border-color:#fecaca; background:#fff5f5; font-weight:700;" onclick="openCourseExitSurveyModal('{{ c.course_id }}')">
+                          📝 Take Exit Survey
+                        </button>
+                      {% endif %}
+                    </div>
                     <div style="display:flex; gap:8px;">
                       <a href="/api/courses/{{ c.course_id }}/export-pdf" target="_blank" class="btn-sp btn-sp-outline" style="flex:1; justify-content:center; font-size:0.76rem;">
                         📄 Syllabus PDF
@@ -1294,6 +1317,10 @@
     function renderPerformanceDashboard(data) {
       const c = data.course || {};
       const g = data.grades || {};
+      const gv = data.grade_visibility || {};
+      const finalUnlocked = Boolean(gv.final_grade_unlocked);
+      const surveyCompleted = Boolean(gv.survey_completed);
+      const gradesFinalized = Boolean(gv.all_assessments_finalized);
       const st = data.student || {};
       const stats = data.class_statistics || data.class_average || {};
       const comp = data.comparison || {};
@@ -1314,6 +1341,42 @@
         const icon = val > 0 ? '▲' : (val < 0 ? '▼' : '●');
         return `<span style="display:inline-flex; align-items:center; gap:2px; font-weight:700; font-size:0.75rem; color:${color}; background:${bg}; padding:2px 6px; border-radius:4px;" title="Difference vs Class Average: ${sign}${val.toFixed(1)}${unit}">${icon} ${sign}${val.toFixed(1)}${unit}</span>`;
       }
+
+      const surveyLockBannerHtml = !surveyCompleted ? `
+        <div id="finalGradeSurveyLockBanner" style="background:${gradesFinalized ? '#fffbeb' : '#f8fafc'}; border:2px solid ${gradesFinalized ? '#f59e0b' : '#cbd5e1'}; border-radius:10px; padding:14px 18px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; align-items:flex-start; gap:12px;">
+            <span style="font-size:1.7rem; line-height:1;">🔒</span>
+            <div>
+              <div style="font-weight:800; font-size:0.95rem; color:${gradesFinalized ? '#92400e' : '#1e293b'};">
+                ${gradesFinalized
+                  ? '🔒 Complete Course Exit Survey to View Final Grade'
+                  : '🔒 Final Grade Locked (Course Exit Survey Required Upon Grade Completion)'}
+              </div>
+              <div style="font-size:0.79rem; color:#475569; margin-top:3px; line-height:1.4;">
+                ${gradesFinalized
+                  ? 'All course assessments have been finalized by your instructor. Submit your quick Course Exit Survey (CLOs &amp; course feedback) to immediately unlock and reveal your Final Grade.'
+                  : `You currently have ${gv.unrecorded_count || 0} pending assessment(s). You can complete your Course Exit Survey now so your Final Grade unlocks automatically once all grades are finalized.`}
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-sp btn-sp-primary" style="font-size:0.84rem; padding:9px 16px;" onclick="openCourseExitSurveyModal('${escapeHtml(c.course_id || '')}')">
+            📝 Take Course Exit Survey
+          </button>
+        </div>
+      ` : (!gradesFinalized ? `
+        <div style="background:#eff6ff; border:1.5px solid #93c5fd; border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:0.82rem; color:#1e3a8a;">
+            <strong>✓ Course Exit Survey Completed:</strong> Your Final Grade will unlock automatically as soon as your instructor records all remaining assessments (${gv.unrecorded_count || 0} remaining).
+          </div>
+          <span class="badge-pill" style="background:#dcfce7; color:#166534;">Survey Submitted</span>
+        </div>
+      ` : `
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:10px 16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:0.82rem; color:#166534; font-weight:700;">
+            🔓 Final Grade Unlocked — Course Exit Survey Completed (${escapeHtml(gv.survey_submitted_at || '')})
+          </div>
+        </div>
+      `);
 
       let html = `
         <!-- Fast Course Switcher Navigation Bar -->
@@ -1346,6 +1409,8 @@
           </div>
         </div>
 
+        ${surveyLockBannerHtml}
+
         <!-- Executive Student vs Class Benchmark Hero Banner -->
         <div style="background:linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border:1.5px solid #5eead4; border-radius:10px; padding:16px; margin-bottom:18px; box-shadow:0 2px 8px rgba(15, 118, 110, 0.08);">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
@@ -1353,7 +1418,7 @@
               <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <span style="font-size:1.25rem;">📈</span>
                 <h4 style="margin:0; font-size:1.02rem; color:#0f766e; font-weight:800;">Academic Performance vs. Class Average Benchmark</h4>
-                <span class="badge-pill" style="background:#0f766e; color:#ffffff; font-weight:700; font-size:0.74rem;">${escapeHtml(comp.standing_label || 'Good Standing')}</span>
+                <span class="badge-pill" style="background:#0f766e; color:#ffffff; font-weight:700; font-size:0.74rem;">${escapeHtml(comp.standing_label || 'In Progress')}</span>
               </div>
               <div style="font-size:0.79rem; color:#475569; margin-top:4px;">
                 Direct comparative analytics across <strong>${stats.total_students || 1}</strong> student(s) enrolled in this course section.
@@ -1362,11 +1427,11 @@
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
               <div style="background:#ffffff; border:1.5px solid #99f6e4; padding:6px 14px; border-radius:8px; text-align:center; min-width:85px;">
                 <div style="font-size:0.68rem; color:#64748b; font-weight:700;">CLASS RANK</div>
-                <div style="font-size:1.15rem; font-weight:800; color:#0f766e;">#${comp.rank || 1} <span style="font-size:0.74rem; font-weight:600; color:#64748b;">of ${stats.total_students || 1}</span></div>
+                <div style="font-size:1.15rem; font-weight:800; color:#0f766e;">${finalUnlocked && comp.rank ? `#${comp.rank} <span style="font-size:0.74rem; font-weight:600; color:#64748b;">of ${stats.total_students || 1}</span>` : '🔒'}</div>
               </div>
               <div style="background:#ffffff; border:1.5px solid #99f6e4; padding:6px 14px; border-radius:8px; text-align:center; min-width:85px;">
                 <div style="font-size:0.68rem; color:#64748b; font-weight:700;">PERCENTILE</div>
-                <div style="font-size:1.15rem; font-weight:800; color:#0369a1;">Top ${comp.percentile !== undefined ? comp.percentile : 0}%</div>
+                <div style="font-size:1.15rem; font-weight:800; color:#0369a1;">${finalUnlocked && comp.percentile !== null && comp.percentile !== undefined ? `Top ${comp.percentile}%` : '🔒'}</div>
               </div>
             </div>
           </div>
@@ -1377,11 +1442,13 @@
             <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:8px; padding:12px;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:0.72rem; color:#64748b; font-weight:700;">AVERAGE FINAL GRADE (AFG)</div>
-                ${formatVarianceBadge(comp.afg_diff, '%')}
+                ${finalUnlocked ? formatVarianceBadge(comp.afg_diff, '%') : '<span style="font-size:0.72rem; color:#92400e; font-weight:700;">🔒 Locked</span>'}
               </div>
               <div style="display:flex; align-items:baseline; gap:6px; margin-top:4px;">
-                <span style="font-size:1.45rem; font-weight:800; color:#0f766e;">${g.average_final_grade !== undefined ? g.average_final_grade.toFixed(1) : '—'}%</span>
-                <span style="font-size:0.85rem; font-weight:700; color:#64748b;">(${g.transmuted_grade || '—'})</span>
+                ${finalUnlocked && g.average_final_grade !== null && g.average_final_grade !== undefined
+                  ? `<span style="font-size:1.45rem; font-weight:800; color:#0f766e;">${g.average_final_grade.toFixed(1)}%</span>
+                     <span style="font-size:0.85rem; font-weight:700; color:#64748b;">(${g.transmuted_grade || '—'})</span>`
+                  : `<span style="font-size:1.05rem; font-weight:800; color:#92400e;">🔒 ${surveyCompleted ? 'Pending Grades' : 'Survey Required'}</span>`}
               </div>
               <div style="font-size:0.74rem; color:#64748b; margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; justify-content:space-between;">
                 <span>Class Average:</span>
@@ -1396,7 +1463,7 @@
                 ${formatVarianceBadge(comp.midterm_diff, '%')}
               </div>
               <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:4px;">
-                ${g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) : '—'}%
+                ${g.midterm_grade !== null && g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) + '%' : '—'}
               </div>
               <div style="font-size:0.74rem; color:#64748b; margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; justify-content:space-between;">
                 <span>Class Average:</span>
@@ -1408,10 +1475,10 @@
             <div style="background:#ffffff; border:1px solid #99f6e4; border-radius:8px; padding:12px;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:0.72rem; color:#64748b; font-weight:700;">FINALS GRADE</div>
-                ${formatVarianceBadge(comp.finals_diff, '%')}
+                ${finalUnlocked ? formatVarianceBadge(comp.finals_diff, '%') : '<span style="font-size:0.72rem; color:#92400e; font-weight:700;">🔒 Locked</span>'}
               </div>
               <div style="font-size:1.45rem; font-weight:800; color:#0f766e; margin-top:4px;">
-                ${g.finals_grade !== undefined ? g.finals_grade.toFixed(1) : '—'}%
+                ${finalUnlocked && g.finals_grade !== null && g.finals_grade !== undefined ? g.finals_grade.toFixed(1) + '%' : '🔒'}
               </div>
               <div style="font-size:0.74rem; color:#64748b; margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; justify-content:space-between;">
                 <span>Class Average:</span>
@@ -1436,23 +1503,25 @@
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(135px, 1fr)); gap:10px; margin-bottom:18px;">
           <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
             <div style="font-size:0.70rem; color:#64748b; font-weight:700;">MIDTERM GRADE</div>
-            <div style="font-size:1.35rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) : '—'}%</div>
+            <div style="font-size:1.35rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.midterm_grade !== null && g.midterm_grade !== undefined ? g.midterm_grade.toFixed(1) + '%' : '—'}</div>
           </div>
           <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
             <div style="font-size:0.70rem; color:#64748b; font-weight:700;">FINALS GRADE</div>
-            <div style="font-size:1.35rem; font-weight:800; color:#0f766e; margin-top:2px;">${g.finals_grade !== undefined ? g.finals_grade.toFixed(1) : '—'}%</div>
+            <div style="font-size:1.35rem; font-weight:800; color:#0f766e; margin-top:2px;">${finalUnlocked && g.finals_grade !== null && g.finals_grade !== undefined ? g.finals_grade.toFixed(1) + '%' : '🔒'}</div>
           </div>
           <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
             <div style="font-size:0.70rem; color:#64748b; font-weight:700;">AVERAGE FINAL (AFG)</div>
-            <div style="font-size:1.35rem; font-weight:800; color:#1e293b; margin-top:2px;">${g.average_final_grade !== undefined ? g.average_final_grade.toFixed(1) : '—'}%</div>
+            <div style="font-size:1.35rem; font-weight:800; color:#1e293b; margin-top:2px;">${finalUnlocked && g.average_final_grade !== null && g.average_final_grade !== undefined ? g.average_final_grade.toFixed(1) + '%' : '🔒'}</div>
           </div>
           <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
             <div style="font-size:0.70rem; color:#64748b; font-weight:700;">TRANSMUTED GRADE</div>
-            <div style="font-size:1.35rem; font-weight:800; color:${g.passed ? '#15803d' : '#dc2626'}; margin-top:2px;">${g.transmuted_grade || '—'}</div>
+            <div style="font-size:1.35rem; font-weight:800; color:${finalUnlocked ? (g.passed ? '#15803d' : '#dc2626') : '#92400e'}; margin-top:2px;">${finalUnlocked ? (g.transmuted_grade || '—') : '🔒'}</div>
           </div>
           <div style="background:#fff; border:1.5px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center;">
             <div style="font-size:0.70rem; color:#64748b; font-weight:700;">ACADEMIC STANDING</div>
-            <span style="display:inline-block; margin-top:4px; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; background:${g.passed ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;'}">${g.status_label || 'ENROLLED'}</span>
+            <span style="display:inline-block; margin-top:4px; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; background:${finalUnlocked ? (g.passed ? '#dcfce7; color:#15803d;' : '#fee2e2; color:#b91c1c;') : '#fef3c7; color:#92400e;'}">
+              ${finalUnlocked ? (g.status_label || 'ENROLLED') : (surveyCompleted ? 'PENDING FINAL' : 'LOCKED 🔒')}
+            </span>
           </div>
         </div>
 
@@ -1953,6 +2022,204 @@
       }
     });
 
+    /* ==================== PER-COURSE EXIT SURVEY CONTROLLER ==================== */
+    let _activeExitSurveyCourseId = null;
+    let _activeExitSurveySchema = null;
+
+    async function openCourseExitSurveyModal(courseId) {
+      if (!courseId) return;
+      _activeExitSurveyCourseId = courseId;
+      const backdrop = document.getElementById("courseExitSurveyBackdrop");
+      const titleEl = document.getElementById("exitSurveyModalTitle");
+      const subEl = document.getElementById("exitSurveyModalSubtitle");
+      const bodyEl = document.getElementById("exitSurveyModalBody");
+      const statusEl = document.getElementById("exitSurveyStatus");
+      if (statusEl) { statusEl.style.display = "none"; statusEl.textContent = ""; }
+      if (bodyEl) bodyEl.innerHTML = `<div style="padding:28px; text-align:center; color:#64748b;">⏳ Loading syllabus Course Learning Outcomes &amp; survey questions...</div>`;
+      if (backdrop) backdrop.style.display = "flex";
+
+      try {
+        const res = await fetch(`/api/student/courses/${encodeURIComponent(courseId)}/exit-survey`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        _activeExitSurveySchema = data;
+        const crs = data.course || {};
+        const clos = data.clos || [];
+        const genQs = data.general_questions || [];
+        const existing = data.response || null;
+
+        if (titleEl) titleEl.textContent = `📝 Course Exit Survey — ${crs.course_code || 'Course'}`;
+        if (subEl) subEl.textContent = `${crs.course_title || ''} • ${crs.section || ''} • Instructor: ${crs.faculty_name || ''}`;
+
+        const renderLikertRow = (groupName, valSelected) => [1, 2, 3, 4, 5].map(n => `
+          <td style="text-align:center; padding:6px 4px;">
+            <input type="radio" name="${escapeHtml(groupName)}" value="${n}" ${Number(valSelected) === n ? 'checked' : ''} style="cursor:pointer; transform:scale(1.1);" />
+          </td>
+        `).join("");
+
+        bodyEl.innerHTML = `
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px 12px; font-size:0.79rem; color:#166534; margin-bottom:14px;">
+            <strong>Scale Guide:</strong> <strong>5</strong> = Strongly Agree / Highly Confident &bull; <strong>4</strong> = Agree &bull; <strong>3</strong> = Neutral &bull; <strong>2</strong> = Disagree &bull; <strong>1</strong> = Strongly Disagree
+          </div>
+
+          <h4 style="margin:0 0 8px; font-size:0.9rem; color:#0f172a;">Part I. Course Learning Outcomes (CLO) Attainment Self-Assessment</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.78rem; margin-bottom:16px; border:1px solid #e2e8f0;">
+            <thead>
+              <tr style="background:#f1f5f9; color:#334155;">
+                <th style="padding:7px 10px; text-align:left;">CLO &amp; Outcome Statement</th>
+                <th style="width:36px; text-align:center;">1</th>
+                <th style="width:36px; text-align:center;">2</th>
+                <th style="width:36px; text-align:center;">3</th>
+                <th style="width:36px; text-align:center;">4</th>
+                <th style="width:36px; text-align:center;">5</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${clos.length ? clos.map(co => `
+                <tr style="border-bottom:1px solid #e2e8f0;">
+                  <td style="padding:7px 10px;">
+                    <strong style="color:#7f1d1d;">${escapeHtml(co.co_id)}:</strong>
+                    <span>${escapeHtml(co.description || '')}</span>
+                  </td>
+                  ${renderLikertRow('survey_clo_' + co.co_id, existing?.clo_ratings?.[co.co_id])}
+                </tr>
+              `).join('') : '<tr><td colspan="6" style="padding:10px; text-align:center; color:#64748b;">No CLOs defined in syllabus.</td></tr>'}
+            </tbody>
+          </table>
+
+          <h4 style="margin:0 0 8px; font-size:0.9rem; color:#0f172a;">Part II. CQI-Anchored Pedagogical, Assessment &amp; Resource Evaluation</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.78rem; margin-bottom:14px; border:1px solid #e2e8f0;">
+            <thead>
+              <tr style="background:#f1f5f9; color:#334155;">
+                <th style="padding:7px 10px; text-align:left;">Evaluation Criterion (Anchored to Course CQI Plan)</th>
+                <th style="width:36px; text-align:center;">1</th>
+                <th style="width:36px; text-align:center;">2</th>
+                <th style="width:36px; text-align:center;">3</th>
+                <th style="width:36px; text-align:center;">4</th>
+                <th style="width:36px; text-align:center;">5</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${genQs.map(q => `
+                <tr style="border-bottom:1px solid #e2e8f0;">
+                  <td style="padding:7px 10px;">
+                    <div style="font-size:0.68rem; font-weight:700; color:#0f766e; text-transform:uppercase; margin-bottom:2px;">${escapeHtml(q.cqi_category || 'CQI Dimension')}</div>
+                    <strong style="color:#1e3a8a;">${escapeHtml(q.label)}:</strong>
+                    <div>${escapeHtml(q.prompt)}</div>
+                  </td>
+                  ${renderLikertRow('survey_gen_' + q.key, existing?.general_ratings?.[q.key])}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="margin-bottom:12px;">
+            <label for="exitSurveyChallengingTopics" style="display:block; font-weight:700; font-size:0.82rem; color:#1e293b; margin-bottom:4px;">
+              Part III-A. Most Challenging Topics / CLOs &amp; Lab Recommendations:
+            </label>
+            <textarea id="exitSurveyChallengingTopics" rows="2" placeholder="Which specific topics or CLOs were most challenging, and what teaching/laboratory improvements would help future cohorts?" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem;">${escapeHtml(existing?.challenging_topics || '')}</textarea>
+          </div>
+
+          <div>
+            <label for="exitSurveyComments" style="display:block; font-weight:700; font-size:0.82rem; color:#1e293b; margin-bottom:4px;">
+              Part III-B. Additional Qualitative Feedback for Continuous Quality Improvement (CQI):
+            </label>
+            <textarea id="exitSurveyComments" rows="2" placeholder="Share suggestions on course pace, laboratory activities, assessments, or topics..." style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.82rem;">${escapeHtml(existing?.comments || '')}</textarea>
+          </div>
+        `;
+      } catch (err) {
+        if (bodyEl) bodyEl.innerHTML = `<div style="padding:20px; color:#b91c1c; text-align:center;">Could not load exit survey: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function closeCourseExitSurveyModal() {
+      const backdrop = document.getElementById("courseExitSurveyBackdrop");
+      if (backdrop) backdrop.style.display = "none";
+      _activeExitSurveyCourseId = null;
+    }
+
+    async function submitCourseExitSurvey() {
+      if (!_activeExitSurveyCourseId || !_activeExitSurveySchema) return;
+      const statusEl = document.getElementById("exitSurveyStatus");
+      const btn = document.getElementById("exitSurveySubmitBtn");
+      const clos = _activeExitSurveySchema.clos || [];
+      const genQs = _activeExitSurveySchema.general_questions || [];
+
+      const cloRatings = {};
+      for (const co of clos) {
+        const checked = document.querySelector(`input[name="survey_clo_${CSS.escape(co.co_id)}"]:checked`);
+        if (!checked) {
+          alert(`Please rate ${co.co_id} before submitting.`);
+          return;
+        }
+        cloRatings[co.co_id] = parseInt(checked.value, 10);
+      }
+
+      const genRatings = {};
+      for (const q of genQs) {
+        const checked = document.querySelector(`input[name="survey_gen_${CSS.escape(q.key)}"]:checked`);
+        if (!checked) {
+          alert(`Please rate "${q.label}" before submitting.`);
+          return;
+        }
+        genRatings[q.key] = parseInt(checked.value, 10);
+      }
+
+      const challengingTopics = (document.getElementById("exitSurveyChallengingTopics")?.value || "").trim();
+      const comments = (document.getElementById("exitSurveyComments")?.value || "").trim();
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ Submitting..."; }
+
+      try {
+        const res = await fetch(`/api/student/courses/${encodeURIComponent(_activeExitSurveyCourseId)}/exit-survey`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clo_ratings: cloRatings,
+            general_ratings: genRatings,
+            challenging_topics: challengingTopics,
+            comments: comments,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+        // Immediately update card buttons for this course across all views
+        const cid = _activeExitSurveyCourseId;
+        document.querySelectorAll(`.course-survey-btn[data-course-id="${CSS.escape(cid)}"]`).forEach(el => {
+          const pill = document.createElement("span");
+          pill.className = "badge-pill course-survey-badge";
+          pill.dataset.courseId = cid;
+          pill.style.cssText = "background:#dcfce7; color:#166534; font-size:0.71rem;";
+          pill.textContent = "✓ Exit Survey Done";
+          el.replaceWith(pill);
+        });
+
+        if (statusEl) {
+          statusEl.style.display = "block";
+          statusEl.style.background = "#dcfce7";
+          statusEl.style.color = "#166534";
+          statusEl.textContent = "✓ Survey recorded! Unlocking Final Grade...";
+        }
+
+        const perfVisible = document.getElementById("studentPerformanceInlineView")?.style.display !== "none";
+        setTimeout(() => {
+          closeCourseExitSurveyModal();
+          if (perfVisible || currentPerfCourseId === cid) {
+            openPerformanceDashboardModal(cid);
+          }
+        }, 450);
+      } catch (err) {
+        if (statusEl) {
+          statusEl.style.display = "block";
+          statusEl.style.background = "#fee2e2";
+          statusEl.style.color = "#991b1b";
+          statusEl.textContent = `✕ Submission failed: ${err.message}`;
+        }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "✓ Submit Course Exit Survey"; }
+      }
+    }
+
 </script>
 
   <!-- Score & Paper Receipt Acknowledgment Modal Pop-up -->
@@ -2085,5 +2352,25 @@
       </div>
     </div>
 
+    <!-- Course Exit Survey Modal -->
+    <div class="sp-modal-backdrop" id="courseExitSurveyBackdrop" style="z-index:12000;" onclick="if(event.target===this) closeCourseExitSurveyModal();">
+      <div class="sp-modal" style="max-width:760px;">
+        <div style="padding:14px 20px; background:linear-gradient(135deg, #7f1d1d 0%, #0f766e 100%); color:#ffffff; border-radius:9px 9px 0 0; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h3 id="exitSurveyModalTitle" style="margin:0; font-size:1.05rem; font-weight:800;">📝 Course Exit Survey</h3>
+            <div id="exitSurveyModalSubtitle" style="font-size:0.76rem; color:#e2e8f0; margin-top:2px;">Student OBE Outcomes &amp; Course Evaluation</div>
+          </div>
+          <button type="button" onclick="closeCourseExitSurveyModal()" style="background:none; border:none; color:#ffffff; font-size:1.3rem; cursor:pointer;">&times;</button>
+        </div>
+        <div id="exitSurveyModalBody" style="padding:18px 20px; max-height:68vh; overflow-y:auto;"></div>
+        <div id="exitSurveyStatus" style="display:none; margin:0 20px 10px; padding:8px 12px; border-radius:6px; font-size:0.8rem; font-weight:700;"></div>
+        <div style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; border-radius:0 0 9px 9px;">
+          <button type="button" class="btn-sp btn-sp-outline" onclick="closeCourseExitSurveyModal()">Cancel</button>
+          <button type="button" id="exitSurveySubmitBtn" class="btn-sp btn-sp-primary" onclick="submitCourseExitSurvey()">✓ Submit Course Exit Survey</button>
+        </div>
+      </div>
+    </div>
+
+{% include "_firebase_web_sdk.html" %}
 </body>
 </html>

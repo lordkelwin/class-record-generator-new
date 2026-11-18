@@ -104,9 +104,10 @@ def _get_all_courses() -> List[Dict[str, Any]]:
 
 
 def _load_students() -> Dict[str, Dict[str, Any]]:
-    """Loads all students from both SQLite and JSON, merging them safely."""
+    """Loads all students from SQLite / Cloud Firestore and local JSON, preferring DB in Firebase mode."""
+    use_fb = bool(getattr(config, "USE_FIREBASE", False)) if "config" in globals() else False
     merged: Dict[str, Dict[str, Any]] = {}
-    if os.path.exists(STUDENTS_FILE):
+    if not use_fb and os.path.exists(STUDENTS_FILE):
         try:
             with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -717,6 +718,12 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
     sid_lower = sid.lower()
 
     st_profile = get_student_profile(sid) or {}
+    completed_surveys: Dict[str, Any] = {}
+    try:
+        import db_persistence
+        completed_surveys = db_persistence.get_student_completed_surveys_map_db(sid)
+    except Exception:
+        completed_surveys = {}
 
     pending_list = []
     acknowledged_list = []
@@ -790,6 +797,7 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
             school_year, semester, group_label = courses_store.parse_semester_ay(sem_ay_raw)
 
             status_category = "acknowledged" if ack_record is not None else ("pending" if is_qa_approved else "in_review")
+            srv_rec = completed_surveys.get(cid)
 
             course_item = {
                 "course_id": cid,
@@ -813,6 +821,8 @@ def find_courses_for_student(student_id: str) -> Dict[str, Any]:
                 "total_enrolled": len(students),
                 "total_acknowledged": len(acks),
                 "status_category": status_category,
+                "survey_completed": bool(srv_rec and srv_rec.get("is_completed")),
+                "survey_submitted_at": srv_rec.get("submitted_at") if srv_rec else None,
             }
 
             if ack_record is not None:

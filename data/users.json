@@ -22,7 +22,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T00:56:06",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": "2026-11-16T12:19:38"
   },
@@ -45,9 +45,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T15:27:35",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
-    "last_login": "2026-11-16T13:10:12",
+    "last_login": "2026-11-18T11:25:21",
     "has_signature": true
   },
   "qahead_ce": {
@@ -69,7 +69,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T15:27:35",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": "2026-10-24T09:32:36",
     "has_signature": true
@@ -94,7 +94,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-23T15:27:35",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": "2026-11-12T12:09:05",
     "has_signature": true
@@ -118,7 +118,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": "2026-11-12T09:34:40",
     "has_signature": true
@@ -142,7 +142,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -163,7 +163,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -186,7 +186,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -209,7 +209,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -233,7 +233,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -256,7 +256,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -277,7 +277,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -298,7 +298,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -321,7 +321,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -344,7 +344,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -367,7 +367,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -390,7 +390,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -413,7 +413,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -434,7 +434,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -457,7 +457,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -480,7 +480,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -504,7 +504,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -525,7 +525,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -548,7 +548,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -572,7 +572,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -595,7 +595,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -616,7 +616,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -639,7 +639,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -662,7 +662,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -685,7 +685,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -709,7 +709,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -733,7 +733,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -756,7 +756,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -779,7 +779,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -802,7 +802,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -825,7 +825,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -848,7 +848,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -871,7 +871,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -892,7 +892,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -913,7 +913,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -934,7 +934,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -958,7 +958,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -981,7 +981,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1004,7 +1004,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1025,7 +1025,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1048,7 +1048,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1071,7 +1071,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1094,7 +1094,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1117,7 +1117,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1140,7 +1140,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1163,7 +1163,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1186,7 +1186,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1209,7 +1209,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1232,7 +1232,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1255,7 +1255,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1276,7 +1276,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1297,7 +1297,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1318,7 +1318,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1339,7 +1339,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1360,7 +1360,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1381,7 +1381,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1402,9 +1402,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
-    "last_login": "2026-10-24T20:10:28"
+    "last_login": "2026-11-17T13:35:51"
   },
   "staff_benilan": {
     "username": "staff_benilan",
@@ -1423,7 +1423,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1444,7 +1444,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1465,7 +1465,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1486,7 +1486,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1507,7 +1507,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T05:13:01",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1530,7 +1530,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": "2026-11-12T09:33:57",
     "has_signature": true
@@ -1555,9 +1555,9 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
-    "last_login": "2026-11-16T13:10:55",
+    "last_login": "2026-11-18T09:55:57",
     "has_signature": true
   },
   "faculty_arenga": {
@@ -1579,7 +1579,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": "2026-10-30T08:08:49",
     "has_signature": true
@@ -1604,7 +1604,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": "2026-11-12T09:36:34",
     "has_signature": true
@@ -1630,7 +1630,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1654,7 +1654,7 @@
     "can_access_faculty_tools": true,
     "is_staff": false,
     "created_at": "2026-10-24T06:42:46",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   },
@@ -1677,7 +1677,7 @@
     "can_access_faculty_tools": false,
     "is_staff": false,
     "created_at": "2026-10-24T11:36:22",
-    "updated_at": "2026-11-16T13:10:12.028742",
+    "updated_at": "2026-11-18T19:05:20.683573",
     "must_change_password": false,
     "last_login": null
   }

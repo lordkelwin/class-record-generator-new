@@ -330,6 +330,37 @@ def list_courses(username: str, faculty_name: str = "") -> Dict[str, Any]:
                 except Exception:
                     continue
 
+    # In Cloud Firestore mode (USE_FIREBASE=true), merge courses persisted in Firestore
+    # so multi-instance Cloud Run containers see every newly created/updated subject.
+    use_fb = bool(getattr(config, "USE_FIREBASE", False)) if "config" in globals() else False
+    if use_fb:
+        u_lower = (username or "").strip().lower()
+        fname_lower = (faculty_name or "").strip().lower()
+        try:
+            import db_persistence
+            db_docs = db_persistence.list_all_courses_from_db() or []
+            for doc in db_docs:
+                if not isinstance(doc, dict):
+                    continue
+                cid = doc.get("id") or doc.get("course_id")
+                if not cid or cid in seen_ids:
+                    continue
+                doc_owner_l = str(doc.get("owner") or "").strip().lower()
+                bp_meta = ((doc.get("blueprint") or {}).get("metadata") or {})
+                doc_fname_l = str(bp_meta.get("faculty_name") or "").strip().lower()
+                authors = get_doc_authors(doc)
+                author_unames = [(a.get("username") or "").strip().lower() for a in authors]
+                is_owner = (u_lower and doc_owner_l == u_lower) or (fname_lower and doc_fname_l == fname_lower)
+                is_coauthor = bool(u_lower and u_lower in author_unames and not is_owner)
+                if is_owner or is_coauthor:
+                    summ = _summary_from_doc(doc)
+                    summ["is_owner"] = bool(is_owner)
+                    summ["is_coauthor"] = bool(is_coauthor)
+                    courses_list.append(summ)
+                    seen_ids.add(summ["id"])
+        except Exception as _db_err:
+            logger.debug("Could not merge DB courses in list_courses: %s", _db_err)
+
     # Sort courses by updated_at descending
     courses_list.sort(key=lambda c: c.get("updated_at") or "", reverse=True)
 
@@ -1562,9 +1593,10 @@ def duplicate_course(username: str, course_id: str, new_section: str = "", clear
 def delete_course(username_or_course_id: str, course_id: Optional[str] = None) -> bool:
     target_id_for_db = course_id if course_id is not None else username_or_course_id
     safe_db_id = re.sub(r"[^A-Za-z0-9_-]+", "", target_id_for_db)
+    db_deleted = False
     try:
         import db_persistence
-        db_persistence.delete_course_from_db(safe_db_id)
+        db_deleted = bool(db_persistence.delete_course_from_db(safe_db_id))
     except Exception:
         pass
     if course_id is None:
@@ -1580,8 +1612,8 @@ def delete_course(username_or_course_id: str, course_id: Optional[str] = None) -
                             os.remove(fp)
                             return True
                         except Exception:
-                            return False
-        return False
+                            return db_deleted
+        return db_deleted
     else:
         username = username_or_course_id
         user_dir = _get_user_courses_dir(username)
@@ -1708,45 +1740,68 @@ def save_course_doc(doc: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def list_all_workflow_courses() -> List[Dict[str, Any]]:
-    """Returns all courses across all user workspaces with their workflow state."""
+    """Returns all courses across all user workspaces (reading Firestore in USE_FIREBASE mode, local JSON otherwise)."""
+    docs_by_id: Dict[str, Dict[str, Any]] = {}
+    use_fb = bool(getattr(config, "USE_FIREBASE", False)) if "config" in globals() else False
+
+    # 1. In Cloud Firestore mode, Firestore is authoritative across Cloud Run instances
+    if use_fb:
+        try:
+            import db_persistence
+            for db_doc in (db_persistence.list_all_courses_from_db() or []):
+                if isinstance(db_doc, dict):
+                    cid = db_doc.get("id") or db_doc.get("course_id")
+                    if cid:
+                        docs_by_id[cid] = db_doc
+        except Exception as _db_err:
+            logger.debug("Could not load DB courses in list_all_workflow_courses: %s", _db_err)
+
+    # 2. Local workspace JSON courses
+    if os.path.exists(COURSES_BASE_DIR):
+        for uname in os.listdir(COURSES_BASE_DIR):
+            user_dir = os.path.join(COURSES_BASE_DIR, uname)
+            if not os.path.isdir(user_dir):
+                continue
+            for fn in os.listdir(user_dir):
+                if not fn.endswith(".json"):
+                    continue
+                fp = os.path.join(user_dir, fn)
+                try:
+                    with open(fp, "r", encoding="utf-8") as f:
+                        doc = json.load(f)
+                    cid = doc.get("id") or doc.get("course_id") or fn[:-5]
+                    if cid and cid not in docs_by_id:
+                        docs_by_id[cid] = doc
+                except Exception:
+                    continue
+
     results = []
-    if not os.path.exists(COURSES_BASE_DIR):
-        return results
-    for uname in os.listdir(COURSES_BASE_DIR):
-        user_dir = os.path.join(COURSES_BASE_DIR, uname)
-        if not os.path.isdir(user_dir):
+    for cid, doc in docs_by_id.items():
+        try:
+            bp = doc.get("blueprint") or {}
+            meta = bp.get("metadata") or {}
+            sem_ay = meta.get("semester_ay") or doc.get("semester_ay") or "1st Semester, A.Y. 2026-2027"
+            sy, sem, grp = parse_semester_ay(sem_ay)
+            results.append({
+                "id": cid,
+                "owner": doc.get("owner"),
+                "course_code": (meta.get("course_code") or doc.get("course_code") or "New Course").strip(),
+                "course_title": (meta.get("course_title") or doc.get("course_title") or "Untitled Subject").strip(),
+                "section": (meta.get("section") or doc.get("section") or "1A").strip(),
+                "semester_ay": sem_ay,
+                "school_year": sy,
+                "semester": sem,
+                "group_label": grp,
+                "credit_units": meta.get("credit_units") or "3.0 Units",
+                "faculty_name": meta.get("faculty_name") or doc.get("owner"),
+                "created_at": doc.get("created_at"),
+                "updated_at": doc.get("updated_at"),
+                "workflow": syllabus_workflow.public_view(doc),
+                "class_record_workflow": class_record_workflow.public_cr_view(doc),
+                "doc_raw": doc,
+            })
+        except Exception:
             continue
-        for fn in os.listdir(user_dir):
-            if not fn.endswith(".json"):
-                continue
-            fp = os.path.join(user_dir, fn)
-            try:
-                with open(fp, "r", encoding="utf-8") as f:
-                    doc = json.load(f)
-                    bp = doc.get("blueprint") or {}
-                    meta = bp.get("metadata") or {}
-                    sem_ay = meta.get("semester_ay") or doc.get("semester_ay") or "1st Semester, A.Y. 2026-2027"
-                    sy, sem, grp = parse_semester_ay(sem_ay)
-                    results.append({
-                        "id": doc.get("id"),
-                        "owner": doc.get("owner"),
-                        "course_code": (meta.get("course_code") or doc.get("course_code") or "New Course").strip(),
-                        "course_title": (meta.get("course_title") or doc.get("course_title") or "Untitled Subject").strip(),
-                        "section": (meta.get("section") or doc.get("section") or "1A").strip(),
-                        "semester_ay": sem_ay,
-                        "school_year": sy,
-                        "semester": sem,
-                        "group_label": grp,
-                        "credit_units": meta.get("credit_units") or "3.0 Units",
-                        "faculty_name": meta.get("faculty_name") or doc.get("owner"),
-                        "created_at": doc.get("created_at"),
-                        "updated_at": doc.get("updated_at"),
-                        "workflow": syllabus_workflow.public_view(doc),
-                        "class_record_workflow": class_record_workflow.public_cr_view(doc),
-                        "doc_raw": doc,
-                    })
-            except Exception:
-                continue
     results.sort(key=lambda x: (x.get("workflow", {}).get("submitted_at") or x.get("updated_at") or ""), reverse=True)
     return results
 

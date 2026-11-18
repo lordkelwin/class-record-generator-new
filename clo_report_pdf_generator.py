@@ -7,7 +7,7 @@ colors, typography, tables, and signatory blocks of 'AEE 321_EE 3A_CLO Report.pd
 import os
 import re
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from fpdf import FPDF
 
 from models import SyllabusBlueprint, AssessmentItem

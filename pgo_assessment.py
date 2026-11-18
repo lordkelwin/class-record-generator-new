@@ -171,6 +171,12 @@ def _resolve_clo_alignments(
     Combines syllabus metadata (`program_outcomes`, `performance_indicator`) with
     authoritative relational mappings from PGO-PI-IGA.accdb.
     """
+    if not isinstance(co, dict):
+        return []
+    accdb_lookup = accdb_lookup if isinstance(accdb_lookup, dict) else {}
+    pgo_lookup = pgo_lookup if isinstance(pgo_lookup, dict) else {}
+    pi_lookup = pi_lookup if isinstance(pi_lookup, dict) else {}
+
     norm_code = normalize_course_code(course_code)
     accdb_course = accdb_lookup.get(norm_code) or accdb_lookup.get(f"{norm_code}L") or {}
     accdb_mappings = accdb_course.get("pgo_pi_mappings") or []
@@ -332,14 +338,43 @@ def compute_course_student_clo_metrics(doc: Dict[str, Any]) -> Dict[str, Any]:
     Computes exact bottom-up per-student CLO attainment ratings from Class Record scores
     using the official Base-50 formula matching Step 4 Class Record & Step 7 CLO Report (MID-10).
     """
-    bp_dict = doc.get("blueprint") or {}
-    meta = bp_dict.get("metadata") or {}
-    has_scores = courses_store.has_recorded_scores(doc)
+    if not isinstance(doc, dict):
+        doc = {}
+    bp_dict = doc.get("blueprint") if isinstance(doc.get("blueprint"), dict) else {}
+    meta = bp_dict.get("metadata") if isinstance(bp_dict.get("metadata"), dict) else {}
+    raw_progs = meta.get("programs")
+    first_prog = (
+        raw_progs[0]
+        if isinstance(raw_progs, list) and raw_progs
+        else (meta.get("program_code") or doc.get("program_code") or "EE")
+    )
+    outcomes_raw = [
+        co for co in (bp_dict.get("course_outcomes") or [])
+        if isinstance(co, dict)
+    ]
+    base_meta = {
+        "course_code": str(meta.get("course_code") or doc.get("course_code") or "").strip(),
+        "course_title": str(meta.get("course_title") or doc.get("course_title") or "").strip(),
+        "section": str(meta.get("section") or doc.get("section") or "").strip(),
+        "program_code": normalize_program_code(first_prog or "EE"),
+        "semester_ay": str(meta.get("semester_ay") or doc.get("semester_ay") or "").strip(),
+    }
+
+    try:
+        has_scores = bool(courses_store.has_recorded_scores(doc))
+    except Exception:
+        has_scores = False
 
     try:
         bp_obj = SyllabusBlueprint.from_dict(bp_dict)
-    except Exception:
-        return {"has_scores": False, "students": [], "outcomes": bp_dict.get("course_outcomes") or []}
+    except Exception as exc:
+        logger.warning("PGO Assessment fallback for course '%s': %s", doc.get("id"), exc)
+        return {
+            **base_meta,
+            "has_scores": False,
+            "students": [],
+            "outcomes": outcomes_raw,
+        }
 
     # Expand all assessment items into per-CLO columns matching renderLiveGradebookAndReports & MID-10
     all_sa_cols: List[Dict[str, Any]] = []
@@ -373,11 +408,11 @@ def compute_course_student_clo_metrics(doc: Dict[str, Any]) -> Dict[str, Any]:
                 if a_type == "SA":
                     all_sa_cols.append(col_info)
 
-    outcomes_raw = bp_dict.get("course_outcomes") or []
     student_metrics: List[Dict[str, Any]] = []
 
     for st_idx, st_obj in enumerate(bp_obj.students or []):
-        raw_st_dict = (bp_dict.get("students") or [])[st_idx] if st_idx < len(bp_dict.get("students") or []) else {}
+        raw_st_list = bp_dict.get("students") if isinstance(bp_dict.get("students"), list) else []
+        raw_st_dict = raw_st_list[st_idx] if st_idx < len(raw_st_list) and isinstance(raw_st_list[st_idx], dict) else {}
         sid = str(getattr(st_obj, "student_id", "") or raw_st_dict.get("student_id") or "").strip()
         if not sid:
             continue
@@ -385,8 +420,13 @@ def compute_course_student_clo_metrics(doc: Dict[str, Any]) -> Dict[str, Any]:
         clo_results: Dict[str, Dict[str, Any]] = {}
         for co in outcomes_raw:
             co_id = str(co.get("co_id") or "CLO1").strip().upper()
-            deg_cutoff = float(co.get("target_score_pct") or 75.0)
-            if deg_cutoff <= 1.0:
+            try:
+                deg_cutoff = float(co.get("target_score_pct") or 75.0)
+            except (ValueError, TypeError):
+                deg_cutoff = 75.0
+            if deg_cutoff <= 0:
+                deg_cutoff = 75.0
+            elif deg_cutoff <= 1.0:
                 deg_cutoff *= 100.0
 
             # Prefer SA columns for CLO evaluation; fall back to all columns if no SA mapped
@@ -471,12 +511,8 @@ def compute_course_student_clo_metrics(doc: Dict[str, Any]) -> Dict[str, Any]:
         })
 
     return {
+        **base_meta,
         "has_scores": has_scores,
-        "course_code": (meta.get("course_code") or doc.get("course_code") or "").strip(),
-        "course_title": (meta.get("course_title") or doc.get("course_title") or "").strip(),
-        "section": (meta.get("section") or doc.get("section") or "").strip(),
-        "program_code": normalize_program_code(meta.get("program_code") or (meta.get("programs") or ["EE"])[0] or "EE"),
-        "semester_ay": (meta.get("semester_ay") or doc.get("semester_ay") or "").strip(),
         "students": student_metrics,
         "outcomes": outcomes_raw,
     }
@@ -525,6 +561,167 @@ def _collect_scoped_courses(user: Dict[str, Any], scope: Dict[str, Any]) -> List
             seen_ids.add(cid)
             scoped_docs.append(doc)
     return scoped_docs
+
+
+def _extract_pgo_key(pgo_item: Dict[str, Any]) -> str:
+    """Extracts a normalized PGO key ('a'..'m' or '1'..'22') for directory lookup."""
+    letter = str(pgo_item.get("letter") or "").strip().lower()
+    if letter:
+        return letter
+    code = str(pgo_item.get("pgo_code") or pgo_item.get("pgo_id") or "").strip().lower()
+    m = re.search(r"([a-m]|\d+)$", code)
+    return m.group(1) if m else code
+
+
+def build_program_pgo_pi_directory(
+    scope: Dict[str, Any],
+    pgo_tree: List[Dict[str, Any]],
+    final_pgos: List[Dict[str, Any]],
+    pi_node_lookup: Dict[str, Dict[str, Any]],
+    faculty_aligned_pgos: Set[str],
+    faculty_aligned_pis: Set[str],
+    faculty_program_codes: Set[str],
+    program_filter: str = "ALL",
+) -> Dict[str, Any]:
+    """
+    Builds the complete Program Graduate Outcomes (PGO) & Performance Indicators (PI)
+    Reference Directory grouped per degree program, respecting RBAC visibility:
+      - College-wide roles (Dean, Associate Dean, QA Head, Staff, Admin):
+          all CoE degree programs, all PGOs, and all PIs.
+      - Program Head:
+          all PGOs and PIs for their assigned program(s) (or all if '*').
+      - Faculty:
+          strictly limited to PGOs and PIs aligned to their handled/assigned courses.
+    """
+    import catalog_data
+
+    catalog = catalog_data.get_full_catalog() or {}
+    prog_structs = catalog.get("program_structures") or {}
+
+    accdb_by_key: Dict[str, Dict[str, Any]] = {
+        str(p.get("pgo_id") or p.get("pgo") or "").strip().lower(): p
+        for p in (pgo_tree or [])
+    }
+    live_pgo_by_key: Dict[str, Dict[str, Any]] = {
+        str(p.get("pgo_id") or "").strip().lower(): p
+        for p in (final_pgos or [])
+    }
+
+    allowed_progs = set(scope.get("allowed_programs") or [])
+    is_college_wide = bool(scope.get("is_college_wide"))
+    is_program_wide = bool(scope.get("is_program_wide"))
+
+    prog_flt_norm = normalize_program_code(program_filter) if program_filter and program_filter.upper() != "ALL" else "ALL"
+
+    programs_out: List[Dict[str, Any]] = []
+    total_pgos = 0
+    total_pis = 0
+
+    for raw_code, struct in prog_structs.items():
+        norm_code = normalize_program_code(raw_code)
+        if not is_college_wide:
+            if is_program_wide:
+                if "*" not in allowed_progs and allowed_progs and norm_code not in allowed_progs:
+                    continue
+            else:
+                # Faculty: limit to programs their assigned courses serve
+                if faculty_program_codes and norm_code not in faculty_program_codes and norm_code != "EE":
+                    continue
+
+        if prog_flt_norm != "ALL" and norm_code != prog_flt_norm:
+            continue
+
+        degree_label = raw_code if str(raw_code).upper().startswith("BS") else f"BS{raw_code}"
+        pgo_catalog = struct.get("pgo_pi_catalog") or []
+
+        pgos_out: List[Dict[str, Any]] = []
+        prog_pi_count = 0
+
+        for p_item in pgo_catalog:
+            pkey = _extract_pgo_key(p_item)
+            pgo_code = str(p_item.get("pgo_code") or f"PGO {pkey}").strip()
+            acc_pgo = accdb_by_key.get(pkey) if norm_code == "EE" else None
+            live_pgo = live_pgo_by_key.get(pkey) if norm_code == "EE" else None
+
+            raw_pis = list(p_item.get("pis") or [])
+            if not raw_pis and acc_pgo:
+                raw_pis = [
+                    {
+                        "pi_code": str(pi.get("pi_id") or "").strip(),
+                        "description": str(pi.get("description") or "").strip(),
+                        "full_text": str(pi.get("label") or pi.get("description") or "").strip(),
+                        "igas": "",
+                    }
+                    for pi in (acc_pgo.get("pis") or [])
+                ]
+
+            # Faculty RBAC filter: show only aligned PGOs / PIs
+            if not is_program_wide:
+                if pkey not in faculty_aligned_pgos and pgo_code.lower() not in faculty_aligned_pgos:
+                    continue
+
+            pis_out: List[Dict[str, Any]] = []
+            for pi in raw_pis:
+                pi_code = str(pi.get("pi_code") or pi.get("pi_id") or "").strip()
+                pi_norm = pi_code.lower().lstrip("pi-").strip(".")
+                if not is_program_wide and faculty_aligned_pis:
+                    if pi_norm not in faculty_aligned_pis and pi_code.lower() not in faculty_aligned_pis:
+                        # If faculty has PGO aligned but no granular PI match recorded, still keep if no PI list matched
+                        if any(al.startswith(f"{pkey}.") for al in faculty_aligned_pis):
+                            continue
+                live_pi = pi_node_lookup.get(pi_norm) if norm_code == "EE" else None
+                pis_out.append({
+                    "pi_code": pi_code,
+                    "description": str(pi.get("description") or "").strip(),
+                    "full_text": str(pi.get("full_text") or pi.get("description") or "").strip(),
+                    "igas": str(pi.get("igas") or "").strip(),
+                    "is_aligned": bool(live_pi and live_pi.get("is_aligned")),
+                    "avg_grade": live_pi.get("avg_grade") if live_pi else None,
+                    "attainment_rate_pct": live_pi.get("attainment_rate_pct") if live_pi else None,
+                    "ied_levels": live_pi.get("ied_levels") or [] if live_pi else [],
+                })
+
+            prog_pi_count += len(pis_out)
+            pgos_out.append({
+                "pgo_code": pgo_code,
+                "pgo_key": pkey,
+                "letter": str(p_item.get("letter") or pkey).strip(),
+                "keyword": (acc_pgo.get("keyword") if acc_pgo else "") or str(p_item.get("short_label") or pgo_code).strip(),
+                "description": (acc_pgo.get("description") if acc_pgo else "") or str(p_item.get("description") or "").strip(),
+                "full_description": str(p_item.get("description") or "").strip(),
+                "short_label": str(p_item.get("short_label") or "").strip(),
+                "igas": str(p_item.get("igas") or "").strip(),
+                "is_aligned": bool(live_pgo and live_pgo.get("is_aligned")),
+                "avg_grade": live_pgo.get("avg_grade") if live_pgo else None,
+                "attainment_rate_pct": live_pgo.get("attainment_rate_pct") if live_pgo else None,
+                "ied_levels": live_pgo.get("ied_levels") or [] if live_pgo else [],
+                "pis": pis_out,
+            })
+
+        if not pgos_out and not is_program_wide:
+            continue
+
+        total_pgos += len(pgos_out)
+        total_pis += prog_pi_count
+        programs_out.append({
+            "program_code": norm_code,
+            "raw_code": raw_code,
+            "degree_label": degree_label,
+            "program_name": str(struct.get("program_name") or degree_label).strip(),
+            "department": str(struct.get("department") or "").strip(),
+            "cmo_reference": str(struct.get("cmo_reference") or "").strip(),
+            "source_file": str(struct.get("source_file") or "").strip(),
+            "pgo_count": len(pgos_out),
+            "pi_count": prog_pi_count,
+            "pgos": pgos_out,
+        })
+
+    return {
+        "programs": programs_out,
+        "total_programs": len(programs_out),
+        "total_pgos": total_pgos,
+        "total_pis": total_pis,
+    }
 
 
 def build_pgo_assessment_report(
@@ -692,13 +889,15 @@ def build_pgo_assessment_report(
     total_aligned_clos = 0
     for doc in filtered_docs:
         cid = doc.get("id")
+        if not cid:
+            continue
         metrics = compute_course_student_clo_metrics(doc)
-        c_code = metrics["course_code"]
-        c_title = metrics["course_title"]
-        c_sec = metrics["section"]
-        has_scores = metrics["has_scores"]
-        outcomes = metrics["outcomes"]
-        students_m = metrics["students"]
+        c_code = metrics.get("course_code") or str(doc.get("course_code") or "").strip()
+        c_title = metrics.get("course_title") or str(doc.get("course_title") or "").strip()
+        c_sec = metrics.get("section") or str(doc.get("section") or "").strip()
+        has_scores = bool(metrics.get("has_scores", False))
+        outcomes = metrics.get("outcomes") or []
+        students_m = metrics.get("students") or []
 
         # Map each CLO in course -> alignments
         clo_align_map: Dict[str, List[Dict[str, Any]]] = {}
@@ -707,7 +906,9 @@ def build_pgo_assessment_report(
         course_ied_set: Set[str] = set()
 
         for co in outcomes:
-            co_id = str(co.get("co_id") or "CLO1").strip().upper()
+            if not isinstance(co, dict):
+                continue
+            co_id = str(co.get("co_id") or co.get("code") or "CLO1").strip().upper()
             aligns = _resolve_clo_alignments(c_code, co, accdb_lookup, pgo_lookup, pi_lookup)
             # Apply I-E-D filter if requested
             if ied_flt in ("I", "E", "D"):
@@ -976,8 +1177,8 @@ def build_pgo_assessment_report(
             "course_code": c_code,
             "course_title": c_title,
             "section": c_sec,
-            "program_code": metrics["program_code"],
-            "semester_ay": metrics["semester_ay"],
+            "program_code": metrics.get("program_code") or normalize_program_code(doc.get("program_code") or "EE"),
+            "semester_ay": metrics.get("semester_ay") or str(doc.get("semester_ay") or "").strip(),
             "has_scores": has_scores,
             "students_count": len(students_m),
             "aligned_clos_count": len(clo_align_map),
@@ -1270,6 +1471,29 @@ def build_pgo_assessment_report(
     overall_att_pct = round(sum(pgo_att_pool) / len(pgo_att_pool), 1) if pgo_att_pool else 0.0
     overall_avg_grade = round(sum(pgo_grade_pool) / len(pgo_grade_pool), 2) if pgo_grade_pool else 0.0
 
+    program_directory = build_program_pgo_pi_directory(
+        scope=scope,
+        pgo_tree=pgo_tree,
+        final_pgos=final_pgos,
+        pi_node_lookup=pi_node_lookup,
+        faculty_aligned_pgos=faculty_aligned_pgos,
+        faculty_aligned_pis=faculty_aligned_pis,
+        faculty_program_codes=available_programs_set,
+        program_filter=program_filter,
+    )
+    all_dir_progs = build_program_pgo_pi_directory(
+        scope=scope,
+        pgo_tree=pgo_tree,
+        final_pgos=final_pgos,
+        pi_node_lookup=pi_node_lookup,
+        faculty_aligned_pgos=faculty_aligned_pgos,
+        faculty_aligned_pis=faculty_aligned_pis,
+        faculty_program_codes=available_programs_set,
+        program_filter="ALL",
+    )
+    dir_program_codes = [p["program_code"] for p in all_dir_progs.get("programs", [])]
+    combined_programs = sorted(available_programs_set | set(dir_program_codes))
+
     return {
         "success": True,
         "scope": {
@@ -1283,7 +1507,11 @@ def build_pgo_assessment_report(
             "ied": ied_flt,
             "cohort": cohort_flt,
             "q": q_norm,
-            "available_programs": sorted(available_programs_set),
+            "available_programs": combined_programs,
+            "available_directory_programs": [
+                {"program_code": p["program_code"], "degree_label": p["degree_label"], "program_name": p["program_name"]}
+                for p in all_dir_progs.get("programs", [])
+            ],
             "available_courses": available_courses_meta,
             "available_cohorts": sorted(available_cohorts_set, reverse=True),
         },
@@ -1303,6 +1531,7 @@ def build_pgo_assessment_report(
         },
         "pgos": final_pgos,
         "pis": final_pis,
+        "program_directory": program_directory,
         "courses": courses_summary,
         "cohorts": final_cohorts,
         "students_matrix": students_matrix,

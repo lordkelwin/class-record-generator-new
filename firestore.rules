@@ -1,0 +1,155 @@
+rules_version = '2';
+
+// =============================================================================
+// Cloud Firestore Security Rules — USeP OBE Class Record & CQI System (Pilot)
+// =============================================================================
+//
+// Architecture & Security Model:
+// - Backend-Mediated Access Only: All end-user interactions (Faculty, Program
+//   Head, QA Head, Dean, Admin, and Students) are routed exclusively through the
+//   Python Flask + Gunicorn backend running on Cloud Run (proxied via Firebase
+//   Hosting).
+// - Admin SDK Privilege Separation: The Cloud Run backend connects to Cloud
+//   Firestore using Google Cloud / Firebase Admin service-account credentials
+//   (`google-cloud-firestore`), which authenticate via Cloud IAM and bypass
+//   client-side Firestore Security Rules.
+// - Zero Untrusted Client Surface: No browser or mobile client uses the
+//   Firestore Client SDK to read or write documents directly. Therefore, all
+//   direct client reads and writes are unconditionally denied (`if false`) to
+//   eliminate PII exposure, privilege escalation, schema pollution, and
+//   resource-exhaustion attacks from untrusted clients.
+// - RBAC & Schema Validation: Role-based access control, ownership checks,
+//   workflow state transitions, and input validation are enforced server-side
+//   in the Flask application layer before invoking Firestore Admin operations.
+//
+// =============================================================================
+// Assumed Data Model (Managed Server-Side by Flask + Admin SDK)
+// =============================================================================
+//
+// Collection: app_users
+//   Document ID: username
+//   Fields: username, password_hash, full_name, email, role, workflow_roles,
+//           program_codes, department, college, position_title, signature_data,
+//           can_access_faculty_tools, is_staff, extra_data, created_at, updated_at
+//   Sensitivity: HIGH (PII, credentials/hashes, e-signatures, RBAC metadata)
+//
+// Collection: app_students
+//   Document ID: student_id
+//   Fields: student_id, username, password_hash, full_name, first_name,
+//           last_name, email, program_year, signature_data,
+//           signature_updated_at, enrolled_courses, assessment_acknowledgments,
+//           created_at, updated_at
+//   Sensitivity: HIGH (Student PII, credentials/hashes, e-signatures, grades/enrollment)
+//
+// Collection: courses
+//   Document ID: course_id
+//   Fields: course_id, owner, course_code, course_title, section, semester_ay,
+//           schedule, program_code, year_level, credit_units, workflow_status,
+//           blueprint_json, workflow_json, class_record_workflow_json,
+//           created_at, updated_at (plus nested assessment/grade/review data)
+//   Sensitivity: HIGH (Faculty ownership, student grades, syllabus approvals)
+//
+// Collection: survey_responses
+//   Document ID: composite or auto-generated response ID
+//   Fields: student_id, subject_id, course_code, clo_ratings_json,
+//           general_ratings_json, cqi_anchors_json, challenging_topics, comments,
+//           submitted_at, is_completed
+//   Sensitivity: HIGH (Student identity linked to course exit survey feedback)
+//
+// Collection: cqi_plans
+//   Document ID: course_id / plan ID
+//   Fields: course_id, course_code, course_title, section, program_code,
+//           semester_ay, faculty_username, faculty_name, targeted_clos_json,
+//           synthesis_json, key_strengths, areas_for_improvement, gap_analysis,
+//           root_causes, action_plan, target_kpis, indicators_json, status,
+//           submitted_at, reviewed_by, reviewed_by_name, reviewed_at,
+//           program_head_remarks, revisit_date, revisit_term, revisit_status,
+//           updated_at
+//   Sensitivity: MEDIUM-HIGH (Internal academic quality assurance & reviews)
+//
+// Collection: curriculum_master
+//   Document ID: curriculum / program identifier
+//   Fields: Program structure, prospectus courses, PGO/PI/IGA/CLO mappings
+//   Sensitivity: MEDIUM (Controlled institutional curriculum definitions)
+//
+// Collection: system_meta
+//   Document ID: metadata key
+//   Fields: System configuration, migration state, and pilot operational metadata
+//   Sensitivity: HIGH (Internal operational state)
+//
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Explicit Collection Lockdowns
+    // All direct client reads and writes are denied. Server-side Flask routes
+    // on Cloud Run mediate all RBAC and data access via Admin credentials.
+    // -------------------------------------------------------------------------
+
+    match /app_users/{userId} {
+      allow read, write: if false;
+
+      match /{subpath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /app_students/{studentId} {
+      allow read, write: if false;
+
+      match /{subpath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /courses/{courseId} {
+      allow read, write: if false;
+
+      match /{subpath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /survey_responses/{responseId} {
+      allow read, write: if false;
+
+      match /{subpath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /cqi_plans/{planId} {
+      allow read, write: if false;
+
+      match /{subpath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /curriculum_master/{docId} {
+      allow read, write: if false;
+
+      match /{subpath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    match /system_meta/{metaId} {
+      allow read, write: if false;
+
+      match /{subpath=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Default-Deny Catch-All Rule
+    // Denies direct client access to any other collection or subcollection path.
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
